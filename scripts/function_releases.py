@@ -9,7 +9,7 @@ version order and a function belongs to the first release that registers it:
 
 A row whose version has no tag is pending: the functions added since the last
 release, kept under the current VERSION. `--out` writes the tagged rows only;
-`--sync` (what scripts/sync.py runs) adds the pending row and keeps it at VERSION;
+`--sync` (what scripts/sync.py runs) appends the functions missing from every row under VERSION;
 `--check` holds every tagged row to the tags and the pending row to the corpus.
 
   function_releases.py --out ta_codegen/input/releases.yaml   # tagged rows, from the tags
@@ -104,23 +104,18 @@ def format_ledger(rows):
 
 
 def sync_ledger(root, version):
-    """Ensure every corpus function has a row and the untagged one sits at VERSION.
+    """Ensure every corpus function has a row: the missing ones are appended under VERSION.
 
-    Returns the messages to print. Writes only on a change. With no release tag in
-    sight (a shallow clone) the untagged rows are left alone rather than merged.
+    Returns the messages to print. Writes only on a change. A row whose version has no
+    tag here is reported, never moved: a clone may simply lack the tag.
     """
     path = root / LEDGER
     existing = path.read_text() if path.exists() else ""
     rows = parse_ledger(existing, path)
     tagged = {rel for rel, _ in release_tags()}
     messages = []
-    if tagged:
-        for v in sorted((v for v in rows if v != version and v not in tagged), key=version_key):
-            moved = rows.pop(v)
-            rows.setdefault(version, set()).update(moved)
-            messages.append(f"{LEDGER}: no tag v{v}; moved its {len(moved)} function(s) under {version}")
-    else:
-        messages.append(f"{LEDGER}: no release tag found, untagged rows left as they are")
+    for v in sorted((v for v in rows if v != version and v not in tagged), key=version_key):
+        messages.append(f"{LEDGER}: no tag v{v} here; its row is left as it is")
     listed = set().union(*rows.values()) if rows else set()
     missing = sorted(corpus(root) - listed)
     if missing:
@@ -176,15 +171,19 @@ def check(path, derived, unreleased):
             f"{path} (tagged rows)", "derived from the release tags"))
         status = 1
     in_pending = set().union(*pending.values()) if pending else set()
+    corpus_names = corpus()
     for name in sorted(set(unreleased) - in_pending):
         print(f"{path}: {name} is in no row; run scripts/sync.py")
         status = 1
     for name in sorted(in_pending - set(unreleased)):
-        print(f"{path}: {name} is in a pending row but shipped in a tagged release")
+        if name not in corpus_names:
+            print(f"{path}: {name} is not in ta_codegen/input; remove it from the ledger")
+        else:
+            print(f"{path}: {name} is in a pending row but shipped in a tagged release")
         status = 1
     if len(pending) > 1:
         print(f"{path}: {len(pending)} untagged rows ({', '.join(sorted(pending, key=version_key))}); "
-              "run scripts/sync.py to merge them")
+              "fetch the tags, or fold the stale row into VERSION by hand")
         status = 1
     for v in pending:
         print(f"pending (untagged): {v}: {' '.join(sorted(pending[v])) or '(none)'}")

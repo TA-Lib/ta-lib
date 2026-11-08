@@ -390,10 +390,10 @@ export function erDisplayShift(outputIdx: number, options?: ErOptions): number {
  * ```ts
  * import { er } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = er(data, { timePeriod: 10 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = er(series, { timePeriod: 10 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`kama`](https://ta-lib.org/functions/kama)
  * @see [`mama`](https://ta-lib.org/functions/mama)
@@ -911,9 +911,9 @@ export function erOpenAndFillPositional(
  * ```ts
  * import { erOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = erOpen(data, { timePeriod: 10 });
+ * const stream = erOpen(series, { timePeriod: 10 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -947,9 +947,9 @@ export function erOpen(real: ArrayLike<number>, options?: ErOptions): ErStream {
  * ```ts
  * import { erOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = erOpenAndFill(data, { timePeriod: 10 });
+ * const { stream, begIdx, values } = erOpenAndFill(series, { timePeriod: 10 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

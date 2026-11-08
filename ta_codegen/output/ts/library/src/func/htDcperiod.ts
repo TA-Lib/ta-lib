@@ -696,10 +696,10 @@ export function htDcperiodDisplayShift(outputIdx: number, options?: HtDcperiodOp
  * ```ts
  * import { htDcperiod } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = htDcperiod(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = htDcperiod(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
  * @see [`htPhasor`](https://ta-lib.org/functions/ht_phasor)
@@ -2210,9 +2210,9 @@ export function htDcperiodOpenAndFillPositional(
  * ```ts
  * import { htDcperiodOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = htDcperiodOpen(data);
+ * const stream = htDcperiodOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -2245,9 +2245,9 @@ export function htDcperiodOpen(real: ArrayLike<number>, options?: HtDcperiodOpti
  * ```ts
  * import { htDcperiodOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = htDcperiodOpenAndFill(data);
+ * const { stream, begIdx, values } = htDcperiodOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

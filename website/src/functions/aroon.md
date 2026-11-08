@@ -9,7 +9,7 @@ Aroon reports how recently the highest high and lowest low occurred within a rol
 
 ## Chart
 
-<ta-chart src="/functions/aroon.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outAroonDown as a dashed line and outAroonUp as a solid line."></ta-chart>
+<ta-chart src="/functions/aroon.svg" ratio="720:416" label="AROON over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outAroonDown as a dashed line and outAroonUp as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outAroonDown as a dashed line and outAroonUp as a solid line. [Reference data (CSV)](/functions/aroon.csv) · [Chart (SVG)](/functions/aroon.svg)
 
@@ -51,6 +51,90 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double aroonDown[252], aroonUp[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_AROON( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, aroonDown, aroonUp );
+printf( "%d values from bar %d; last aroonDown = %f\n", outNBElement, outBegIdx, aroonDown[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut aroon_down = vec![0.0; 252];
+let mut aroon_up = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.aroon(0, high.len() - 1, &high, &low, 14, &mut aroon_down, &mut aroon_up)?;
+println!("{} values from bar {}; last aroon_down = {}", range.count, range.beg_idx, aroon_down[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] aroonDown = new double[252];
+double[] aroonUp = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.aroon(0, high.length - 1, high, low, 14, aroonDown, aroonUp);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last aroonDown = " + aroonDown[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var aroonDown = new double[252];
+var aroonUp = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Aroon(0, high.Length - 1, high, low, 14, aroonDown, aroonUp);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last aroonDown = {aroonDown[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { aroon } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
+  timePeriod: 14,
+});
+console.log(outAroonDown.length + ' values from bar ' + begIdx + '; last outAroonDown = ' + outAroonDown[outAroonDown.length - 1]);
+```
+
+:::
 
 ## Implementation
 

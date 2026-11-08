@@ -458,25 +458,27 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close = vec![0.0; 252]; // your data, oldest first
+    /// # let close: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    /// #     .collect();
+    /// let volume = vec![0.0; 252]; // your data, oldest first
+    /// # let volume: Vec<f64> = (0..252)
+    /// #     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
+    /// #     .collect();
     /// let mut kvo = vec![0.0; 252];
     /// let mut kvo_signal = vec![0.0; 252];
     ///
-    /// let out_range = core.kvo(
-    ///     0, high.len() - 1, &high, &low, &close, &volume, 34, 55, 13,
-    ///     &mut kvo, &mut kvo_signal,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(kvo[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.kvo(0, high.len() - 1, &high, &low, &close, &volume, 34, 55, 13,
+    ///                      &mut kvo, &mut kvo_signal)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last kvo = {}", range.count, range.beg_idx, kvo[range.count - 1]);
+    /// # assert!(kvo[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -915,7 +917,7 @@ impl Core {
     ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
     ///     .collect();
     /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
@@ -954,7 +956,7 @@ impl Core {
     ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
     ///     .collect();
     /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
     ///     .collect();
     ///
     /// let core = Core::new();

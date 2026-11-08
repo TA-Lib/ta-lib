@@ -758,10 +758,9 @@ export function sarextDisplayShift(outputIdx: number, options?: SarextOptions): 
  * ```ts
  * import { sarext } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = sarext({ high, low }, {
  *   startValue: 0,
  *   offsetOnReverse: 0,
@@ -772,7 +771,7 @@ export function sarextDisplayShift(outputIdx: number, options?: SarextOptions): 
  *   accelerationShort: 0.02,
  *   accelerationMaxShort: 0.2,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)

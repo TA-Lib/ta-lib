@@ -9,7 +9,7 @@ Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in ser
 
 ## Chart
 
-<ta-chart src="/functions/dosc.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
+<ta-chart src="/functions/dosc.svg" ratio="720:416" label="DOSC over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram. [Reference data (CSV)](/functions/dosc.csv) · [Chart (SVG)](/functions/dosc.svg)
 
@@ -65,6 +65,85 @@ DOSC = DS - SMA(DS, signalPeriod)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_DOSC( 0, n - 1, series, 14, 5, 3, 9, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.dosc(0, series.len() - 1, &series, 14, 5, 3, 9, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.dosc(0, series.length - 1, series, 14, 5, 3, 9, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Dosc(0, series.Length - 1, series, 14, 5, 3, 9, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { dosc } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = dosc(series, {
+  timePeriod: 14,
+  firstPeriod: 5,
+  secondPeriod: 3,
+  signalPeriod: 9,
+});
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

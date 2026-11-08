@@ -374,10 +374,10 @@ export function minDisplayShift(outputIdx: number, options?: MinOptions): number
  * ```ts
  * import { min } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = min(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = min(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`max`](https://ta-lib.org/functions/max)
  * @see [`minindex`](https://ta-lib.org/functions/minindex)
@@ -808,9 +808,9 @@ export function minOpenAndFillPositional(
  * ```ts
  * import { minOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = minOpen(data, { timePeriod: 30 });
+ * const stream = minOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -844,9 +844,9 @@ export function minOpen(real: ArrayLike<number>, options?: MinOptions): MinStrea
  * ```ts
  * import { minOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = minOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = minOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

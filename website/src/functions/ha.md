@@ -13,7 +13,7 @@ Read the result as a trend filter rather than as price: consecutive candles of o
 
 ## Chart
 
-<ta-chart src="/functions/ha.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill."></ta-chart>
+<ta-chart src="/functions/ha.svg" ratio="720:274" label="HA over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill."></ta-chart>
 
 Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill. [Reference data (CSV)](/functions/ha.csv) · [Chart (SVG)](/functions/ha.svg)
 
@@ -66,6 +66,112 @@ HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double open[252]; /* your data, oldest first */
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double haOpen[252], haHigh[252], haLow[252], haClose[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_HA( 0, n - 1, open, high, low, close,
+       &outBegIdx, &outNBElement, haOpen, haHigh, haLow, haClose );
+printf( "%d values from bar %d; last haOpen = %f\n", outNBElement, outBegIdx, haOpen[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let open = vec![0.0; 252]; // your data, oldest first
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut ha_open = vec![0.0; 252];
+let mut ha_high = vec![0.0; 252];
+let mut ha_low = vec![0.0; 252];
+let mut ha_close = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.ha(0, open.len() - 1, &open, &high, &low, &close,
+                    &mut ha_open, &mut ha_high, &mut ha_low, &mut ha_close)?;
+println!("{} values from bar {}; last ha_open = {}", range.count, range.beg_idx, ha_open[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] open = new double[252]; // your data, oldest first
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] haOpen = new double[252];
+double[] haHigh = new double[252];
+double[] haLow = new double[252];
+double[] haClose = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.ha(0, open.length - 1, open, high, low, close, haOpen, haHigh, haLow, haClose);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last haOpen = " + haOpen[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var open = new double[252]; // your data, oldest first
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var haOpen = new double[252];
+var haHigh = new double[252];
+var haLow = new double[252];
+var haClose = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Ha(0, open.Length - 1, open, high, low, close, haOpen, haHigh, haLow, haClose);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last haOpen = {haOpen[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { ha } from 'ta-lib';
+
+const open = new Float64Array(252); // your data, oldest first
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outHaOpen,
+  outHaHigh,
+  outHaLow,
+  outHaClose,
+} = ha({ open, high, low, close });
+console.log(outHaOpen.length + ' values from bar ' + begIdx + '; last outHaOpen = ' + outHaOpen[outHaOpen.length - 1]);
+```
+
+:::
 
 ## Implementation
 

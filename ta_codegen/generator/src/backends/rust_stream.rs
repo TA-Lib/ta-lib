@@ -35,7 +35,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::common;
 use super::fma;
-use super::rust_doc::{fmt_real_literal, series_def, CLOSE_SERIES, VOLUME_SERIES};
+use super::rust_doc::{fmt_real_literal, series_def};
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
     collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
@@ -2926,23 +2926,21 @@ fn stream_example_input(
     func: &FuncDef,
     input: &str,
 ) -> Option<(&'static str, String, String)> {
-    if let Some(domain) = super::rust_doc::input_domain(func, input) {
-        let expr = super::rust_doc::domain_series(domain, "(0.1 * i as f64).sin()", fmt_real_literal);
-        return Some(("data", expr, fmt_real_literal(super::rust_doc::domain_bar(domain, 0.42))));
-    }
-    let (var, expr, bar) = match input {
-        "inOpen" => ("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()", "100.2"),
-        "inHigh" => ("high", "101.0 + 10.0 * (0.1 * i as f64).sin()", "101.4"),
-        "inLow" => ("low", "99.0 + 10.0 * (0.1 * i as f64).sin()", "99.1"),
-        "inClose" => ("close", CLOSE_SERIES, "100.9"),
-        "inVolume" => ("volume", VOLUME_SERIES, "12_345.0"),
-        "inPeriods" => ("periods", "5.0 + (i % 10) as f64", "14.0"),
-        "inReal" => ("data", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
-        "inReal0" => ("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
-        "inReal1" => ("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()", "101.3"),
-        _ => return None,
+    let series = super::examples::series(func, input)?;
+    let bar = match super::rust_doc::input_domain(func, input) {
+        Some(domain) => fmt_real_literal(super::rust_doc::domain_bar(domain, 0.42)),
+        None => match input {
+            "inOpen" => "100.2",
+            "inHigh" => "101.4",
+            "inLow" => "99.1",
+            "inVolume" => "12_345.0",
+            "inPeriods" => "14.0",
+            "inReal1" => "101.3",
+            _ => "100.9",
+        }
+        .to_string(),
     };
-    Some((var, expr.to_string(), bar.to_string()))
+    Some((series.var, super::examples::render(&series, &super::rust_doc::RUST_SYNTAX), bar))
 }
 
 /// A runnable peek==update doctest (the per-function bit-exactness witness).

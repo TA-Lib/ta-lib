@@ -493,14 +493,14 @@ export function coppockDisplayShift(outputIdx: number, options?: CoppockOptions)
  * ```ts
  * import { coppock } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = coppock(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = coppock(series, {
  *   wmaPeriod: 10,
  *   roc1Period: 11,
  *   roc2Period: 14,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  */
 export function coppock(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult {
@@ -1215,9 +1215,9 @@ export function coppockOpenAndFillPositional(
  * ```ts
  * import { coppockOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = coppockOpen(data, {
+ * const stream = coppockOpen(series, {
  *   wmaPeriod: 10,
  *   roc1Period: 11,
  *   roc2Period: 14,
@@ -1258,9 +1258,9 @@ export function coppockOpen(real: ArrayLike<number>, options?: CoppockOptions): 
  * ```ts
  * import { coppockOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = coppockOpenAndFill(data, {
+ * const { stream, begIdx, values } = coppockOpenAndFill(series, {
  *   wmaPeriod: 10,
  *   roc1Period: 11,
  *   roc2Period: 14,

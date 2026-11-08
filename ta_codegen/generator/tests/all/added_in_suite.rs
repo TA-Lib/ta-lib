@@ -11,7 +11,7 @@ use crate::common;
 use ta_codegen_lib::backends::docs_site::{self, Releases};
 use ta_codegen_lib::parser;
 
-fn repo_root() -> PathBuf {
+pub(crate) fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
@@ -72,7 +72,7 @@ fn every_corpus_function_passes_the_generate_gate() {
 /// Render the website pages of `names` through `docs_site::generate` under a throwaway
 /// root holding only what the renderer reads: the ledger, `VERSION` and the pages'
 /// sources. Returns each page's text.
-fn render(names: &[&str]) -> HashMap<String, String> {
+pub(crate) fn render(names: &[&str]) -> HashMap<String, String> {
     let real = repo_root();
     let root = std::env::temp_dir().join(format!("ta_added_in_{}_{}", std::process::id(), names.join("_")));
     let _ = std::fs::remove_dir_all(&root);

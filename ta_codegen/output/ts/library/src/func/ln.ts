@@ -228,10 +228,10 @@ export function lnDisplayShift(outputIdx: number, options?: LnOptions): number {
  * ```ts
  * import { ln } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = ln(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = ln(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`log10`](https://ta-lib.org/functions/log10)
  * @see [`exp`](https://ta-lib.org/functions/exp)
@@ -487,9 +487,9 @@ export function lnOpenAndFillPositional(
  * ```ts
  * import { lnOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = lnOpen(data);
+ * const stream = lnOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -521,9 +521,9 @@ export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
  * ```ts
  * import { lnOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = lnOpenAndFill(data);
+ * const { stream, begIdx, values } = lnOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

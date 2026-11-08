@@ -406,16 +406,14 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  * ```ts
  * import { eri } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
  *   timePeriod: 13,
  * });
- * // outBullPower[k] is the value at bar begIdx + k
+ * console.log(outBullPower.length + ' values from bar ' + begIdx + '; last outBullPower = ' + outBullPower[outBullPower.length - 1]);
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`efi`](https://ta-lib.org/functions/efi)

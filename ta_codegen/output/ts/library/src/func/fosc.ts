@@ -390,10 +390,10 @@ export function foscDisplayShift(outputIdx: number, options?: FoscOptions): numb
  * ```ts
  * import { fosc } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = fosc(data, { timePeriod: 5 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = fosc(series, { timePeriod: 5 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`tsf`](https://ta-lib.org/functions/tsf)
  * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
@@ -949,9 +949,9 @@ export function foscOpenAndFillPositional(
  * ```ts
  * import { foscOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = foscOpen(data, { timePeriod: 5 });
+ * const stream = foscOpen(series, { timePeriod: 5 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -985,9 +985,9 @@ export function foscOpen(real: ArrayLike<number>, options?: FoscOptions): FoscSt
  * ```ts
  * import { foscOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = foscOpenAndFill(data, { timePeriod: 5 });
+ * const { stream, begIdx, values } = foscOpenAndFill(series, { timePeriod: 5 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

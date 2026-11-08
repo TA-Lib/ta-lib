@@ -228,9 +228,10 @@ export function acosDisplayShift(outputIdx: number, options?: AcosOptions): numb
  * ```ts
  * import { acos } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const { begIdx, values } = acos(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = acos(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`cos`](https://ta-lib.org/functions/cos)
  * @see [`asin`](https://ta-lib.org/functions/asin)
@@ -486,8 +487,8 @@ export function acosOpenAndFillPositional(
  * ```ts
  * import { acosOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const stream = acosOpen(data);
+ * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const stream = acosOpen(series);
  * const peeked = stream.peek(0.42); // a forming bar: commits nothing
  * const updated = stream.update(0.42); // the bar closes
  * ```
@@ -519,8 +520,8 @@ export function acosOpen(real: ArrayLike<number>, options?: AcosOptions): AcosSt
  * ```ts
  * import { acosOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const { stream, begIdx, values } = acosOpenAndFill(data);
+ * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = acosOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

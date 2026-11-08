@@ -9,7 +9,7 @@ Element-wise arctangent of the input series.
 
 ## Chart
 
-<ta-chart src="/functions/atan.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/atan.svg" ratio="720:416" label="ATAN over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/atan.csv) · [Chart (SVG)](/functions/atan.svg)
 
@@ -43,6 +43,80 @@ outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_ATAN( 0, n - 1, series, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.atan(0, series.len() - 1, &series, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.atan(0, series.length - 1, series, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Atan(0, series.Length - 1, series, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { atan } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = atan(series);
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

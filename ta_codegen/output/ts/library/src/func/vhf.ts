@@ -323,10 +323,10 @@ export function vhfDisplayShift(outputIdx: number, options?: VhfOptions): number
  * ```ts
  * import { vhf } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = vhf(data, { timePeriod: 28 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = vhf(series, { timePeriod: 28 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`adx`](https://ta-lib.org/functions/adx)
  * @see [`cmo`](https://ta-lib.org/functions/cmo)
@@ -765,9 +765,9 @@ export function vhfOpenAndFillPositional(
  * ```ts
  * import { vhfOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = vhfOpen(data, { timePeriod: 28 });
+ * const stream = vhfOpen(series, { timePeriod: 28 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -801,9 +801,9 @@ export function vhfOpen(real: ArrayLike<number>, options?: VhfOptions): VhfStrea
  * ```ts
  * import { vhfOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = vhfOpenAndFill(data, { timePeriod: 28 });
+ * const { stream, begIdx, values } = vhfOpenAndFill(series, { timePeriod: 28 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

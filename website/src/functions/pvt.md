@@ -11,7 +11,7 @@ Read the slope and the divergences, not the level: the total's zero point is arb
 
 ## Chart
 
-<ta-chart src="/functions/pvt.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+<ta-chart src="/functions/pvt.svg" ratio="720:484" label="PVT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/pvt.csv) · [Chart (SVG)](/functions/pvt.svg)
 
@@ -55,6 +55,85 @@ The series starts at zero on the first bar of the requested range.
 | <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double close[252]; /* your data, oldest first */
+double volume[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_PVT( 0, n - 1, close, volume, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let close = vec![0.0; 252]; // your data, oldest first
+let volume = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.pvt(0, close.len() - 1, &close, &volume, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] close = new double[252]; // your data, oldest first
+double[] volume = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.pvt(0, close.length - 1, close, volume, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var close = new double[252]; // your data, oldest first
+var volume = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Pvt(0, close.Length - 1, close, volume, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { pvt } from 'ta-lib';
+
+const close = new Float64Array(252); // your data, oldest first
+const volume = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = pvt({ close, volume });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

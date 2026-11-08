@@ -462,10 +462,10 @@ export function skewDisplayShift(outputIdx: number, options?: SkewOptions): numb
  * ```ts
  * import { skew } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = skew(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = skew(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`kurtosis`](https://ta-lib.org/functions/kurtosis)
  * @see [`var_`](https://ta-lib.org/functions/var)
@@ -1299,9 +1299,9 @@ export function skewOpenAndFillPositional(
  * ```ts
  * import { skewOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = skewOpen(data, { timePeriod: 30 });
+ * const stream = skewOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1335,9 +1335,9 @@ export function skewOpen(real: ArrayLike<number>, options?: SkewOptions): SkewSt
  * ```ts
  * import { skewOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = skewOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = skewOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

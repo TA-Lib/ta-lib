@@ -13,7 +13,7 @@ The two outputs are independent flags rather than one signed value, because an o
 
 ## Chart
 
-<ta-chart src="/functions/fractal.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back."></ta-chart>
+<ta-chart src="/functions/fractal.svg" ratio="720:274" label="FRACTAL over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back."></ta-chart>
 
 Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back. [Reference data (CSV)](/functions/fractal.csv) · [Chart (SVG)](/functions/fractal.svg)
 
@@ -83,6 +83,92 @@ The function's flags declare which values it can return: [rW7](/spec/inputs-outp
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+int swingHigh[252], swingLow[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_FRACTAL( 0, n - 1, high, low, 2, 2, &outBegIdx, &outNBElement, swingHigh, swingLow );
+printf( "%d values from bar %d; last swingHigh = %d\n", outNBElement, outBegIdx, swingHigh[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut swing_high = vec![0i32; 252];
+let mut swing_low = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.fractal(0, high.len() - 1, &high, &low, 2, 2,
+                         &mut swing_high, &mut swing_low)?;
+println!("{} values from bar {}; last swing_high = {}", range.count, range.beg_idx, swing_high[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+int[] swingHigh = new int[252];
+int[] swingLow = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.fractal(0, high.length - 1, high, low, 2, 2, swingHigh, swingLow);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last swingHigh = " + swingHigh[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var swingHigh = new int[252];
+var swingLow = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Fractal(0, high.Length - 1, high, low, 2, 2, swingHigh, swingLow);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last swingHigh = {swingHigh[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { fractal } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
+  leftBars: 2,
+  rightBars: 2,
+});
+console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+```
+
+:::
 
 ## Implementation
 

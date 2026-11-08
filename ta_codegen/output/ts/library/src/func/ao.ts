@@ -400,12 +400,11 @@ export function aoDisplayShift(outputIdx: number, options?: AoOptions): number {
  * ```ts
  * import { ao } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = ao({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`apo`](https://ta-lib.org/functions/apo)
  * @see [`macd`](https://ta-lib.org/functions/macd)

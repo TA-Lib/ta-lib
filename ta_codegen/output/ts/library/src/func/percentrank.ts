@@ -308,10 +308,10 @@ export function percentrankDisplayShift(outputIdx: number, options?: Percentrank
  * ```ts
  * import { percentrank } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = percentrank(data, { timePeriod: 100 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = percentrank(series, { timePeriod: 100 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`willr`](https://ta-lib.org/functions/willr)
@@ -671,9 +671,9 @@ export function percentrankOpenAndFillPositional(
  * ```ts
  * import { percentrankOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentrankOpen(data, { timePeriod: 100 });
+ * const stream = percentrankOpen(series, { timePeriod: 100 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -707,9 +707,9 @@ export function percentrankOpen(real: ArrayLike<number>, options?: PercentrankOp
  * ```ts
  * import { percentrankOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = percentrankOpenAndFill(data, {
+ * const { stream, begIdx, values } = percentrankOpenAndFill(series, {
  *   timePeriod: 100,
  * });
  * // values[k] is the value at bar begIdx + k

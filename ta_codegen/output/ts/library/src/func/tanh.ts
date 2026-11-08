@@ -224,10 +224,10 @@ export function tanhDisplayShift(outputIdx: number, options?: TanhOptions): numb
  * ```ts
  * import { tanh } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   3 * Math.sin(0.1 * i));
- * const { begIdx, values } = tanh(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = tanh(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sinh`](https://ta-lib.org/functions/sinh)
  * @see [`cosh`](https://ta-lib.org/functions/cosh)
@@ -483,9 +483,9 @@ export function tanhOpenAndFillPositional(
  * ```ts
  * import { tanhOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   3 * Math.sin(0.1 * i));
- * const stream = tanhOpen(data);
+ * const stream = tanhOpen(series);
  * const peeked = stream.peek(1.26); // a forming bar: commits nothing
  * const updated = stream.update(1.26); // the bar closes
  * ```
@@ -517,9 +517,9 @@ export function tanhOpen(real: ArrayLike<number>, options?: TanhOptions): TanhSt
  * ```ts
  * import { tanhOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   3 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = tanhOpenAndFill(data);
+ * const { stream, begIdx, values } = tanhOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

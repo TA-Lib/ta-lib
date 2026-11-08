@@ -18,6 +18,7 @@ mod divisor_guard_suite;
 mod eager_select_suite;
 mod doc_emphasis_suite;
 mod enums_suite;
+mod examples_suite;
 mod fma_suite;
 mod indicator_variants_suite;
 mod input_domain_suite;

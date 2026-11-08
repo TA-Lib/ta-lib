@@ -225,10 +225,10 @@ export function atanDisplayShift(outputIdx: number, options?: AtanOptions): numb
  * ```ts
  * import { atan } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = atan(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = atan(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`tan`](https://ta-lib.org/functions/tan)
  * @see [`acos`](https://ta-lib.org/functions/acos)
@@ -485,9 +485,9 @@ export function atanOpenAndFillPositional(
  * ```ts
  * import { atanOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = atanOpen(data);
+ * const stream = atanOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -519,9 +519,9 @@ export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanSt
  * ```ts
  * import { atanOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = atanOpenAndFill(data);
+ * const { stream, begIdx, values } = atanOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

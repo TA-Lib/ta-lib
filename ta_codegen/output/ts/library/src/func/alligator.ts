@@ -553,10 +553,9 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  * ```ts
  * import { alligator } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
  *   jawPeriod: 13,
  *   jawShift: 8,
@@ -565,7 +564,7 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  *   lipsPeriod: 5,
  *   lipsShift: 3,
  * });
- * // outJaw[k] is the value at bar begIdx + k
+ * console.log(outJaw.length + ' values from bar ' + begIdx + '; last outJaw = ' + outJaw[outJaw.length - 1]);
  * ```
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

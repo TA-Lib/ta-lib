@@ -7,7 +7,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 ## Reference data
 
-Each page charts the function over one fixed price series (IBM, daily, 1999, the series `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, computed by the C library. Running TA-Lib over the CSV's own input columns from its first row reproduces the output columns. Compare with a tolerance rather than bit for bit: the values come from one platform, and a function that [uses a transcendental](/spec/versions/#transcendental) may differ in the last bits [across machines](/spec/versions/#machines).
+Each page charts the function over one fixed price series (IBM, daily, 1999, the series `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, computed by the C library. Running TA-Lib over the CSV's own input columns from its first row reproduces the output columns. Compare with a tolerance rather than bit for bit: a function that [uses a transcendental](/spec/versions/#transcendental) may differ in the last bits [across machines](/spec/versions/#machines).
 
 ## Cycle Indicators
 

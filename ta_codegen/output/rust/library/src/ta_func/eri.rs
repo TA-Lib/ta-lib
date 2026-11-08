@@ -341,22 +341,23 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close = vec![0.0; 252]; // your data, oldest first
+    /// # let close: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    /// #     .collect();
     /// let mut bull_power = vec![0.0; 252];
     /// let mut bear_power = vec![0.0; 252];
     ///
-    /// let out_range = core.eri(
-    ///     0, high.len() - 1, &high, &low, &close, 13,
-    ///     &mut bull_power, &mut bear_power,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(bull_power[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.eri(0, high.len() - 1, &high, &low, &close, 13,
+    ///                      &mut bull_power, &mut bear_power)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last bull_power = {}", range.count, range.beg_idx, bull_power[range.count - 1]);
+    /// # assert!(bull_power[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

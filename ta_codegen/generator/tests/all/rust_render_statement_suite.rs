@@ -1122,20 +1122,20 @@ fn every_integer_output_carries_an_example_claim() {
         }
         let out = backends::rust_lang::generate(&func, &enums, registry, helpers);
         // One claim per integer output, counted BY THAT OUTPUT'S OWN example
-        // variable. Counting bare `[..out_range.count]` instead let a mixed
+        // variable. Counting bare `[..range.count]` instead let a mixed
         // real+integer function satisfy the floor with the real output's
         // finiteness assert alone -- SUPERTREND passed this gate with no integer
         // claim at all, which is the whole condition it exists to catch.
         let claims: usize = func
             .outputs
             .iter()
-            .zip(backends::rust_doc::output_var_names(&func))
+            .zip(backends::rust_doc::example_output_vars(&func))
             .filter(|(o, _)| o.param_type == ir::ParamType::Integer)
             .map(|(_, var)| {
                 // Word boundary, not `contains`: `trend` is a proper suffix of
                 // `supertrend`, so the real output's finiteness assert would
                 // answer the integer output's needle.
-                usize::from(mentions_word(&out, &format!("{var}[..out_range.count]")))
+                usize::from(mentions_word(&out, &format!("{var}[..range.count]")))
             })
             .sum();
         assert!(

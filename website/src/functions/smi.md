@@ -9,7 +9,7 @@ Stochastic Momentum Index: where the close sits relative to the **midpoint** of 
 
 ## Chart
 
-<ta-chart src="/functions/smi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line."></ta-chart>
+<ta-chart src="/functions/smi.svg" ratio="720:416" label="SMI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line. [Reference data (CSV)](/functions/smi.csv) · [Chart (SVG)](/functions/smi.svg)
 
@@ -67,6 +67,99 @@ Signal = EMA(SMI, signalPeriod)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double smi[252], smiSignal[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SMI( 0, n - 1, high, low, close, 13, 2, 25, 9, &outBegIdx, &outNBElement, smi, smiSignal );
+printf( "%d values from bar %d; last smi = %f\n", outNBElement, outBegIdx, smi[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut smi = vec![0.0; 252];
+let mut smi_signal = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.smi(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9,
+                     &mut smi, &mut smi_signal)?;
+println!("{} values from bar {}; last smi = {}", range.count, range.beg_idx, smi[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] smi = new double[252];
+double[] smiSignal = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.smi(0, high.length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last smi = " + smi[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var smi = new double[252];
+var smiSignal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Smi(0, high.Length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last smi = {smi[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { smi } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
+  timePeriod: 13,
+  fastPeriod: 2,
+  slowPeriod: 25,
+  signalPeriod: 9,
+});
+console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
+```
+
+:::
 
 ## Implementation
 

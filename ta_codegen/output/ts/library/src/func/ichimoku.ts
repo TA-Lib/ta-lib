@@ -485,10 +485,9 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  * ```ts
  * import { ichimoku } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outTenkanSen,
@@ -500,7 +499,7 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  *   kijunPeriod: 26,
  *   senkouBPeriod: 52,
  * });
- * // outTenkanSen[k] is the value at bar begIdx + k
+ * console.log(outTenkanSen.length + ' values from bar ' + begIdx + '; last outTenkanSen = ' + outTenkanSen[outTenkanSen.length - 1]);
  * ```
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

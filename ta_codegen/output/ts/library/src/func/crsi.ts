@@ -385,14 +385,14 @@ export function crsiDisplayShift(outputIdx: number, options?: CrsiOptions): numb
  * ```ts
  * import { crsi } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = crsi(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = crsi(series, {
  *   timePeriod: 3,
  *   streakPeriod: 2,
  *   rankPeriod: 100,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`percentrank`](https://ta-lib.org/functions/percentrank)
@@ -835,9 +835,9 @@ export function crsiOpenAndFillPositional(
  * ```ts
  * import { crsiOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = crsiOpen(data, {
+ * const stream = crsiOpen(series, {
  *   timePeriod: 3,
  *   streakPeriod: 2,
  *   rankPeriod: 100,
@@ -877,9 +877,9 @@ export function crsiOpen(real: ArrayLike<number>, options?: CrsiOptions): CrsiSt
  * ```ts
  * import { crsiOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = crsiOpenAndFill(data, {
+ * const { stream, begIdx, values } = crsiOpenAndFill(series, {
  *   timePeriod: 3,
  *   streakPeriod: 2,
  *   rankPeriod: 100,

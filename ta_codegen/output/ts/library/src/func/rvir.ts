@@ -349,15 +349,14 @@ export function rvirDisplayShift(outputIdx: number, options?: RvirOptions): numb
  * ```ts
  * import { rvir } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = rvir({ high, low }, {
  *   timePeriod: 14,
  *   stdDevPeriod: 10,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`rvi`](https://ta-lib.org/functions/rvi)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)

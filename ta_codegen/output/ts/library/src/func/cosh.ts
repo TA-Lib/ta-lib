@@ -228,10 +228,10 @@ export function coshDisplayShift(outputIdx: number, options?: CoshOptions): numb
  * ```ts
  * import { cosh } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
- * const { begIdx, values } = cosh(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = cosh(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sinh`](https://ta-lib.org/functions/sinh)
  * @see [`tanh`](https://ta-lib.org/functions/tanh)
@@ -487,9 +487,9 @@ export function coshOpenAndFillPositional(
  * ```ts
  * import { coshOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const stream = coshOpen(data);
+ * const stream = coshOpen(series);
  * const peeked = stream.peek(2.1); // a forming bar: commits nothing
  * const updated = stream.update(2.1); // the bar closes
  * ```
@@ -521,9 +521,9 @@ export function coshOpen(real: ArrayLike<number>, options?: CoshOptions): CoshSt
  * ```ts
  * import { coshOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = coshOpenAndFill(data);
+ * const { stream, begIdx, values } = coshOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

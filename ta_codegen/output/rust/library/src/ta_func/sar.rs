@@ -460,15 +460,17 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.sar(0, high.len() - 1, &high, &low, 0.02, 0.2, &mut out)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.sar(0, high.len() - 1, &high, &low, 0.02, 0.2, &mut out)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(out[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

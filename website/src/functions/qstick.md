@@ -9,7 +9,7 @@ Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a s
 
 ## Chart
 
-<ta-chart src="/functions/qstick.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/qstick.svg" ratio="720:416" label="QSTICK over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/qstick.csv) · [Chart (SVG)](/functions/qstick.svg)
 
@@ -52,6 +52,85 @@ The moving average is a plain SMA, so there is no seeding convention and none of
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double open[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_QSTICK( 0, n - 1, open, close, 10, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let open = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.qstick(0, open.len() - 1, &open, &close, 10, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] open = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.qstick(0, open.length - 1, open, close, 10, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var open = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Qstick(0, open.Length - 1, open, close, 10, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { qstick } from 'ta-lib';
+
+const open = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = qstick({ open, close }, { timePeriod: 10 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

@@ -11,7 +11,7 @@ This function is meant for building your own cycle analysis on top of the raw ph
 
 ## Chart
 
-<ta-chart src="/functions/ht_phasor.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line."></ta-chart>
+<ta-chart src="/functions/ht_phasor.svg" ratio="720:416" label="HT_PHASOR over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line. [Reference data (CSV)](/functions/ht_phasor.csv) · [Chart (SVG)](/functions/ht_phasor.svg)
 
@@ -50,6 +50,83 @@ I and Q are the Cartesian coordinates of the rotating cycle vector — the same 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double inPhase[252], quadrature[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_HT_PHASOR( 0, n - 1, series, &outBegIdx, &outNBElement, inPhase, quadrature );
+printf( "%d values from bar %d; last inPhase = %f\n", outNBElement, outBegIdx, inPhase[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut in_phase = vec![0.0; 252];
+let mut quadrature = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.ht_phasor(0, series.len() - 1, &series, &mut in_phase, &mut quadrature)?;
+println!("{} values from bar {}; last in_phase = {}", range.count, range.beg_idx, in_phase[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] inPhase = new double[252];
+double[] quadrature = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.htPhasor(0, series.length - 1, series, inPhase, quadrature);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last inPhase = " + inPhase[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var inPhase = new double[252];
+var quadrature = new double[252];
+
+var core = Core.Default;
+OutRange r = core.HtPhasor(0, series.Length - 1, series, inPhase, quadrature);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last inPhase = {inPhase[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { htPhasor } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
+console.log(outInPhase.length + ' values from bar ' + begIdx + '; last outInPhase = ' + outInPhase[outInPhase.length - 1]);
+```
+
+:::
 
 ## Implementation
 

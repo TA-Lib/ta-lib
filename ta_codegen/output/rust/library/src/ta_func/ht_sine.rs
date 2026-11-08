@@ -598,15 +598,16 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let series = vec![0.0; 252]; // your data, oldest first
+    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut sine = vec![0.0; 252];
     /// let mut lead_sine = vec![0.0; 252];
     ///
-    /// let out_range = core.ht_sine(0, data.len() - 1, &data, &mut sine, &mut lead_sine)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(sine[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.ht_sine(0, series.len() - 1, &series, &mut sine, &mut lead_sine)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last sine = {}", range.count, range.beg_idx, sine[range.count - 1]);
+    /// # assert!(sine[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -1496,10 +1497,10 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_sine_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ht_sine_open(&series).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1528,16 +1529,16 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
     /// let mut batch_sine = vec![0.0; 252];
     /// let mut batch_lead_sine = vec![0.0; 252];
-    /// let batch = core.ht_sine(0, data.len() - 1, &data, &mut batch_sine, &mut batch_lead_sine)?;
+    /// let batch = core.ht_sine(0, series.len() - 1, &series, &mut batch_sine, &mut batch_lead_sine)?;
     ///
     /// let mut sine = vec![0.0; 252];
     /// let mut lead_sine = vec![0.0; 252];
-    /// let (_stream, filled) = core.ht_sine_open_and_fill(&data, &mut sine, &mut lead_sine)?;
+    /// let (_stream, filled) = core.ht_sine_open_and_fill(&series, &mut sine, &mut lead_sine)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);

@@ -437,17 +437,16 @@ export function donchianDisplayShift(outputIdx: number, options?: DonchianOption
  * ```ts
  * import { donchian } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outUpperBand,
  *   outMiddleBand,
  *   outLowerBand,
  * } = donchian({ high, low }, { timePeriod: 20 });
- * // outUpperBand[k] is the value at bar begIdx + k
+ * console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
  * ```
  */
 export function donchian(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianResult {

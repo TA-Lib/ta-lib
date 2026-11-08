@@ -228,9 +228,10 @@ export function asinDisplayShift(outputIdx: number, options?: AsinOptions): numb
  * ```ts
  * import { asin } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const { begIdx, values } = asin(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = asin(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`acos`](https://ta-lib.org/functions/acos)
  * @see [`atan`](https://ta-lib.org/functions/atan)
@@ -489,8 +490,8 @@ export function asinOpenAndFillPositional(
  * ```ts
  * import { asinOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const stream = asinOpen(data);
+ * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const stream = asinOpen(series);
  * const peeked = stream.peek(0.42); // a forming bar: commits nothing
  * const updated = stream.update(0.42); // the bar closes
  * ```
@@ -522,8 +523,8 @@ export function asinOpen(real: ArrayLike<number>, options?: AsinOptions): AsinSt
  * ```ts
  * import { asinOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
- * const { stream, begIdx, values } = asinOpenAndFill(data);
+ * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = asinOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

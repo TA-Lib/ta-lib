@@ -228,10 +228,10 @@ export function expDisplayShift(outputIdx: number, options?: ExpOptions): number
  * ```ts
  * import { exp } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
- * const { begIdx, values } = exp(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = exp(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ln`](https://ta-lib.org/functions/ln)
  * @see [`sqrt`](https://ta-lib.org/functions/sqrt)
@@ -486,9 +486,9 @@ export function expOpenAndFillPositional(
  * ```ts
  * import { expOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const stream = expOpen(data);
+ * const stream = expOpen(series);
  * const peeked = stream.peek(2.1); // a forming bar: commits nothing
  * const updated = stream.update(2.1); // the bar closes
  * ```
@@ -520,9 +520,9 @@ export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStrea
  * ```ts
  * import { expOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = expOpenAndFill(data);
+ * const { stream, begIdx, values } = expOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

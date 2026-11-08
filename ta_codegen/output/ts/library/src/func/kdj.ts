@@ -468,12 +468,10 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  * ```ts
  * import { MAType, kdj } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outK, outD, outJ } = kdj({ high, low, close }, {
  *   fastKPeriod: 9,
  *   slowKPeriod: 3,
@@ -481,7 +479,7 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  *   slowDPeriod: 3,
  *   slowDMaType: MAType.RMA,
  * });
- * // outK[k] is the value at bar begIdx + k
+ * console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)

@@ -495,14 +495,14 @@ export function sharpeDisplayShift(outputIdx: number, options?: SharpeOptions): 
  * ```ts
  * import { sharpe } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = sharpe(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = sharpe(series, {
  *   timePeriod: 20,
  *   riskFreeRate: 0,
  *   annualization: 252,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`var_`](https://ta-lib.org/functions/var)
@@ -1330,9 +1330,9 @@ export function sharpeOpenAndFillPositional(
  * ```ts
  * import { sharpeOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = sharpeOpen(data, {
+ * const stream = sharpeOpen(series, {
  *   timePeriod: 20,
  *   riskFreeRate: 0,
  *   annualization: 252,
@@ -1374,9 +1374,9 @@ export function sharpeOpen(real: ArrayLike<number>, options?: SharpeOptions): Sh
  * ```ts
  * import { sharpeOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = sharpeOpenAndFill(data, {
+ * const { stream, begIdx, values } = sharpeOpenAndFill(series, {
  *   timePeriod: 20,
  *   riskFreeRate: 0,
  *   annualization: 252,

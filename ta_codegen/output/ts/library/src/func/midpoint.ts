@@ -414,10 +414,10 @@ export function midpointDisplayShift(outputIdx: number, options?: MidpointOption
  * ```ts
  * import { midpoint } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = midpoint(data, { timePeriod: 14 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = midpoint(series, { timePeriod: 14 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`max`](https://ta-lib.org/functions/max)
@@ -930,9 +930,9 @@ export function midpointOpenAndFillPositional(
  * ```ts
  * import { midpointOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = midpointOpen(data, { timePeriod: 14 });
+ * const stream = midpointOpen(series, { timePeriod: 14 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -966,9 +966,9 @@ export function midpointOpen(real: ArrayLike<number>, options?: MidpointOptions)
  * ```ts
  * import { midpointOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = midpointOpenAndFill(data, {
+ * const { stream, begIdx, values } = midpointOpenAndFill(series, {
  *   timePeriod: 14,
  * });
  * // values[k] is the value at bar begIdx + k

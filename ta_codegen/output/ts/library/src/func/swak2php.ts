@@ -416,10 +416,10 @@ export function swak2phpDisplayShift(outputIdx: number, options?: Swak2phpOption
  * ```ts
  * import { swak2php } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = swak2php(data, { timePeriod: 20 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = swak2php(series, { timePeriod: 20 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`swakHp`](https://ta-lib.org/functions/swak_hp)
  * @see [`swakBp`](https://ta-lib.org/functions/swak_bp)
@@ -907,9 +907,9 @@ export function swak2phpOpenAndFillPositional(
  * ```ts
  * import { swak2phpOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = swak2phpOpen(data, { timePeriod: 20 });
+ * const stream = swak2phpOpen(series, { timePeriod: 20 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -944,9 +944,9 @@ export function swak2phpOpen(real: ArrayLike<number>, options?: Swak2phpOptions)
  * ```ts
  * import { swak2phpOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = swak2phpOpenAndFill(data, {
+ * const { stream, begIdx, values } = swak2phpOpenAndFill(series, {
  *   timePeriod: 20,
  * });
  * // values[k] is the value at bar begIdx + k

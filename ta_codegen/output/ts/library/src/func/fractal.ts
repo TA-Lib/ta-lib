@@ -405,15 +405,14 @@ export function fractalDisplayShift(outputIdx: number, options?: FractalOptions)
  * ```ts
  * import { fractal } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
  *   leftBars: 2,
  *   rightBars: 2,
  * });
- * // outSwingHigh[k] is the value at bar begIdx + k
+ * console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
  * ```
  * @see [`aroon`](https://ta-lib.org/functions/aroon)
  * @see [`maxindex`](https://ta-lib.org/functions/maxindex)

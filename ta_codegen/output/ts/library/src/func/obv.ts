@@ -253,12 +253,11 @@ export function obvDisplayShift(outputIdx: number, options?: ObvOptions): number
  * ```ts
  * import { obv } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const { begIdx, values } = obv(data, { volume });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ * const volume = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = obv(series, { volume });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  */
 export function obv(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvResult {
@@ -576,11 +575,11 @@ export function obvOpenAndFillPositional(
  * ```ts
  * import { obvOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = obvOpen(data, { volume });
+ * const stream = obvOpen(series, { volume });
  * const peeked = stream.peek(100.9, 12345); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
@@ -617,11 +616,11 @@ export function obvOpen(real: ArrayLike<number>, prices: { open?: ArrayLike<numb
  * ```ts
  * import { obvOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const { stream, begIdx, values } = obvOpenAndFill(data, { volume });
+ * const { stream, begIdx, values } = obvOpenAndFill(series, { volume });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

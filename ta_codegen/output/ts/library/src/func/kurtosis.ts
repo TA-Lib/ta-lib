@@ -495,10 +495,10 @@ export function kurtosisDisplayShift(outputIdx: number, options?: KurtosisOption
  * ```ts
  * import { kurtosis } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = kurtosis(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = kurtosis(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`var_`](https://ta-lib.org/functions/var)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
@@ -1412,9 +1412,9 @@ export function kurtosisOpenAndFillPositional(
  * ```ts
  * import { kurtosisOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kurtosisOpen(data, { timePeriod: 30 });
+ * const stream = kurtosisOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1448,9 +1448,9 @@ export function kurtosisOpen(real: ArrayLike<number>, options?: KurtosisOptions)
  * ```ts
  * import { kurtosisOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = kurtosisOpenAndFill(data, {
+ * const { stream, begIdx, values } = kurtosisOpenAndFill(series, {
  *   timePeriod: 30,
  * });
  * // values[k] is the value at bar begIdx + k

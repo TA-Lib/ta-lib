@@ -556,15 +556,15 @@ export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): numb
  * ```ts
  * import { MAType, mavp } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const { begIdx, values } = mavp(data, periods, {
+ * const series = new Float64Array(252); // your data, oldest first
+ * const periods = new Float64Array(252); // one period per bar
+ *
+ * const { begIdx, values } = mavp(series, periods, {
  *   minPeriod: 2,
  *   maxPeriod: 30,
  *   maType: MAType.SMA,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
@@ -1152,10 +1152,10 @@ export function mavpOpenAndFillPositional(
  * ```ts
  * import { MAType, mavpOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const stream = mavpOpen(data, periods, {
+ * const stream = mavpOpen(series, periods, {
  *   minPeriod: 2,
  *   maxPeriod: 30,
  *   maType: MAType.SMA,
@@ -1197,10 +1197,10 @@ export function mavpOpen(real: ArrayLike<number>, periods: ArrayLike<number>, op
  * ```ts
  * import { MAType, mavpOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const { stream, begIdx, values } = mavpOpenAndFill(data, periods, {
+ * const { stream, begIdx, values } = mavpOpenAndFill(series, periods, {
  *   minPeriod: 2,
  *   maxPeriod: 30,
  *   maType: MAType.SMA,

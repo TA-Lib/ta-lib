@@ -432,10 +432,10 @@ export function wmaDisplayShift(outputIdx: number, options?: WmaOptions): number
  * ```ts
  * import { wma } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = wma(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = wma(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`ema`](https://ta-lib.org/functions/ema)
@@ -1133,9 +1133,9 @@ export function wmaOpenAndFillPositional(
  * ```ts
  * import { wmaOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = wmaOpen(data, { timePeriod: 30 });
+ * const stream = wmaOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1169,9 +1169,9 @@ export function wmaOpen(real: ArrayLike<number>, options?: WmaOptions): WmaStrea
  * ```ts
  * import { wmaOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = wmaOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = wmaOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

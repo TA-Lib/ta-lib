@@ -1,7 +1,7 @@
 # Reference corpus
 
 Daily OHLCV series the function pages on ta-lib.org are computed over
-(`scripts/build.py refdata`). One file per instrument, columns
+(`scripts/build.py refdata`); not part of the released source tarball. One file per instrument, columns
 `date,open,high,low,close,volume`, dates `YYYY-MM-DD` ascending. An optional
 first line `# label: <text>` names the series the way a chart caption does
 (`# label: IBM, daily, 1999`); without one the file name is the label.

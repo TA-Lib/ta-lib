@@ -11,7 +11,7 @@ A +VI line crossing above −VI is the bullish signal the authors describe; the 
 
 ## Chart
 
-<ta-chart src="/functions/vortex.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line."></ta-chart>
+<ta-chart src="/functions/vortex.svg" ratio="720:416" label="VORTEX over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line. [Reference data (CSV)](/functions/vortex.csv) · [Chart (SVG)](/functions/vortex.svg)
 
@@ -61,6 +61,96 @@ No smoothing, no recursion, no seeding — three rolling sums over per-bar terms
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double plusVi[252], minusVi[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_VORTEX( 0, n - 1, high, low, close, 14, &outBegIdx, &outNBElement, plusVi, minusVi );
+printf( "%d values from bar %d; last plusVi = %f\n", outNBElement, outBegIdx, plusVi[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut plus_vi = vec![0.0; 252];
+let mut minus_vi = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.vortex(0, high.len() - 1, &high, &low, &close, 14,
+                        &mut plus_vi, &mut minus_vi)?;
+println!("{} values from bar {}; last plus_vi = {}", range.count, range.beg_idx, plus_vi[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] plusVi = new double[252];
+double[] minusVi = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.vortex(0, high.length - 1, high, low, close, 14, plusVi, minusVi);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last plusVi = " + plusVi[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var plusVi = new double[252];
+var minusVi = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Vortex(0, high.Length - 1, high, low, close, 14, plusVi, minusVi);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last plusVi = {plusVi[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { vortex } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
+  timePeriod: 14,
+});
+console.log(outPlusVi.length + ' values from bar ' + begIdx + '; last outPlusVi = ' + outPlusVi[outPlusVi.length - 1]);
+```
+
+:::
 
 ## Implementation
 

@@ -18,15 +18,19 @@ const STALE_CHUNK =
 // most once; any successful navigation clears the mark.
 const RELOAD_TARGET = "vp-reload-stale-chunk";
 
-// A function page's chart. The SVG is fetched on mount and inlined, so the
-// site's stylesheet themes it and the page's HTML and JS chunk carry none of
-// it; until then the box holds the chart's height so nothing below it moves.
-// `<noscript>` holds an `<img>` of the same file for a reader without JS.
+// A function page's chart. The SVG is fetched on mount and inlined, so its
+// own stylesheet picks up the theme's `--vp-c-*` and the page's HTML and JS
+// chunk carry none of it; until then the figure holds the chart's height so
+// nothing below it moves. `<noscript>` holds an `<img>` of the same file for a
+// reader without JS. `label` names the chart for a screen reader; `alt`, the
+// drawing sentence, goes on the `<img>` alone, because the page repeats it in
+// prose right after the chart.
 const TaChart = defineComponent({
   name: "TaChart",
   props: {
     src: { type: String, required: true },
     ratio: { type: String, default: "720:285" },
+    label: { type: String, default: "" },
     alt: { type: String, default: "" },
   },
   setup(props) {
@@ -48,11 +52,15 @@ const TaChart = defineComponent({
 
     return () => {
       const [w, hgt] = props.ratio.split(":");
-      const box = { class: "ta-chart-box", style: { aspectRatio: `${w} / ${hgt}`, maxWidth: "100%" } };
-      if (svg.value) return h("div", { ...box, role: "img", "aria-label": props.alt, innerHTML: svg.value });
-      if (failed.value) return h("div", box, h("a", { href: url }, "Chart (SVG)"));
+      // The figure carries the aspect ratio and the minimum width, and holds the
+      // svg or the img at width 100%, so the space reserved before the fetch is
+      // the space the chart takes after it, at every viewport width.
+      const fig = { class: "ta-chart-fig", style: { aspectRatio: `${w} / ${hgt}` } };
+      const box = (child: ReturnType<typeof h>) => h("div", { class: "ta-chart-box" }, child);
+      if (svg.value) return box(h("div", { ...fig, role: "img", "aria-label": props.label, innerHTML: svg.value }));
+      if (failed.value) return h("div", { class: "ta-chart-box" }, h("a", { href: url }, "Chart (SVG)"));
       const alt = props.alt.replace(/&/gu, "&amp;").replace(/"/gu, "&quot;");
-      return h("div", box, h("noscript", { innerHTML: `<img src="${url}" alt="${alt}">` }));
+      return box(h("div", fig, h("noscript", { innerHTML: `<img src="${url}" alt="${alt}">` })));
     };
   },
 });

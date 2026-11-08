@@ -9,7 +9,7 @@ Plus Directional Movement: the Wilder-smoothed accumulation of upward directiona
 
 ## Chart
 
-<ta-chart src="/functions/plus_dm.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/plus_dm.svg" ratio="720:416" label="PLUS_DM over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/plus_dm.csv) · [Chart (SVG)](/functions/plus_dm.svg)
 
@@ -53,6 +53,85 @@ period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_PLUS_DM( 0, n - 1, high, low, 14, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.plus_dm(0, high.len() - 1, &high, &low, 14, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.plusDm(0, high.length - 1, high, low, 14, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.PlusDm(0, high.Length - 1, high, low, 14, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { plusDm } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = plusDm({ high, low }, { timePeriod: 14 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

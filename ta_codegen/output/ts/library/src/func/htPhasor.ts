@@ -708,10 +708,10 @@ export function htPhasorDisplayShift(outputIdx: number, options?: HtPhasorOption
  * ```ts
  * import { htPhasor } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, outInPhase, outQuadrature } = htPhasor(data);
- * // outInPhase[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, outInPhase, outQuadrature } = htPhasor(series);
+ * console.log(outInPhase.length + ' values from bar ' + begIdx + '; last outInPhase = ' + outInPhase[outInPhase.length - 1]);
  * ```
  * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
  * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
@@ -2052,9 +2052,9 @@ export function htPhasorOpenAndFillPositional(
  * ```ts
  * import { htPhasorOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = htPhasorOpen(data);
+ * const stream = htPhasorOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -2086,14 +2086,14 @@ export function htPhasorOpen(real: ArrayLike<number>, options?: HtPhasorOptions)
  * ```ts
  * import { htPhasorOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
  *   begIdx,
  *   outInPhase,
  *   outQuadrature,
- * } = htPhasorOpenAndFill(data);
+ * } = htPhasorOpenAndFill(series);
  * // outInPhase[k] is the value at bar begIdx + k
  * ```
  */

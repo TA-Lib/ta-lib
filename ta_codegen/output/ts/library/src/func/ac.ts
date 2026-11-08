@@ -480,16 +480,15 @@ export function acDisplayShift(outputIdx: number, options?: AcOptions): number {
  * ```ts
  * import { ac } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = ac({ high, low }, {
  *   fastPeriod: 5,
  *   slowPeriod: 34,
  *   signalPeriod: 5,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ao`](https://ta-lib.org/functions/ao)
  * @see [`macd`](https://ta-lib.org/functions/macd)

@@ -877,14 +877,14 @@ export function stcDisplayShift(outputIdx: number, options?: StcOptions): number
  * ```ts
  * import { stc } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = stc(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = stc(series, {
  *   fastPeriod: 23,
  *   slowPeriod: 50,
  *   cyclePeriod: 10,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
@@ -2298,9 +2298,9 @@ export function stcOpenAndFillPositional(
  * ```ts
  * import { stcOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = stcOpen(data, {
+ * const stream = stcOpen(series, {
  *   fastPeriod: 23,
  *   slowPeriod: 50,
  *   cyclePeriod: 10,
@@ -2340,9 +2340,9 @@ export function stcOpen(real: ArrayLike<number>, options?: StcOptions): StcStrea
  * ```ts
  * import { stcOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = stcOpenAndFill(data, {
+ * const { stream, begIdx, values } = stcOpenAndFill(series, {
  *   fastPeriod: 23,
  *   slowPeriod: 50,
  *   cyclePeriod: 10,

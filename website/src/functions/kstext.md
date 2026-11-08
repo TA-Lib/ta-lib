@@ -11,7 +11,7 @@ Know Sure Thing with selectable moving averages: Pring's weighted sum of four sm
 
 ## Chart
 
-<ta-chart src="/functions/kstext.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
+<ta-chart src="/functions/kstext.svg" ratio="720:416" label="KSTEXT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line. [Reference data (CSV)](/functions/kstext.csv) · [Chart (SVG)](/functions/kstext.svg)
 
@@ -84,6 +84,100 @@ MA_roc uses optInROCMAType, MA_signal uses optInSignalMAType
 | <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double kst[252], kstSignal[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_KSTEXT( 0, n - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_SMA,
+           &outBegIdx, &outNBElement, kst, kstSignal );
+printf( "%d values from bar %d; last kst = %f\n", outNBElement, outBegIdx, kst[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut kst = vec![0.0; 252];
+let mut kst_signal = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.kstext(0, series.len() - 1, &series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType::SMA, MAType::SMA,
+                        &mut kst, &mut kst_signal)?;
+println!("{} values from bar {}; last kst = {}", range.count, range.beg_idx, kst[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] kst = new double[252];
+double[] kstSignal = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.kstext(0, series.length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
+                         kst, kstSignal);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last kst = " + kst[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var kst = new double[252];
+var kstSignal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Kstext(0, series.Length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
+                         kst, kstSignal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last kst = {kst[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, kstext } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outKst, outKstSignal } = kstext(series, {
+  roc1Period: 10,
+  roc2Period: 15,
+  roc3Period: 20,
+  roc4Period: 30,
+  ma1Period: 10,
+  ma2Period: 10,
+  ma3Period: 10,
+  ma4Period: 15,
+  signalPeriod: 9,
+  rocMaType: MAType.SMA,
+  signalMaType: MAType.SMA,
+});
+console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
+```
+
+:::
 
 ## Implementation
 

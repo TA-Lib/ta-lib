@@ -535,17 +535,19 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let series0 = vec![0.0; 252]; // your data, oldest first
+    /// # let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series1 = vec![0.0; 252]; // your data, oldest first
+    /// # let series1: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
+    /// #     .collect();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.beta(0, data0.len() - 1, &data0, &data1, 5, &mut out)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.beta(0, series0.len() - 1, &series0, &series1, 5, &mut out)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(out[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -1273,13 +1275,13 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252)
+    /// let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series1: Vec<f64> = (0..252)
     ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.beta_open(&data0, &data1, 5).expect("enough history");
+    /// let (mut s, _last) = core.beta_open(&series0, &series1, 5).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9, 101.3).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -1307,17 +1309,17 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252)
+    /// let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series1: Vec<f64> = (0..252)
     ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.beta(0, data0.len() - 1, &data0, &data1, 5, &mut batch_out)?;
+    /// let batch = core.beta(0, series0.len() - 1, &series0, &series1, 5, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
-    /// let (_stream, filled) = core.beta_open_and_fill(&data0, &data1, 5, &mut out)?;
+    /// let (_stream, filled) = core.beta_open_and_fill(&series0, &series1, 5, &mut out)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);

@@ -705,15 +705,15 @@ export function macdDisplayShift(outputIdx: number, options?: MacdOptions): numb
  * ```ts
  * import { macd } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macd(data, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
- * // outMacd[k] is the value at bar begIdx + k
+ * } = macd(series, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+ * console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
  * ```
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
@@ -1621,9 +1621,9 @@ export function macdOpenAndFillPositional(
  * ```ts
  * import { macdOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdOpen(data, {
+ * const stream = macdOpen(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
  *   signalPeriod: 9,
@@ -1663,7 +1663,7 @@ export function macdOpen(real: ArrayLike<number>, options?: MacdOptions): MacdSt
  * ```ts
  * import { macdOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
@@ -1671,7 +1671,11 @@ export function macdOpen(real: ArrayLike<number>, options?: MacdOptions): MacdSt
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macdOpenAndFill(data, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+ * } = macdOpenAndFill(series, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   signalPeriod: 9,
+ * });
  * // outMacd[k] is the value at bar begIdx + k
  * ```
  */

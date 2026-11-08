@@ -11,7 +11,7 @@ The output is unbounded and centred on zero. A peak or trough marks a likely tur
 
 ## Chart
 
-<ta-chart src="/functions/fisher.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line."></ta-chart>
+<ta-chart src="/functions/fisher.svg" ratio="720:416" label="FISHER over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line. [Reference data (CSV)](/functions/fisher.csv) · [Chart (SVG)](/functions/fisher.svg)
 
@@ -65,6 +65,90 @@ With `P = (high + low) / 2` and `MaxP`, `MinP` its highest and lowest value over
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double fisher[252], trigger[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_FISHER( 0, n - 1, high, low, 10, &outBegIdx, &outNBElement, fisher, trigger );
+printf( "%d values from bar %d; last fisher = %f\n", outNBElement, outBegIdx, fisher[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut fisher = vec![0.0; 252];
+let mut trigger = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.fisher(0, high.len() - 1, &high, &low, 10, &mut fisher, &mut trigger)?;
+println!("{} values from bar {}; last fisher = {}", range.count, range.beg_idx, fisher[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] fisher = new double[252];
+double[] trigger = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.fisher(0, high.length - 1, high, low, 10, fisher, trigger);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last fisher = " + fisher[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var fisher = new double[252];
+var trigger = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Fisher(0, high.Length - 1, high, low, 10, fisher, trigger);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last fisher = {fisher[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { fisher } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
+  timePeriod: 10,
+});
+console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
+```
+
+:::
 
 ## Implementation
 

@@ -870,7 +870,7 @@ fn gen_public_entry(
     let mut out = String::new();
 
     // Doc comments + #[doc(alias)] attributes from the canonical <name>.md.
-    out.push_str(&super::rust_doc::guarded_docs(func, snake, enums, registry));
+    out.push_str(&super::rust_doc::guarded_docs(func, enums, registry));
 
     out.push_str(&format!("    pub fn {snake}(\n"));
     out.push_str("        &self,\n");

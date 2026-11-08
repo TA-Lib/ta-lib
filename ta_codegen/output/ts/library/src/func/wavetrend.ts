@@ -690,18 +690,16 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  * ```ts
  * import { wavetrend } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outWt1, outWt2 } = wavetrend({ high, low, close }, {
  *   channelPeriod: 10,
  *   averagePeriod: 21,
  *   signalPeriod: 4,
  * });
- * // outWt1[k] is the value at bar begIdx + k
+ * console.log(outWt1.length + ' values from bar ' + begIdx + '; last outWt1 = ' + outWt1[outWt1.length - 1]);
  * ```
  * @see [`cci`](https://ta-lib.org/functions/cci)
  * @see [`smi`](https://ta-lib.org/functions/smi)

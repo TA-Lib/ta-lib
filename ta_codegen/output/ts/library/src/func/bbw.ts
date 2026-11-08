@@ -545,15 +545,15 @@ export function bbwDisplayShift(outputIdx: number, options?: BbwOptions): number
  * ```ts
  * import { MAType, bbw } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = bbw(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = bbw(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`percentb`](https://ta-lib.org/functions/percentb)
@@ -999,9 +999,9 @@ export function bbwOpenAndFillPositional(
  * ```ts
  * import { MAType, bbwOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = bbwOpen(data, {
+ * const stream = bbwOpen(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,
@@ -1044,9 +1044,9 @@ export function bbwOpen(real: ArrayLike<number>, options?: BbwOptions): BbwStrea
  * ```ts
  * import { MAType, bbwOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = bbwOpenAndFill(data, {
+ * const { stream, begIdx, values } = bbwOpenAndFill(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,

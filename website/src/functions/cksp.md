@@ -9,7 +9,7 @@ Chande and Kroll's two-line volatility stop. The highest high is offset down, an
 
 ## Chart
 
-<ta-chart src="/functions/cksp.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line."></ta-chart>
+<ta-chart src="/functions/cksp.svg" ratio="720:274" label="CKSP over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line."></ta-chart>
 
 Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line. [Reference data (CSV)](/functions/cksp.csv) · [Chart (SVG)](/functions/cksp.svg)
 
@@ -67,6 +67,98 @@ LowStop = MIN(FirstLowStop, StopPeriod)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double highStop[252], lowStop[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_CKSP( 0, n - 1, high, low, close, 10, 1.0, 9, &outBegIdx, &outNBElement, highStop, lowStop );
+printf( "%d values from bar %d; last highStop = %f\n", outNBElement, outBegIdx, highStop[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut high_stop = vec![0.0; 252];
+let mut low_stop = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.cksp(0, high.len() - 1, &high, &low, &close, 10, 1.0, 9,
+                      &mut high_stop, &mut low_stop)?;
+println!("{} values from bar {}; last high_stop = {}", range.count, range.beg_idx, high_stop[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] highStop = new double[252];
+double[] lowStop = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.cksp(0, high.length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last highStop = " + highStop[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var highStop = new double[252];
+var lowStop = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Cksp(0, high.Length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last highStop = {highStop[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { cksp } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outHighStop, outLowStop } = cksp({ high, low, close }, {
+  timePeriod: 10,
+  multiplier: 1,
+  stopPeriod: 9,
+});
+console.log(outHighStop.length + ' values from bar ' + begIdx + '; last outHighStop = ' + outHighStop[outHighStop.length - 1]);
+```
+
+:::
 
 ## Implementation
 

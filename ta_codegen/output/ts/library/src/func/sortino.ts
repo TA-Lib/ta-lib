@@ -493,14 +493,14 @@ export function sortinoDisplayShift(outputIdx: number, options?: SortinoOptions)
  * ```ts
  * import { sortino } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = sortino(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = sortino(series, {
  *   timePeriod: 20,
  *   mar: 0,
  *   annualization: 252,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sharpe`](https://ta-lib.org/functions/sharpe)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
@@ -1321,9 +1321,9 @@ export function sortinoOpenAndFillPositional(
  * ```ts
  * import { sortinoOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = sortinoOpen(data, {
+ * const stream = sortinoOpen(series, {
  *   timePeriod: 20,
  *   mar: 0,
  *   annualization: 252,
@@ -1365,9 +1365,9 @@ export function sortinoOpen(real: ArrayLike<number>, options?: SortinoOptions): 
  * ```ts
  * import { sortinoOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = sortinoOpenAndFill(data, {
+ * const { stream, begIdx, values } = sortinoOpenAndFill(series, {
  *   timePeriod: 20,
  *   mar: 0,
  *   annualization: 252,

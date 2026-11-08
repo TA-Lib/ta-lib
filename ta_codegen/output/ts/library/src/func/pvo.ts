@@ -653,14 +653,14 @@ export function pvoDisplayShift(outputIdx: number, options?: PvoOptions): number
  * ```ts
  * import { MAType, pvo } from 'ta-lib';
  *
- * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ * const volume = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = pvo({ volume }, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
  *   maType: MAType.EMA,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`obv`](https://ta-lib.org/functions/obv)

@@ -9,7 +9,7 @@ Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading fo
 
 ## Chart
 
-<ta-chart src="/functions/eri.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line."></ta-chart>
+<ta-chart src="/functions/eri.svg" ratio="720:416" label="ERI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line. [Reference data (CSV)](/functions/eri.csv) · [Chart (SVG)](/functions/eri.svg)
 
@@ -59,6 +59,96 @@ Because the underlying average is an [`EMA`](/functions/ema.md), ERI inherits it
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double bullPower[252], bearPower[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_ERI( 0, n - 1, high, low, close, 13, &outBegIdx, &outNBElement, bullPower, bearPower );
+printf( "%d values from bar %d; last bullPower = %f\n", outNBElement, outBegIdx, bullPower[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut bull_power = vec![0.0; 252];
+let mut bear_power = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.eri(0, high.len() - 1, &high, &low, &close, 13,
+                     &mut bull_power, &mut bear_power)?;
+println!("{} values from bar {}; last bull_power = {}", range.count, range.beg_idx, bull_power[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] bullPower = new double[252];
+double[] bearPower = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.eri(0, high.length - 1, high, low, close, 13, bullPower, bearPower);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last bullPower = " + bullPower[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var bullPower = new double[252];
+var bearPower = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Eri(0, high.Length - 1, high, low, close, 13, bullPower, bearPower);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last bullPower = {bullPower[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { eri } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
+  timePeriod: 13,
+});
+console.log(outBullPower.length + ' values from bar ' + begIdx + '; last outBullPower = ' + outBullPower[outBullPower.length - 1]);
+```
+
+:::
 
 ## Implementation
 

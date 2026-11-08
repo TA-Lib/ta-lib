@@ -998,13 +998,13 @@ export function percentileDisplayShift(outputIdx: number, options?: PercentileOp
  * ```ts
  * import { percentile } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = percentile(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = percentile(series, {
  *   timePeriod: 100,
  *   percentile: 50,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)
@@ -2567,9 +2567,9 @@ export function percentileOpenAndFillPositional(
  * ```ts
  * import { percentileOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentileOpen(data, { timePeriod: 100, percentile: 50 });
+ * const stream = percentileOpen(series, { timePeriod: 100, percentile: 50 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -2605,9 +2605,9 @@ export function percentileOpen(real: ArrayLike<number>, options?: PercentileOpti
  * ```ts
  * import { percentileOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = percentileOpenAndFill(data, {
+ * const { stream, begIdx, values } = percentileOpenAndFill(series, {
  *   timePeriod: 100,
  *   percentile: 50,
  * });

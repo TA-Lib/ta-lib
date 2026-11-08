@@ -477,10 +477,10 @@ export function demaDisplayShift(outputIdx: number, options?: DemaOptions): numb
  * ```ts
  * import { dema } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = dema(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = dema(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`tema`](https://ta-lib.org/functions/tema)
@@ -1011,9 +1011,9 @@ export function demaOpenAndFillPositional(
  * ```ts
  * import { demaOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = demaOpen(data, { timePeriod: 30 });
+ * const stream = demaOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1047,9 +1047,9 @@ export function demaOpen(real: ArrayLike<number>, options?: DemaOptions): DemaSt
  * ```ts
  * import { demaOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = demaOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = demaOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

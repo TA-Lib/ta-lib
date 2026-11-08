@@ -570,15 +570,14 @@ export function sarDisplayShift(outputIdx: number, options?: SarOptions): number
  * ```ts
  * import { sar } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = sar({ high, low }, {
  *   acceleration: 0.02,
  *   maximum: 0.2,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`sarext`](https://ta-lib.org/functions/sarext)
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)

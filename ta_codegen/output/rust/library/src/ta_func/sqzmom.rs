@@ -469,25 +469,26 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close = vec![0.0; 252]; // your data, oldest first
+    /// # let close: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    /// #     .collect();
     /// let mut momentum = vec![0.0; 252];
     /// let mut squeeze = vec![0i32; 252];
     ///
-    /// let out_range = core.sqzmom(
-    ///     0, high.len() - 1, &high, &low, &close, 20, 2.0, 20, 2.0, 1.5, 1.0,
-    ///     &mut momentum, &mut squeeze,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(momentum[..out_range.count].iter().all(|v| v.is_finite()));
-    /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
-    /// // the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise
-    /// assert!(squeeze[..out_range.count].iter().all(|&v| (-1..=3).contains(&v)));
+    /// let core = Core::new();
+    /// let range = core.sqzmom(0, high.len() - 1, &high, &low, &close, 20, 2.0, 20, 2.0, 1.5, 1.0,
+    ///                         &mut momentum, &mut squeeze)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last momentum = {}", range.count, range.beg_idx, momentum[range.count - 1]);
+    /// # assert!(momentum[..range.count].iter().all(|v| v.is_finite()));
+    /// # assert_eq!(range.beg_idx + range.count, high.len());
+    /// # // the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise
+    /// # assert!(squeeze[..range.count].iter().all(|&v| (-1..=3).contains(&v)));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

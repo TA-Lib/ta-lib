@@ -317,21 +317,21 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut tenkan_sen = vec![0.0; 252];
     /// let mut kijun_sen = vec![0.0; 252];
     /// let mut senkou_span_a = vec![0.0; 252];
     /// let mut senkou_span_b = vec![0.0; 252];
     ///
-    /// let out_range = core.ichimoku(
-    ///     0, high.len() - 1, &high, &low, 9, 26, 52,
-    ///     &mut tenkan_sen, &mut kijun_sen, &mut senkou_span_a, &mut senkou_span_b,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(tenkan_sen[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.ichimoku(0, high.len() - 1, &high, &low, 9, 26, 52,
+    ///                           &mut tenkan_sen, &mut kijun_sen, &mut senkou_span_a, &mut senkou_span_b)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last tenkan_sen = {}", range.count, range.beg_idx, tenkan_sen[range.count - 1]);
+    /// # assert!(tenkan_sen[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

@@ -557,15 +557,15 @@ export function percentbDisplayShift(outputIdx: number, options?: PercentbOption
  * ```ts
  * import { MAType, percentb } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = percentb(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = percentb(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,
  *   maType: MAType.SMA,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`bbw`](https://ta-lib.org/functions/bbw)
@@ -1038,9 +1038,9 @@ export function percentbOpenAndFillPositional(
  * ```ts
  * import { MAType, percentbOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentbOpen(data, {
+ * const stream = percentbOpen(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,
@@ -1083,9 +1083,9 @@ export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions)
  * ```ts
  * import { MAType, percentbOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = percentbOpenAndFill(data, {
+ * const { stream, begIdx, values } = percentbOpenAndFill(series, {
  *   timePeriod: 20,
  *   nbDevUp: 2,
  *   nbDevDn: 2,

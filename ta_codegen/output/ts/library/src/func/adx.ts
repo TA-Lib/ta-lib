@@ -650,14 +650,12 @@ export function adxDisplayShift(outputIdx: number, options?: AdxOptions): number
  * ```ts
  * import { adx } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = adx({ high, low, close }, { timePeriod: 14 });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`adxr`](https://ta-lib.org/functions/adxr)
  * @see [`dx`](https://ta-lib.org/functions/dx)

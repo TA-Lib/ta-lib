@@ -583,14 +583,14 @@ export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number
  * ```ts
  * import { MAType, apo } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = apo(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = apo(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
  *   maType: MAType.EMA,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -974,9 +974,9 @@ export function apoOpenAndFillPositional(
  * ```ts
  * import { MAType, apoOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = apoOpen(data, {
+ * const stream = apoOpen(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
  *   maType: MAType.EMA,
@@ -1016,9 +1016,9 @@ export function apoOpen(real: ArrayLike<number>, options?: ApoOptions): ApoStrea
  * ```ts
  * import { MAType, apoOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = apoOpenAndFill(data, {
+ * const { stream, begIdx, values } = apoOpenAndFill(series, {
  *   fastPeriod: 12,
  *   slowPeriod: 26,
  *   maType: MAType.EMA,

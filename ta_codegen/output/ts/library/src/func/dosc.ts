@@ -636,15 +636,15 @@ export function doscDisplayShift(outputIdx: number, options?: DoscOptions): numb
  * ```ts
  * import { dosc } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = dosc(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = dosc(series, {
  *   timePeriod: 14,
  *   firstPeriod: 5,
  *   secondPeriod: 3,
  *   signalPeriod: 9,
  * });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
@@ -1381,9 +1381,9 @@ export function doscOpenAndFillPositional(
  * ```ts
  * import { doscOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = doscOpen(data, {
+ * const stream = doscOpen(series, {
  *   timePeriod: 14,
  *   firstPeriod: 5,
  *   secondPeriod: 3,
@@ -1425,9 +1425,9 @@ export function doscOpen(real: ArrayLike<number>, options?: DoscOptions): DoscSt
  * ```ts
  * import { doscOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = doscOpenAndFill(data, {
+ * const { stream, begIdx, values } = doscOpenAndFill(series, {
  *   timePeriod: 14,
  *   firstPeriod: 5,
  *   secondPeriod: 3,

@@ -27,17 +27,13 @@
 #include <unistd.h>
 #endif
 
-/* Mirrors the YAML `domain` field of these functions' input until the
- * abstract layer exposes it: the close is mapped affinely onto [lo, hi]. */
-static const struct { const char *func; double lo, hi; } DOMAIN[] = {
-    { "ACOS", -1.0, 1.0 }, { "ASIN", -1.0, 1.0 },
-    { "TANH", -3.0, 3.0 },
-    { "EXP",  -5.0, 5.0 }, { "SINH", -5.0, 5.0 }, { "COSH", -5.0, 5.0 },
-};
+#include "ta_refdata_domains.h"
 
 #define WINDOW_BARS 252
+#define PRICE_COLS 6                    /* date,open,high,low,close,volume */
+#define MAXEXTRA 8                      /* derived input columns after them */
 #define MAXOUT 8
-#define MAXCOL (6 + MAXOUT)
+#define MAXCOL (PRICE_COLS + MAXEXTRA + MAXOUT)
 #define TIGHT_TOL 1e-12
 #define CORPUS_REF "ibm_1999.csv"
 
@@ -169,7 +165,11 @@ static char **list_csv(const char *dir, int *count)
     HANDLE hf;
     snprintf(pat, sizeof pat, "%s\\*.csv", dir);
     hf = FindFirstFileA(pat, &fd);
-    if (hf == INVALID_HANDLE_VALUE) die("%s: cannot list directory", dir);
+    if (hf == INVALID_HANDLE_VALUE) {
+        DWORD e = GetLastError();
+        if (e == ERROR_FILE_NOT_FOUND || e == ERROR_NO_MORE_FILES) { *count = 0; return NULL; }
+        die("%s: cannot list directory (error %lu)", dir, (unsigned long)e);
+    }
     do {
         if (!has_csv_suffix(fd.cFileName)) continue;
         if (n == cap) { cap = cap * 2 + 16; names = realloc(names, (size_t)cap * sizeof *names); if (!names) die("out of memory"); }
@@ -235,7 +235,7 @@ static int parse_table(const char *text, Table *t, char *err, size_t errn)
             }
             t->colHeader = xstrdup(line);
             t->nCols = split_cells(t->colHeader, t->cols, MAXCOL);
-            if (t->nCols < 6 || strcmp(t->cols[0], "date") != 0) {
+            if (t->nCols < PRICE_COLS || strcmp(t->cols[0], "date") != 0) {
                 snprintf(err, errn, "bad column header");
                 return 0;
             }
@@ -314,7 +314,7 @@ static void load_corpus(const char *dir)
         text = read_file(path, NULL);
         if (!text) die("%s: %s", path, strerror(errno));
         if (!parse_table(text, &t, err, sizeof err)) die("%s: %s", path, err);
-        if (t.nCols != 6 || strcmp(t.colHeader, "date") != 0 ||
+        if (t.nCols != PRICE_COLS || strcmp(t.colHeader, "date") != 0 ||
             strcmp(t.cols[1], "open") || strcmp(t.cols[2], "high") || strcmp(t.cols[3], "low") ||
             strcmp(t.cols[4], "close") || strcmp(t.cols[5], "volume"))
             die("%s: columns must be date,open,high,low,close,volume", path);
@@ -344,7 +344,9 @@ typedef struct {
     TA_ParamHolder *h;
     const Series *s;
     int first, rows;
-    double *mapped, *periods;           /* derived inputs, computed over the rows */
+    int nExtra;                         /* derived inputs: one CSV column each, after the prices */
+    const char *extraName[MAXEXTRA];
+    double *extra[MAXEXTRA];
     double *rout[MAXOUT];
     int *iout[MAXOUT];
     int isInt[MAXOUT], isPattern[MAXOUT];
@@ -352,12 +354,15 @@ typedef struct {
     char inputs[512];
 } Run;
 
-static const char *domain_input(const TA_FuncInfo *fi, double *lo, double *hi)
+static int domain_input(const TA_FuncInfo *fi, const char *input, double *lo, double *hi)
 {
     size_t i;
-    for (i = 0; i < sizeof DOMAIN / sizeof DOMAIN[0]; i++)
-        if (strcmp(fi->name, DOMAIN[i].func) == 0) { *lo = DOMAIN[i].lo; *hi = DOMAIN[i].hi; return fi->name; }
-    return NULL;
+    for (i = 0; REFDATA_DOMAIN[i].func; i++)
+        if (strcmp(fi->name, REFDATA_DOMAIN[i].func) == 0 && strcmp(input, REFDATA_DOMAIN[i].input) == 0) {
+            *lo = REFDATA_DOMAIN[i].lo; *hi = REFDATA_DOMAIN[i].hi;
+            return 1;
+        }
+    return 0;
 }
 
 static void run_alloc(Run *r, const TA_FuncInfo *fi, int rowsCap)
@@ -367,8 +372,7 @@ static void run_alloc(Run *r, const TA_FuncInfo *fi, int rowsCap)
     r->fi = fi;
     if (fi->nbOutput > MAXOUT) die("%s: %u outputs, MAXOUT is %d", fi->name, fi->nbOutput, MAXOUT);
     if (TA_ParamHolderAlloc(fi->handle, &r->h) != TA_SUCCESS) die("%s: TA_ParamHolderAlloc", fi->name);
-    r->mapped = xmalloc(sizeof(double) * (size_t)rowsCap);
-    r->periods = xmalloc(sizeof(double) * (size_t)rowsCap);
+    for (i = 0; i < MAXEXTRA; i++) r->extra[i] = xmalloc(sizeof(double) * (size_t)rowsCap);
     for (i = 0; i < fi->nbOutput; i++) {
         const TA_OutputParameterInfo *oo;
         TA_GetOutputParameterInfo(fi->handle, i, &oo);
@@ -391,13 +395,29 @@ static void run_free(Run *r)
 {
     unsigned i;
     TA_ParamHolderFree(r->h);
-    free(r->mapped); free(r->periods);
+    for (i = 0; i < MAXEXTRA; i++) free(r->extra[i]);
     for (i = 0; i < r->fi->nbOutput; i++) { free(r->rout[i]); free(r->iout[i]); }
 }
 
+/* A derived input's column of `t`, by the input's name, parsed into `dst`. */
+static void column_from_table(const Table *t, const char *name, double *dst, const char *func)
+{
+    int j, i;
+    for (j = PRICE_COLS; j < t->nCols; j++)
+        if (strcmp(t->cols[j], name) == 0) break;
+    if (j == t->nCols) die("%s: no `%s` column to replay from", func, name);
+    for (i = 0; i < t->nRows; i++) {
+        char *end;
+        dst[i] = strtod(t->cells[i][j], &end);
+        if (end == t->cells[i][j] || *end) die("%s row %d: bad %s", func, i + 1, name);
+    }
+}
+
 /* Binds the inputs over s[first .. first+rows) and calls the function with
- * startIdx 0: what a reader of the written rows can reproduce. */
-static TA_RetCode run_call(Run *r, const Series *s, int first, int rows)
+ * startIdx 0: what a reader of the written rows can reproduce. A derived input
+ * (not a plain price column) is computed from the close, or, under --replay,
+ * read from `fromFile`'s column of its name. */
+static TA_RetCode run_call(Run *r, const Series *s, int first, int rows, const Table *fromFile)
 {
     const TA_FuncInfo *fi = r->fi;
     unsigned i;
@@ -406,9 +426,9 @@ static TA_RetCode run_call(Run *r, const Series *s, int first, int rows)
     const double *o = s->o + first, *h = s->h + first, *l = s->l + first, *c = s->c + first, *v = s->v + first;
     r->s = s; r->first = first; r->rows = rows;
     r->inputs[0] = 0;
+    r->nExtra = 0;
     mn = mx = rows ? c[0] : 0.0;
     for (b = 1; b < rows; b++) { if (c[b] < mn) mn = c[b]; if (c[b] > mx) mx = c[b]; }
-    for (b = 0; b < rows; b++) r->periods[b] = (b < rows / 2) ? 5.0 : 20.0;
     for (i = 0; i < fi->nbInput; i++) {
         const TA_InputParameterInfo *ii;
         char item[128];
@@ -427,14 +447,18 @@ static TA_RetCode run_call(Run *r, const Series *s, int first, int rows)
         } else if (ii->type == TA_Input_Real) {
             const double *src;
             const char *desc;
+            double *derived = NULL;
             if (strcmp(ii->paramName, "inPeriods") == 0) {
-                src = r->periods; desc = "5(first-half)|20(second-half)";
-            } else if (domain_input(fi, &lo, &hi)) {
+                derived = r->extra[r->nExtra];
+                for (b = 0; b < rows; b++) derived[b] = (b < rows / 2) ? 5.0 : 20.0;
+                src = derived; desc = "5(first-half)|20(second-half)";
+            } else if (domain_input(fi, ii->paramName, &lo, &hi)) {
                 char lob[32], hib[32];
                 static char descbuf[96];
+                derived = r->extra[r->nExtra];
                 for (b = 0; b < rows; b++)
-                    r->mapped[b] = (mx > mn) ? lo + (c[b] - mn) * (hi - lo) / (mx - mn) : lo;
-                src = r->mapped;
+                    derived[b] = (mx > mn) ? lo + (c[b] - mn) * (hi - lo) / (mx - mn) : lo;
+                src = derived;
                 snprintf(descbuf, sizeof descbuf, "close->[%s,%s]", fmt_real(lob, sizeof lob, lo), fmt_real(hib, sizeof hib, hi));
                 desc = descbuf;
             } else if (realIdx == 0 && strcmp(ii->paramName, "inReal0") == 0) {
@@ -443,6 +467,11 @@ static TA_RetCode run_call(Run *r, const Series *s, int first, int rows)
                 src = c; desc = "close";
             } else {
                 src = l; desc = "low";
+            }
+            if (derived) {
+                if (r->nExtra == MAXEXTRA) die("%s: more than %d derived inputs", fi->name, MAXEXTRA);
+                if (fromFile) column_from_table(fromFile, ii->paramName, derived, fi->name);
+                r->extraName[r->nExtra++] = ii->paramName;
             }
             realIdx++;
             TA_SetInputParamRealPtr(r->h, i, src);
@@ -504,7 +533,7 @@ static void render(const Run *r, Buf *b, int flaggedBars)
 {
     const TA_FuncInfo *fi = r->fi;
     unsigned i;
-    int row;
+    int row, e;
     char num[32];
     const int lb = r->lookback;
     const int outRows = r->rows > lb ? r->rows - lb : 0;
@@ -534,6 +563,7 @@ static void render(const Run *r, Buf *b, int flaggedBars)
     }
     buf_addf(b, "\n# lookback: %d\n", lb);
     buf_add(b, "date,open,high,low,close,volume");
+    for (e = 0; e < r->nExtra; e++) buf_addf(b, ",%s", r->extraName[e]);
     for (i = 0; i < fi->nbOutput; i++) {
         const TA_OutputParameterInfo *oo;
         TA_GetOutputParameterInfo(fi->handle, i, &oo);
@@ -547,6 +577,7 @@ static void render(const Run *r, Buf *b, int flaggedBars)
         buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->l[a]));
         buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->c[a]));
         buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->v[a]));
+        for (e = 0; e < r->nExtra; e++) buf_addf(b, ",%s", fmt_real(num, sizeof num, r->extra[e][row]));
         for (i = 0; i < fi->nbOutput; i++) {
             if (k < 0 || k >= r->nb) buf_add(b, ",");
             else if (r->isInt[i]) buf_addf(b, ",%d", r->iout[i][k]);
@@ -565,10 +596,11 @@ static int same_real(double a, double b, double tol)
 }
 
 /* Findings in `committed` against `computed`: the header must match textually,
- * the input cells by value, the output cells by the rule. Every finding is
- * printed under --check; the plain run prints the first and rewrites. */
+ * the input cells by value, the output cells (from column `firstOut`) by the
+ * rule. Every finding is printed under --check; the plain run prints the first
+ * and rewrites. */
 static int compare_tables(const char *func, const Table *committed, const Table *computed,
-                          const int *isInt, double tol, int reportAll)
+                          int firstOut, const int *isInt, double tol, int reportAll)
 {
     int i, j, n = 0;
     char err[256];
@@ -598,8 +630,8 @@ static int compare_tables(const char *func, const Table *committed, const Table 
             int bad = 0;
             if (j == 0) bad = strcmp(a[0], b[0]) != 0;
             else if (!*a[j] || !*b[j]) bad = (*a[j] != 0) != (*b[j] != 0);
-            else if (j < 6) bad = strtod(a[j], NULL) != strtod(b[j], NULL);
-            else if (isInt[j - 6]) bad = strtol(a[j], NULL, 10) != strtol(b[j], NULL, 10);
+            else if (j < firstOut) bad = strtod(a[j], NULL) != strtod(b[j], NULL);
+            else if (isInt[j - firstOut]) bad = strtol(a[j], NULL, 10) != strtol(b[j], NULL, 10);
             else
                 bad = !same_real(strtod(a[j], NULL), strtod(b[j], NULL), tol);
             if (bad) {
@@ -651,14 +683,14 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
         const int lb = r.lookback;
         int f;
         bestCount = 0;
-        rc = run_call(&r, best, 0, best->n);
+        rc = run_call(&r, best, 0, best->n, NULL);
         if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
         for (k = 0; k < best->n; k++) bestCount += run_flagged(&r, k);
         for (f = 0; f < nCorpus; f++) {
             const Series *s = &corpus[f];
             int start, count = 0;
             if (s->n < lb + WINDOW_BARS) continue;
-            rc = run_call(&r, s, 0, s->n);
+            rc = run_call(&r, s, 0, s->n, NULL);
             if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, s->name, (int)rc);
             for (k = lb; k < lb + WINDOW_BARS; k++) count += run_flagged(&r, k);
             for (start = lb; start + WINDOW_BARS <= s->n; start++) {
@@ -676,9 +708,11 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
         if (bestCount == 0) { best = &corpus[refSeries]; bestFirst = 0; bestRows = best->n; }
     }
 
-    rc = run_call(&r, best, bestFirst, bestRows);
+    rc = run_call(&r, best, bestFirst, bestRows, NULL);
     if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
-    if (r.nb > 0 && (r.beg != r.lookback || r.beg + r.nb != r.rows))
+    if (r.nb <= 0)
+        die("%s: lookback %d leaves no output bar over %d rows", fi->name, r.lookback, r.rows);
+    if (r.beg != r.lookback || r.beg + r.nb != r.rows)
         die("%s: outBegIdx %d / outNBElement %d do not match lookback %d over %d rows",
             fi->name, r.beg, r.nb, r.lookback, r.rows);
     for (k = 0; k < r.rows; k++) flagged += run_flagged(&r, k);
@@ -694,7 +728,7 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
         printf("  %s: unreadable (%s)\n", fi->name, err);
         findings++;
     } else {
-        int bad = compare_tables(fi->name, &committed, &computed, r.isInt,
+        int bad = compare_tables(fi->name, &committed, &computed, PRICE_COLS + r.nExtra, r.isInt,
                                  run_is_transcendental(&r) ? CODEGEN_TRANSCENDENTAL_TOL : TIGHT_TOL, checkMode);
         free_table(&committed);
         if (!bad) { nUpToDate++; goto done; }
@@ -749,7 +783,7 @@ static int replay(const char *path)
     const TA_FuncInfo *fi;
     Series s;
     Run r;
-    int i, bad = 0;
+    int i, bad = 0, firstOut;
     unsigned o;
     if (!text) die("%s: %s", path, strerror(errno));
     if (!parse_table(text, &t, err, sizeof err)) die("%s: %s", path, err);
@@ -760,12 +794,17 @@ static int replay(const char *path)
     lower_name(lower, sizeof lower, name);
     s = series_from_rows(lower, t.nRows, t.cells);
     run_alloc(&r, fi, s.n ? s.n : 1);
-    if (run_call(&r, &s, 0, s.n) != TA_SUCCESS) die("%s: TA_CallFunc failed", path);
-    if ((int)fi->nbOutput != t.nCols - 6) die("%s: %d output columns, %u expected", path, t.nCols - 6, fi->nbOutput);
+    if (run_call(&r, &s, 0, s.n, &t) != TA_SUCCESS) die("%s: TA_CallFunc failed", path);
+    firstOut = PRICE_COLS + r.nExtra;
+    for (i = 0; i < r.nExtra; i++)
+        if (PRICE_COLS + i >= t.nCols || strcmp(t.cols[PRICE_COLS + i], r.extraName[i]) != 0)
+            die("%s: column %d must be `%s`", path, PRICE_COLS + i + 1, r.extraName[i]);
+    if ((int)fi->nbOutput != t.nCols - firstOut)
+        die("%s: %d output columns, %u expected", path, t.nCols - firstOut, fi->nbOutput);
     for (i = 0; i < t.nRows; i++) {
         int k = i - r.beg;
         for (o = 0; o < fi->nbOutput; o++) {
-            const char *cell = t.cells[i][6 + o];
+            const char *cell = t.cells[i][firstOut + o];
             int have = k >= 0 && k < r.nb, differ;
             if (!*cell || !have) differ = (*cell != 0) != have;
             else if (r.isInt[o]) differ = strtol(cell, NULL, 10) != r.iout[o][k];
@@ -774,7 +813,7 @@ static int replay(const char *path)
                 char num[32];
                 const char *got = !have ? "(empty)" : r.isInt[o] ? (snprintf(num, sizeof num, "%d", r.iout[o][k]), num)
                                                                  : fmt_real(num, sizeof num, r.rout[o][k]);
-                printf("  %s row %s %s: file=%s replay=%s\n", name, t.cells[i][0], t.cols[6 + o], *cell ? cell : "(empty)", got);
+                printf("  %s row %s %s: file=%s replay=%s\n", name, t.cells[i][0], t.cols[firstOut + o], *cell ? cell : "(empty)", got);
                 bad++;
             }
         }

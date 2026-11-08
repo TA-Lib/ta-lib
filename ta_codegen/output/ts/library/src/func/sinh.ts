@@ -228,10 +228,10 @@ export function sinhDisplayShift(outputIdx: number, options?: SinhOptions): numb
  * ```ts
  * import { sinh } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
- * const { begIdx, values } = sinh(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = sinh(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`cosh`](https://ta-lib.org/functions/cosh)
  * @see [`tanh`](https://ta-lib.org/functions/tanh)
@@ -486,9 +486,9 @@ export function sinhOpenAndFillPositional(
  * ```ts
  * import { sinhOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const stream = sinhOpen(data);
+ * const stream = sinhOpen(series);
  * const peeked = stream.peek(2.1); // a forming bar: commits nothing
  * const updated = stream.update(2.1); // the bar closes
  * ```
@@ -520,9 +520,9 @@ export function sinhOpen(real: ArrayLike<number>, options?: SinhOptions): SinhSt
  * ```ts
  * import { sinhOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   5 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = sinhOpenAndFill(data);
+ * const { stream, begIdx, values } = sinhOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

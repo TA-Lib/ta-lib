@@ -233,19 +233,21 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let open = vec![0.0; 252]; // your data, oldest first
+    /// # let open: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    /// #     .collect();
+    /// let close = vec![0.0; 252]; // your data, oldest first
+    /// # let close: Vec<f64> = (0..252)
+    /// #     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    /// #     .collect();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.imi(0, open.len() - 1, &open, &close, 14, &mut out)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.imi(0, open.len() - 1, &open, &close, 14, &mut out)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(out[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

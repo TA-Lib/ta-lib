@@ -11,7 +11,7 @@ The Alligator is a leg of Williams' Profitunity system, alongside the Awesome Os
 
 ## Chart
 
-<ta-chart src="/functions/alligator.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward."></ta-chart>
+<ta-chart src="/functions/alligator.svg" ratio="720:274" label="ALLIGATOR over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward."></ta-chart>
 
 Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward. [Reference data (CSV)](/functions/alligator.csv) · [Chart (SVG)](/functions/alligator.svg)
 
@@ -69,6 +69,99 @@ SMMA is Wilder's smoothed moving average ([`RMA`](/functions/rma.md)): seeded wi
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double jaw[252], teeth[252], lips[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_ALLIGATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, jaw, teeth, lips );
+printf( "%d values from bar %d; last jaw = %f\n", outNBElement, outBegIdx, jaw[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut jaw = vec![0.0; 252];
+let mut teeth = vec![0.0; 252];
+let mut lips = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.alligator(0, high.len() - 1, &high, &low, 13, 8, 8, 5, 5, 3,
+                           &mut jaw, &mut teeth, &mut lips)?;
+println!("{} values from bar {}; last jaw = {}", range.count, range.beg_idx, jaw[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] jaw = new double[252];
+double[] teeth = new double[252];
+double[] lips = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.alligator(0, high.length - 1, high, low, 13, 8, 8, 5, 5, 3, jaw, teeth, lips);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last jaw = " + jaw[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var jaw = new double[252];
+var teeth = new double[252];
+var lips = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Alligator(0, high.Length - 1, high, low, 13, 8, 8, 5, 5, 3, jaw, teeth, lips);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last jaw = {jaw[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { alligator } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
+  jawPeriod: 13,
+  jawShift: 8,
+  teethPeriod: 8,
+  teethShift: 5,
+  lipsPeriod: 5,
+  lipsShift: 3,
+});
+console.log(outJaw.length + ' values from bar ' + begIdx + '; last outJaw = ' + outJaw[outJaw.length - 1]);
+```
+
+:::
 
 ## Implementation
 

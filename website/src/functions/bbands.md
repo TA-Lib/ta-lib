@@ -9,7 +9,7 @@ Bollinger Bands: a moving-average middle band with upper and lower bands offset 
 
 ## Chart
 
-<ta-chart src="/functions/bbands.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
+<ta-chart src="/functions/bbands.svg" ratio="720:274" label="BBANDS over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
 
 Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/bbands.csv) · [Chart (SVG)](/functions/bbands.svg)
 
@@ -74,6 +74,101 @@ and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double upperBand[252], middleBand[252], lowerBand[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_BBANDS( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA,
+           &outBegIdx, &outNBElement, upperBand, middleBand, lowerBand );
+printf( "%d values from bar %d; last upperBand = %f\n", outNBElement, outBegIdx, upperBand[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut upper_band = vec![0.0; 252];
+let mut middle_band = vec![0.0; 252];
+let mut lower_band = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.bbands(0, series.len() - 1, &series, 20, 2.0, 2.0, MAType::SMA,
+                        &mut upper_band, &mut middle_band, &mut lower_band)?;
+println!("{} values from bar {}; last upper_band = {}", range.count, range.beg_idx, upper_band[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] upperBand = new double[252];
+double[] middleBand = new double[252];
+double[] lowerBand = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.bbands(0, series.length - 1, series, 20, 2.0, 2.0, MAType.SMA,
+                         upperBand, middleBand, lowerBand);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last upperBand = " + upperBand[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var upperBand = new double[252];
+var middleBand = new double[252];
+var lowerBand = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Bbands(0, series.Length - 1, series, 20, 2.0, 2.0, MAType.SMA,
+                         upperBand, middleBand, lowerBand);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last upperBand = {upperBand[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, bbands } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outUpperBand,
+  outMiddleBand,
+  outLowerBand,
+} = bbands(series, {
+  timePeriod: 20,
+  nbDevUp: 2,
+  nbDevDn: 2,
+  maType: MAType.SMA,
+});
+console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
+```
+
+:::
 
 ## Implementation
 

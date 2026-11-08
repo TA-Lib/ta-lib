@@ -245,12 +245,11 @@ export function medpriceDisplayShift(outputIdx: number, options?: MedpriceOption
  * ```ts
  * import { medprice } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, values } = medprice({ high, low });
- * // values[k] is the value at bar begIdx + k
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`avgprice`](https://ta-lib.org/functions/avgprice)

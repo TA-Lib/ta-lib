@@ -642,6 +642,26 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // one page per function from its ta_codegen/input/<name>/<name>.md source.
     backends::docs_site::generate(all_funcs, &enums, &root);
 
+    // The verified copies of the pages' samples, whole-corpus like the pages.
+    if backends_to_run.contains(&"c") {
+        backends::c_examples::write(all_funcs, &enums, &root.join("src/tools/ta_examples/ta_examples.c"));
+    }
+    if backends_to_run.contains(&"java") {
+        backends::java_examples::write(
+            all_funcs,
+            &enums,
+            &root.join("ta_codegen/output/java/library/src/test/java/io/github/talib/test/ExamplesTest.java"),
+        );
+    }
+    if backends_to_run.contains(&"csharp") {
+        backends::csharp_examples::write(
+            all_funcs,
+            &enums,
+            &root.join("ta_codegen/output/csharp/library/test/ExamplesTest.g.cs"),
+        );
+    }
+    backends::refdata_gen::generate(all_funcs, &root);
+
     // Generated regions inside otherwise hand-written website pages (e.g. the
     // unstable-period function list, kept in step with the FuncUnstId enum).
     backends::docs_patch::generate(&enums, &root);

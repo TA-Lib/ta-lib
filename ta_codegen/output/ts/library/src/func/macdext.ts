@@ -548,14 +548,14 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  * ```ts
  * import { MAType, macdext } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macdext(data, {
+ * } = macdext(series, {
  *   fastPeriod: 12,
  *   fastMaType: MAType.SMA,
  *   slowPeriod: 26,
@@ -563,7 +563,7 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  *   signalPeriod: 9,
  *   signalMaType: MAType.SMA,
  * });
- * // outMacd[k] is the value at bar begIdx + k
+ * console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
@@ -1158,9 +1158,9 @@ export function macdextOpenAndFillPositional(
  * ```ts
  * import { MAType, macdextOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdextOpen(data, {
+ * const stream = macdextOpen(series, {
  *   fastPeriod: 12,
  *   fastMaType: MAType.SMA,
  *   slowPeriod: 26,
@@ -1206,7 +1206,7 @@ export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): 
  * ```ts
  * import { MAType, macdextOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
@@ -1214,7 +1214,7 @@ export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): 
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macdextOpenAndFill(data, {
+ * } = macdextOpenAndFill(series, {
  *   fastPeriod: 12,
  *   fastMaType: MAType.SMA,
  *   slowPeriod: 26,

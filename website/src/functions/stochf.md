@@ -9,7 +9,7 @@ Fast Stochastic Oscillator: the raw %K line and its moving-average-smoothed %D l
 
 ## Chart
 
-<ta-chart src="/functions/stochf.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFastK as a solid line and outFastD as a solid line."></ta-chart>
+<ta-chart src="/functions/stochf.svg" ratio="720:416" label="STOCHF over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFastK as a solid line and outFastD as a solid line."></ta-chart>
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFastK as a solid line and outFastD as a solid line. [Reference data (CSV)](/functions/stochf.csv) · [Chart (SVG)](/functions/stochf.svg)
 
@@ -61,6 +61,100 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double fastK[252], fastD[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_STOCHF( 0, n - 1, high, low, close, 5, 3, TA_MAType_SMA,
+           &outBegIdx, &outNBElement, fastK, fastD );
+printf( "%d values from bar %d; last fastK = %f\n", outNBElement, outBegIdx, fastK[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut fast_k = vec![0.0; 252];
+let mut fast_d = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.stochf(0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA,
+                        &mut fast_k, &mut fast_d)?;
+println!("{} values from bar {}; last fast_k = {}", range.count, range.beg_idx, fast_k[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] fastK = new double[252];
+double[] fastD = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.stochf(0, high.length - 1, high, low, close, 5, 3, MAType.SMA, fastK, fastD);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last fastK = " + fastK[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var fastK = new double[252];
+var fastD = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Stochf(0, high.Length - 1, high, low, close, 5, 3, MAType.SMA, fastK, fastD);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last fastK = {fastK[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, stochf } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outFastK, outFastD } = stochf({ high, low, close }, {
+  fastKPeriod: 5,
+  fastDPeriod: 3,
+  fastDMaType: MAType.SMA,
+});
+console.log(outFastK.length + ' values from bar ' + begIdx + '; last outFastK = ' + outFastK[outFastK.length - 1]);
+```
+
+:::
 
 ## Implementation
 

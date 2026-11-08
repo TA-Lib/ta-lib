@@ -9,7 +9,7 @@ An ATR-scaled trailing band that follows price on one side at a time and flips t
 
 ## Chart
 
-<ta-chart src="/functions/supertrend.svg" ratio="720:416" alt="Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend."></ta-chart>
+<ta-chart src="/functions/supertrend.svg" ratio="720:416" label="SUPERTREND over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend."></ta-chart>
 
 Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend. [Reference data (CSV)](/functions/supertrend.csv) · [Chart (SVG)](/functions/supertrend.svg)
 
@@ -70,6 +70,98 @@ SuperTrend = Upper while the trend is down, until Close > Upper flips it up
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double supertrend[252];
+int trend[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SUPERTREND( 0, n - 1, high, low, close, 10, 3.0, &outBegIdx, &outNBElement, supertrend, trend );
+printf( "%d values from bar %d; last supertrend = %f\n", outNBElement, outBegIdx, supertrend[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut supertrend = vec![0.0; 252];
+let mut trend = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.supertrend(0, high.len() - 1, &high, &low, &close, 10, 3.0,
+                            &mut supertrend, &mut trend)?;
+println!("{} values from bar {}; last supertrend = {}", range.count, range.beg_idx, supertrend[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] supertrend = new double[252];
+int[] trend = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.supertrend(0, high.length - 1, high, low, close, 10, 3.0, supertrend, trend);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last supertrend = " + supertrend[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var supertrend = new double[252];
+var trend = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Supertrend(0, high.Length - 1, high, low, close, 10, 3.0, supertrend, trend);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last supertrend = {supertrend[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { supertrend } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSupertrend, outTrend } = supertrend({ high, low, close }, {
+  timePeriod: 10,
+  multiplier: 3,
+});
+console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
+```
+
+:::
 
 ## Implementation
 

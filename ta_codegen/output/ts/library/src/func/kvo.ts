@@ -645,20 +645,17 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  * ```ts
  * import { kvo } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ * const volume = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outKvo, outKvoSignal } = kvo({ high, low, close, volume }, {
  *   fastPeriod: 34,
  *   slowPeriod: 55,
  *   signalPeriod: 13,
  * });
- * // outKvo[k] is the value at bar begIdx + k
+ * console.log(outKvo.length + ' values from bar ' + begIdx + '; last outKvo = ' + outKvo[outKvo.length - 1]);
  * ```
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)

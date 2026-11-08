@@ -470,14 +470,13 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  * ```ts
  * import { fisher } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
  *   timePeriod: 10,
  * });
- * // outFisher[k] is the value at bar begIdx + k
+ * console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
  * ```
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`willr`](https://ta-lib.org/functions/willr)

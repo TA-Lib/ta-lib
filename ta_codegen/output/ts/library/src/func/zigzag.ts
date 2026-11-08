@@ -479,17 +479,16 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  * ```ts
  * import { zigzag } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outZigZag,
  *   outTrend,
  *   outPivotIdx,
  * } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
- * // outZigZag[k] is the value at bar begIdx + k
+ * console.log(outZigZag.length + ' values from bar ' + begIdx + '; last outZigZag = ' + outZigZag[outZigZag.length - 1]);
  * ```
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`supertrend`](https://ta-lib.org/functions/supertrend)

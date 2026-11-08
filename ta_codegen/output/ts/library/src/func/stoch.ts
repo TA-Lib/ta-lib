@@ -605,12 +605,10 @@ export function stochDisplayShift(outputIdx: number, options?: StochOptions): nu
  * ```ts
  * import { MAType, stoch } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
  *   fastKPeriod: 5,
  *   slowKPeriod: 3,
@@ -618,7 +616,7 @@ export function stochDisplayShift(outputIdx: number, options?: StochOptions): nu
  *   slowDPeriod: 3,
  *   slowDMaType: MAType.SMA,
  * });
- * // outSlowK[k] is the value at bar begIdx + k
+ * console.log(outSlowK.length + ' values from bar ' + begIdx + '; last outSlowK = ' + outSlowK[outSlowK.length - 1]);
  * ```
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)

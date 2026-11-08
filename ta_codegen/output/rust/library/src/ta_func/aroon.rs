@@ -279,19 +279,18 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut aroon_down = vec![0.0; 252];
     /// let mut aroon_up = vec![0.0; 252];
     ///
-    /// let out_range = core.aroon(
-    ///     0, high.len() - 1, &high, &low, 14,
-    ///     &mut aroon_down, &mut aroon_up,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(aroon_down[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.aroon(0, high.len() - 1, &high, &low, 14, &mut aroon_down, &mut aroon_up)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last aroon_down = {}", range.count, range.beg_idx, aroon_down[range.count - 1]);
+    /// # assert!(aroon_down[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

@@ -288,23 +288,23 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut swing_high = vec![0i32; 252];
     /// let mut swing_low = vec![0i32; 252];
     ///
-    /// let out_range = core.fractal(
-    ///     0, high.len() - 1, &high, &low, 2, 2,
-    ///     &mut swing_high, &mut swing_low,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
-    /// // a pattern output writes only the values its flags declare
-    /// assert!(swing_high[..out_range.count].iter().all(|v| [0, 100].contains(v)));
-    /// // a pattern output writes only the values its flags declare
-    /// assert!(swing_low[..out_range.count].iter().all(|v| [0, 100].contains(v)));
+    /// let core = Core::new();
+    /// let range = core.fractal(0, high.len() - 1, &high, &low, 2, 2,
+    ///                          &mut swing_high, &mut swing_low)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last swing_high = {}", range.count, range.beg_idx, swing_high[range.count - 1]);
+    /// # assert_eq!(range.beg_idx + range.count, high.len());
+    /// # // a pattern output writes only the values its flags declare
+    /// # assert!(swing_high[..range.count].iter().all(|v| [0, 100].contains(v)));
+    /// # // a pattern output writes only the values its flags declare
+    /// # assert!(swing_low[..range.count].iter().all(|v| [0, 100].contains(v)));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

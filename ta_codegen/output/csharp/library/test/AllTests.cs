@@ -77,6 +77,7 @@ public static class AllTests
         ["BatchApiTest"] = 149,
         ["CoreBuilderTest"] = 86,
         ["DivZeroTest"] = 91,
+        ["ExamplesTest"] = 420,
         ["FpSelectTest"] = 3_635_004,
         ["MetadataTest"] = 4_282,
         ["NoPhantomIoTest"] = 868,

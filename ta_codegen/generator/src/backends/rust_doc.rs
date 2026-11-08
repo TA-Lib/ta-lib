@@ -20,6 +20,7 @@
 //! or blockquote marker.
 
 use super::doc_meta::{self, ensure_period, RangeMeta};
+use super::examples::{self, Snippet};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
 use crate::registry::Registry;
 use std::collections::{BTreeMap, HashMap};
@@ -35,7 +36,6 @@ const WRAP: usize = 92;
 #[allow(clippy::implicit_hasher, clippy::too_many_lines)]
 pub fn guarded_docs(
     func: &FuncDef,
-    snake: &str,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
 ) -> String {
@@ -118,7 +118,7 @@ pub fn guarded_docs(
          always sufficient.",
     );
 
-    if let Some(example) = example_doctest(func, snake, enums) {
+    if let Some(example) = example_doctest(func, enums) {
         d.blank();
         d.paragraph("# Examples");
         d.blank();
@@ -479,23 +479,15 @@ fn doc_aliases(func: &FuncDef, doc: &DocDef) -> Vec<String> {
 
 /// Number of bars in every example input series: one trading year, comfortably
 /// larger than the largest default lookback (~64 for the Hilbert Transform family).
-pub(super) const EXAMPLE_LEN: usize = 252;
+pub(super) const EXAMPLE_LEN: usize = examples::LEN;
 
-/// `close` carries a second harmonic so it is never at the exact midpoint of the
-/// bar: a midpoint close makes the money-flow multiplier
-/// `((close-low) - (high-close)) / (high-low)` identically zero, which left the
-/// AD/ADOSC/CMF examples unable to fail (issue #136). The harmonic amplitude keeps
-/// `|close - midpoint| < 1.0`, so `close` stays inside `[low, high]`.
-pub(super) const CLOSE_SERIES: &str =
-    "100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin()";
-
-/// `volume` rises overall but falls on some bars: a monotonically increasing volume
-/// never takes the down-volume branch (NVI stays at its 1000.0 seed for every bar).
-pub(super) const VOLUME_SERIES: &str =
-    "10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin()";
-
-/// The default `inReal` series, `[90, 110]`, before any `domain` mapping.
-const REAL_SERIES: &str = "100.0 + 10.0 * (0.1 * i as f64).sin()";
+/// Rust's spelling of a synthetic series expression.
+pub(crate) const RUST_SYNTAX: examples::Syntax<'static> = examples::Syntax {
+    real: fmt_real_literal,
+    bar: "i as f64",
+    sin: |x| format!("({x}).sin()"),
+    modulo: |m| format!("(i % {m}) as f64"),
+};
 
 /// The default series mapped affinely onto the input's `domain`, with `sine`
 /// spelling `sin(0.1 * i)` in the target language and `lit` its real literals.
@@ -523,50 +515,6 @@ pub(super) fn input_domain(func: &FuncDef, input: &str) -> Option<(f64, f64)> {
     func.inputs.iter().find(|i| i.name == input).and_then(|i| i.domain)
 }
 
-/// The example input series for one input, as `(variable name, source lines)`.
-/// `open` and `close` both stay inside `[low, high]`: their offset from the bar
-/// midpoint never reaches 1.0. Returns `None` for an unknown input shape, which
-/// drops the example.
-fn example_input(func: &FuncDef, input: &str) -> Option<(&'static str, Vec<String>)> {
-    if let Some(domain) = input_domain(func, input) {
-        let expr = domain_series(domain, "(0.1 * i as f64).sin()", fmt_real_literal);
-        return Some(("data", series_def("data", &expr)));
-    }
-    Some(match input {
-        "inOpen" => (
-            "open",
-            series_def("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()"),
-        ),
-        "inHigh" => (
-            "high",
-            series_def("high", "101.0 + 10.0 * (0.1 * i as f64).sin()"),
-        ),
-        "inLow" => (
-            "low",
-            series_def("low", "99.0 + 10.0 * (0.1 * i as f64).sin()"),
-        ),
-        "inClose" => ("close", series_def("close", CLOSE_SERIES)),
-        "inVolume" => ("volume", series_def("volume", VOLUME_SERIES)),
-        "inPeriods" => (
-            "periods",
-            vec![format!("let periods = vec![14.0; {EXAMPLE_LEN}];")],
-        ),
-        "inReal" => ("data", series_def("data", REAL_SERIES)),
-        "inReal0" => (
-            "data0",
-            series_def("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
-        ),
-        "inReal1" => (
-            "data1",
-            series_def("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()"),
-        ),
-        _ => return None,
-    })
-}
-
-/// Build a runnable `# Examples` doctest that calls the guarded function on
-/// deterministic synthetic data with every optional parameter at its default,
-/// and asserts success. Returned lines are raw markdown (no `///` prefix).
 /// `use ta_lib::X;` or `use ta_lib::{A, B};` — braces only when they are needed,
 /// so a function with no enum parameter keeps the single-item form.
 pub(crate) fn example_use_line(items: &[String]) -> String {
@@ -582,24 +530,11 @@ pub(crate) fn example_use_line(items: &[String]) -> String {
 /// An `enum:` parameter is named rather than numbered: the example is the first
 /// thing a reader copies, and a bare `1` would not compile against the typed
 /// parameter. Shared with the streaming examples so both spell it the same way.
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::float_cmp)] // an enum default is an exact integer, not a measurement
 pub(crate) fn example_opt_literal(
     opt: &crate::ir::OptInput,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
-    let default = opt.default.unwrap_or(0.0);
-    match &opt.param_type {
-        ParamType::Real => fmt_real_literal(default),
-        ParamType::Enum(name) => enums
-            .get(name)
-            .and_then(|e| e.variants.iter().find(|v| f64::from(v.value) == default))
-            .map_or_else(
-                || format!("{}", default as i64),
-                |v| format!("{name}::{}", v.name),
-            ),
-        _ => format!("{}", default as i64),
-    }
+    examples::opt_literal(opt, enums, fmt_real_literal, |e, v| format!("{}::{v}", e.name))
 }
 
 /// The enum types a function's optional parameters use, for an example's `use`.
@@ -617,73 +552,55 @@ pub(crate) fn example_enum_imports(func: &FuncDef) -> Vec<String> {
     v
 }
 
-fn example_doctest(
-    func: &FuncDef,
-    snake: &str,
-    enums: &HashMap<String, EnumDef>,
-) -> Option<Vec<String>> {
-    let mut lines: Vec<String> = Vec::new();
-    lines.push("```".to_string());
-    // `RetCode` is not imported: the call returns `Result<OutRange, RetCode>` and
-    // the example propagates with `?`, naming the error type once, fully
-    // qualified, on the hidden trailing line that lets `?` work in a doctest.
+/// The batch example: its shown lines are the function page's Rust tab, its hidden
+/// lines fill the arrays with the synthetic series and assert the result. Rendered
+/// as the doctest by [`example_doctest`], so the page can only show what ran.
+pub(crate) fn example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Snippet> {
+    use examples::{hidden, shown, LEN};
+    let snake = super::common::snake_words(&func.name);
+    let series = examples::all_series(func)?;
+    let first = series.first()?.var;
     let mut imports = vec!["Core".to_string()];
     imports.extend(example_enum_imports(func));
-    lines.push(example_use_line(&imports));
-    lines.push(String::new());
 
-    let mut first_series: Option<String> = None;
-    let mut args: Vec<String> = Vec::new();
-    for input in &func.inputs {
-        let (var, def) = example_input(func, &input.name)?;
-        lines.extend(def);
-        if first_series.is_none() {
-            first_series = Some(var.to_string());
-        }
-        args.push(format!("&{var}"));
+    let mut body: Vec<examples::Line> = Vec::new();
+    for s in &series {
+        // The shown binding is the placeholder a reader fills; the hidden one
+        // shadows it with the synthetic series.
+        body.push(shown(format!("let {} = vec![0.0; {LEN}]; // {}", s.var, s.comment)));
+        body.extend(series_def(s.var, &examples::render(s, &RUST_SYNTAX)).into_iter().map(hidden));
     }
-    let first = first_series?;
+    let out_vars = example_output_vars(func);
+    for (output, var) in func.outputs.iter().zip(&out_vars) {
+        let zero = match output.param_type {
+            ParamType::Integer => "0i32",
+            _ => "0.0",
+        };
+        body.push(shown(format!("let mut {var} = vec![{zero}; {LEN}];")));
+    }
+    body.push(shown(""));
+    body.push(shown("let core = Core::new();"));
 
-    // Optional parameters at their documented defaults. An `enum:` parameter is
-    // named, not numbered -- the example is the first thing a reader copies, and
-    // a bare `1` there would not even compile now that the parameter is typed.
+    let mut args: Vec<String> = vec!["0".to_string(), format!("{first}.len() - 1")];
+    args.extend(series.iter().map(|s| format!("&{}", s.var)));
     let opt_args: Vec<String> = func
         .optional_inputs
         .iter()
         .map(|opt| example_opt_literal(opt, enums))
         .collect();
     args.extend(opt_args.iter().cloned());
-
-    lines.push(String::new());
-    lines.push("let core = Core::new();".to_string());
-
-    let out_vars = output_var_names(func);
-    let mut out_args: Vec<String> = Vec::new();
-    for (output, var) in func.outputs.iter().zip(&out_vars) {
-        let zero = match output.param_type {
-            ParamType::Integer => "0i32",
-            _ => "0.0",
-        };
-        lines.push(format!("let mut {var} = vec![{zero}; {EXAMPLE_LEN}];"));
-        out_args.push(format!("&mut {var}"));
-    }
-
-    lines.push(String::new());
-    let range = format!("0, {first}.len() - 1");
-    let call_one_line = format!(
-        "let out_range = core.{snake}({range}, {}, {})?;",
-        args.join(", "),
-        out_args.join(", ")
+    let outs: Vec<String> = out_vars.iter().map(|v| format!("&mut {v}")).collect();
+    body.extend(
+        examples::wrap_call(&format!("let range = core.{snake}("), &args, &outs, ")?;", WRAP)
+            .into_iter()
+            .map(shown),
     );
-    if call_one_line.len() <= WRAP {
-        lines.push(call_one_line);
-    } else {
-        lines.push(format!("let out_range = core.{snake}("));
-        lines.push(format!("    {range}, {},", args.join(", ")));
-        lines.push(format!("    {},", out_args.join(", ")));
-        lines.push(")?;".to_string());
-    }
-    lines.push("assert!(out_range.count > 0);".to_string());
+    body.push(hidden("assert!(range.count > 0);"));
+    let printed = &out_vars[0];
+    body.push(shown(format!(
+        "println!(\"{{}} values from bar {{}}; last {printed} = {{}}\", range.count, range.beg_idx, \
+         {printed}[range.count - 1]);"
+    )));
     // Assert on the values, not just the return code. A `nan_inf_output` function
     // may emit infinity on ordinary data, so it is held to no NaN instead.
     if let Some((_, var)) = func
@@ -692,12 +609,8 @@ fn example_doctest(
         .zip(&out_vars)
         .find(|(o, _)| o.param_type != ParamType::Integer)
     {
-        let check = if func.flags.iter().any(|fl| fl == "nan_inf_output") {
-            "!v.is_nan()"
-        } else {
-            "v.is_finite()"
-        };
-        lines.push(format!("assert!({var}[..out_range.count].iter().all(|v| {check}));"));
+        let check = if examples::allows_infinity(func) { "!v.is_nan()" } else { "v.is_finite()" };
+        body.push(hidden(format!("assert!({var}[..range.count].iter().all(|v| {check}));")));
     }
     // An integer output has no finiteness to check, which is why the 61
     // candlestick examples and the four other integer-output examples asserted
@@ -715,9 +628,7 @@ fn example_doctest(
         .iter()
         .any(|o| o.param_type == ParamType::Integer)
     {
-        lines.push(format!(
-            "assert_eq!(out_range.beg_idx + out_range.count, {first}.len());"
-        ));
+        body.push(hidden(format!("assert_eq!(range.beg_idx + range.count, {first}.len());")));
         let period = func
             .optional_inputs
             .iter()
@@ -725,18 +636,34 @@ fn example_doctest(
             .map(|i| opt_args[i].clone());
         for (output, var) in func.outputs.iter().zip(&out_vars) {
             if output.param_type == ParamType::Integer {
-                lines.extend(integer_domain_claim(
-                    func,
-                    output,
-                    var,
-                    &first,
-                    period.as_deref(),
-                ));
+                body.extend(
+                    integer_domain_claim(func, output, var, first, period.as_deref())
+                        .into_iter()
+                        .map(hidden),
+                );
             }
         }
     }
     // Lets the example above use `?`; hidden from the rendered docs.
-    lines.push("# Ok::<(), ta_lib::RetCode>(())".to_string());
+    body.push(hidden("Ok::<(), ta_lib::RetCode>(())"));
+    Some(Snippet { imports: vec![example_use_line(&imports)], body })
+}
+
+/// The batch example's output variables, [`examples::output_vars`] in snake case.
+pub fn example_output_vars(func: &FuncDef) -> Vec<String> {
+    examples::output_vars(func).iter().map(|v| camel_to_snake(v)).collect()
+}
+
+/// The runnable `# Examples` doctest: [`example`] with its hidden lines behind `# `.
+/// Returned lines are raw markdown (no `///` prefix).
+fn example_doctest(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<Vec<String>> {
+    let snippet = example(func, enums)?;
+    let mut lines = vec!["```".to_string()];
+    lines.extend(snippet.imports);
+    lines.push(String::new());
+    for line in snippet.body {
+        lines.push(if line.shown { line.text } else { format!("# {}", line.text) });
+    }
     lines.push("```".to_string());
     Some(lines)
 }
@@ -844,24 +771,24 @@ fn integer_domain_claim(
             let list = values.iter().map(i32::to_string).collect::<Vec<_>>().join(", ");
             vec![
                 "// a pattern output writes only the values its flags declare".to_string(),
-                format!("assert!({var}[..out_range.count].iter().all(|v| [{list}].contains(v)));"),
+                format!("assert!({var}[..range.count].iter().all(|v| [{list}].contains(v)));"),
             ]
         }
         IntClaim::Either(a, b, note) => vec![
             format!("// {note}"),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == {a} || v == {b}));"),
+            format!("assert!({var}[..range.count].iter().all(|&v| v == {a} || v == {b}));"),
         ],
         IntClaim::Within(lo, hi, note) => vec![
             format!("// {note}"),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| ({lo}..={hi}).contains(&v)));"),
+            format!("assert!({var}[..range.count].iter().all(|&v| ({lo}..={hi}).contains(&v)));"),
         ],
         IntClaim::WindowExtremum { is_max } => window_extremum_claim(var, series, period, is_max),
         // Written as a sum rather than a difference so the usize rendering
         // cannot underflow at the first bar.
         IntClaim::PivotIdx(note) => vec![
             format!("// {note}"),
-            format!("for (k, &idx) in {var}[..out_range.count].iter().enumerate() {{"),
-            "    assert!((idx as usize) <= out_range.beg_idx + k);".to_string(),
+            format!("for (k, &idx) in {var}[..range.count].iter().enumerate() {{"),
+            "    assert!((idx as usize) <= range.beg_idx + k);".to_string(),
             format!("    if k > 0 {{ assert!(idx >= {var}[k - 1]); }}"),
             "}".to_string(),
         ],
@@ -889,8 +816,8 @@ fn window_extremum_claim(
     };
     vec![
         format!("// every reported index locates the {word} value of its {period}-bar window"),
-        format!("for (k, &idx) in {var}[..out_range.count].iter().enumerate() {{"),
-        "    let (bar, idx) = (out_range.beg_idx + k, idx as usize);".to_string(),
+        format!("for (k, &idx) in {var}[..range.count].iter().enumerate() {{"),
+        "    let (bar, idx) = (range.beg_idx + k, idx as usize);".to_string(),
         format!("    assert!(bar + 1 - {period} <= idx && idx <= bar);"),
         format!(
             "    assert!({series}[bar + 1 - {period}..=bar].iter().all(|&v| v {cmp} {series}[idx]));"

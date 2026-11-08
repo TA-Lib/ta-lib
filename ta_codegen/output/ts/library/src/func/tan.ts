@@ -221,10 +221,10 @@ export function tanDisplayShift(outputIdx: number, options?: TanOptions): number
  * ```ts
  * import { tan } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = tan(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = tan(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`atan`](https://ta-lib.org/functions/atan)
  * @see [`sin`](https://ta-lib.org/functions/sin)
@@ -481,9 +481,9 @@ export function tanOpenAndFillPositional(
  * ```ts
  * import { tanOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = tanOpen(data);
+ * const stream = tanOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -515,9 +515,9 @@ export function tanOpen(real: ArrayLike<number>, options?: TanOptions): TanStrea
  * ```ts
  * import { tanOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = tanOpenAndFill(data);
+ * const { stream, begIdx, values } = tanOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

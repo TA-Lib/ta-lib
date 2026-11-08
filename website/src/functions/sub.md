@@ -9,7 +9,7 @@ Element-wise subtraction of two input series.
 
 ## Chart
 
-<ta-chart src="/functions/sub.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/sub.svg" ratio="720:416" label="SUB over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/sub.csv) · [Chart (SVG)](/functions/sub.svg)
 
@@ -44,6 +44,85 @@ outReal[i] = inReal0[i] - inReal1[i]
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series0[252]; /* your data, oldest first */
+double series1[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SUB( 0, n - 1, series0, series1, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series0 = vec![0.0; 252]; // your data, oldest first
+let series1 = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.sub(0, series0.len() - 1, &series0, &series1, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series0 = new double[252]; // your data, oldest first
+double[] series1 = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.sub(0, series0.length - 1, series0, series1, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series0 = new double[252]; // your data, oldest first
+var series1 = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Sub(0, series0.Length - 1, series0, series1, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { sub } from 'ta-lib';
+
+const series0 = new Float64Array(252); // your data, oldest first
+const series1 = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = sub(series0, series1);
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

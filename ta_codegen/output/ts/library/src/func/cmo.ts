@@ -374,10 +374,10 @@ export function cmoDisplayShift(outputIdx: number, options?: CmoOptions): number
  * ```ts
  * import { cmo } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = cmo(data, { timePeriod: 14 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = cmo(series, { timePeriod: 14 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
@@ -811,9 +811,9 @@ export function cmoOpenAndFillPositional(
  * ```ts
  * import { cmoOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = cmoOpen(data, { timePeriod: 14 });
+ * const stream = cmoOpen(series, { timePeriod: 14 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -847,9 +847,9 @@ export function cmoOpen(real: ArrayLike<number>, options?: CmoOptions): CmoStrea
  * ```ts
  * import { cmoOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = cmoOpenAndFill(data, { timePeriod: 14 });
+ * const { stream, begIdx, values } = cmoOpenAndFill(series, { timePeriod: 14 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

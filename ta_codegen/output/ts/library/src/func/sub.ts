@@ -233,12 +233,11 @@ export function subDisplayShift(outputIdx: number, options?: SubOptions): number
  * ```ts
  * import { sub } from 'ta-lib';
  *
- * const data0 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const data1 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i + 0.7));
- * const { begIdx, values } = sub(data0, data1);
- * // values[k] is the value at bar begIdx + k
+ * const series0 = new Float64Array(252); // your data, oldest first
+ * const series1 = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = sub(series0, series1);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`add`](https://ta-lib.org/functions/add)
  * @see [`mult`](https://ta-lib.org/functions/mult)
@@ -519,11 +518,11 @@ export function subOpenAndFillPositional(
  * ```ts
  * import { subOpen } from 'ta-lib';
  *
- * const data0 = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const data1 = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i + 0.7));
- * const stream = subOpen(data0, data1);
+ * const stream = subOpen(series0, series1);
  * const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 101.3); // the bar closes
  * ```
@@ -557,11 +556,11 @@ export function subOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, opti
  * ```ts
  * import { subOpenAndFill } from 'ta-lib';
  *
- * const data0 = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const data1 = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i + 0.7));
- * const { stream, begIdx, values } = subOpenAndFill(data0, data1);
+ * const { stream, begIdx, values } = subOpenAndFill(series0, series1);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

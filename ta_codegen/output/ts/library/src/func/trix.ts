@@ -550,10 +550,10 @@ export function trixDisplayShift(outputIdx: number, options?: TrixOptions): numb
  * ```ts
  * import { trix } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = trix(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = trix(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`roc`](https://ta-lib.org/functions/roc)
@@ -1237,9 +1237,9 @@ export function trixOpenAndFillPositional(
  * ```ts
  * import { trixOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = trixOpen(data, { timePeriod: 30 });
+ * const stream = trixOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1273,9 +1273,9 @@ export function trixOpen(real: ArrayLike<number>, options?: TrixOptions): TrixSt
  * ```ts
  * import { trixOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = trixOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = trixOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

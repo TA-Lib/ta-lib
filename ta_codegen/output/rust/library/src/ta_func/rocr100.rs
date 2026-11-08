@@ -250,14 +250,15 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let series = vec![0.0; 252]; // your data, oldest first
+    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.rocr100(0, data.len() - 1, &data, 10, &mut out)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.rocr100(0, series.len() - 1, &series, 10, &mut out)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(out[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -485,10 +486,10 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.rocr100_open(&data, 10).expect("enough history");
+    /// let (mut s, _last) = core.rocr100_open(&series, 10).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -516,14 +517,14 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.rocr100(0, data.len() - 1, &data, 10, &mut batch_out)?;
+    /// let batch = core.rocr100(0, series.len() - 1, &series, 10, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
-    /// let (_stream, filled) = core.rocr100_open_and_fill(&data, 10, &mut out)?;
+    /// let (_stream, filled) = core.rocr100_open_and_fill(&series, 10, &mut out)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);

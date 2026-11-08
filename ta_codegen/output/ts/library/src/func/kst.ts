@@ -835,9 +835,9 @@ export function kstDisplayShift(outputIdx: number, options?: KstOptions): number
  * ```ts
  * import { kst } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, outKst, outKstSignal } = kst(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, outKst, outKstSignal } = kst(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,
@@ -848,7 +848,7 @@ export function kstDisplayShift(outputIdx: number, options?: KstOptions): number
  *   sma4Period: 15,
  *   signalPeriod: 9,
  * });
- * // outKst[k] is the value at bar begIdx + k
+ * console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
  * ```
  * @see [`kstext`](https://ta-lib.org/functions/kstext)
  * @see [`roc`](https://ta-lib.org/functions/roc)
@@ -2177,9 +2177,9 @@ export function kstOpenAndFillPositional(
  * ```ts
  * import { kstOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kstOpen(data, {
+ * const stream = kstOpen(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,
@@ -2231,14 +2231,14 @@ export function kstOpen(real: ArrayLike<number>, options?: KstOptions): KstStrea
  * ```ts
  * import { kstOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
  *   begIdx,
  *   outKst,
  *   outKstSignal,
- * } = kstOpenAndFill(data, {
+ * } = kstOpenAndFill(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,

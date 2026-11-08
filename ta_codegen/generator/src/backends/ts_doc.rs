@@ -15,6 +15,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use super::doc_meta::{self, ensure_period, RangeMeta};
+use super::examples::{self, hidden, shown, Line};
 use super::rust_doc::{self, IntClaim};
 use super::ts::{self, ts_names};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
@@ -841,8 +842,9 @@ pub struct Example {
     pub title: String,
     /// Names the example imports from the package.
     pub imports: BTreeSet<String>,
-    /// The example's code, after its import line.
-    pub body: Vec<String>,
+    /// The example's code, after its import line; the doc block shows the shown
+    /// lines, the test runs them all.
+    pub body: Vec<Line>,
     /// Names only the checks import.
     pub check_imports: BTreeSet<String>,
     /// Assertions over the variables the body defined.
@@ -855,8 +857,14 @@ impl Example {
     pub fn source(&self) -> Vec<String> {
         let mut lines: Vec<String> = import_line(&self.imports).lines().map(String::from).collect();
         lines.push(String::new());
-        lines.extend(self.body.iter().cloned());
+        lines.extend(self.body.iter().filter(|l| l.shown).map(|l| l.text.clone()));
         lines
+    }
+
+    /// Every body line, as the test runs it.
+    #[must_use]
+    pub fn body_text(&self) -> Vec<String> {
+        self.body.iter().map(|l| l.text.clone()).collect()
     }
 }
 
@@ -875,27 +883,23 @@ fn import_line(names: &BTreeSet<String>) -> String {
 }
 
 /// One input's example series: `(variable, element expression in i, one more bar)`.
-/// The batch, open and fill examples feed the same history, and `open` and
-/// `close` stay inside `[low, high]`. See [`rust_doc::CLOSE_SERIES`] for why
-/// `close` carries a second harmonic and `volume` falls on some bars.
+/// The batch, open and fill examples feed the same history, from [`examples::series`].
 fn series(func: &FuncDef, input: &str) -> Option<(&'static str, String, String)> {
-    if let Some(domain) = rust_doc::input_domain(func, input) {
-        let expr = rust_doc::domain_series(domain, "Math.sin(0.1 * i)", doc_meta::fmt_real);
-        return Some(("data", expr, doc_meta::fmt_real(rust_doc::domain_bar(domain, 0.42))));
-    }
-    let (var, expr, bar) = match input {
-        "inOpen" => ("open", "100 + 10 * Math.sin(0.1 * i - 0.05)", "100.2"),
-        "inHigh" => ("high", "101 + 10 * Math.sin(0.1 * i)", "101.4"),
-        "inLow" => ("low", "99 + 10 * Math.sin(0.1 * i)", "99.1"),
-        "inClose" => ("close", "100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i)", "100.9"),
-        "inVolume" => ("volume", "10000 + 100 * i + 2000 * Math.sin(0.3 * i)", "12345"),
-        "inPeriods" => ("periods", "5 + (i % 10)", "14"),
-        "inReal" => ("data", "100 + 10 * Math.sin(0.1 * i)", "100.9"),
-        "inReal0" => ("data0", "100 + 10 * Math.sin(0.1 * i)", "100.9"),
-        "inReal1" => ("data1", "100 + 10 * Math.sin(0.1 * i + 0.7)", "101.3"),
-        _ => return None,
+    let s = examples::series(func, input)?;
+    let bar = match rust_doc::input_domain(func, input) {
+        Some(domain) => doc_meta::fmt_real(rust_doc::domain_bar(domain, 0.42)),
+        None => match input {
+            "inOpen" => "100.2",
+            "inHigh" => "101.4",
+            "inLow" => "99.1",
+            "inVolume" => "12345",
+            "inPeriods" => "14",
+            "inReal1" => "101.3",
+            _ => "100.9",
+        }
+        .to_string(),
     };
-    Some((var, expr.to_string(), bar.to_string()))
+    Some((s.var, examples::render(&s, &examples::MATH_SIN), bar))
 }
 
 fn series_lines(var: &str, expr: &str) -> Vec<String> {
@@ -913,16 +917,29 @@ fn series_lines(var: &str, expr: &str) -> Vec<String> {
 struct Setup {
     /// One `(variable, bar literal)` per bar input, in call order.
     series: Vec<(&'static str, String)>,
+    /// The series as literals, for the streaming examples.
     lines: Vec<String>,
+    /// The series as the batch example declares them: a placeholder a reader
+    /// fills, shown, and the hidden fill the test runs.
+    placeholder: Vec<Line>,
     opts: Vec<String>,
     imports: BTreeSet<String>,
 }
 
 fn setup(func: &FuncDef, inputs: &[String], enums: &HashMap<String, EnumDef>) -> Option<Setup> {
-    let mut s = Setup { series: Vec::new(), lines: Vec::new(), opts: Vec::new(), imports: BTreeSet::new() };
+    let mut s = Setup {
+        series: Vec::new(),
+        lines: Vec::new(),
+        placeholder: Vec::new(),
+        opts: Vec::new(),
+        imports: BTreeSet::new(),
+    };
     for input in inputs {
         let (var, expr, bar) = series(func, input)?;
         s.lines.extend(series_lines(var, &expr));
+        let comment = examples::series(func, input)?.comment;
+        s.placeholder.push(shown(format!("const {var} = new Float64Array({EXAMPLE_LEN}); // {comment}")));
+        s.placeholder.push(hidden(format!("for (let i = 0; i < {EXAMPLE_LEN}; i++) {var}[i] = {expr};")));
         s.series.push((var, bar));
     }
     if s.series.is_empty() {
@@ -1037,11 +1054,16 @@ pub fn batch_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option
     imports.insert(names.public.clone());
     let outs: Vec<String> = func.outputs.iter().map(|o| ts::result_key(func, o)).collect();
 
-    let mut body = s.lines.clone();
+    let mut body = s.placeholder.clone();
+    body.push(shown(""));
     let (pre, lead) = destructure(&result_names(func));
-    body.extend(pre);
-    body.extend(api_call(&lead, &names.public, &api_args(func, &s), &example_opts(func, &s)));
-    body.push(format!("// {}[k] is the value at bar begIdx + k", outs[0]));
+    body.extend(pre.into_iter().map(shown));
+    body.extend(api_call(&lead, &names.public, &api_args(func, &s), &example_opts(func, &s)).into_iter().map(shown));
+    // Concatenation, not a template literal: `${` reads as TeX to the doc gate.
+    body.push(shown(format!(
+        "console.log({0}.length + ' values from bar ' + begIdx + '; last {0} = ' + {0}[{0}.length - 1]);",
+        outs[0]
+    )));
 
     let mut checks = vec![
         format!("const count = {}.length;", outs[0]),
@@ -1154,7 +1176,7 @@ pub fn open_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<
     Some(Example {
         title: format!("{}: {} example", func.name, names.open),
         imports,
-        body,
+        body: body.into_iter().map(shown).collect(),
         check_imports: BTreeSet::new(),
         checks,
     })
@@ -1199,7 +1221,7 @@ pub fn fill_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<
     Some(Example {
         title: format!("{}: {} example", func.name, names.open_and_fill),
         imports,
-        body,
+        body: body.into_iter().map(shown).collect(),
         check_imports,
         checks,
     })
@@ -1263,7 +1285,8 @@ pub fn render_example_tests(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         let _ = writeln!(s, "{}", import_line(&imports));
         for ex in &exs {
             let _ = writeln!(s, "\ntest('{}', () => {{", ex.title);
-            for line in ex.body.iter().chain(std::iter::once(&String::new())).chain(&ex.checks) {
+            let body = ex.body_text();
+            for line in body.iter().chain(std::iter::once(&String::new())).chain(&ex.checks) {
                 if line.is_empty() {
                     s.push('\n');
                 } else {

@@ -9,7 +9,7 @@ A two-candle bearish reversal pattern: a long white candle followed by a black c
 
 ## Chart
 
-<ta-chart src="/functions/cdldarkcloudcover.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdldarkcloudcover.svg" ratio="720:274" label="CDLDARKCLOUDCOVER over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
 Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdldarkcloudcover.csv) · [Chart (SVG)](/functions/cdldarkcloudcover.svg)
 
@@ -61,6 +61,98 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double open[252]; /* your data, oldest first */
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+int out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_CDLDARKCLOUDCOVER( 0, n - 1, open, high, low, close, 0.5, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let open = vec![0.0; 252]; // your data, oldest first
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.cdldarkcloudcover(0, open.len() - 1, &open, &high, &low, &close, 0.5,
+                                   &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] open = new double[252]; // your data, oldest first
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+int[] out = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.cdldarkcloudcover(0, open.length - 1, open, high, low, close, 0.5, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var open = new double[252]; // your data, oldest first
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var outInteger = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Cdldarkcloudcover(0, open.Length - 1, open, high, low, close, 0.5, outInteger);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outInteger = {outInteger[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { cdldarkcloudcover } from 'ta-lib';
+
+const open = new Float64Array(252); // your data, oldest first
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = cdldarkcloudcover({ open, high, low, close }, {
+  penetration: 0.5,
+});
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

@@ -221,10 +221,10 @@ export function sinDisplayShift(outputIdx: number, options?: SinOptions): number
  * ```ts
  * import { sin } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = sin(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = sin(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`cos`](https://ta-lib.org/functions/cos)
  * @see [`tan`](https://ta-lib.org/functions/tan)
@@ -480,9 +480,9 @@ export function sinOpenAndFillPositional(
  * ```ts
  * import { sinOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = sinOpen(data);
+ * const stream = sinOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -514,9 +514,9 @@ export function sinOpen(real: ArrayLike<number>, options?: SinOptions): SinStrea
  * ```ts
  * import { sinOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = sinOpenAndFill(data);
+ * const { stream, begIdx, values } = sinOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

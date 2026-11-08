@@ -617,12 +617,10 @@ export function sqzmomDisplayShift(outputIdx: number, options?: SqzmomOptions): 
  * ```ts
  * import { sqzmom } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
  *   bbPeriod: 20,
  *   nbDev: 2,
@@ -631,7 +629,7 @@ export function sqzmomDisplayShift(outputIdx: number, options?: SqzmomOptions): 
  *   factorNormal: 1.5,
  *   factorNarrow: 1,
  * });
- * // outMomentum[k] is the value at bar begIdx + k
+ * console.log(outMomentum.length + ' values from bar ' + begIdx + '; last outMomentum = ' + outMomentum[outMomentum.length - 1]);
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`kc`](https://ta-lib.org/functions/kc)

@@ -9,7 +9,7 @@ Hilbert Transform classifier that labels each bar 1 (trending — favor trend-fo
 
 ## Chart
 
-<ta-chart src="/functions/ht_trendmode.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+<ta-chart src="/functions/ht_trendmode.svg" ratio="720:416" label="HT_TRENDMODE over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/ht_trendmode.csv) · [Chart (SVG)](/functions/ht_trendmode.svg)
 
@@ -43,6 +43,80 @@ Mean-reversion is the trading assumption that price will swing back toward its r
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+int out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_HT_TRENDMODE( 0, n - 1, series, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %d\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.ht_trendmode(0, series.len() - 1, &series, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+int[] out = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.htTrendmode(0, series.length - 1, series, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var outInteger = new int[252];
+
+var core = Core.Default;
+OutRange r = core.HtTrendmode(0, series.Length - 1, series, outInteger);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outInteger = {outInteger[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { htTrendmode } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = htTrendmode(series);
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

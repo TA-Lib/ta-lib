@@ -357,10 +357,10 @@ export function rmaDisplayShift(outputIdx: number, options?: RmaOptions): number
  * ```ts
  * import { rma } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = rma(data, { timePeriod: 30 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = rma(series, { timePeriod: 30 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`sma`](https://ta-lib.org/functions/sma)
@@ -722,9 +722,9 @@ export function rmaOpenAndFillPositional(
  * ```ts
  * import { rmaOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = rmaOpen(data, { timePeriod: 30 });
+ * const stream = rmaOpen(series, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -758,9 +758,9 @@ export function rmaOpen(real: ArrayLike<number>, options?: RmaOptions): RmaStrea
  * ```ts
  * import { rmaOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = rmaOpenAndFill(data, { timePeriod: 30 });
+ * const { stream, begIdx, values } = rmaOpenAndFill(series, { timePeriod: 30 });
  * // values[k] is the value at bar begIdx + k
  * ```
  */

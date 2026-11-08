@@ -228,10 +228,10 @@ export function log10DisplayShift(outputIdx: number, options?: Log10Options): nu
  * ```ts
  * import { log10 } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = log10(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = log10(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`ln`](https://ta-lib.org/functions/ln)
  * @see [`exp`](https://ta-lib.org/functions/exp)
@@ -486,9 +486,9 @@ export function log10OpenAndFillPositional(
  * ```ts
  * import { log10Open } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = log10Open(data);
+ * const stream = log10Open(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -520,9 +520,9 @@ export function log10Open(real: ArrayLike<number>, options?: Log10Options): Log1
  * ```ts
  * import { log10OpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = log10OpenAndFill(data);
+ * const { stream, begIdx, values } = log10OpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

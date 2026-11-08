@@ -206,7 +206,9 @@ def show_help():
                         A file is rewritten only when missing or out of
                         tolerance; a CSV naming no function is removed.
                         --check writes nothing and fails on any difference,
-                        missing or stale file.
+                        missing or stale file, then replays every CSV from
+                        its own rows (ta_refdata --replay) and fails on a
+                        cell that does not reproduce.
     ref                 Differential fuzz of the current library vs each frozen
                         release in ta_ref/ (builds bin/ta_ref_<X_Y_Z>_serve, then
                         runs ta_regtest --ref=<X_Y_Z> per member). C-only; needs
@@ -393,7 +395,12 @@ REFDATA_OUT = os.path.join('website', 'src', '.vuepress', 'public', 'functions')
 def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
                   check: bool) -> int:
     """Builds ta_refdata and runs it over the committed corpus into the website's
-    public/functions directory; --check compares and writes nothing."""
+    public/functions directory; --check compares and writes nothing, then replays
+    every written CSV from its own rows."""
+    if not os.path.isfile(os.path.join(root_dir, 'src', 'tools', 'ta_refdata', 'ta_refdata.c')):
+        print("Error: src/tools/ta_refdata is not in this tree (it is not part of the "
+              "released source tarball); refdata needs a git checkout.")
+        return 1
     cmake_build(build_dir, target='ta_refdata', jobs=jobs, config=build_type)
     exe = 'ta_refdata' + ('.exe' if os.name == 'nt' else '')
     candidates = [os.path.join(build_dir, 'bin', exe),
@@ -408,7 +415,18 @@ def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
           [os.path.join(root_dir, REFDATA_CORPUS), out_dir]
     print(f"=== {' '.join(os.path.relpath(c, root_dir) if c.startswith(root_dir) else c for c in cmd)} ===",
           flush=True)
-    return subprocess.run(cmd).returncode
+    rc = subprocess.run(cmd).returncode
+    if rc != 0 or not check:
+        return rc
+    csvs = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.endswith('.csv'))
+    print(f"=== ta_refdata --replay ({len(csvs)} files) ===", flush=True)
+    for i in range(0, len(csvs), 50):
+        p = subprocess.run([binary, '--replay'] + csvs[i:i + 50], capture_output=True, text=True)
+        if p.returncode != 0:
+            print(p.stdout + p.stderr, end='')
+            print("Error: a reference CSV does not reproduce from its own rows.")
+            return 1
+    return 0
 
 def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) -> int:
     """Cross-language BITWISE parity gate (issue #113). Diffs each generated
@@ -649,6 +667,10 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/c/tools/ta_bench_icount.c',
     'website/src/functions/sma.md',
     'website/src/.vuepress/public/functions/sma.svg',
+    'src/tools/ta_refdata/ta_refdata_domains.h',
+    'src/tools/ta_examples/ta_examples.c',
+    'ta_codegen/output/java/library/src/test/java/io/github/talib/test/ExamplesTest.java',
+    'ta_codegen/output/csharp/library/test/ExamplesTest.g.cs',
 )
 
 # These two are SPLICED, not rewritten: everything outside the GENCODE markers
@@ -1040,6 +1062,9 @@ def main():
             # multi-config generator registers the test per configuration, so
             # the build and ctest must name the same one.
             cmake_build(build_dir, target=cmake_target, jobs=args.jobs,
+                        config=args.build_type)
+            # The function pages' C samples, a CTest entry beside ta_regtest.
+            cmake_build(build_dir, target='ta_examples', jobs=args.jobs,
                         config=args.build_type)
             subprocess.run(['ctest', '-C', args.build_type, '--output-on-failure',
                             '--no-tests=error'], check=True, cwd=build_dir)

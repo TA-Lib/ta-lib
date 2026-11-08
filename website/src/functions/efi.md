@@ -11,7 +11,7 @@ Elder reads two settings — 2 for the short term, which he pairs with a 22-peri
 
 ## Chart
 
-<ta-chart src="/functions/efi.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+<ta-chart src="/functions/efi.svg" ratio="720:484" label="EFI over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/efi.csv) · [Chart (SVG)](/functions/efi.svg)
 
@@ -54,6 +54,85 @@ The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod`
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double close[252]; /* your data, oldest first */
+double volume[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_EFI( 0, n - 1, close, volume, 13, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let close = vec![0.0; 252]; // your data, oldest first
+let volume = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.efi(0, close.len() - 1, &close, &volume, 13, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] close = new double[252]; // your data, oldest first
+double[] volume = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.efi(0, close.length - 1, close, volume, 13, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var close = new double[252]; // your data, oldest first
+var volume = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Efi(0, close.Length - 1, close, volume, 13, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { efi } from 'ta-lib';
+
+const close = new Float64Array(252); // your data, oldest first
+const volume = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = efi({ close, volume }, { timePeriod: 13 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
 
 ## Implementation
 

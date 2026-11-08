@@ -323,10 +323,10 @@ export function stddevDisplayShift(outputIdx: number, options?: StddevOptions): 
  * ```ts
  * import { stddev } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = stddev(data, { timePeriod: 5, nbDev: 1 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = stddev(series, { timePeriod: 5, nbDev: 1 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`var_`](https://ta-lib.org/functions/var)
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
@@ -685,9 +685,9 @@ export function stddevOpenAndFillPositional(
  * ```ts
  * import { stddevOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = stddevOpen(data, { timePeriod: 5, nbDev: 1 });
+ * const stream = stddevOpen(series, { timePeriod: 5, nbDev: 1 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -723,9 +723,9 @@ export function stddevOpen(real: ArrayLike<number>, options?: StddevOptions): St
  * ```ts
  * import { stddevOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = stddevOpenAndFill(data, {
+ * const { stream, begIdx, values } = stddevOpenAndFill(series, {
  *   timePeriod: 5,
  *   nbDev: 1,
  * });

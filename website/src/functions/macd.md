@@ -9,7 +9,7 @@ Moving Average Convergence/Divergence: the difference between a fast and a slow 
 
 ## Chart
 
-<ta-chart src="/functions/macd.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
+<ta-chart src="/functions/macd.svg" ratio="720:416" label="MACD over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macd.csv) · [Chart (SVG)](/functions/macd.svg)
 
@@ -58,6 +58,92 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double macd[252], macdSignal[252], macdHist[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_MACD( 0, n - 1, series, 12, 26, 9, &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
+printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut macd = vec![0.0; 252];
+let mut macd_signal = vec![0.0; 252];
+let mut macd_hist = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.macd(0, series.len() - 1, &series, 12, 26, 9,
+                      &mut macd, &mut macd_signal, &mut macd_hist)?;
+println!("{} values from bar {}; last macd = {}", range.count, range.beg_idx, macd[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] macd = new double[252];
+double[] macdSignal = new double[252];
+double[] macdHist = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.macd(0, series.length - 1, series, 12, 26, 9, macd, macdSignal, macdHist);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last macd = " + macd[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var macd = new double[252];
+var macdSignal = new double[252];
+var macdHist = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Macd(0, series.Length - 1, series, 12, 26, 9, macd, macdSignal, macdHist);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last macd = {macd[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { macd } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outMacd,
+  outMacdSignal,
+  outMacdHist,
+} = macd(series, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+```
+
+:::
 
 ## Implementation
 

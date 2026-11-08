@@ -1,7 +1,5 @@
 //! The `domain` input field: the YAML carries the range an example input has to
-//! live in, and the example emitters read it. Before it, `rust_doc` held the
-//! three functions by name, where a fourth could be added to the corpus and
-//! keep its out-of-domain `NaN` example with every gate green.
+//! live in, and every example emitter reads it.
 
 use std::path::Path;
 
@@ -74,7 +72,7 @@ fn rust_doc_lines(name: &str) -> Vec<String> {
     for src in [&batch, &stream] {
         lines.extend(src.lines().map(str::trim).filter(|l| l.starts_with("///")).map(String::from));
     }
-    assert!(lines.iter().filter(|l| l.contains("let data: Vec<f64>")).count() >= 2, "{name}: no doctest series");
+    assert!(lines.iter().filter(|l| l.contains("let series: Vec<f64>")).count() >= 2, "{name}: no doctest series");
     lines
 }
 
@@ -105,7 +103,7 @@ fn the_typescript_examples_feed_the_domain_not_the_price_scale() {
         let examples = backends::ts_doc::examples(&func, &enums);
         assert!(examples.len() >= 3, "{name}: {} examples", examples.len());
         // The series line wraps past WRAP, so compare whitespace-normalised text.
-        let body: Vec<&str> = examples.iter().flat_map(|e| e.body.iter().map(String::as_str)).collect();
+        let body: Vec<&str> = examples.iter().flat_map(|e| e.body.iter().map(|l| l.text.as_str())).collect();
         let text = body.join("\n").split_whitespace().collect::<Vec<_>>().join(" ");
         assert!(!text.contains("100 +"), "{name}: a 100-based series in an example");
         assert!(text.contains(expected), "{name}: no `{expected}` in {body:?}");

@@ -44,38 +44,41 @@ import {
 } from 'ta-lib';
 
 test('AVGDEV: avgdev example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
-  const { begIdx, values } = avgdev(data, { timePeriod: 14 });
-  // values[k] is the value at bar begIdx + k
+  const series = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+
+  const { begIdx, values } = avgdev(series, { timePeriod: 14 });
+  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 
   const count = values.length;
   assert.ok(count > 0);
-  assert.equal(begIdx + count, data.length);
+  assert.equal(begIdx + count, series.length);
   assert.ok(values.every(Number.isFinite));
 });
 
 test('AVGDEV: avgdevOpen example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) =>
+  const series = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
-  const stream = avgdevOpen(data, { timePeriod: 14 });
+  const stream = avgdevOpen(series, { timePeriod: 14 });
   const peeked = stream.peek(100.9); // a forming bar: commits nothing
   const updated = stream.update(100.9); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
   const range = stream.outRange();
-  assert.equal(range.begIdx + range.count, data.length + 1);
+  assert.equal(range.begIdx + range.count, series.length + 1);
 });
 
 test('AVGDEV: avgdevOpenAndFill example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) =>
+  const series = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
-  const { stream, begIdx, values } = avgdevOpenAndFill(data, { timePeriod: 14 });
+  const { stream, begIdx, values } = avgdevOpenAndFill(series, {
+    timePeriod: 14,
+  });
   // values[k] is the value at bar begIdx + k
 
   const range = stream.outRange();
-  const batch = avgdev(data, { timePeriod: 14 });
+  const batch = avgdev(series, { timePeriod: 14 });
   assert.deepEqual([begIdx, values.length], [range.begIdx, range.count]);
   assert.deepEqual([begIdx, values.length], [batch.begIdx, batch.values.length]);
   assert.ok(values.length > 0);
@@ -85,16 +88,17 @@ test('AVGDEV: avgdevOpenAndFill example', () => {
 });
 
 test('AVGPRICE: avgprice example', () => {
-  const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
-  const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
-  const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
-  const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+  const open = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  const close = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+
   const { begIdx, values } = avgprice({ open, high, low, close });
-  // values[k] is the value at bar begIdx + k
+  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 
   const count = values.length;
   assert.ok(count > 0);
@@ -144,14 +148,15 @@ test('AVGPRICE: avgpriceOpenAndFill example', () => {
 });
 
 test('HA: ha example', () => {
-  const open = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i - 0.05));
-  const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
-  const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
-  const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+  const open = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  const close = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+
   const {
     begIdx,
     outHaOpen,
@@ -159,7 +164,7 @@ test('HA: ha example', () => {
     outHaLow,
     outHaClose,
   } = ha({ open, high, low, close });
-  // outHaOpen[k] is the value at bar begIdx + k
+  console.log(outHaOpen.length + ' values from bar ' + begIdx + '; last outHaOpen = ' + outHaOpen[outHaOpen.length - 1]);
 
   const count = outHaOpen.length;
   assert.ok(count > 0);
@@ -224,12 +229,13 @@ test('HA: haOpenAndFill example', () => {
 });
 
 test('MEDPRICE: medprice example', () => {
-  const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
-  const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+
   const { begIdx, values } = medprice({ high, low });
-  // values[k] is the value at bar begIdx + k
+  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 
   const count = values.length;
   assert.ok(count > 0);
@@ -271,14 +277,15 @@ test('MEDPRICE: medpriceOpenAndFill example', () => {
 });
 
 test('TYPPRICE: typprice example', () => {
-  const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
-  const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
-  const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  const close = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+
   const { begIdx, values } = typprice({ high, low, close });
-  // values[k] is the value at bar begIdx + k
+  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 
   const count = values.length;
   assert.ok(count > 0);
@@ -324,14 +331,15 @@ test('TYPPRICE: typpriceOpenAndFill example', () => {
 });
 
 test('WCLPRICE: wclprice example', () => {
-  const high = Float64Array.from({ length: 252 }, (_, i) =>
-    101 + 10 * Math.sin(0.1 * i));
-  const low = Float64Array.from({ length: 252 }, (_, i) =>
-    99 + 10 * Math.sin(0.1 * i));
-  const close = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+  const close = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) close[i] = 100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i);
+
   const { begIdx, values } = wclprice({ high, low, close });
-  // values[k] is the value at bar begIdx + k
+  console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 
   const count = values.length;
   assert.ok(count > 0);

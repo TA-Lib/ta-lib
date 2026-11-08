@@ -9,9 +9,9 @@ Returns the absolute input indices of the lowest and highest values within each 
 
 ## Chart
 
-<ta-chart src="/functions/minmaxindex.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer outputs outMinIdx and outMaxIdx."></ta-chart>
+<ta-chart src="/functions/minmaxindex.svg" ratio="720:438" label="MINMAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for each of outMinIdx and outMaxIdx."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer outputs outMinIdx and outMaxIdx. [Reference data (CSV)](/functions/minmaxindex.csv) · [Chart (SVG)](/functions/minmaxindex.svg)
+Drawn on the price pane over the close as a line; below it, a step pane of its own for each of outMinIdx and outMaxIdx. [Reference data (CSV)](/functions/minmaxindex.csv) · [Chart (SVG)](/functions/minmaxindex.svg)
 
 ## Formula
 
@@ -55,6 +55,85 @@ outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
 
 </div>
+
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+int minIdx[252], maxIdx[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_MINMAXINDEX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, minIdx, maxIdx );
+printf( "%d values from bar %d; last minIdx = %d\n", outNBElement, outBegIdx, minIdx[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut min_idx = vec![0i32; 252];
+let mut max_idx = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.minmaxindex(0, series.len() - 1, &series, 30, &mut min_idx, &mut max_idx)?;
+println!("{} values from bar {}; last min_idx = {}", range.count, range.beg_idx, min_idx[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+int[] minIdx = new int[252];
+int[] maxIdx = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.minmaxindex(0, series.length - 1, series, 30, minIdx, maxIdx);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last minIdx = " + minIdx[r.count() - 1]);
+```
+
+@tab C\#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var minIdx = new int[252];
+var maxIdx = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Minmaxindex(0, series.Length - 1, series, 30, minIdx, maxIdx);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last minIdx = {minIdx[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { minmaxindex } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outMinIdx, outMaxIdx } = minmaxindex(series, {
+  timePeriod: 30,
+});
+console.log(outMinIdx.length + ' values from bar ' + begIdx + '; last outMinIdx = ' + outMinIdx[outMinIdx.length - 1]);
+```
+
+:::
 
 ## Implementation
 

@@ -363,15 +363,16 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let series = vec![0.0; 252]; // your data, oldest first
+    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut min = vec![0.0; 252];
     /// let mut max = vec![0.0; 252];
     ///
-    /// let out_range = core.minmax(0, data.len() - 1, &data, 30, &mut min, &mut max)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(min[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.minmax(0, series.len() - 1, &series, 30, &mut min, &mut max)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last min = {}", range.count, range.beg_idx, min[range.count - 1]);
+    /// # assert!(min[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -690,10 +691,10 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.minmax_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.minmax_open(&series, 30).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -722,16 +723,16 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
     /// let mut batch_min = vec![0.0; 252];
     /// let mut batch_max = vec![0.0; 252];
-    /// let batch = core.minmax(0, data.len() - 1, &data, 30, &mut batch_min, &mut batch_max)?;
+    /// let batch = core.minmax(0, series.len() - 1, &series, 30, &mut batch_min, &mut batch_max)?;
     ///
     /// let mut min = vec![0.0; 252];
     /// let mut max = vec![0.0; 252];
-    /// let (_stream, filled) = core.minmax_open_and_fill(&data, 30, &mut min, &mut max)?;
+    /// let (_stream, filled) = core.minmax_open_and_fill(&series, 30, &mut min, &mut max)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);

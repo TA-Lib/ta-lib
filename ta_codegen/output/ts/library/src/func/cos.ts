@@ -221,10 +221,10 @@ export function cosDisplayShift(outputIdx: number, options?: CosOptions): number
  * ```ts
  * import { cos } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = cos(data);
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = cos(series);
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`acos`](https://ta-lib.org/functions/acos)
  * @see [`sin`](https://ta-lib.org/functions/sin)
@@ -483,9 +483,9 @@ export function cosOpenAndFillPositional(
  * ```ts
  * import { cosOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = cosOpen(data);
+ * const stream = cosOpen(series);
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -517,9 +517,9 @@ export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStrea
  * ```ts
  * import { cosOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = cosOpenAndFill(data);
+ * const { stream, begIdx, values } = cosOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```
  */

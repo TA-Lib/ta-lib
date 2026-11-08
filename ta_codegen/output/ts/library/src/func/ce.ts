@@ -579,17 +579,15 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  * ```ts
  * import { ce } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outLong, outShort } = ce({ high, low, close }, {
  *   timePeriod: 22,
  *   multiplier: 3,
  * });
- * // outLong[k] is the value at bar begIdx + k
+ * console.log(outLong.length + ' values from bar ' + begIdx + '; last outLong = ' + outLong[outLong.length - 1]);
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`max`](https://ta-lib.org/functions/max)

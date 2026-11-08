@@ -530,17 +530,15 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  * ```ts
  * import { supertrend } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ * const close = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outSupertrend, outTrend } = supertrend({ high, low, close }, {
  *   timePeriod: 10,
  *   multiplier: 3,
  * });
- * // outSupertrend[k] is the value at bar begIdx + k
+ * console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)

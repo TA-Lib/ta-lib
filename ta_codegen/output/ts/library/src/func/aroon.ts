@@ -380,14 +380,13 @@ export function aroonDisplayShift(outputIdx: number, options?: AroonOptions): nu
  * ```ts
  * import { aroon } from 'ta-lib';
  *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
+ * const high = new Float64Array(252); // your data, oldest first
+ * const low = new Float64Array(252); // your data, oldest first
+ *
  * const { begIdx, outAroonDown, outAroonUp } = aroon({ high, low }, {
  *   timePeriod: 14,
  * });
- * // outAroonDown[k] is the value at bar begIdx + k
+ * console.log(outAroonDown.length + ' values from bar ' + begIdx + '; last outAroonDown = ' + outAroonDown[outAroonDown.length - 1]);
  * ```
  * @see [`aroonosc`](https://ta-lib.org/functions/aroonosc)
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)

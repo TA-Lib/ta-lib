@@ -426,10 +426,10 @@ export function linearregSlopeDisplayShift(outputIdx: number, options?: Linearre
  * ```ts
  * import { linearregSlope } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, values } = linearregSlope(data, { timePeriod: 14 });
- * // values[k] is the value at bar begIdx + k
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, values } = linearregSlope(series, { timePeriod: 14 });
+ * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
  * @see [`linearregIntercept`](https://ta-lib.org/functions/linearreg_intercept)
@@ -1121,9 +1121,9 @@ export function linearregSlopeOpenAndFillPositional(
  * ```ts
  * import { linearregSlopeOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = linearregSlopeOpen(data, { timePeriod: 14 });
+ * const stream = linearregSlopeOpen(series, { timePeriod: 14 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1157,9 +1157,9 @@ export function linearregSlopeOpen(real: ArrayLike<number>, options?: LinearregS
  * ```ts
  * import { linearregSlopeOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const { stream, begIdx, values } = linearregSlopeOpenAndFill(data, {
+ * const { stream, begIdx, values } = linearregSlopeOpenAndFill(series, {
  *   timePeriod: 14,
  * });
  * // values[k] is the value at bar begIdx + k

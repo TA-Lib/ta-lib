@@ -126,9 +126,10 @@ fn load_chart(func: &FuncDef, public_dir: &Path) -> Option<Chart> {
 /// sentence and the links, which is all an agent or a no-JS reader sees.
 fn chart_section(func: &FuncDef, chart: &Chart) -> String {
     let dir = func.name.to_lowercase();
-    let alt = chart.sentence.replace('&', "&amp;").replace('"', "&quot;");
+    let attr = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;");
+    let (label, alt) = (attr(&chart.label), attr(&chart.sentence));
     format!(
-        "## Chart\n\n<ta-chart src=\"/functions/{dir}.svg\" ratio=\"{}:{}\" alt=\"{alt}\"></ta-chart>\n\n\
+        "## Chart\n\n<ta-chart src=\"/functions/{dir}.svg\" ratio=\"{}:{}\" label=\"{label}\" alt=\"{alt}\"></ta-chart>\n\n\
          {} [Reference data (CSV)](/functions/{dir}.csv) · [Chart (SVG)](/functions/{dir}.svg)\n",
         chart.width, chart.height, chart.sentence
     )
@@ -178,6 +179,7 @@ fn transform_page(
     let injected = link_output_values(&injected, func.is_candlestick());
     let with_impl = inject_implementation(&injected, func, root, releases);
     let with_flags = inject_flags(&with_impl, func, enums, stability);
+    let with_flags = inject_example(&with_flags, func, enums);
     let linked = linkify_see_also(&with_flags, known);
     let normalized = normalize_function_links(&linked);
     let pruned = strip_empty_sections(&normalized);
@@ -206,6 +208,53 @@ const AFTER_IMPLEMENTATION: [&str; 3] = ["## Aliases", "## See Also", "## Refere
 /// follows it in the canonical order, or at the end.
 fn inject_implementation(body: &str, func: &FuncDef, root: &Path, releases: &Releases) -> String {
     insert_before_later_sections(body, &implementation_section(func, root, releases))
+}
+
+/// The five tabs of the `## Example` section, in site order: tab title, fence language,
+/// and the lines each language's emitter shows (its compiled copy carries more).
+#[allow(clippy::implicit_hasher)]
+#[must_use]
+pub fn example_tabs(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+) -> Option<Vec<(&'static str, &'static str, Vec<String>)>> {
+    Some(vec![
+        ("C", "c", super::c_examples::example(func, enums)?.shown()),
+        ("Rust", "rust", super::rust_doc::example(func, enums)?.shown()),
+        ("Java", "java", super::java_examples::example(func, enums)?.shown()),
+        ("C\\#", "csharp", super::csharp_examples::example(func, enums)?.shown()),
+        ("TypeScript", "ts", super::ts_doc::batch_example(func, enums)?.source()),
+    ])
+}
+
+/// The `## Example` section: one `code-tabs` block, every parameter at its default,
+/// the last computed value printed. None when an input has no example shape.
+#[allow(clippy::implicit_hasher)]
+#[must_use]
+pub fn example_section(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<String> {
+    let mut s = String::from("## Example\n\n::: code-tabs#lang\n");
+    for (title, fence, lines) in example_tabs(func, enums)? {
+        s.push_str(&format!("\n@tab {title}\n\n```{fence}\n"));
+        for line in lines {
+            s.push_str(&line);
+            s.push('\n');
+        }
+        s.push_str("```\n");
+    }
+    s.push_str("\n:::\n");
+    Some(s)
+}
+
+/// Insert the `## Example` section right before `## Implementation`.
+fn inject_example(body: &str, func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
+    let Some(block) = example_section(func, enums) else {
+        return body.to_string();
+    };
+    let lines: Vec<&str> = body.lines().collect();
+    let Some(at) = lines.iter().position(|l| l.trim_end() == "## Implementation") else {
+        return body.to_string();
+    };
+    format!("{}\n{block}\n{}\n", lines[..at].join("\n"), lines[at..].join("\n"))
 }
 
 /// From this release on, ta-lib-python ships each function under the C version that added it.
@@ -839,10 +888,12 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         if let Err(e) = validate_no_bare_urls(&body, f) {
             errors.push(e);
         }
-        if body.lines().any(|l| l.trim_end() == "## Chart") {
-            errors.push(format!(
-                "{dir}/{dir}.md: `## Chart` is generated for the website page; delete it from the input"
-            ));
+        for heading in ["## Chart", "## Example"] {
+            if body.lines().any(|l| l.trim_end() == heading) {
+                errors.push(format!(
+                    "{dir}/{dir}.md: `{heading}` is generated for the website page; delete it from the input"
+                ));
+            }
         }
         if has_authored_implementation(&body) {
             errors.push(format!(
@@ -1543,10 +1594,9 @@ fn build_index(funcs: &[&FuncDef]) -> String {
          Each page charts the function over one fixed price series (IBM, daily, 1999, the series \
          `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, \
          computed by the C library. Running TA-Lib over the CSV's own input columns from its first \
-         row reproduces the output columns. Compare with a tolerance rather than bit for bit: the \
-         values come from one platform, and a function that \
-         [uses a transcendental](/spec/versions/#transcendental) may differ in the last bits \
-         [across machines](/spec/versions/#machines).\n",
+         row reproduces the output columns. Compare with a tolerance rather than bit for bit: a \
+         function that [uses a transcendental](/spec/versions/#transcendental) may differ in the \
+         last bits [across machines](/spec/versions/#machines).\n",
     );
     for (group, fns) in &by_group {
         s.push_str(&format!("\n## {group}\n\n"));

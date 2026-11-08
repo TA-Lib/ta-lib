@@ -389,20 +389,20 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
+    /// let high = vec![0.0; 252]; // your data, oldest first
+    /// # let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low = vec![0.0; 252]; // your data, oldest first
+    /// # let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let mut jaw = vec![0.0; 252];
     /// let mut teeth = vec![0.0; 252];
     /// let mut lips = vec![0.0; 252];
     ///
-    /// let out_range = core.alligator(
-    ///     0, high.len() - 1, &high, &low, 13, 8, 8, 5, 5, 3,
-    ///     &mut jaw, &mut teeth, &mut lips,
-    /// )?;
-    /// assert!(out_range.count > 0);
-    /// assert!(jaw[..out_range.count].iter().all(|v| v.is_finite()));
+    /// let core = Core::new();
+    /// let range = core.alligator(0, high.len() - 1, &high, &low, 13, 8, 8, 5, 5, 3,
+    ///                            &mut jaw, &mut teeth, &mut lips)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last jaw = {}", range.count, range.beg_idx, jaw[range.count - 1]);
+    /// # assert!(jaw[..range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

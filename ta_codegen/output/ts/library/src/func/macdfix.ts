@@ -607,15 +607,15 @@ export function macdfixDisplayShift(outputIdx: number, options?: MacdfixOptions)
  * ```ts
  * import { macdfix } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = new Float64Array(252); // your data, oldest first
+ *
  * const {
  *   begIdx,
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macdfix(data, { signalPeriod: 9 });
- * // outMacd[k] is the value at bar begIdx + k
+ * } = macdfix(series, { signalPeriod: 9 });
+ * console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
@@ -1449,9 +1449,9 @@ export function macdfixOpenAndFillPositional(
  * ```ts
  * import { macdfixOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdfixOpen(data, { signalPeriod: 9 });
+ * const stream = macdfixOpen(series, { signalPeriod: 9 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
@@ -1485,7 +1485,7 @@ export function macdfixOpen(real: ArrayLike<number>, options?: MacdfixOptions): 
  * ```ts
  * import { macdfixOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
@@ -1493,7 +1493,7 @@ export function macdfixOpen(real: ArrayLike<number>, options?: MacdfixOptions): 
  *   outMacd,
  *   outMacdSignal,
  *   outMacdHist,
- * } = macdfixOpenAndFill(data, { signalPeriod: 9 });
+ * } = macdfixOpenAndFill(series, { signalPeriod: 9 });
  * // outMacd[k] is the value at bar begIdx + k
  * ```
  */

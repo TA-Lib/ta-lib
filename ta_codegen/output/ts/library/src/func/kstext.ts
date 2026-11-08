@@ -676,9 +676,9 @@ export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): 
  * ```ts
  * import { MAType, kstext } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const { begIdx, outKst, outKstSignal } = kstext(data, {
+ * const series = new Float64Array(252); // your data, oldest first
+ *
+ * const { begIdx, outKst, outKstSignal } = kstext(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,
@@ -691,7 +691,7 @@ export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): 
  *   rocMaType: MAType.SMA,
  *   signalMaType: MAType.SMA,
  * });
- * // outKst[k] is the value at bar begIdx + k
+ * console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
  * ```
  * @see [`kst`](https://ta-lib.org/functions/kst)
  * @see [`roc`](https://ta-lib.org/functions/roc)
@@ -1516,9 +1516,9 @@ export function kstextOpenAndFillPositional(
  * ```ts
  * import { MAType, kstextOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kstextOpen(data, {
+ * const stream = kstextOpen(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,
@@ -1574,14 +1574,14 @@ export function kstextOpen(real: ArrayLike<number>, options?: KstextOptions): Ks
  * ```ts
  * import { MAType, kstextOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ * const series = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const {
  *   stream,
  *   begIdx,
  *   outKst,
  *   outKstSignal,
- * } = kstextOpenAndFill(data, {
+ * } = kstextOpenAndFill(series, {
  *   roc1Period: 10,
  *   roc2Period: 15,
  *   roc3Period: 20,

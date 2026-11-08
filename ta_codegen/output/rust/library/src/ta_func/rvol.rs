@@ -255,16 +255,17 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     ///
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
+    /// let volume = vec![0.0; 252]; // your data, oldest first
+    /// # let volume: Vec<f64> = (0..252)
+    /// #     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
+    /// #     .collect();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.rvol(0, volume.len() - 1, &volume, 20, &mut out)?;
-    /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| !v.is_nan()));
+    /// let core = Core::new();
+    /// let range = core.rvol(0, volume.len() - 1, &volume, 20, &mut out)?;
+    /// # assert!(range.count > 0);
+    /// println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+    /// # assert!(out[..range.count].iter().all(|v| !v.is_nan()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -521,7 +522,7 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
@@ -554,7 +555,7 @@ impl Core {
     /// ```
     /// use ta_lib::Core;
     /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .map(|i| 10000.0 + 100.0 * i as f64 + 2000.0 * (0.3 * i as f64).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
