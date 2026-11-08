@@ -175,7 +175,8 @@ body .vp-toc-placeholder {
   }
 
   &:hover::after,
-  &:focus-visible::after {
+  &:focus-visible::after,
+  summary &:focus::after {
     opacity: 1;
     visibility: visible;
   }

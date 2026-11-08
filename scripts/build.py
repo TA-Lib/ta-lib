@@ -420,7 +420,8 @@ def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
         return rc
     if not check:
         # The pages and charts are rendered from the CSVs just written.
-        return run_codegen(root_dir, 'run', '--release', '--', 'generate')
+        run_codegen(root_dir, 'run', '--release', '--', 'generate')
+        return 0
     csvs = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.endswith('.csv'))
     print(f"=== ta_refdata --replay ({len(csvs)} files) ===", flush=True)
     for i in range(0, len(csvs), 50):

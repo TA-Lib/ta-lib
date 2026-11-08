@@ -127,8 +127,9 @@ fn load_chart(func: &FuncDef, public_dir: &Path) -> Option<Chart> {
 /// The drawing description and the flags behind it are detail most readers skip, so the
 /// site folds them; the tag, the links and the fold's text are all an agent's twin shows.
 fn chart_section(func: &FuncDef, chart: &Chart) -> String {
-    const TIP: &str = "The chart is drawn from the function's metadata alone: the flags the \
-                       abstract API reports for it and for each output.";
+    const TIP: &str = "The chart is drawn from the function's metadata: the flags the abstract \
+                       API reports for it and for each output, and the input series its reference \
+                       run declares.";
     let dir = func.name.to_lowercase();
     let attr = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;");
     let (label, alt) = (attr(&chart.label), attr(&chart.sentence));
@@ -1604,8 +1605,9 @@ fn build_index(funcs: &[&FuncDef]) -> String {
     ));
     s.push_str(
         "\n## Reference data\n\n\
-         Each page charts the function over one fixed price series (IBM, daily, 1999, the series \
-         `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, \
+         Each page charts the function at default parameters over one fixed price series (IBM, \
+         daily, 1999, the series `ta_regtest` ships), or over a synthetic input the page names for \
+         the Math Transform and Math Operators functions, and links a CSV of the inputs and every output, \
          computed by the C library. Running TA-Lib over the CSV's own input columns from its first \
          row reproduces the output columns. [Compare with a tolerance](/spec/versions/#tolerance) \
          rather than bit for bit.\n",

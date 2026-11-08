@@ -11,11 +11,11 @@ Single-candle pattern: a short real body with short upper and lower shadows (a s
 
 <ta-chart src="/functions/cdlshortline.svg" ratio="720:274" label="CDLSHORTLINE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles by sign (the candle's colour), ▲ above the high for + and ▼ below the low for −."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
 Drawn on the price pane over candles, with outInteger as markers on the candles by sign (the candle's colour), ▲ above the high for + and ▼ below the low for −.
 
-Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, zero, positive, negative`
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: integer, positive, negative`
 
 :::
 

@@ -232,22 +232,33 @@ impl RefData {
         }
     }
 
-    /// Component letters the header names (`inPriceHLC=HLC`), lower-cased tokens.
+    /// The price components the header says the function read, as lower-cased
+    /// tokens: a bundle's letters (`inPriceHLC=HLC`) or a real input's column
+    /// (`inReal0=high`), so a function fed high and low draws candles.
     fn header_components(&self) -> Vec<&'static str> {
         let mut comps = Vec::new();
         for (_, v) in &self.input_desc {
-            if !v.is_empty() && v.chars().all(|c| "OHLCV".contains(c)) {
-                for c in v.chars() {
-                    let name = match c {
+            let names: Vec<&'static str> = match v.as_str() {
+                "open" => vec!["open"],
+                "high" => vec!["high"],
+                "low" => vec!["low"],
+                "close" => vec!["close"],
+                "volume" => vec!["volume"],
+                letters if !letters.is_empty() && letters.chars().all(|c| "OHLCV".contains(c)) => letters
+                    .chars()
+                    .map(|c| match c {
                         'O' => "open",
                         'H' => "high",
                         'L' => "low",
                         'C' => "close",
                         _ => "volume",
-                    };
-                    if !comps.contains(&name) {
-                        comps.push(name);
-                    }
+                    })
+                    .collect(),
+                _ => Vec::new(),
+            };
+            for name in names {
+                if !comps.contains(&name) {
+                    comps.push(name);
                 }
             }
         }
@@ -885,10 +896,18 @@ fn input_line_class(k: usize) -> (&'static str, &'static str) {
     if k == 0 { ("close", "close") } else { ("line s5", "s5") }
 }
 
+/// Per output class, the flags its drawing reads; an integer output's deciding fact
+/// is its type, which is no flag.
+const REAL_FLAGS_READ: [&str; 9] =
+    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "zero", "negative", "display_shift"];
+const PATTERN_FLAGS_READ: [&str; 4] = ["positive", "negative", "zero", "display_shift"];
+const SIGN_FLAGS_READ: [&str; 3] = ["positive", "negative", "display_shift"];
+const STEP_FLAGS_READ: [&str; 1] = ["display_shift"];
+
 /// What decided the drawing, in the site's order: the function's `overlap` or
 /// `candlestick` flag, the price bundles and synthetic inputs, then every output's
 /// flags with its display shift when it has one.
-fn flags_used(func: &FuncDef, data: &RefData) -> Vec<String> {
+fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
     let mut used: Vec<String> = Vec::new();
     for flag in ["overlap", "candlestick"] {
         if has(&func.flags, flag) {
@@ -914,13 +933,29 @@ fn flags_used(func: &FuncDef, data: &RefData) -> Vec<String> {
             used.push(format!("{}: series {} [{}, {}]", input.name, input.series.token(), fmt(lo), fmt(hi)));
         }
     }
+    let named = |outs: &[&Output], o: &Output| outs.iter().any(|p| p.name == o.name);
     for o in &func.outputs {
         let shift = data.shift(&o.name);
-        let flags: Vec<String> = o
-            .flags
-            .iter()
-            .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() })
-            .collect();
+        let pattern = named(&plan.pattern_outs, o);
+        let (lead, keep): (Option<&str>, &[&str]) = if pattern {
+            (None, &PATTERN_FLAGS_READ)
+        } else if named(&plan.sign_outs, o) {
+            (Some("integer"), &SIGN_FLAGS_READ)
+        } else if named(&plan.int_outs, o) {
+            (Some("integer"), &STEP_FLAGS_READ)
+        } else {
+            (None, &REAL_FLAGS_READ)
+        };
+        let mut flags: Vec<String> = lead.map(String::from).into_iter().collect();
+        if pattern {
+            flags.extend(o.flags.iter().filter(|f| f.starts_with("pattern_")).cloned());
+        }
+        flags.extend(
+            o.flags
+                .iter()
+                .filter(|f| keep.contains(&f.as_str()))
+                .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() }),
+        );
         used.push(if flags.is_empty() { o.name.clone() } else { format!("{}: {}", o.name, flags.join(", ")) });
     }
     used
@@ -1463,7 +1498,7 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
         svg: cv.out,
         label,
         sentence,
-        flags_used: flags_used(func, data),
+        flags_used: flags_used(func, data, &plan),
         width: px(W),
         height: px(total_h),
     }
@@ -1685,6 +1720,65 @@ mod tests {
         assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
     }
 
+    /// `flags_used` names only what each output class's drawing read: no `line` on
+    /// a pattern output, no `positive`/`negative` on a plain line, an integer
+    /// output's type in place of flags.
+    #[test]
+    fn flags_used_lists_what_each_output_class_read() {
+        let macd = func(
+            "MACD",
+            &[],
+            vec![Input::new("inReal", ParamType::Real)],
+            vec![
+                out("outMACD", ParamType::Real, &["line", "zero", "positive", "negative"]),
+                out("outMACDSignal", ParamType::Real, &["dash_line", "negative"]),
+                out("outMACDHist", ParamType::Real, &["histogram", "zero", "negative", "positive"]),
+            ],
+        );
+        let mut csv = String::from("# input: test.csv; window 1999-01-04..1999-01-05 (2 bars)\n# parameters: optInFastPeriod=12 (defaults)\n# inputs: inReal=close\n# outputs: outMACD (shift 0) outMACDSignal (shift 0) outMACDHist (shift 0)\ndate,open,high,low,close,volume,outMACD,outMACDSignal,outMACDHist\n");
+        csv.push_str("1999-01-04,1,2,0.5,1.5,100,1,2,-1\n1999-01-05,1,2,0.5,1.6,100,2,1,1\n");
+        let chart = render(&macd, &RefData::parse(&csv).unwrap());
+        assert_eq!(
+            chart.flags_used,
+            vec!["outMACD: line, zero, negative", "outMACDSignal: dash_line, negative", "outMACDHist: histogram, zero, negative"]
+        );
+
+        let ohlc = [PriceComponent::Open, PriceComponent::High, PriceComponent::Low, PriceComponent::Close]
+            .into_iter()
+            .map(|component| Input {
+                price: Some(crate::ir::PriceRef { group: 0, component }),
+                ..Input::new(component.input_name(), ParamType::Real)
+            })
+            .collect();
+        let cdl = func(
+            "CDLX",
+            &["candlestick"],
+            ohlc,
+            vec![
+                out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "negative", "display_shift", "pattern_weak"]),
+                out("outSign", ParamType::Integer, &["line", "zero", "positive", "negative"]),
+                out("outFlag", ParamType::Integer, &["line", "pattern_bool", "zero", "positive"]),
+            ],
+        );
+        let d = candle_csv("; flagged bars: 1", "outInteger (shift -1) outSign (shift 0) outFlag (shift 0)", &["0,0,0", "-100,100,0", "0,0,100", "0,-100,0", "0,0,0"]);
+        let chart = render(&cdl, &d);
+        assert_eq!(
+            chart.flags_used,
+            vec![
+                "candlestick",
+                "inPriceOHLC: open, high, low, close",
+                "outInteger: pattern_bull_bear, pattern_weak, zero, negative, display_shift (-1)",
+                "outSign: integer, positive, negative",
+                "outFlag: pattern_bool, zero, positive",
+            ]
+        );
+
+        let step = func("HT_TRENDMODE", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outTrend", ParamType::Integer, &["line", "zero", "positive"])]);
+        let csv = "# input: test.csv; window 1999-01-04..1999-01-05 (2 bars)\n# parameters: (defaults)\n# inputs: inReal=close\n# outputs: outTrend (shift 0)\ndate,open,high,low,close,volume,outTrend\n1999-01-04,1,2,0.5,1.5,100,1\n1999-01-05,1,2,0.5,1.6,100,0\n";
+        let chart = render(&step, &RefData::parse(csv).unwrap());
+        assert_eq!(chart.flags_used, vec!["outTrend: integer"]);
+    }
+
     /// The call markers a pattern sentence promises are the ones its sign flags
     /// declare: a bearish-only pattern never mentions a bullish marker.
     #[test]
@@ -1860,6 +1954,15 @@ mod tests {
         assert_eq!(d.output("outA"), &[None, None]);
         assert_eq!(d.output("outB"), &[None, Some(3.0)]);
         assert_eq!(d.header_components(), vec!["volume"]);
+        let hl = RefData::parse(&text.replace("inReal=ramp[-1,1] inPriceV=V", "inReal0=high inReal1=low").replace(",inReal,", ",").replace(",-1,,", ",,").replace(",1,nan,3", ",nan,3")).unwrap();
+        assert_eq!(hl.header_components(), vec!["high", "low"]);
+        let f = func("CORREL", &[], vec![Input::new("inReal0", ParamType::Real), Input::new("inReal1", ParamType::Real)], vec![out("outA", ParamType::Real, &["line"]), out("outB", ParamType::Real, &["line"])]);
+        let chart = render(&f, &hl);
+        assert!(chart.sentence.starts_with("Drawn on the price pane over candles;"), "{}", chart.sentence);
+        assert!(chart.svg.contains("class=\"up wick\"") || chart.svg.contains("class=\"down wick\""), "{}", chart.svg);
+        let c = RefData::parse(&text.replace("inReal=ramp[-1,1] inPriceV=V", "inReal=close").replace(",inReal,", ",").replace(",-1,,", ",,").replace(",1,nan,3", ",nan,3")).unwrap();
+        assert_eq!(c.header_components(), vec!["close"]);
+        assert!(render(&f, &c).sentence.starts_with("Drawn on the price pane over the close as a line;"));
         assert_eq!(d.synthetic_inputs(), vec![("inReal", "ramp[-1,1]")]);
         assert_eq!(base_series(&d, &d.synthetic_inputs()), vec![("inReal", vec![Some(-1.0), Some(1.0)])]);
         assert!(!d.all_inputs_synthetic(), "a price input keeps the series");

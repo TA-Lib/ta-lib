@@ -410,6 +410,11 @@ jobs:
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
 
+      # The function pages' reference CSVs must still be what the C library
+      # computes (one tolerance rule), and each must reproduce from its own rows.
+      - name: Check the function pages' reference data
+        run: python3 scripts/build.py refdata --check
+
       # A JS typed array reads undefined past its end and drops the store, so the
       # leg above cannot see an off-by-one the JVM, the CLR and safe Rust throw
       # on. Here every typed array the TS server and library build is

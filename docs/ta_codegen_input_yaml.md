@@ -82,8 +82,8 @@ verbatim (batch) or idiomatically recast (streaming, #278).
 | `name` | string | yes | Parameter name (e.g., `inReal`, `inReal0`) |
 | `type` | string | yes | Data type (see [Input Types](#input-types)) |
 | `price_components` | list | for `price` | OHLCV components for a `price`-type input (e.g., `[high, low, close]`) |
-| `series` | `price` \| `ramp` \| `sine` | no | `real` only, default `price`: what every example, doctest and reference-data run feeds the input. `price` is the reference price column (the close; high and low for `inReal0`/`inReal1`); `ramp` is a straight line from `lo` to `hi` over the bars; `sine` is the examples' default sine mapped into `[lo, hi]`. `ramp` and `sine` need `domain` |
-| `domain` | [lo, hi] | with `series` | The range a `ramp` or `sine` series spans, on the scale the function is defined on (ACOS: `[-1, 1]`; the price-scale sine is `[90, 110]`) |
+| `series` | `price` \| `ramp` \| `sine` | no | `real` only, default `price`: what every example, doctest and reference-data run feeds the input. `price` is the reference price column for the reference data (the close; high and low for `inReal0`/`inReal1`) and the price-scale sine for the examples and doctests; `ramp` is a straight line from `lo` to `hi` over the bars; `sine` is the examples' default sine mapped into `[lo, hi]`. `ramp` and `sine` need `domain` |
+| `domain` | [lo, hi] | with `ramp`/`sine` | The range a `ramp` or `sine` series spans, on the scale the function is defined on (ACOS: `[-1, 1]`; the price-scale sine is `[90, 110]`) |
 
 ### Optional input parameters
 

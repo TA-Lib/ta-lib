@@ -93,9 +93,9 @@ jobs:
   # is not Java", and running anything needs the nightly's toolchain anyway.
   #
   # Three units, because they fail independently and a PR can break exactly one:
-  # the shipped library, the hand-written suites under it (NOT generated — the
-  # generator preserves them, so an API change has to be carried into them by
-  # hand, which is what #326 missed), and the server, whose Java comes from a
+  # the shipped library, the suites under it (hand-written except ExamplesTest,
+  # which ta_codegen writes; the generator preserves the rest, so an API change
+  # has to be carried into them by hand, which is what #326 missed), and the server, whose Java comes from a
   # different emitter (server_gen.rs) than the library's (java_stream.rs).
   # Nothing else compares those two emitters' idea of the same API.
   #
@@ -147,7 +147,7 @@ jobs:
           cd ta_codegen/output/java
           if ! javac --release 17 -nowarn -cp /tmp/ta-java-main -d /tmp/ta-java-test \
                $(find library/src/test -name '*.java'); then
-            echo "::error::The hand-written Java suites no longer compile against the generated library. These are NOT generated (ta_codegen/output/java/library/src/test/) — an API change has to be carried into them by hand."
+            echo "::error::The Java suites no longer compile against the generated library. Except ExamplesTest.java (ta_codegen: java_examples.rs), they are NOT generated (ta_codegen/output/java/library/src/test/): an API change has to be carried into them by hand."
             exit 1
           fi
 
@@ -201,7 +201,7 @@ jobs:
         run: |
           if ! dotnet build ta_codegen/output/csharp/library/test/TALib.Test.csproj \
                -c Release --nologo; then
-            echo "::error::The hand-written C# suites no longer compile against the generated library. These are NOT generated (ta_codegen/output/csharp/library/test/) — an API change has to be carried into them by hand."
+            echo "::error::The C# suites no longer compile against the generated library. Except ExamplesTest.g.cs (ta_codegen: csharp_examples.rs), they are NOT generated (ta_codegen/output/csharp/library/test/): an API change has to be carried into them by hand."
             exit 1
           fi
 

@@ -74,6 +74,15 @@ export default defineClientConfig({
     app.component("llm-exclude", (_props, { slots }) => slots.default?.());
     app.component("ta-chart", TaChart);
 
+    if (!__VUEPRESS_SSR__) {
+      // The (i) badge inside a fold's summary explains the fold; a tap on it must not
+      // also toggle the fold.
+      document.addEventListener("click", (event) => {
+        const target = event.target as Element | null;
+        if (target?.closest?.("summary .flag-tip")) event.preventDefault();
+      });
+    }
+
     if (__VUEPRESS_SSR__) return;
 
     router.onError((error: Error, to) => {
