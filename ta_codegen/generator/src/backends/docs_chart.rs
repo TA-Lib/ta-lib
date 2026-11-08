@@ -33,6 +33,7 @@ const SLOTS: [&str; 5] = ["s1", "s2", "s3", "s4", "s5"];
 const MONTHS: [&str; 12] = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
+const BAR_TICK: usize = 50;
 const SERIES_CAPTION: &str = "IBM, daily, 1999";
 
 /// The chart's whole look, shipped inside every SVG: the `var(--vp-c-*, fallback)` hooks
@@ -1310,28 +1311,24 @@ fn draw_axis(cv: &mut Canvas<'_>, total_h: f64, max_shift: i32) {
         fmt(ax_y),
         fmt(ax_y)
     );
-    let mut prev: Option<usize> = None;
-    for (i, d) in cv.data.dates.iter().enumerate() {
-        let mo = d
-            .get(5..7)
-            .and_then(|m| m.parse::<usize>().ok())
-            .filter(|m| (1..=12).contains(m));
-        let Some(mo) = mo else { continue };
-        if prev != Some(mo) {
-            let x = cv.x_of(i) - cv.bw / 2.0;
-            let _ = writeln!(
-                cv.out,
-                "<line class=\"grid\" x1=\"{}\" x2=\"{}\" y1=\"{}\" y2=\"{}\"/>\n<text x=\"{}\" y=\"{}\">{}</text>",
-                fmt(x),
-                fmt(x),
-                fmt(ax_y),
-                fmt(ax_y + 4.0),
-                fmt(x + 3.0),
-                fmt(ax_y + 14.0),
-                MONTHS[mo - 1]
-            );
-            prev = Some(mo);
-        }
+    let ticks: Vec<(usize, String)> = if cv.data.all_inputs_synthetic() {
+        (0..cv.data.dates.len()).step_by(BAR_TICK).map(|i| (i, i.to_string())).collect()
+    } else {
+        month_ticks(&cv.data.dates)
+    };
+    for (i, text) in ticks {
+        let x = cv.x_of(i) - cv.bw / 2.0;
+        let _ = writeln!(
+            cv.out,
+            "<line class=\"grid\" x1=\"{}\" x2=\"{}\" y1=\"{}\" y2=\"{}\"/>\n<text x=\"{}\" y=\"{}\">{}</text>",
+            fmt(x),
+            fmt(x),
+            fmt(ax_y),
+            fmt(ax_y + 4.0),
+            fmt(x + 3.0),
+            fmt(ax_y + 14.0),
+            text
+        );
     }
     if max_shift > 0 {
         let x = cv.x_of(cv.data.dates.len()) - cv.bw / 2.0;
@@ -1344,6 +1341,23 @@ fn draw_axis(cv: &mut Canvas<'_>, total_h: f64, max_shift: i32) {
             fmt(ax_y)
         );
     }
+}
+
+fn month_ticks(dates: &[String]) -> Vec<(usize, String)> {
+    let mut ticks = Vec::new();
+    let mut prev: Option<usize> = None;
+    for (i, d) in dates.iter().enumerate() {
+        let mo = d
+            .get(5..7)
+            .and_then(|m| m.parse::<usize>().ok())
+            .filter(|m| (1..=12).contains(m));
+        let Some(mo) = mo else { continue };
+        if prev != Some(mo) {
+            ticks.push((i, MONTHS[mo - 1].to_string()));
+            prev = Some(mo);
+        }
+    }
+    ticks
 }
 
 fn component_names(letters: &str) -> Option<String> {
@@ -1871,6 +1885,14 @@ mod tests {
         assert_eq!(fill_pts.split(' ').count(), 8, "{fill_pts}");
     }
 
+    /// The x-axis tick labels: unclassed `<text>` other than the caption.
+    fn axis_labels(svg: &str) -> Vec<&str> {
+        svg.lines()
+            .filter(|l| l.starts_with("<text x=") && !l.contains("input:"))
+            .filter_map(|l| l.split('>').nth(1)?.strip_suffix("</text"))
+            .collect()
+    }
+
     /// A column named after an input argument is the input the function read; the
     /// top pane plots it, and a non-price input without one is a parse error.
     #[test]
@@ -1895,7 +1917,9 @@ mod tests {
         assert!(chart.svg.contains("aria-label=\"ACOS over a ramp from -1 to 1\""), "{}", chart.svg);
         let without = csv.replace(",inReal,", ",").replace(",-0.5,2", ",2").replace(",0.25,1", ",1").replace(",0.5,0", ",0");
         assert_eq!(RefData::parse(&without).unwrap_err(), "input inReal=ramp[-1,1] has no `inReal` column");
-        assert!(RefData::parse(&without.replace("ramp[-1,1]", "close")).is_ok());
+        assert_eq!(axis_labels(&chart.svg), vec!["0"], "{}", chart.svg);
+        let on_close = render(&f, &RefData::parse(&without.replace("ramp[-1,1]", "close")).unwrap());
+        assert_eq!(axis_labels(&on_close.svg), vec!["Jan"], "{}", on_close.svg);
         assert!(RefData::parse(&without.replace("inReal=ramp[-1,1]", "inPeriods=5(first-half)|20(second-half)")).is_err());
         let sine = RefData::parse(&csv.replace("ramp[-1,1]", "sine[90,110]")).unwrap();
         assert_eq!(sine.synthetic_inputs(), vec![("inReal", "sine[90,110]")]);

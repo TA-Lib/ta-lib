@@ -20,28 +20,16 @@
 <text class="legend" x="31" y="259">outReal</text>
 <line class="grid" x1="10" x2="662" y1="382" y2="382"/>
 <line class="grid" x1="10" x2="10" y1="382" y2="386"/>
-<text x="13" y="396">Jan</text>
-<line class="grid" x1="59.2" x2="59.2" y1="382" y2="386"/>
-<text x="62.2" y="396">Feb</text>
-<line class="grid" x1="108.3" x2="108.3" y1="382" y2="386"/>
-<text x="111.3" y="396">Mar</text>
-<line class="grid" x1="167.8" x2="167.8" y1="382" y2="386"/>
-<text x="170.8" y="396">Apr</text>
-<line class="grid" x1="222.2" x2="222.2" y1="382" y2="386"/>
-<text x="225.2" y="396">May</text>
-<line class="grid" x1="273.9" x2="273.9" y1="382" y2="386"/>
-<text x="276.9" y="396">Jun</text>
-<line class="grid" x1="330.8" x2="330.8" y1="382" y2="386"/>
-<text x="333.8" y="396">Jul</text>
-<line class="grid" x1="385.2" x2="385.2" y1="382" y2="386"/>
-<text x="388.2" y="396">Aug</text>
-<line class="grid" x1="442.1" x2="442.1" y1="382" y2="386"/>
-<text x="445.1" y="396">Sep</text>
-<line class="grid" x1="496.4" x2="496.4" y1="382" y2="386"/>
-<text x="499.4" y="396">Oct</text>
-<line class="grid" x1="550.7" x2="550.7" y1="382" y2="386"/>
-<text x="553.7" y="396">Nov</text>
-<line class="grid" x1="605.1" x2="605.1" y1="382" y2="386"/>
-<text x="608.1" y="396">Dec</text>
+<text x="13" y="396">0</text>
+<line class="grid" x1="139.4" x2="139.4" y1="382" y2="386"/>
+<text x="142.4" y="396">50</text>
+<line class="grid" x1="268.7" x2="268.7" y1="382" y2="386"/>
+<text x="271.7" y="396">100</text>
+<line class="grid" x1="398.1" x2="398.1" y1="382" y2="386"/>
+<text x="401.1" y="396">150</text>
+<line class="grid" x1="527.5" x2="527.5" y1="382" y2="386"/>
+<text x="530.5" y="396">200</text>
+<line class="grid" x1="656.8" x2="656.8" y1="382" y2="386"/>
+<text x="659.8" y="396">250</text>
 <text x="10" y="412">252 bars · input: inReal = ramp [-1, 1]</text>
 </svg>
