@@ -9,7 +9,7 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 
 ## Chart
 
-<ta-chart src="/functions/cdltristar.svg" ratio="720:274" label="CDLTRISTAR over Synthetic series, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdltristar.svg" ratio="720:274" label="CDLTRISTAR over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 

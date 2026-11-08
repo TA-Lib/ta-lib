@@ -9,7 +9,7 @@ Three-candle bearish reversal pattern: a long white candle, then a black candle 
 
 ## Chart
 
-<ta-chart src="/functions/cdl2crows.svg" ratio="720:274" label="CDL2CROWS over Synthetic series, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdl2crows.svg" ratio="720:274" label="CDL2CROWS over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 

@@ -9,7 +9,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 ## Chart
 
-<ta-chart src="/functions/cdlhikkakemod.svg" ratio="720:274" label="CDLHIKKAKEMOD over Synthetic series, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a confirmed call (200) ringed."></ta-chart>
+<ta-chart src="/functions/cdlhikkakemod.svg" ratio="720:274" label="CDLHIKKAKEMOD over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a confirmed call (200) ringed."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 

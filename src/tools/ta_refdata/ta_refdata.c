@@ -29,7 +29,6 @@
 
 #include "ta_refdata_domains.h"
 
-#define WINDOW_BARS 252
 #define PRICE_COLS 6                    /* date,open,high,low,close,volume */
 #define MAXEXTRA 8                      /* derived input columns after them */
 #define MAXOUT 8
@@ -668,7 +667,7 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
     const Ctx *ctx = opaque;
     Run r;
     const Series *best = &corpus[refSeries];
-    int bestFirst = 0, bestRows = best->n, bestCount = -1, k, flagged = 0;
+    int bestRows = best->n, bestCount = -1, k, flagged = 0;
     char lower[64], path[1024];
     Buf text = { NULL, 0, 0 };
     Table computed, committed;
@@ -683,40 +682,32 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
 
     run_alloc(&r, fi, maxRows);
     if (run_is_pattern(&r)) {
-        /* Every full window of lookback + WINDOW_BARS bars, in every file, scored
-         * by its flagged bars; the default window is always a candidate so one
-         * 252-bar file still has one. Ties: count desc, file asc, start asc.
-         * A synthetic file is a candidate only when no market file fires. */
-        const int lb = r.lookback;
+        /* The reference file when it fires at all; otherwise the other file
+         * holding the most flagged bars, a market file before a synthetic one.
+         * Every file but the reference is an excerpt charted whole, its
+         * lookback included. Ties: file name asc. */
         int f, pass;
         bestCount = 0;
         rc = run_call(&r, best, 0, best->n, NULL);
         if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
         for (k = 0; k < best->n; k++) bestCount += run_flagged(&r, k);
-        for (pass = 0; pass < 2 && (pass == 0 || bestCount == 0); pass++)
+        for (pass = 0; pass < 2 && bestCount == 0; pass++)
         for (f = 0; f < nCorpus; f++) {
             const Series *s = &corpus[f];
-            int start, count = 0;
-            if (s->synthetic != pass || s->n < lb + WINDOW_BARS) continue;
+            int count = 0;
+            if (f == refSeries || s->synthetic != pass || s->n <= r.lookback) continue;
             rc = run_call(&r, s, 0, s->n, NULL);
             if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, s->name, (int)rc);
-            for (k = lb; k < lb + WINDOW_BARS; k++) count += run_flagged(&r, k);
-            for (start = lb; start + WINDOW_BARS <= s->n; start++) {
-                int rows = lb + WINDOW_BARS, first = start - lb;
-                int isDefault = s == &corpus[refSeries] && first == 0 && rows == s->n;
-                if (start > lb) count += run_flagged(&r, start + WINDOW_BARS - 1) - run_flagged(&r, start - 1);
-                if (isDefault) continue;
-                if (count > bestCount ||
-                    (count == bestCount && (strcmp(s->name, best->name) < 0 ||
-                     (s == best && strcmp(s->date[start], best->date[bestFirst + lb]) < 0)))) {
-                    bestCount = count; best = s; bestFirst = first; bestRows = rows;
-                }
+            for (k = 0; k < s->n; k++) count += run_flagged(&r, k);
+            if (count > bestCount || (count && count == bestCount && strcmp(s->name, best->name) < 0)) {
+                bestCount = count; best = s;
             }
         }
-        if (bestCount == 0) { best = &corpus[refSeries]; bestFirst = 0; bestRows = best->n; }
+        if (bestCount == 0) best = &corpus[refSeries];
+        bestRows = best->n;
     }
 
-    rc = run_call(&r, best, bestFirst, bestRows, NULL);
+    rc = run_call(&r, best, 0, bestRows, NULL);
     if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
     if (r.nb <= 0)
         die("%s: lookback %d leaves no output bar over %d rows", fi->name, r.lookback, r.rows);
