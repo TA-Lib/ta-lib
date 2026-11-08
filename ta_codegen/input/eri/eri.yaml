@@ -17,7 +17,7 @@ optional_inputs:
 outputs:
   - name: outBullPower
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outBearPower
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]

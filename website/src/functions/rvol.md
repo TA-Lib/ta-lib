@@ -11,11 +11,11 @@ Read it as a confirmation filter rather than a direction signal: it says how muc
 
 ## Chart
 
-<ta-chart src="/functions/rvol.svg" ratio="720:484" label="RVOL over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+<ta-chart src="/functions/rvol.svg" ratio="720:484" label="RVOL over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane.
 
 Metadata flags used: `inPriceV: volume` · `outReal: line`
 

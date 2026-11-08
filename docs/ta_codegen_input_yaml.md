@@ -250,6 +250,7 @@ An unrecognised flag string in any of the three lists fails `generate`.
 | `dash_line` | Dashed line | `TA_OUT_DASH_LINE` |
 | `dot` | Individual dots | `TA_OUT_DOT` |
 | `histogram` | Bar chart / histogram | `TA_OUT_HISTO` |
+| `segmented` | A line that restarts wherever the function's one integer output changes value: never connect across a change. Real outputs only, and the function must have exactly one integer output | `TA_OUT_SEGMENTED` |
 
 **Values** (what the values mean: spec rule rW7, `website/src/spec/inputs-outputs/README.md`):
 
@@ -262,9 +263,11 @@ An unrecognised flag string in any of the three lists fails `generate`.
 | `pattern_bull_bear` | Pattern output whose sign is a call | `TA_OUT_PATTERN_BULL_BEAR` |
 | `pattern_weak` | Level 80 occurs too | `TA_OUT_PATTERN_WEAK` |
 | `pattern_confirm` | Level 200 occurs too | `TA_OUT_PATTERN_CONFIRM` |
+| `bar_index` | The value is an absolute index into the input arrays. Integer outputs only | `TA_OUT_BAR_INDEX` |
 
 An output that sets any of `positive`, `negative`, `zero` lists every sign it
-writes. A pattern output takes one of three shapes, and `generate` rejects
+writes; on a real output, for some valid parameter values over well-formed bars,
+not counting a running sum's rounding a few units in the last place past zero. A pattern output takes one of three shapes, and `generate` rejects
 anything else:
 
 - `pattern_bool, zero, positive`;

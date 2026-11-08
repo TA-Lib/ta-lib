@@ -9,13 +9,13 @@ Returns the absolute input indices of the lowest and highest values within each 
 
 ## Chart
 
-<ta-chart src="/functions/minmaxindex.svg" ratio="720:438" label="MINMAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for each of outMinIdx and outMaxIdx."></ta-chart>
+<ta-chart src="/functions/minmaxindex.svg" ratio="720:438" label="MINMAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over the close as a line; below it, a step pane of its own for each of outMinIdx and outMaxIdx.
+Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx.
 
-Metadata flags used: `outMinIdx: integer` · `outMaxIdx: integer`
+Metadata flags used: `outMinIdx: integer, bar_index` · `outMaxIdx: integer, bar_index`
 
 :::
 

@@ -82,7 +82,7 @@ optional_inputs:
 outputs:
   - name: outKST
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outKSTSignal
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]

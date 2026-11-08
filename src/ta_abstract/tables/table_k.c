@@ -225,13 +225,13 @@ const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_SlowD_MAType =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outK =
-                               { TA_Output_Real, "outK", TA_OUT_LINE };
+                               { TA_Output_Real, "outK", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outD =
-                               { TA_Output_Real, "outD", TA_OUT_LINE };
+                               { TA_Output_Real, "outD", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outJ =
-                               { TA_Output_Real, "outJ", TA_OUT_LINE };
+                               { TA_Output_Real, "outJ", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_KDJ_Inputs[]    =
 {
@@ -391,10 +391,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_KST_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KST_outKST =
-                               { TA_Output_Real, "outKST", TA_OUT_LINE };
+                               { TA_Output_Real, "outKST", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KST_outKSTSignal =
-                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_KST_Inputs[]    =
 {
@@ -585,10 +585,10 @@ const TA_OptInputParameterInfo TA_DEF_UI_D_KSTEXT_SignalMAType =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KSTEXT_outKST =
-                               { TA_Output_Real, "outKST", TA_OUT_LINE };
+                               { TA_Output_Real, "outKST", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KSTEXT_outKSTSignal =
-                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outKSTSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_KSTEXT_Inputs[]    =
 {
@@ -649,6 +649,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_KURTOSIS_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KURTOSIS_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_KURTOSIS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -657,7 +660,7 @@ static const TA_InputParameterInfo    *TA_KURTOSIS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_KURTOSIS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_KURTOSIS_Default,
   NULL
 };
 
@@ -726,10 +729,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_KVO_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KVO_outKVO =
-                               { TA_Output_Real, "outKVO", TA_OUT_LINE };
+                               { TA_Output_Real, "outKVO", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KVO_outKVOSignal =
-                               { TA_Output_Real, "outKVOSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outKVOSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_KVO_Inputs[]    =
 {

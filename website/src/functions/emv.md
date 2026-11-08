@@ -19,7 +19,7 @@ The output scales with the instrument's volume and with the volume divisor, so i
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
 
-Metadata flags used: `inPriceHLV: high, low, volume` · `outReal: line`
+Metadata flags used: `inPriceHLV: high, low, volume` · `outReal: line, positive, negative`
 
 :::
 

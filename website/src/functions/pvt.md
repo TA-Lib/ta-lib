@@ -17,7 +17,7 @@ Read the slope and the divergences, not the level: the total's zero point is arb
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
 
-Metadata flags used: `inPriceCV: close, volume` · `outReal: line`
+Metadata flags used: `inPriceCV: close, volume` · `outReal: line, positive, negative`
 
 :::
 

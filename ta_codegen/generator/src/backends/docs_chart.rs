@@ -2,13 +2,18 @@
 //! function's metadata and a reference run over a fixed daily series.
 //!
 //! The metadata decides the drawing: `overlap` puts real outputs on the price
-//! pane, otherwise they get an indicator pane; each integer output that is not a
-//! pattern gets a step pane of its own; `pattern_*` outputs, and a `candlestick`
+//! pane, otherwise they get an indicator pane, which has a zero line when an
+//! output is a histogram or declares both `positive` and `negative`; four real
+//! outputs named `…Open`, `…High`, `…Low`, `…Close` are a candle pane of their
+//! own; each integer output that is not a pattern gets a step pane of its own,
+//! and a `bar_index` one also draws, on the price pane, the function's one real
+//! input read at the bar it names; `pattern_*` outputs, and a `candlestick`
 //! function's plain integer output (its sign is the candle's colour), become
 //! markers on the candles; the inputs' price components pick candles or a close
 //! line and add a volume pane. Output flags pick the stroke (`line`, `dash_line`,
-//! `dot`, `histogram`, `upper_limit`/`lower_limit` band), and `display_shift`
-//! moves the series by the shift the reference run reports.
+//! `dot`, `histogram`, `upper_limit`/`lower_limit` band, `segmented` broken and
+//! coloured by the integer output's sign), and `display_shift` moves the series
+//! by the shift the reference run reports.
 //!
 //! `STYLE` is the chart's whole stylesheet and ships inside the SVG; the site
 //! adds layout only.
@@ -24,6 +29,7 @@ const TOP: f64 = 6.0;
 const GAP: f64 = 12.0;
 const H_PRICE: f64 = 230.0;
 const H_IND: f64 = 130.0;
+const H_CANDLE: f64 = 200.0;
 const H_INT_SMALL: f64 = 70.0;
 const H_VOL: f64 = 56.0;
 const H_AXIS: f64 = 20.0;
@@ -480,6 +486,8 @@ enum LegendMark<'a> {
     /// A sign marker pair in a slot colour.
     Sign(&'a str),
     Hist,
+    /// An up and a down candle.
+    Candles,
 }
 
 struct LegendItem<'a> {
@@ -581,7 +589,6 @@ impl<'a> Canvas<'a> {
         }
     }
 
-    /// An output's levels: each a dashed rule across the pane, labelled with its value.
     fn levels(&mut self, p: &Pane, levels: &[f64]) {
         for v in levels {
             let yy = fmt(p.sy(*v));
@@ -628,6 +635,34 @@ impl<'a> Canvas<'a> {
                     pts.join(" ")
                 );
             }
+        }
+    }
+
+    /// A line broken wherever `key` changes value or a value is missing, each run
+    /// stroked by the sign of its key: `up`, `down`, or `fallback` at 0. The key is
+    /// an integer output, so comparing it exactly is sound.
+    #[allow(clippy::float_cmp)]
+    fn segmented_line(&mut self, p: &Pane, vals: &[Option<f64>], key: &[Option<f64>], fallback: &str, shift: i32) {
+        let mut start = 0usize;
+        while start < vals.len() {
+            let k = key.get(start).copied().flatten();
+            let mut end = start + 1;
+            while end < vals.len() && key.get(end).copied().flatten() == k {
+                end += 1;
+            }
+            if let Some(k) = k {
+                let cls = if k > 0.0 {
+                    "line up"
+                } else if k < 0.0 {
+                    "line down"
+                } else {
+                    fallback
+                };
+                let mut run = vec![None; vals.len()];
+                run[start..end].copy_from_slice(&vals[start..end]);
+                self.polyline(p, &run, cls, shift);
+            }
+            start = end;
         }
     }
 
@@ -682,11 +717,17 @@ impl<'a> Canvas<'a> {
     }
 
     fn candles(&mut self, p: &Pane) {
+        let data = self.data;
+        self.candle_series(p, |i| Some((data.open[i], data.high[i], data.low[i], data.close[i])));
+    }
+
+    /// A candle, coloured by close against open, at each bar `bar` gives
+    /// `(open, high, low, close)` for.
+    fn candle_series(&mut self, p: &Pane, bar: impl Fn(usize) -> Option<(f64, f64, f64, f64)>) {
         let half = (self.bw * 0.36).max(0.6);
         let (mut ups, mut downs) = (String::new(), String::new());
-        let data = self.data;
         for i in 0..self.n {
-            let (open, close) = (data.open[i], data.close[i]);
+            let Some((open, high, low, close)) = bar(i) else { continue };
             let x = self.x_of(i);
             let top = p.sy(open.max(close));
             let mut bot = p.sy(open.min(close));
@@ -698,8 +739,8 @@ impl<'a> Canvas<'a> {
                 path,
                 "M{} {}V{}M{} {}h{}V{}h{}Z",
                 fmt(x),
-                fmt(p.sy(data.high[i])),
-                fmt(p.sy(data.low[i])),
+                fmt(p.sy(high)),
+                fmt(p.sy(low)),
                 fmt(x - half),
                 fmt(top),
                 fmt(2.0 * half),
@@ -765,6 +806,25 @@ impl<'a> Canvas<'a> {
                     );
                     x += 16.0;
                 }
+                LegendMark::Candles => {
+                    let _ = writeln!(
+                        self.out,
+                        "<path class=\"up wick\" d=\"M{x1} {}V{}M{} {}h4V{}h-4Z\"/><path class=\"down wick\" d=\"M{x2} {}V{}M{} {}h4V{}h-4Z\"/>",
+                        fmt(y - 10.0),
+                        fmt(y),
+                        fmt(x),
+                        fmt(y - 7.0),
+                        fmt(y - 2.0),
+                        fmt(y - 10.0),
+                        fmt(y),
+                        fmt(x + 7.0),
+                        fmt(y - 8.0),
+                        fmt(y - 3.0),
+                        x1 = fmt(x + 2.0),
+                        x2 = fmt(x + 9.0),
+                    );
+                    x += 17.0;
+                }
                 LegendMark::Line { cls, dashed } => {
                     let _ = writeln!(
                         self.out,
@@ -801,6 +861,25 @@ struct Plan<'a> {
     pattern_outs: Vec<&'a Output>,
     /// A candlestick function's plain integer output: its sign is the candle's colour.
     sign_outs: Vec<&'a Output>,
+    /// Real outputs named `…Open`, `…High`, `…Low`, `…Close`, in that order: a
+    /// candle series in a pane of its own.
+    candle_outs: Option<[&'a Output; 4]>,
+    /// The `bar_index` outputs of a function reading one real series, with that
+    /// input's argument name: each draws the input at the bar it names.
+    index_outs: Vec<&'a Output>,
+    index_input: Option<&'a str>,
+    /// The only integer output, which a `segmented` output breaks and colours by.
+    segment_key: Option<&'a Output>,
+}
+
+/// One real output per suffix `Open`, `High`, `Low`, `Close`, else `None`.
+fn candle_outputs(func: &FuncDef) -> Option<[&Output; 4]> {
+    let pick = |suffix: &str| -> Option<&Output> {
+        let mut hits = func.outputs.iter().filter(|o| o.param_type == ParamType::Real && o.name.ends_with(suffix));
+        let first = hits.next()?;
+        hits.next().is_none().then_some(first)
+    };
+    Some([pick("Open")?, pick("High")?, pick("Low")?, pick("Close")?])
 }
 
 fn plan<'a>(func: &'a FuncDef, data: &RefData) -> Plan<'a> {
@@ -818,6 +897,12 @@ fn plan<'a>(func: &'a FuncDef, data: &RefData) -> Plan<'a> {
         || reads(PriceComponent::High)
         || reads(PriceComponent::Low);
     let has_vol = reads(PriceComponent::Volume);
+    let candle_outs = candle_outputs(func);
+    let index_input = match func.inputs.as_slice() {
+        [i] if i.price.is_none() && i.param_type == ParamType::Real => Some(i.name.as_str()),
+        _ => None,
+    };
+    let ints: Vec<&Output> = func.outputs.iter().filter(|o| o.param_type == ParamType::Integer).collect();
     let mut p = Plan {
         candles,
         has_vol,
@@ -826,13 +911,23 @@ fn plan<'a>(func: &'a FuncDef, data: &RefData) -> Plan<'a> {
         int_outs: Vec::new(),
         pattern_outs: Vec::new(),
         sign_outs: Vec::new(),
+        candle_outs,
+        index_outs: Vec::new(),
+        index_input,
+        segment_key: (ints.len() == 1).then(|| ints[0]),
     };
     for o in &func.outputs {
+        if candle_outs.is_some_and(|c| c.iter().any(|k| k.name == o.name)) {
+            continue;
+        }
         if o.flags.iter().any(|f| f.starts_with("pattern_")) {
             p.pattern_outs.push(o);
         } else if o.param_type == ParamType::Integer && is_candle {
             p.sign_outs.push(o);
         } else if o.param_type == ParamType::Integer {
+            if index_input.is_some() && has(&o.flags, "bar_index") {
+                p.index_outs.push(o);
+            }
             p.int_outs.push(o);
         } else if overlap {
             p.price_outs.push(o);
@@ -861,7 +956,6 @@ fn shift_phrase(shift: i32) -> String {
     }
 }
 
-/// The levels as the YAML wrote them.
 fn level_items(levels: &[f64]) -> Vec<String> {
     levels.iter().map(|v| format!("{v}")).collect()
 }
@@ -880,6 +974,7 @@ fn line_class(slot: &str, dashed: bool) -> String {
 
 struct Layout {
     price: Pane,
+    candle: Option<Pane>,
     ind: Option<Pane>,
     steps: Vec<Pane>,
     vol: Option<Pane>,
@@ -894,12 +989,14 @@ fn layout(plan: &Plan<'_>) -> Layout {
         p
     };
     let price = take(H_PRICE);
+    let candle = plan.candle_outs.is_some().then(|| take(H_CANDLE));
     let ind = (!plan.ind_outs.is_empty()).then(|| take(H_IND));
     let step_h = if plan.ind_outs.is_empty() && plan.int_outs.len() == 1 { H_IND } else { H_INT_SMALL };
     let steps = plan.int_outs.iter().map(|_| take(step_h)).collect();
     let vol = plan.has_vol.then(|| take(H_VOL));
     Layout {
         price,
+        candle,
         ind,
         steps,
         vol,
@@ -926,9 +1023,12 @@ fn input_line_class(k: usize) -> (&'static str, &'static str) {
 }
 
 /// Per output class, the flags its drawing reads; an integer output's deciding fact
-/// is its type, which is no flag.
-const REAL_FLAGS_READ: [&str; 9] =
-    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "zero", "negative", "display_shift"];
+/// is its type, which is no flag. An indicator-pane output adds `positive, negative`
+/// when it declares both, since that pair draws the zero line.
+const PRICE_FLAGS_READ: [&str; 8] =
+    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "segmented", "display_shift"];
+const IND_FLAGS_READ: [&str; 9] =
+    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "positive", "negative", "display_shift"];
 const PATTERN_FLAGS_READ: [&str; 4] = ["positive", "negative", "zero", "display_shift"];
 const SIGN_FLAGS_READ: [&str; 3] = ["positive", "negative", "display_shift"];
 const STEP_FLAGS_READ: [&str; 1] = ["display_shift"];
@@ -938,10 +1038,11 @@ const STEP_FLAGS_READ: [&str; 1] = ["display_shift"];
 /// flags with its display shift when it has one.
 fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
     let mut used: Vec<String> = Vec::new();
-    for flag in ["overlap", "candlestick"] {
-        if has(&func.flags, flag) {
-            used.push(flag.to_string());
-        }
+    if has(&func.flags, "overlap") && !plan.price_outs.is_empty() {
+        used.push("overlap".to_string());
+    }
+    if has(&func.flags, "candlestick") {
+        used.push("candlestick".to_string());
     }
     let mut groups_seen: Vec<usize> = Vec::new();
     for input in &func.inputs {
@@ -966,14 +1067,22 @@ fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
     for o in &func.outputs {
         let shift = data.shift(&o.name);
         let pattern = named(&plan.pattern_outs, o);
+        let ind = named(&plan.ind_outs, o);
+        let unread_signs = ind && !(has(&o.flags, "positive") && has(&o.flags, "negative"));
         let (lead, keep): (Option<&str>, &[&str]) = if pattern {
             (None, &PATTERN_FLAGS_READ)
         } else if named(&plan.sign_outs, o) {
             (Some("integer"), &SIGN_FLAGS_READ)
+        } else if named(&plan.index_outs, o) {
+            (Some("integer"), &["bar_index", "display_shift"])
         } else if named(&plan.int_outs, o) {
             (Some("integer"), &STEP_FLAGS_READ)
+        } else if plan.candle_outs.is_some_and(|c| named(&c, o)) {
+            (None, &[])
+        } else if ind {
+            (None, &IND_FLAGS_READ)
         } else {
-            (None, &REAL_FLAGS_READ)
+            (None, &PRICE_FLAGS_READ)
         };
         let mut flags: Vec<String> = lead.map(String::from).into_iter().collect();
         if pattern {
@@ -982,7 +1091,7 @@ fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
         flags.extend(
             o.flags
                 .iter()
-                .filter(|f| keep.contains(&f.as_str()))
+                .filter(|f| keep.contains(&f.as_str()) && !(unread_signs && (*f == "positive" || *f == "negative")))
                 .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() }),
         );
         if !o.levels.is_empty() {
@@ -1031,6 +1140,25 @@ fn draw_price_outputs<'p>(
             }
             let _ = writeln!(cv.out, "<path class=\"f{}\" d=\"{d}\"/>", slot_digit(cls));
             legend.push(LegendItem { mark: LegendMark::Dot(cls), text: o.name.clone() });
+        } else if let Some(key) = plan.segment_key.filter(|_| has(&o.flags, "segmented")) {
+            let dashed = has(&o.flags, "dash_line");
+            cv.segmented_line(price, vals, data.output(&key.name), &line_class(cls, dashed), sh);
+            legend.push(LegendItem {
+                mark: LegendMark::Line { cls: "up", dashed },
+                text: format!("{} where {} > 0", o.name, key.name),
+            });
+            legend.push(LegendItem { mark: LegendMark::Line { cls: "down", dashed }, text: "< 0".to_string() });
+            let mut ph = format!(
+                "{} as {} broken wherever {} changes, in the up colour where {} is positive and the down colour where it is negative",
+                o.name,
+                stroke_word(&o.flags),
+                key.name,
+                key.name
+            );
+            ph.push_str(&shift_phrase(sh));
+            ph.push_str(&level_phrase(o));
+            phrases.push(ph);
+            continue;
         } else if is_edge {
             cv.polyline(price, vals, &format!("edge {cls}"), sh);
             legend.push(LegendItem { mark: LegendMark::Line { cls, dashed: false }, text: o.name.clone() });
@@ -1076,6 +1204,56 @@ fn draw_price_outputs<'p>(
             );
         }
         phrases.push(format!("a band between {} and {} with a soft fill", uo.name, lo.name));
+    }
+    phrases
+}
+
+/// The input series the `bar_index` outputs index, `(legend name, values)`: a price
+/// column under its own name, else the input's column under the argument's.
+fn index_series(data: &RefData, arg: &str) -> Option<(String, Vec<Option<f64>>)> {
+    let src = data.input_desc.iter().find(|(k, _)| k == arg).map(|(_, v)| v.as_str())?;
+    let col: Option<&[f64]> = match src {
+        "open" => Some(&data.open),
+        "high" => Some(&data.high),
+        "low" => Some(&data.low),
+        "close" => Some(&data.close),
+        "volume" => Some(&data.volume),
+        _ => None,
+    };
+    match col {
+        Some(c) => Some((src.to_string(), c.iter().map(|v| Some(*v)).collect())),
+        None => Some((arg.to_string(), data.input(arg)?.to_vec())),
+    }
+}
+
+/// Each `bar_index` output's input value at the bar it names, bar by bar: `None`
+/// where the output has no value or names no bar.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn indexed(series: &[Option<f64>], idx: &[Option<f64>]) -> Vec<Option<f64>> {
+    idx.iter()
+        .map(|v| {
+            let v = v.filter(|v| v.is_finite() && *v >= 0.0)?;
+            series.get(v.round() as usize).copied().flatten()
+        })
+        .collect()
+}
+
+/// The `bar_index` outputs on the price pane, in their step panes' slot colours.
+fn draw_index_lines<'p>(
+    cv: &mut Canvas<'_>,
+    plan: &Plan<'p>,
+    price: &Pane,
+    legend: &mut Vec<LegendItem<'p>>,
+) -> Vec<String> {
+    let data = cv.data;
+    let Some((col, series)) = plan.index_input.and_then(|arg| index_series(data, arg)) else { return Vec::new() };
+    let mut phrases = Vec::new();
+    for o in &plan.index_outs {
+        let k = plan.int_outs.iter().position(|p| p.name == o.name).unwrap_or(0);
+        let cls = SLOTS[k % SLOTS.len()];
+        cv.polyline(price, &indexed(&series, data.output(&o.name)), &line_class(cls, false), data.shift(&o.name));
+        legend.push(LegendItem { mark: LegendMark::Line { cls, dashed: false }, text: format!("{col}[{}]", o.name) });
+        phrases.push(format!("{col} at the bar {} names as a solid line", o.name));
     }
     phrases
 }
@@ -1247,11 +1425,16 @@ fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> 
         ind.extend(data.output(&o.name));
         ind.extend_plain(&o.levels);
     }
+    // A signed output whose data sits far from zero (SUM of prices) would be
+    // flattened against a zero baseline; within one data span, zero joins the axis.
+    let (lo, hi) = (ind.lo(), ind.hi());
+    let near_zero = lo.min(0.0) >= lo - (hi - lo) && hi.max(0.0) <= hi + (hi - lo);
     let want_zero = plan.ind_outs.iter().any(|o| {
-        has(&o.flags, "zero") || has(&o.flags, "negative") || has(&o.flags, "histogram")
+        has(&o.flags, "histogram")
+            || (near_zero && has(&o.flags, "positive") && has(&o.flags, "negative"))
     });
     ind.finish(0.08, want_zero);
-    cv.grid(ind, true);
+    cv.grid(ind, want_zero);
     for o in &plan.ind_outs {
         cv.levels(ind, &o.levels);
     }
@@ -1275,12 +1458,40 @@ fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> 
         }
     }
     cv.legend(ind, &legend);
-    let zero_note = if want_zero || (ind.lo() < 0.0 && 0.0 < ind.hi()) {
-        " with a zero line"
-    } else {
-        ""
-    };
+    let zero_note = if want_zero { " with a zero line" } else { "" };
     format!("a separate indicator pane{zero_note} showing {}", join_and(&phrases))
+}
+
+/// The candle outputs as candles in their own pane, coloured by their close against
+/// their open.
+fn draw_candle_pane(cv: &mut Canvas<'_>, outs: [&Output; 4], pane: &mut Pane) -> String {
+    let data = cv.data;
+    let cols: Vec<&[Option<f64>]> = outs.iter().map(|o| data.output(&o.name)).collect();
+    for c in &cols {
+        pane.extend(*c);
+    }
+    pane.finish(0.05, false);
+    cv.grid(pane, false);
+    let at = |k: usize, i: usize| cols[k].get(i).copied().flatten().filter(|v| v.is_finite());
+    cv.candle_series(pane, |i| Some((at(0, i)?, at(1, i)?, at(2, i)?, at(3, i)?)));
+    let names: Vec<String> = outs.iter().map(|o| o.name.clone()).collect();
+    let prefix_len = names[0]
+        .char_indices()
+        .map(|(i, _)| i)
+        .take_while(|&i| names.iter().all(|n| n.get(..i) == names[0].get(..i)))
+        .last()
+        .unwrap_or(0);
+    let tails: Vec<&str> = names.iter().map(|n| &n[prefix_len..]).collect();
+    cv.legend(
+        pane,
+        &[LegendItem { mark: LegendMark::Candles, text: format!("{}{}", &names[0][..prefix_len], tails.join("/")) }],
+    );
+    format!(
+        "a candle pane of its own for {}, each candle coloured by {} against {}",
+        join_and(&names),
+        names[3],
+        names[0]
+    )
 }
 
 /// One pane per integer output: two never share a scale.
@@ -1455,6 +1666,28 @@ fn chart_label(func: &FuncDef, data: &RefData, synthetic: &[(&str, &str)]) -> St
     }
 }
 
+/// The price pane's range: whatever it draws, the bar-index lines included.
+fn scale_price_pane(price: &mut Pane, plan: &Plan<'_>, data: &RefData, base: &[(&str, Vec<Option<f64>>)]) {
+    if plan.candles {
+        price.extend_plain(&data.high);
+        price.extend_plain(&data.low);
+    } else {
+        for (_, vals) in base {
+            price.extend(vals);
+        }
+    }
+    for o in &plan.price_outs {
+        price.extend(data.output(&o.name));
+        price.extend_plain(&o.levels);
+    }
+    if let Some((_, series)) = plan.index_input.and_then(|arg| index_series(data, arg)) {
+        for o in &plan.index_outs {
+            price.extend(&indexed(&series, data.output(&o.name)));
+        }
+    }
+    price.finish(0.05, false);
+}
+
 pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     let plan = plan(func, data);
     let bars = data.dates.len();
@@ -1465,23 +1698,11 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
         .max()
         .unwrap_or(0)
         .max(0);
-    let Layout { mut price, mut ind, mut steps, mut vol, total_h } = layout(&plan);
+    let Layout { mut price, mut candle, mut ind, mut steps, mut vol, total_h } = layout(&plan);
 
     let synthetic = if plan.candles { Vec::new() } else { data.synthetic_inputs() };
     let base = base_series(data, &synthetic);
-    if plan.candles {
-        price.extend_plain(&data.high);
-        price.extend_plain(&data.low);
-    } else {
-        for (_, vals) in &base {
-            price.extend(vals);
-        }
-    }
-    for o in &plan.price_outs {
-        price.extend(data.output(&o.name));
-        price.extend_plain(&o.levels);
-    }
-    price.finish(0.05, false);
+    scale_price_pane(&mut price, &plan, data, &base);
 
     let mut cv = Canvas::new(data, bars, max_shift);
     let label = chart_label(func, data, &synthetic);
@@ -1521,12 +1742,16 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
             }
         }
     };
-    let price_phrases = draw_price_outputs(&mut cv, &plan, &price, &mut legend);
+    let mut price_phrases = draw_price_outputs(&mut cv, &plan, &price, &mut legend);
+    price_phrases.extend(draw_index_lines(&mut cv, &plan, &price, &mut legend));
     let mut pattern_phrases = draw_pattern_markers(&mut cv, &plan, &price, &mut legend);
     pattern_phrases.extend(draw_sign_markers(&mut cv, &plan, &price, &mut legend));
     cv.legend(&price, &legend);
 
     let mut below: Vec<String> = Vec::new();
+    if let (Some(outs), Some(pane)) = (plan.candle_outs, candle.as_mut()) {
+        below.push(draw_candle_pane(&mut cv, outs, pane));
+    }
     if let Some(ind) = ind.as_mut() {
         below.push(draw_indicator_pane(&mut cv, &plan, ind));
     }
@@ -1825,7 +2050,7 @@ mod tests {
         let chart = render(&macd, &RefData::parse(&csv).unwrap());
         assert_eq!(
             chart.flags_used,
-            vec!["outMACD: line, zero, negative", "outMACDSignal: dash_line, negative", "outMACDHist: histogram, zero, negative"]
+            vec!["outMACD: line, positive, negative", "outMACDSignal: dash_line", "outMACDHist: histogram, negative, positive"]
         );
 
         let ohlc = [PriceComponent::Open, PriceComponent::High, PriceComponent::Low, PriceComponent::Close]
@@ -2072,6 +2297,174 @@ mod tests {
         assert!(RefData::parse("date,open,high,low,close,volume\n1999-01-04,1,2\n").is_err());
     }
 
+    /// `(x, y)` of each point of the first polyline line starting with `needle`.
+    fn polyline_points(svg: &str, needle: &str) -> Vec<(String, String)> {
+        let l = svg.lines().find(|l| l.starts_with(needle)).unwrap_or_else(|| panic!("no {needle}: {svg}"));
+        l.split("points=\"")
+            .nth(1)
+            .unwrap()
+            .split('"')
+            .next()
+            .unwrap()
+            .split(' ')
+            .map(|pt| {
+                let (x, y) = pt.split_once(',').unwrap();
+                (x.to_string(), y.to_string())
+            })
+            .collect()
+    }
+
+    /// Five bars on a close line, one input `inReal=close`, `outputs` columns appended.
+    fn close_csv(outputs: &str, rows: &[&str]) -> RefData {
+        let mut csv = format!("# input: test.csv; window 1999-01-04..1999-01-08 (5 bars)\n# parameters: (defaults)\n# inputs: inReal=close\n# outputs: {outputs}\ndate,open,high,low,close,volume");
+        for name in outputs.split_whitespace().filter(|t| !t.starts_with('(') && !t.ends_with(')')) {
+            let _ = write!(csv, ",{name}");
+        }
+        csv.push('\n');
+        for (i, (c, cells)) in [10.0, 14.0, 12.0, 18.0, 11.0].iter().zip(rows).enumerate() {
+            let _ = writeln!(csv, "1999-01-0{},{c},{c},{c},{c},100,{cells}", i + 4);
+        }
+        RefData::parse(&csv).unwrap()
+    }
+
+    /// A `bar_index` output of a function reading one real series also draws that
+    /// series at the bar it names on the price pane, in its step pane's colour, and
+    /// keeps its step pane.
+    #[test]
+    fn a_bar_index_output_draws_its_input_at_the_bar_it_names() {
+        let maxindex = |flags: &[&str]| func("MAXINDEX", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outInteger", ParamType::Integer, flags)]);
+        let d = close_csv("outInteger (shift 0)", &["", "1", "1", "3", "3"]);
+        let chart = render(&maxindex(&["line", "bar_index"]), &d);
+        let mut p = Pane::new(TOP, H_PRICE);
+        p.extend_plain(&d.close);
+        p.finish(0.05, false);
+        let ys: Vec<String> = polyline_points(&chart.svg, "<polyline class=\"line s1\"").into_iter().map(|(_, y)| y).collect();
+        assert_eq!(ys, [14.0, 14.0, 18.0, 18.0].iter().map(|v| fmt(p.sy(*v))).collect::<Vec<_>>(), "{}", chart.svg);
+        assert!(chart.svg.contains(">close[outInteger]</text>"), "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<polyline class=\"line s1\"").count(), 2, "the step pane stays: {}", chart.svg);
+        assert!(chart.sentence.contains("with close at the bar outInteger names as a solid line"), "{}", chart.sentence);
+        assert!(chart.sentence.ends_with("a step pane of its own for the integer output outInteger."), "{}", chart.sentence);
+        assert_eq!(chart.flags_used, vec!["outInteger: integer, bar_index"]);
+
+        let plain = render(&maxindex(&["line"]), &d);
+        assert_eq!(plain.svg.matches("<polyline class=\"line s1\"").count(), 1, "{}", plain.svg);
+        assert!(!plain.svg.contains("[outInteger]"), "{}", plain.svg);
+
+        let minmax = func(
+            "MINMAXINDEX",
+            &[],
+            vec![Input::new("inReal", ParamType::Real)],
+            vec![out("outMinIdx", ParamType::Integer, &["line", "bar_index"]), out("outMaxIdx", ParamType::Integer, &["line", "bar_index"])],
+        );
+        let d = close_csv("outMinIdx (shift 0) outMaxIdx (shift 0)", &[",", "0,1", "0,1", "0,3", "4,3"]);
+        let chart = render(&minmax, &d);
+        assert!(chart.svg.contains(">close[outMinIdx]</text>") && chart.svg.contains(">close[outMaxIdx]</text>"), "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<polyline class=\"line s2\"").count(), 2, "{}", chart.svg);
+
+        let ohlc = [PriceComponent::High, PriceComponent::Low]
+            .into_iter()
+            .map(|component| Input { price: Some(crate::ir::PriceRef { group: 0, component }), ..Input::new(component.input_name(), ParamType::Real) })
+            .collect();
+        let zz = func("ZZ", &["overlap"], ohlc, vec![out("outZigZag", ParamType::Real, &["line"]), out("outPivotIdx", ParamType::Integer, &["line", "bar_index"])]);
+        let chart = render(&zz, &candle_csv("", "outZigZag (shift 0) outPivotIdx (shift 0)", &["20,0", "30,0", "40,2", "50,2", "60,4"]));
+        assert!(!chart.svg.contains("[outPivotIdx]"), "a price bundle is no one series: {}", chart.svg);
+        assert_eq!(chart.flags_used.last().unwrap(), "outPivotIdx: integer");
+    }
+
+    /// A `segmented` output breaks wherever the integer output changes and takes
+    /// the up or down colour by its sign; without the flag it is one line.
+    #[test]
+    fn a_segmented_output_restarts_at_each_change_of_the_integer_output() {
+        let st = |flags: &[&str]| func("ST", &["overlap"], vec![], vec![out("outSupertrend", ParamType::Real, flags), out("outTrend", ParamType::Integer, &["line", "positive", "negative"])]);
+        let d = candle_csv("", "outSupertrend (shift 0) outTrend (shift 0)", &["15,1", "25,1", "45,-1", "55,-1", "45,1"]);
+        let chart = render(&st(&["line", "segmented"]), &d);
+        assert_eq!(polyline_points(&chart.svg, "<polyline class=\"line up\"").len(), 2, "{}", chart.svg);
+        assert_eq!(polyline_points(&chart.svg, "<polyline class=\"line down\"").len(), 2, "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<circle class=\"line up\"").count(), 1, "bar 4 stands alone: {}", chart.svg);
+        assert!(chart.svg.contains("<line class=\"line up\"") && chart.svg.contains("<line class=\"line down\""), "{}", chart.svg);
+        assert!(chart.svg.contains(">outSupertrend where outTrend &gt; 0</text>"), "{}", chart.svg);
+        assert!(
+            chart.sentence.contains("outSupertrend as a solid line broken wherever outTrend changes, in the up colour where outTrend is positive and the down colour where it is negative"),
+            "{}",
+            chart.sentence
+        );
+        assert!(chart.sentence.ends_with("a step pane of its own for the integer output outTrend."), "{}", chart.sentence);
+        assert_eq!(chart.flags_used, vec!["overlap", "outSupertrend: line, segmented", "outTrend: integer"]);
+
+        let plain = render(&st(&["line"]), &d);
+        assert!(!plain.svg.contains("class=\"line up\""), "{}", plain.svg);
+        assert_eq!(polyline_points(&plain.svg, "<polyline class=\"line s1\"").len(), 5, "{}", plain.svg);
+    }
+
+    /// Four real outputs named `…Open`, `…High`, `…Low`, `…Close` are candles in a
+    /// pane of their own below the price pane, which keeps its own candles.
+    #[test]
+    fn open_high_low_close_outputs_are_a_candle_pane() {
+        let ohlc = [PriceComponent::Open, PriceComponent::High, PriceComponent::Low, PriceComponent::Close]
+            .into_iter()
+            .map(|component| Input { price: Some(crate::ir::PriceRef { group: 0, component }), ..Input::new(component.input_name(), ParamType::Real) })
+            .collect();
+        let ha = func(
+            "HA",
+            &["overlap"],
+            ohlc,
+            vec![
+                out("outHAOpen", ParamType::Real, &["line"]),
+                out("outHAHigh", ParamType::Real, &["line", "upper_limit"]),
+                out("outHALow", ParamType::Real, &["line", "lower_limit"]),
+                out("outHAClose", ParamType::Real, &["line"]),
+            ],
+        );
+        // Bar 0 rises, bar 1 falls: one up and one down candle in the pane.
+        let d = candle_csv("", "outHAOpen (shift 0) outHAHigh (shift 0) outHALow (shift 0) outHAClose (shift 0)", &["12,22,8,18", "18,32,15,16", ",,,", ",,,", ",,,"]);
+        let chart = render(&ha, &d);
+        assert_eq!(chart.height, px(TOP + H_PRICE + GAP + H_CANDLE + H_AXIS + H_CAPTION));
+        assert!(!chart.svg.contains("<polyline class=\"line") && !chart.svg.contains("<polygon"), "{}", chart.svg);
+        let mut p = Pane::new(TOP + H_PRICE + GAP, H_CANDLE);
+        p.extend(d.outputs.iter().flat_map(|(_, v)| v.iter()));
+        p.finish(0.05, false);
+        let x0 = fmt(PAD_L + 0.5 * (W - PAD_L - PAD_R) / 5.0);
+        let ups: Vec<String> = chart.svg.lines().filter(|l| l.starts_with("<path class=\"up wick\" d=\"M")).map(|l| l.split("d=\"").nth(1).unwrap().split('"').next().unwrap().to_string()).collect();
+        assert_eq!(ups.len(), 3, "price candles, pane candles, legend: {}", chart.svg);
+        assert!(ups[1].starts_with(&format!("M{x0} {}V{}", fmt(p.sy(22.0)), fmt(p.sy(8.0)))), "{}", ups[1]);
+        assert!(chart.svg.contains(">outHAOpen/High/Low/Close</text>"), "{}", chart.svg);
+        assert!(
+            chart.sentence.ends_with("; below it, a candle pane of its own for outHAOpen, outHAHigh, outHALow and outHAClose, each candle coloured by outHAClose against outHAOpen."),
+            "{}",
+            chart.sentence
+        );
+        assert_eq!(chart.flags_used, vec!["inPriceOHLC: open, high, low, close", "outHAOpen", "outHAHigh", "outHALow", "outHAClose"]);
+    }
+
+    /// The indicator pane takes in zero and rules it only for a histogram or an
+    /// output declaring both signs whose data comes within a span of zero; one sign,
+    /// or values that merely cross zero, do not.
+    #[test]
+    fn the_zero_line_needs_a_histogram_or_both_signs() {
+        let ind = |flags: &[&str]| func("X", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outReal", ParamType::Real, flags)]);
+        let high = close_csv("outReal (shift 0)", &["10", "12", "14", "16", "20"]);
+        let cross = close_csv("outReal (shift 0)", &["-5", "-2", "1", "3", "5"]);
+        let zero_line = |c: &Chart| c.svg.contains("<line class=\"zero\"");
+        for flags in [&["line", "zero", "positive"][..], &["line", "zero", "negative"], &["line"]] {
+            let c = render(&ind(flags), &high);
+            assert!(!zero_line(&c) && !c.sentence.contains("zero line"), "{flags:?}: {}", c.sentence);
+            assert!(!c.svg.contains(">0</text>"), "{flags:?}: zero is not taken in: {}", c.svg);
+            let c = render(&ind(flags), &cross);
+            assert!(!zero_line(&c) && !c.sentence.contains("zero line"), "{flags:?}: {}", c.sentence);
+        }
+        for flags in [&["line", "zero", "positive", "negative"][..], &["line", "positive", "negative"], &["histogram"]] {
+            let c = render(&ind(flags), &high);
+            assert!(zero_line(&c) && c.sentence.contains("a separate indicator pane with a zero line"), "{flags:?}: {}", c.sentence);
+            assert!(c.svg.contains(">0</text>"), "{flags:?}: zero is taken in: {}", c.svg);
+        }
+        let far = close_csv("outReal (shift 0)", &["100", "102", "104", "106", "110"]);
+        let c = render(&ind(&["line", "positive", "negative"]), &far);
+        assert!(!zero_line(&c) && !c.svg.contains(">0</text>"), "data more than a span from zero: {}", c.svg);
+        assert!(zero_line(&render(&ind(&["histogram"]), &far)));
+        assert_eq!(render(&ind(&["line", "zero", "positive"]), &high).flags_used, vec!["outReal: line"]);
+        assert_eq!(render(&ind(&["line", "zero", "positive", "negative"]), &high).flags_used, vec!["outReal: line, positive, negative"]);
+    }
+
     #[test]
     fn every_reference_csv_renders() {
         let corpus = corpus();
@@ -2086,8 +2479,10 @@ mod tests {
             assert_eq!(chart.height.to_string(), view_h, "{}", f.name);
             assert_eq!(chart.width, 720);
             assert!(chart.svg.contains(&format!("aria-label=\"{}\"", esc(&chart.label))), "{}", f.name);
+            let candle_legend = candle_outputs(f).map(|c| format!(">{}", c[0].name));
             for o in &f.outputs {
-                let needle = format!(">{}", o.name);
+                let in_candles = candle_outputs(f).is_some_and(|c| c.iter().any(|k| k.name == o.name));
+                let needle = if in_candles { candle_legend.clone().unwrap() } else { format!(">{}", o.name) };
                 assert!(chart.svg.contains(&needle), "{}: {} not in legend", f.name, o.name);
                 assert!(chart.sentence.contains(&o.name), "{}: sentence lacks {}: {}", f.name, o.name, chart.sentence);
                 let row = chart.flags_used.iter().filter(|r| *r == &o.name || r.starts_with(&format!("{}: ", o.name))).count();

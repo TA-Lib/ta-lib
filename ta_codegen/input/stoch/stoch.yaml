@@ -41,7 +41,7 @@ optional_inputs:
 outputs:
   - name: outSlowK
     type: real
-    flags: [dash_line]
+    flags: [line, zero, positive, negative]
   - name: outSlowD
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]

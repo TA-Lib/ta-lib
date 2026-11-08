@@ -19,7 +19,7 @@ The oscillator is one leg of Williams' Profitunity system, alongside the Awesome
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram.
 
-Metadata flags used: `inPriceHL: high, low` · `outReal: histogram`
+Metadata flags used: `inPriceHL: high, low` · `outReal: histogram, positive, negative`
 
 :::
 

@@ -15,7 +15,7 @@ Rolling sum of the input over a fixed period. Each output is the sum of the most
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line.
 
-Metadata flags used: `outReal: line`
+Metadata flags used: `outReal: line, positive, negative`
 
 :::
 

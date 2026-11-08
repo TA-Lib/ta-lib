@@ -62,6 +62,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_QSTICK_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_QSTICK_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_QSTICK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OC,
@@ -70,7 +73,7 @@ static const TA_InputParameterInfo    *TA_QSTICK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_QSTICK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_QSTICK_Default,
   NULL
 };
 

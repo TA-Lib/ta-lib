@@ -15,7 +15,7 @@ Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at t
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `outReal: line`
+Metadata flags used: `outReal: line, positive, negative`
 
 :::
 

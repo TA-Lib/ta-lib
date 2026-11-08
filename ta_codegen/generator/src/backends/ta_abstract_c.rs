@@ -1293,9 +1293,7 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "/* {name} END */\n");
 }
 
-/// `TA_GetFuncAttributes`' string, also embedded in `ta_func_api.xml`. Rendered
-/// here independently of `abstract_rows`, whose string `test_abstract.c` holds
-/// byte-identical to this one; neither may call the other.
+/// `TA_GetFuncAttributes`' string, also embedded in `ta_func_api.xml`.
 pub fn attributes_json(func: &FuncDef) -> String {
     use crate::attributes::{Key, Value, INPUTS, KEYS, OPT_INPUTS, OUTPUTS};
     fn members<'a>(out: &mut String, read: impl Fn(&Key) -> Option<Value<'a>>) -> bool {
@@ -1505,6 +1503,8 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "lower_limit" => Some("TA_OUT_LOWER_LIMIT"),
         "display_shift" => Some("TA_OUT_DISPLAY_SHIFT"),
         "pattern_weak" => Some("TA_OUT_PATTERN_WEAK"),
+        "bar_index" => Some("TA_OUT_BAR_INDEX"),
+        "segmented" => Some("TA_OUT_SEGMENTED"),
         _ => None,
     }
 }
@@ -2326,6 +2326,7 @@ fn gen_ta_abstract_c() -> String {
          \x20  {\n\
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
+         \x20  *json = NULL;\n\n\
          \x20  funcDef = (const TA_FuncDef *)handle;\n\
          \x20  if( (funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB) || !funcDef->attributes )\n\
          \x20  {\n\

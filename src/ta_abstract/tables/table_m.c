@@ -80,13 +80,13 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACD_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD_outMACD =
-                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
+                               { TA_Output_Real, "outMACD", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD_outMACDSignal =
-                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACD_outMACDHist =
-                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
+                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_MACD_Inputs[]    =
 {
@@ -174,13 +174,13 @@ const TA_OptInputParameterInfo TA_DEF_UI_D_MACDEXT_SignalMAType =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDEXT_outMACD =
-                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
+                               { TA_Output_Real, "outMACD", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDEXT_outMACDSignal =
-                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDEXT_outMACDHist =
-                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
+                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_MACDEXT_Inputs[]    =
 {
@@ -229,13 +229,13 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDFIX_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDFIX_outMACD =
-                               { TA_Output_Real, "outMACD", TA_OUT_LINE };
+                               { TA_Output_Real, "outMACD", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDFIX_outMACDSignal =
-                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outMACDSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDFIX_outMACDHist =
-                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO };
+                               { TA_Output_Real, "outMACDHist", TA_OUT_HISTO | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_MACDFIX_Inputs[]    =
 {
@@ -293,13 +293,13 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDV_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDV =
-                               { TA_Output_Real, "outMACDV", TA_OUT_LINE };
+                               { TA_Output_Real, "outMACDV", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDVSignal =
-                               { TA_Output_Real, "outMACDVSignal", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outMACDVSignal", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDVHist =
-                               { TA_Output_Real, "outMACDVHist", TA_OUT_HISTO };
+                               { TA_Output_Real, "outMACDVHist", TA_OUT_HISTO | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_MACDV_Inputs[]    =
 {
@@ -411,6 +411,9 @@ DEF_FUNCTION( MAMA,
 /* MAMA END */
 
 /* MARKETFI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MARKETFI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_MARKETFI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLV,
@@ -419,7 +422,7 @@ static const TA_InputParameterInfo    *TA_MARKETFI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MARKETFI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MARKETFI_Default,
   NULL
 };
 
@@ -480,6 +483,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MASSI_SlowPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MASSI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_MASSI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -488,7 +494,7 @@ static const TA_InputParameterInfo    *TA_MASSI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MASSI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MASSI_Default,
   NULL
 };
 
@@ -605,6 +611,9 @@ DEF_FUNCTION( MAX,
 /* MAX END */
 
 /* MAXINDEX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MAXINDEX_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_BAR_INDEX };
+
 static const TA_InputParameterInfo    *TA_MAXINDEX_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -613,7 +622,7 @@ static const TA_InputParameterInfo    *TA_MAXINDEX_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MAXINDEX_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_MAXINDEX_Default,
   NULL
 };
 
@@ -749,6 +758,9 @@ DEF_FUNCTION( MEDPRICE,
 /* MEDPRICE END */
 
 /* MFI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MFI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_MFI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLCV,
@@ -757,7 +769,7 @@ static const TA_InputParameterInfo    *TA_MFI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MFI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MFI_Default,
   NULL
 };
 
@@ -849,6 +861,9 @@ DEF_FUNCTION( MIN,
 /* MIN END */
 
 /* MININDEX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MININDEX_Default =
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_BAR_INDEX };
+
 static const TA_InputParameterInfo    *TA_MININDEX_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -857,7 +872,7 @@ static const TA_InputParameterInfo    *TA_MININDEX_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MININDEX_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Integer_MININDEX_Default,
   NULL
 };
 
@@ -907,10 +922,10 @@ DEF_FUNCTION( MINMAX,
 
 /* MINMAXINDEX BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MINMAXINDEX_outMinIdx =
-                               { TA_Output_Integer, "outMinIdx", TA_OUT_LINE };
+                               { TA_Output_Integer, "outMinIdx", TA_OUT_LINE | TA_OUT_BAR_INDEX };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_MINMAXINDEX_outMaxIdx =
-                               { TA_Output_Integer, "outMaxIdx", TA_OUT_LINE };
+                               { TA_Output_Integer, "outMaxIdx", TA_OUT_LINE | TA_OUT_BAR_INDEX };
 
 static const TA_InputParameterInfo    *TA_MINMAXINDEX_Inputs[]    =
 {
@@ -938,6 +953,9 @@ DEF_FUNCTION( MINMAXINDEX,
 /* MINMAXINDEX END */
 
 /* MINUS_DI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MINUS_DI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_MINUS_DI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -946,7 +964,7 @@ static const TA_InputParameterInfo    *TA_MINUS_DI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MINUS_DI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MINUS_DI_Default,
   NULL
 };
 
@@ -963,6 +981,9 @@ DEF_FUNCTION( MINUS_DI,
 /* MINUS_DI END */
 
 /* MINUS_DM BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MINUS_DM_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_MINUS_DM_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -971,7 +992,7 @@ static const TA_InputParameterInfo    *TA_MINUS_DM_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MINUS_DM_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MINUS_DM_Default,
   NULL
 };
 
@@ -988,6 +1009,9 @@ DEF_FUNCTION( MINUS_DM,
 /* MINUS_DM END */
 
 /* MOM BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MOM_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_MOM_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -996,7 +1020,7 @@ static const TA_InputParameterInfo    *TA_MOM_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MOM_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MOM_Default,
   NULL
 };
 
@@ -1013,6 +1037,9 @@ DEF_FUNCTION( MOM,
 /* MOM END */
 
 /* MULT BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MULT_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_MULT_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real0,
@@ -1022,7 +1049,7 @@ static const TA_InputParameterInfo    *TA_MULT_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_MULT_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_MULT_Default,
   NULL
 };
 

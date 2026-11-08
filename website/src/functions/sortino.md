@@ -15,7 +15,7 @@ The rolling Sortino ratio: the mean return in excess of a minimum acceptable ret
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `outReal: line`
+Metadata flags used: `outReal: line, positive, negative`
 
 :::
 

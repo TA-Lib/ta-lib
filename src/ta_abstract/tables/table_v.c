@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* VAR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VAR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_VAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -47,7 +50,7 @@ static const TA_InputParameterInfo    *TA_VAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_VAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_VAR_Default,
   NULL
 };
 
@@ -88,6 +91,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_VHF_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VHF_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_VHF_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -96,7 +102,7 @@ static const TA_InputParameterInfo    *TA_VHF_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_VHF_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_VHF_Default,
   NULL
 };
 
@@ -191,10 +197,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_VORTEX_TimePeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VORTEX_outPlusVI =
-                               { TA_Output_Real, "outPlusVI", TA_OUT_LINE };
+                               { TA_Output_Real, "outPlusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VORTEX_outMinusVI =
-                               { TA_Output_Real, "outMinusVI", TA_OUT_LINE };
+                               { TA_Output_Real, "outMinusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_VORTEX_Inputs[]    =
 {

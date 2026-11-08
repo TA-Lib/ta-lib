@@ -19,7 +19,7 @@ The alpha is the cutoff-period one. Ehlers notes that it "is computed exactly th
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `outReal: line`
+Metadata flags used: `outReal: line, positive, negative`
 
 :::
 

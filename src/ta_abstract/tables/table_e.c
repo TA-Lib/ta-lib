@@ -53,6 +53,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_EFI_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_EFI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_EFI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_CV,
@@ -61,7 +64,7 @@ static const TA_InputParameterInfo    *TA_EFI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_EFI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_EFI_Default,
   NULL
 };
 
@@ -141,6 +144,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_EMV_VolumeDivisor =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_EMV_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_EMV_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLV,
@@ -149,7 +155,7 @@ static const TA_InputParameterInfo    *TA_EMV_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_EMV_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_EMV_Default,
   NULL
 };
 
@@ -190,6 +196,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ER_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ER_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_ER_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -198,7 +207,7 @@ static const TA_InputParameterInfo    *TA_ER_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ER_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ER_Default,
   NULL
 };
 
@@ -230,10 +239,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ERI_TimePeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ERI_outBullPower =
-                               { TA_Output_Real, "outBullPower", TA_OUT_LINE };
+                               { TA_Output_Real, "outBullPower", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ERI_outBearPower =
-                               { TA_Output_Real, "outBearPower", TA_OUT_LINE };
+                               { TA_Output_Real, "outBearPower", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_ERI_Inputs[]    =
 {
@@ -261,6 +270,9 @@ DEF_FUNCTION( ERI,
 /* ERI END */
 
 /* EXP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_EXP_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_EXP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -269,7 +281,7 @@ static const TA_InputParameterInfo    *TA_EXP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_EXP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_EXP_Default,
   NULL
 };
 

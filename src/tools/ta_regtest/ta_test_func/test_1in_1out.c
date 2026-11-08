@@ -269,7 +269,7 @@ static const ElemLaneIn elemLaneIn[] =
    { 0.63,  0 }, { -1.0,              1 },   /* outside LN and LOG10 */
    { 0.625, 1 }, { 2.0,               1 },   /* outside ACOS and ASIN */
    { 0.94,  0 }, { -0.0,              1 },
-   { 1e300, 0 }, { -0.0,              1 },
+   { 1e300, 0 }, { 1.0,               1 },   /* 0 from ACOS, LN and LOG10 */
    { (double)NAN, 0 }, { 0.0,         1 },
    { (double)INFINITY, 1 }, { -1.0,   1 },
    { 1e300, 0 }

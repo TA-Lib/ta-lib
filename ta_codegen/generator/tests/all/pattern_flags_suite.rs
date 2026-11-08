@@ -99,3 +99,26 @@ fn an_unknown_optional_input_flag_is_rejected() {
 fn parsing_applies_the_rules() {
     parse_yaml_str(&yaml("candlestick", "integer", "line"), Path::new(PATH));
 }
+
+#[test]
+fn bar_index_needs_an_integer_output() {
+    one_complaint(&fixture(PLAIN, ParamType::Real, &["line", "bar_index"]), "`bar_index` needs an integer output");
+}
+
+#[test]
+fn segmented_needs_a_real_output() {
+    one_complaint(&fixture(PLAIN, ParamType::Integer, &["line", "segmented"]), "`segmented` needs a real output");
+}
+
+#[test]
+fn segmented_needs_exactly_one_integer_output() {
+    let mut f = fixture(PLAIN, ParamType::Real, &["line", "segmented"]);
+    one_complaint(&f, "exactly one integer output");
+    let mut int = f.outputs[0].clone();
+    int.param_type = ParamType::Integer;
+    int.flags = vec!["line".to_string()];
+    f.outputs.push(int.clone());
+    assert!(check_flags(&f).is_ok(), "{:?}", check_flags(&f));
+    f.outputs.push(int);
+    one_complaint(&f, "exactly one integer output");
+}

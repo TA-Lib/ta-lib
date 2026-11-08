@@ -15,7 +15,7 @@ Percentage Volume Oscillator: a variation of the [Percentage Price Oscillator](/
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
 
-Metadata flags used: `inPriceV: volume` · `outReal: line`
+Metadata flags used: `inPriceV: volume` · `outReal: line, positive, negative`
 
 :::
 

@@ -101,6 +101,8 @@ mod tests {
             "TA_OUT_LOWER_LIMIT" => "lower_limit",
             "TA_FUNC_FLG_DISPLAY_SHIFT" | "TA_OUT_DISPLAY_SHIFT" => "display_shift",
             "TA_OUT_PATTERN_WEAK" => "pattern_weak",
+            "TA_OUT_BAR_INDEX" => "bar_index",
+            "TA_OUT_SEGMENTED" => "segmented",
             _ => return None,
         }))
     }

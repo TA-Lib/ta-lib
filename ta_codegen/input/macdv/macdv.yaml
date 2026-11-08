@@ -31,10 +31,10 @@ optional_inputs:
 outputs:
   - name: outMACDV
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outMACDVSignal
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]
   - name: outMACDVHist
     type: real
-    flags: [histogram]
+    flags: [histogram, zero, positive, negative]

@@ -90,10 +90,10 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ZIGZAG_outZigZag =
                                { TA_Output_Real, "outZigZag", TA_OUT_LINE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_ZIGZAG_outTrend =
-                               { TA_Output_Integer, "outTrend", TA_OUT_LINE };
+                               { TA_Output_Integer, "outTrend", TA_OUT_LINE | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_ZIGZAG_outPivotIdx =
-                               { TA_Output_Integer, "outPivotIdx", TA_OUT_LINE };
+                               { TA_Output_Integer, "outPivotIdx", TA_OUT_LINE | TA_OUT_BAR_INDEX };
 
 static const TA_InputParameterInfo    *TA_ZIGZAG_Inputs[]    =
 {

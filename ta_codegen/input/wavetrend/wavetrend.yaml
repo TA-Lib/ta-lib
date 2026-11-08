@@ -31,7 +31,7 @@ optional_inputs:
 outputs:
   - name: outWT1
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outWT2
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]

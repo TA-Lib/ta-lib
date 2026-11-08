@@ -31,4 +31,4 @@ optional_inputs:
 outputs:
   - name: outReal
     type: real
-    flags: [line]
+    flags: [line, zero, positive]

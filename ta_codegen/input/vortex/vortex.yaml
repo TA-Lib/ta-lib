@@ -17,7 +17,7 @@ optional_inputs:
 outputs:
   - name: outPlusVI
     type: real
-    flags: [line]
+    flags: [line, zero, positive]
   - name: outMinusVI
     type: real
-    flags: [line]
+    flags: [line, zero, positive]

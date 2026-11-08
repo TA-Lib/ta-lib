@@ -56,7 +56,7 @@ optional_inputs:
 outputs:
   - name: outMomentum
     type: real
-    flags: [histogram]
+    flags: [histogram, zero, positive, negative]
   - name: outSqueeze
     type: integer
     flags: [line]

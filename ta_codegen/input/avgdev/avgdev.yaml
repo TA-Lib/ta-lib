@@ -1,7 +1,7 @@
 name: AVGDEV
 group: Price Transform
 hint: Average Deviation
-flags: [overlap, stream]
+flags: [stream]
 inputs:
   - name: inReal
     type: real

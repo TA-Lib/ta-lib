@@ -15,7 +15,7 @@ MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a 
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outMACDV: line` · `outMACDVSignal: dash_line` · `outMACDVHist: histogram`
+Metadata flags used: `inPriceHLC: high, low, close` · `outMACDV: line, positive, negative` · `outMACDVSignal: dash_line, positive, negative` · `outMACDVHist: histogram, positive, negative`
 
 :::
 

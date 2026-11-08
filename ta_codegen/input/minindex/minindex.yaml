@@ -16,4 +16,4 @@ optional_inputs:
 outputs:
   - name: outInteger
     type: integer
-    flags: [line]
+    flags: [line, bar_index]

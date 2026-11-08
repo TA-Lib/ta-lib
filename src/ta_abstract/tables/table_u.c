@@ -81,6 +81,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ULTOSC_TimePeriod3 =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ULTOSC_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_ULTOSC_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -89,7 +92,7 @@ static const TA_InputParameterInfo    *TA_ULTOSC_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ULTOSC_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ULTOSC_Default,
   NULL
 };
 

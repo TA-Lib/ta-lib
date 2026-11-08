@@ -17,7 +17,7 @@ The output is centred on zero and stays within ±7.6: the smoothed position is l
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line.
 
-Metadata flags used: `inPriceHL: high, low` · `outFisher: line` · `outTrigger: dash_line`
+Metadata flags used: `inPriceHL: high, low` · `outFisher: line, positive, negative` · `outTrigger: dash_line, positive, negative`
 
 :::
 

@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* CCI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CCI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CCI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -47,7 +50,7 @@ static const TA_InputParameterInfo    *TA_CCI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CCI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CCI_Default,
   NULL
 };
 
@@ -1735,6 +1738,9 @@ DEF_FUNCTION( CE,
 /* CE END */
 
 /* CEIL BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CEIL_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CEIL_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -1743,7 +1749,7 @@ static const TA_InputParameterInfo    *TA_CEIL_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CEIL_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CEIL_Default,
   NULL
 };
 
@@ -1772,6 +1778,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_CG_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CG_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CG_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -1780,7 +1789,7 @@ static const TA_InputParameterInfo    *TA_CG_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CG_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CG_Default,
   NULL
 };
 
@@ -1797,6 +1806,9 @@ DEF_FUNCTION( CG,
 /* CG END */
 
 /* CHOP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CHOP_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CHOP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -1805,7 +1817,7 @@ static const TA_InputParameterInfo    *TA_CHOP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CHOP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CHOP_Default,
   NULL
 };
 
@@ -1822,6 +1834,9 @@ DEF_FUNCTION( CHOP,
 /* CHOP END */
 
 /* CHOPTR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CHOPTR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CHOPTR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -1830,7 +1845,7 @@ static const TA_InputParameterInfo    *TA_CHOPTR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CHOPTR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CHOPTR_Default,
   NULL
 };
 
@@ -1933,6 +1948,9 @@ DEF_FUNCTION( CKSP,
 /* CKSP END */
 
 /* CMF BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CMF_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLCV,
@@ -1941,7 +1959,7 @@ static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CMF_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CMF_Default,
   NULL
 };
 
@@ -1958,6 +1976,9 @@ DEF_FUNCTION( CMF,
 /* CMF END */
 
 /* CMO BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CMO_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CMO_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -1966,7 +1987,7 @@ static const TA_InputParameterInfo    *TA_CMO_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CMO_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CMO_Default,
   NULL
 };
 
@@ -1983,6 +2004,9 @@ DEF_FUNCTION( CMO,
 /* CMO END */
 
 /* CMOU BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CMOU_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CMOU_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -1991,7 +2015,7 @@ static const TA_InputParameterInfo    *TA_CMOU_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CMOU_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CMOU_Default,
   NULL
 };
 
@@ -2050,6 +2074,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_COPPOCK_ROC2Period =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_COPPOCK_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_COPPOCK_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2058,7 +2085,7 @@ static const TA_InputParameterInfo    *TA_COPPOCK_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_COPPOCK_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_COPPOCK_Default,
   NULL
 };
 
@@ -2077,6 +2104,9 @@ DEF_FUNCTION( COPPOCK,
 /* COPPOCK END */
 
 /* CORREL BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CORREL_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real0,
@@ -2086,7 +2116,7 @@ static const TA_InputParameterInfo    *TA_CORREL_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CORREL_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CORREL_Default,
   NULL
 };
 
@@ -2103,6 +2133,9 @@ DEF_FUNCTION( CORREL,
 /* CORREL END */
 
 /* COS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_COS_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_COS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2111,7 +2144,7 @@ static const TA_InputParameterInfo    *TA_COS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_COS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_COS_Default,
   NULL
 };
 
@@ -2126,6 +2159,9 @@ DEF_FUNCTION( COS,
 /* COS END */
 
 /* COSH BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_COSH_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_COSH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2134,7 +2170,7 @@ static const TA_InputParameterInfo    *TA_COSH_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_COSH_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_COSH_Default,
   NULL
 };
 
@@ -2218,6 +2254,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_CRSI_RankPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CRSI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_CRSI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2226,7 +2265,7 @@ static const TA_InputParameterInfo    *TA_CRSI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CRSI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CRSI_Default,
   NULL
 };
 
@@ -2268,6 +2307,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_CTI_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CTI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CTI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2276,7 +2318,7 @@ static const TA_InputParameterInfo    *TA_CTI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CTI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CTI_Default,
   NULL
 };
 
@@ -2293,6 +2335,9 @@ DEF_FUNCTION( CTI,
 /* CTI END */
 
 /* CUMSUM BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CUMSUM_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CUMSUM_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -2301,7 +2346,7 @@ static const TA_InputParameterInfo    *TA_CUMSUM_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CUMSUM_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CUMSUM_Default,
   NULL
 };
 
@@ -2353,6 +2398,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_CVI_ROCPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CVI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_CVI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -2361,7 +2409,7 @@ static const TA_InputParameterInfo    *TA_CVI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_CVI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_CVI_Default,
   NULL
 };
 

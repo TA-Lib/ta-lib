@@ -175,6 +175,12 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
          `ParamHolder.displayShift` reports. The values are never shifted.",
     ),
     ("pattern_weak", "PATTERN_WEAK", "Level 80 occurs too: a weaker form of the pattern, on the same bar."),
+    ("bar_index", "BAR_INDEX", "The value is an absolute index into the input arrays."),
+    (
+        "segmented",
+        "SEGMENTED",
+        "A line whose segments restart wherever the function's integer output changes value: never connect across a change.",
+    ),
 ];
 
 const PRICE_COMPONENTS: &[(PriceComponent, &str, &str)] = &[

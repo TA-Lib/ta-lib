@@ -422,6 +422,8 @@ TA_RetCode TA_GetFuncAttributes( const TA_FuncHandle *handle,
       return TA_BAD_PARAM;
    }
 
+   *json = NULL;
+
    funcDef = (const TA_FuncDef *)handle;
    if( (funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB) || !funcDef->attributes )
    {

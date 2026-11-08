@@ -64,6 +64,9 @@ DEF_FUNCTION( RMA,
 /* RMA END */
 
 /* ROC BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROC_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_ROC_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -72,7 +75,7 @@ static const TA_InputParameterInfo    *TA_ROC_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ROC_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ROC_Default,
   NULL
 };
 
@@ -89,6 +92,9 @@ DEF_FUNCTION( ROC,
 /* ROC END */
 
 /* ROCP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROCP_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_ROCP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -97,7 +103,7 @@ static const TA_InputParameterInfo    *TA_ROCP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ROCP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ROCP_Default,
   NULL
 };
 
@@ -114,6 +120,9 @@ DEF_FUNCTION( ROCP,
 /* ROCP END */
 
 /* ROCR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROCR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_ROCR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -122,7 +131,7 @@ static const TA_InputParameterInfo    *TA_ROCR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ROCR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ROCR_Default,
   NULL
 };
 
@@ -139,6 +148,9 @@ DEF_FUNCTION( ROCR,
 /* ROCR END */
 
 /* ROCR100 BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROCR100_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_ROCR100_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -147,7 +159,7 @@ static const TA_InputParameterInfo    *TA_ROCR100_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ROCR100_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ROCR100_Default,
   NULL
 };
 
@@ -211,6 +223,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_ROGERSSATCHELL_Annualization =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROGERSSATCHELL_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_ROGERSSATCHELL_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -219,7 +234,7 @@ static const TA_InputParameterInfo    *TA_ROGERSSATCHELL_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_ROGERSSATCHELL_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_ROGERSSATCHELL_Default,
   NULL
 };
 
@@ -237,6 +252,9 @@ DEF_FUNCTION( ROGERSSATCHELL,
 /* ROGERSSATCHELL END */
 
 /* RSI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_RSI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_RSI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -245,7 +263,7 @@ static const TA_InputParameterInfo    *TA_RSI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_RSI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_RSI_Default,
   NULL
 };
 
@@ -300,6 +318,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_RVI_StdDevPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_RVI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_RVI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -308,7 +329,7 @@ static const TA_InputParameterInfo    *TA_RVI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_RVI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_RVI_Default,
   NULL
 };
 
@@ -363,6 +384,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_RVIR_StdDevPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_RVIR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_RVIR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -371,7 +395,7 @@ static const TA_InputParameterInfo    *TA_RVIR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_RVIR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_RVIR_Default,
   NULL
 };
 
@@ -403,6 +427,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_RVOL_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_RVOL_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_RVOL_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_V,
@@ -411,7 +438,7 @@ static const TA_InputParameterInfo    *TA_RVOL_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_RVOL_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_RVOL_Default,
   NULL
 };
 

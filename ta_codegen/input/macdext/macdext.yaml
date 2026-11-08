@@ -45,10 +45,10 @@ optional_inputs:
 outputs:
   - name: outMACD
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outMACDSignal
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]
   - name: outMACDHist
     type: real
-    flags: [histogram]
+    flags: [histogram, zero, positive, negative]

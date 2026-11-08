@@ -15,7 +15,7 @@ Wilder's Swing Index: one number rating each bar against the bar before it, from
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line, positive, negative`
 
 :::
 

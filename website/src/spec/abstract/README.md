@@ -102,11 +102,11 @@ Every key is answered in every language, and the answer can differ with the lang
 
 Metadata that a flag bit cannot carry, as one JSON object per function: C's `TA_GetFuncAttributes`, the function descriptor's `attributes` in Rust, Java and TypeScript and `Attributes` in C#, and the function's `<Attributes>` element in `ta_func_api.xml`. A function with none has `{}`, and no element in the XML.
 
-A key of the function sits at the top level. A key of an input, an optional parameter or an output sits under `inputs`, `optInputs` or `outputs`, in an object named after the parameter. An empty object is left out. The string is canonical: no whitespace, keys in a fixed order, each number in its shortest form (`30`, `26.5`), so two strings compare byte for byte. Parse it with any JSON parser and ignore a key you do not know ([rA8](/spec/abstract/#ra8)).
+A key of the function sits at the top level. A key of an input, an optional parameter or an output sits under `inputs`, `optInputs` or `outputs`, in an object named after the parameter. An empty object is left out. The string is canonical: no whitespace, keys in a fixed order, each number in plain decimal with no exponent and no `-0` (`30`, `26.5`, `1000000`), so two strings compare byte for byte. Parse it with any JSON parser and ignore a key you do not know ([rA8](/spec/abstract/#ra8)).
 
 | Key | Of | Value | Meaning |
 |---|---|---|---|
-| `levels` | output | numbers, ascending | The reference levels the function's author published, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
+| `levels` | output | numbers, strictly ascending | The reference levels the function's author published, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
 
 RSI's: `{"outputs":{"outReal":{"levels":[30,70]}}}`.
 
@@ -157,6 +157,9 @@ What a function assumes of its input, and what can be said of the values it writ
 | `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is the pattern's call ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_WEAK` | Level 80 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_CONFIRM` | Level 200 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_BAR_INDEX` | The value is an absolute index into the input arrays. |
+
+On a real output, the sign flags say which signs can occur for some valid parameter values over well-formed bars (low <= open, close <= high, volume >= 0) and inputs the function documents as valid. Rounding in a running sum can leave a value a few units in the last place past zero, which the flags do not count.
 
 ### Display hint {#flags-display}
 
@@ -173,6 +176,7 @@ How a chart or a settings dialog should present a function, an output or an opti
 | `TA_OUT_DASH_LINE` | Draw as a dashed line. |
 | `TA_OUT_DOT` | Draw as dots only. |
 | `TA_OUT_HISTO` | Draw as a histogram. |
+| `TA_OUT_SEGMENTED` | A line whose segments restart wherever the function's integer output changes value: never connect across a change. |
 | `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
 | `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |
 | `TA_OPTIN_IS_PERCENT` | The parameter is a percentage. |

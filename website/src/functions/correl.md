@@ -15,7 +15,7 @@ Pearson's correlation coefficient (r) between two input series over a rolling wi
 
 Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
 
-Metadata flags used: `outReal: line`
+Metadata flags used: `outReal: line, positive, negative`
 
 :::
 

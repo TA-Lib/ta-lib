@@ -17,7 +17,7 @@ optional_inputs:
 outputs:
   - name: outFisher
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outTrigger
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]

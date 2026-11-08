@@ -17,7 +17,7 @@ It crosses zero as price crosses its own average, so peaks and troughs mark the 
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back.
 
-Metadata flags used: `outReal: line, display_shift (-11)`
+Metadata flags used: `outReal: line, display_shift (-11), positive, negative`
 
 :::
 

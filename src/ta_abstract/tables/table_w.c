@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* WAD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WAD_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_WAD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -47,7 +50,7 @@ static const TA_InputParameterInfo    *TA_WAD_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_WAD_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_WAD_Default,
   NULL
 };
 
@@ -123,10 +126,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_WAVETREND_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WAVETREND_outWT1 =
-                               { TA_Output_Real, "outWT1", TA_OUT_LINE };
+                               { TA_Output_Real, "outWT1", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WAVETREND_outWT2 =
-                               { TA_Output_Real, "outWT2", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outWT2", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_WAVETREND_Inputs[]    =
 {
@@ -179,6 +182,9 @@ DEF_FUNCTION( WCLPRICE,
 /* WCLPRICE END */
 
 /* WILLR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WILLR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_WILLR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -187,7 +193,7 @@ static const TA_InputParameterInfo    *TA_WILLR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_WILLR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_WILLR_Default,
   NULL
 };
 

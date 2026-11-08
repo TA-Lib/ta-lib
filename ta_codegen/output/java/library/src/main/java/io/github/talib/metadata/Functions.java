@@ -66,7 +66,15 @@ public final class Functions {
 
     private Functions() { }
 
+   private static final Map<String, String> ATTRIBUTES = Map.ofEntries(
+      Map.entry("RSI", "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}")
+   );
+
    private static final Map<String, FuncInfo> BY_NAME = build();
+
+   static String attributesOf(String name) {
+      return ATTRIBUTES.getOrDefault(name, "{}");
+   }
 
    /** Every function, in canonical name order. */
    public static List<FuncInfo> all() {
@@ -394,9 +402,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_ACCBANDS() {
@@ -416,8 +423,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_ACOS() {
@@ -428,9 +434,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_AD() {
@@ -441,9 +446,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ADD() {
@@ -455,9 +459,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ADOSC() {
@@ -479,9 +482,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ADR() {
@@ -498,9 +500,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_ADX() {
@@ -517,9 +518,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_ADXR() {
@@ -536,9 +536,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_ALLIGATOR() {
@@ -583,8 +582,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outJaw", 0x00004001),
             new OutputInfo(OutputType.REAL, "outTeeth", 0x00004001),
             new OutputInfo(OutputType.REAL, "outLips", 0x00004001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_ALMA() {
@@ -612,8 +610,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_AO() {
@@ -635,9 +632,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_APO() {
@@ -664,9 +660,8 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_AROON() {
@@ -683,10 +678,9 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outAroonDown", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outAroonUp", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outAroonDown", 0x00000504),
+            new OutputInfo(OutputType.REAL, "outAroonUp", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_AROONOSC() {
@@ -703,9 +697,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ASI() {
@@ -722,9 +715,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ASIN() {
@@ -735,9 +727,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ATAN() {
@@ -748,9 +739,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ATR() {
@@ -767,14 +757,13 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_AVGDEV() {
       return new FuncInfo(
-         "AVGDEV", "Price Transform", "Average Deviation", 0x03000000,
+         "AVGDEV", "Price Transform", "Average Deviation", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -787,8 +776,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_AVGPRICE() {
@@ -800,8 +788,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_BBANDS() {
@@ -836,8 +823,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_BBW() {
@@ -869,9 +855,8 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_BETA() {
@@ -889,9 +874,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_BOP() {
@@ -902,9 +886,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CCI() {
@@ -921,9 +904,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CDL2CROWS() {
@@ -935,8 +917,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3BLACKCROWS() {
@@ -948,8 +929,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3INSIDE() {
@@ -961,8 +941,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3LINESTRIKE() {
@@ -974,8 +953,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3OUTSIDE() {
@@ -987,8 +965,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3STARSINSOUTH() {
@@ -1000,8 +977,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDL3WHITESOLDIERS() {
@@ -1013,8 +989,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLABANDONEDBABY() {
@@ -1032,8 +1007,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLADVANCEBLOCK() {
@@ -1045,8 +1019,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLBELTHOLD() {
@@ -1058,8 +1031,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLBREAKAWAY() {
@@ -1071,8 +1043,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLCLOSINGMARUBOZU() {
@@ -1084,8 +1055,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLCONCEALBABYSWALL() {
@@ -1097,8 +1067,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLCOUNTERATTACK() {
@@ -1110,8 +1079,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLDARKCLOUDCOVER() {
@@ -1129,8 +1097,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLDOJI() {
@@ -1142,8 +1109,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLDOJISTAR() {
@@ -1155,8 +1121,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLDRAGONFLYDOJI() {
@@ -1168,8 +1133,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLENGULFING() {
@@ -1181,8 +1145,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLEVENINGDOJISTAR() {
@@ -1200,8 +1163,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLEVENINGSTAR() {
@@ -1219,8 +1181,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLGAPSIDESIDEWHITE() {
@@ -1232,8 +1193,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLGRAVESTONEDOJI() {
@@ -1245,8 +1205,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHAMMER() {
@@ -1258,8 +1217,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHANGINGMAN() {
@@ -1271,8 +1229,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHARAMI() {
@@ -1284,8 +1241,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHARAMICROSS() {
@@ -1297,8 +1253,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00008741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHIGHWAVE() {
@@ -1310,8 +1265,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHIKKAKE() {
@@ -1323,8 +1277,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x000007C1)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHIKKAKEMOD() {
@@ -1336,8 +1289,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x000007C1)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLHOMINGPIGEON() {
@@ -1349,8 +1301,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLIDENTICAL3CROWS() {
@@ -1362,8 +1313,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLINNECK() {
@@ -1375,8 +1325,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLINVERTEDHAMMER() {
@@ -1388,8 +1337,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLKICKING() {
@@ -1401,8 +1349,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLKICKINGBYLENGTH() {
@@ -1414,8 +1361,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLLADDERBOTTOM() {
@@ -1427,8 +1373,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLLONGLEGGEDDOJI() {
@@ -1440,8 +1385,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLLONGLINE() {
@@ -1453,8 +1397,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLMARUBOZU() {
@@ -1466,8 +1409,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLMATCHINGLOW() {
@@ -1479,8 +1421,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLMATHOLD() {
@@ -1498,8 +1439,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLMORNINGDOJISTAR() {
@@ -1517,8 +1457,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLMORNINGSTAR() {
@@ -1536,8 +1475,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLONNECK() {
@@ -1549,8 +1487,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLPIERCING() {
@@ -1562,8 +1499,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLRICKSHAWMAN() {
@@ -1575,8 +1511,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLRISEFALL3METHODS() {
@@ -1588,8 +1523,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSEPARATINGLINES() {
@@ -1601,8 +1535,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSHOOTINGSTAR() {
@@ -1614,8 +1547,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSHORTLINE() {
@@ -1627,8 +1559,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSPINNINGTOP() {
@@ -1640,8 +1571,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSTALLEDPATTERN() {
@@ -1653,8 +1583,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLSTICKSANDWICH() {
@@ -1666,8 +1595,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLTAKURI() {
@@ -1679,8 +1607,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLTASUKIGAP() {
@@ -1692,8 +1619,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLTHRUSTING() {
@@ -1705,8 +1631,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLTRISTAR() {
@@ -1718,8 +1643,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLUNIQUE3RIVER() {
@@ -1731,8 +1655,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000541)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLUPSIDEGAP2CROWS() {
@@ -1744,8 +1667,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000641)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CDLXSIDEGAP3METHODS() {
@@ -1757,8 +1679,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CE() {
@@ -1782,8 +1703,7 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outRealLong", 0x00001000),
             new OutputInfo(OutputType.REAL, "outRealShort", 0x00000800)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CEIL() {
@@ -1794,9 +1714,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CG() {
@@ -1813,9 +1732,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000201)
+         ));
    }
 
    private static FuncInfo f_CHOP() {
@@ -1832,9 +1750,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_CHOPTR() {
@@ -1851,9 +1768,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_CKSP() {
@@ -1882,8 +1798,7 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outHighStop", 0x00000001),
             new OutputInfo(OutputType.REAL, "outLowStop", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_CMF() {
@@ -1900,9 +1815,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CMO() {
@@ -1919,9 +1833,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CMOU() {
@@ -1938,9 +1851,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_COPPOCK() {
@@ -1967,9 +1879,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CORREL() {
@@ -1987,9 +1898,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_COS() {
@@ -2000,9 +1910,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000301)
+         ));
    }
 
    private static FuncInfo f_COSH() {
@@ -2013,9 +1922,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+         ));
    }
 
    private static FuncInfo f_CRSI() {
@@ -2042,9 +1950,8 @@ public final class Functions {
                2, 10000, 20, 200, 20, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_CTI() {
@@ -2061,9 +1968,8 @@ public final class Functions {
                2, 100000, 5, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CUMSUM() {
@@ -2074,9 +1980,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_CVI() {
@@ -2098,9 +2003,8 @@ public final class Functions {
                1, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_DEMA() {
@@ -2118,8 +2022,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_DIV() {
@@ -2131,9 +2034,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_DONCHIAN() {
@@ -2153,8 +2055,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_DOSC() {
@@ -2186,9 +2087,8 @@ public final class Functions {
                2, 100000, 2, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_DPO() {
@@ -2205,9 +2105,8 @@ public final class Functions {
                2, 100000, 10, 60, 5, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00004001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00004701)
+         ));
    }
 
    private static FuncInfo f_DX() {
@@ -2224,9 +2123,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_EFI() {
@@ -2243,9 +2141,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_EMA() {
@@ -2263,8 +2160,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_EMV() {
@@ -2286,9 +2182,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ER() {
@@ -2305,9 +2200,8 @@ public final class Functions {
                2, 100000, 2, 100, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_ERI() {
@@ -2324,10 +2218,9 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outBullPower", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outBearPower", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outBullPower", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outBearPower", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_EXP() {
@@ -2338,9 +2231,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_FISHER() {
@@ -2357,10 +2249,9 @@ public final class Functions {
                2, 100000, 5, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outFisher", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outTrigger", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outFisher", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outTrigger", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_FLOOR() {
@@ -2371,9 +2262,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_FOSC() {
@@ -2390,9 +2280,8 @@ public final class Functions {
                2, 100000, 2, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_FRACTAL() {
@@ -2416,8 +2305,7 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.INTEGER, "outSwingHigh", 0x00004521),
             new OutputInfo(OutputType.INTEGER, "outSwingLow", 0x00004521)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_FRAMA() {
@@ -2435,8 +2323,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_HA() {
@@ -2451,8 +2338,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outHAHigh", 0x00000801),
             new OutputInfo(OutputType.REAL, "outHALow", 0x00001001),
             new OutputInfo(OutputType.REAL, "outHAClose", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_HMA() {
@@ -2470,8 +2356,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_HT_DCPERIOD() {
@@ -2482,9 +2367,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+         ));
    }
 
    private static FuncInfo f_HT_DCPHASE() {
@@ -2495,9 +2379,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000301)
+         ));
    }
 
    private static FuncInfo f_HT_PHASOR() {
@@ -2508,10 +2391,9 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outInPhase", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outQuadrature", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outInPhase", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outQuadrature", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_HT_SINE() {
@@ -2522,10 +2404,9 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outSine", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outLeadSine", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outSine", 0x00000301),
+            new OutputInfo(OutputType.REAL, "outLeadSine", 0x00000304)
+         ));
    }
 
    private static FuncInfo f_HT_TRENDLINE() {
@@ -2537,8 +2418,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_HT_TRENDMODE() {
@@ -2550,8 +2430,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_IBS() {
@@ -2562,9 +2441,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_ICHIMOKU() {
@@ -2595,8 +2473,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outKijunSen", 0x00000001),
             new OutputInfo(OutputType.REAL, "outSenkouSpanA", 0x00004001),
             new OutputInfo(OutputType.REAL, "outSenkouSpanB", 0x00004001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_IMI() {
@@ -2613,9 +2490,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_KAMA() {
@@ -2633,8 +2509,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_KC() {
@@ -2664,8 +2539,7 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_KDJ() {
@@ -2702,11 +2576,10 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outK", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outD", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outJ", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outK", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outD", 0x00000704),
+            new OutputInfo(OutputType.REAL, "outJ", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_KST() {
@@ -2763,10 +2636,9 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outKST", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outKST", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_KSTEXT() {
@@ -2833,10 +2705,9 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outKST", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outKST", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outKSTSignal", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_KURTOSIS() {
@@ -2853,9 +2724,8 @@ public final class Functions {
                4, 10000, 10, 200, 5, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_KVO() {
@@ -2882,10 +2752,9 @@ public final class Functions {
                2, 100000, 2, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outKVO", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outKVOSignal", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outKVO", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outKVOSignal", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_LINEARREG() {
@@ -2903,8 +2772,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_LINEARREG_ANGLE() {
@@ -2921,9 +2789,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_LINEARREG_INTERCEPT() {
@@ -2941,8 +2808,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_LINEARREG_SLOPE() {
@@ -2959,9 +2825,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_LN() {
@@ -2972,9 +2837,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_LOG10() {
@@ -2985,9 +2849,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_MA() {
@@ -3010,8 +2873,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MACD() {
@@ -3038,11 +2900,10 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMACD", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outMACD", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000704),
+            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_MACDEXT() {
@@ -3084,11 +2945,10 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMACD", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outMACD", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000704),
+            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_MACDFIX() {
@@ -3105,11 +2965,10 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMACD", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outMACD", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000704),
+            new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_MACDV() {
@@ -3136,11 +2995,10 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMACDV", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outMACDVSignal", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outMACDVHist", 0x00000010)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outMACDV", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outMACDVSignal", 0x00000704),
+            new OutputInfo(OutputType.REAL, "outMACDVHist", 0x00000710)
+         ));
    }
 
    private static FuncInfo f_MAMA() {
@@ -3164,8 +3022,7 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outMAMA", 0x00000001),
             new OutputInfo(OutputType.REAL, "outFAMA", 0x00000004)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MARKETFI() {
@@ -3176,9 +3033,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_MASSI() {
@@ -3200,9 +3056,8 @@ public final class Functions {
                2, 100000, 10, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+         ));
    }
 
    private static FuncInfo f_MAVP() {
@@ -3231,8 +3086,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MAX() {
@@ -3250,8 +3104,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MAXINDEX() {
@@ -3268,9 +3121,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00010001)
+         ));
    }
 
    private static FuncInfo f_MCGD() {
@@ -3288,8 +3140,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MEDIAN() {
@@ -3307,8 +3158,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MEDPRICE() {
@@ -3320,8 +3170,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MFI() {
@@ -3338,9 +3187,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_MIDPOINT() {
@@ -3358,8 +3206,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MIDPRICE() {
@@ -3377,8 +3224,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MIN() {
@@ -3396,8 +3242,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MININDEX() {
@@ -3414,9 +3259,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00010001)
+         ));
    }
 
    private static FuncInfo f_MINMAX() {
@@ -3435,8 +3279,7 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outMin", 0x00000001),
             new OutputInfo(OutputType.REAL, "outMax", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_MINMAXINDEX() {
@@ -3453,10 +3296,9 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outMinIdx", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outMaxIdx", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.INTEGER, "outMinIdx", 0x00010001),
+            new OutputInfo(OutputType.INTEGER, "outMaxIdx", 0x00010001)
+         ));
    }
 
    private static FuncInfo f_MINUS_DI() {
@@ -3473,9 +3315,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_MINUS_DM() {
@@ -3492,9 +3333,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_MOM() {
@@ -3511,9 +3351,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_MULT() {
@@ -3525,9 +3364,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_NATR() {
@@ -3544,9 +3382,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_NVI() {
@@ -3557,9 +3394,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_OBV() {
@@ -3571,9 +3407,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_PERCENTB() {
@@ -3605,9 +3440,8 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_PERCENTILE() {
@@ -3630,8 +3464,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_PERCENTRANK() {
@@ -3648,9 +3481,8 @@ public final class Functions {
                2, 10000, 20, 200, 20, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_PLUS_DI() {
@@ -3667,9 +3499,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_PLUS_DM() {
@@ -3686,9 +3517,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_PPO() {
@@ -3715,9 +3545,8 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_PSO() {
@@ -3739,9 +3568,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_PVI() {
@@ -3752,9 +3580,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_PVO() {
@@ -3781,9 +3608,8 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_PVT() {
@@ -3794,9 +3620,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_QSTICK() {
@@ -3813,9 +3638,8 @@ public final class Functions {
                1, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_RMA() {
@@ -3833,8 +3657,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_ROC() {
@@ -3851,9 +3674,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ROCP() {
@@ -3870,9 +3692,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_ROCR() {
@@ -3889,9 +3710,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+         ));
    }
 
    private static FuncInfo f_ROCR100() {
@@ -3908,9 +3728,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+         ));
    }
 
    private static FuncInfo f_ROGERSSATCHELL() {
@@ -3932,9 +3751,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_RSI() {
@@ -3951,9 +3769,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_RVI() {
@@ -3975,9 +3792,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_RVIR() {
@@ -3999,9 +3815,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_RVOL() {
@@ -4018,9 +3833,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_SAR() {
@@ -4043,8 +3857,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000008)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_SAREXT() {
@@ -4097,8 +3910,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000008)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_SHARPE() {
@@ -4125,9 +3937,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SI() {
@@ -4144,9 +3955,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SIN() {
@@ -4157,9 +3967,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SINH() {
@@ -4170,9 +3979,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SKEW() {
@@ -4189,9 +3997,8 @@ public final class Functions {
                3, 100000, 10, 200, 5, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SMA() {
@@ -4209,8 +4016,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_SMI() {
@@ -4242,10 +4048,9 @@ public final class Functions {
                2, 100000, 2, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outSMI", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outSMISignal", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outSMI", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outSMISignal", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_SORTINO() {
@@ -4272,9 +4077,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SQRT() {
@@ -4285,9 +4089,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_SQZMOM() {
@@ -4329,10 +4132,9 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMomentum", 0x00000010),
+            new OutputInfo(OutputType.REAL, "outMomentum", 0x00000710),
             new OutputInfo(OutputType.INTEGER, "outSqueeze", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_STC() {
@@ -4359,9 +4161,8 @@ public final class Functions {
                2, 100000, 2, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_STDDEV() {
@@ -4383,9 +4184,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_STOCH() {
@@ -4422,10 +4222,9 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outSlowK", 0x00000004),
-            new OutputInfo(OutputType.REAL, "outSlowD", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outSlowK", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outSlowD", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_STOCHF() {
@@ -4452,10 +4251,9 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outFastK", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outFastD", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outFastK", 0x00000501),
+            new OutputInfo(OutputType.REAL, "outFastD", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_STOCHRSI() {
@@ -4487,10 +4285,9 @@ public final class Functions {
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outFastK", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outFastD", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outFastK", 0x00000501),
+            new OutputInfo(OutputType.REAL, "outFastD", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_SUB() {
@@ -4502,9 +4299,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SUM() {
@@ -4521,9 +4317,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SUPERTREND() {
@@ -4545,10 +4340,9 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outSupertrend", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outSupertrend", 0x00020001),
+            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000301)
+         ));
    }
 
    private static FuncInfo f_SWAK_2PHP() {
@@ -4565,9 +4359,8 @@ public final class Functions {
                2, 10000, 5, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SWAK_BP() {
@@ -4589,9 +4382,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_SWAK_BUTTER() {
@@ -4609,8 +4401,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_SWAK_GAUSS() {
@@ -4628,8 +4419,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_SWAK_HP() {
@@ -4646,9 +4436,8 @@ public final class Functions {
                5, 100000, 5, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_T3() {
@@ -4671,8 +4460,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_TAN() {
@@ -4683,9 +4471,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_TANH() {
@@ -4696,9 +4483,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_TEMA() {
@@ -4716,8 +4502,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_TRANGE() {
@@ -4728,9 +4513,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_TRIMA() {
@@ -4748,8 +4532,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_TRIX() {
@@ -4766,9 +4549,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_TSF() {
@@ -4786,8 +4568,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_TSI() {
@@ -4809,9 +4590,8 @@ public final class Functions {
                2, 100000, 2, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_TYPPRICE() {
@@ -4823,8 +4603,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_ULTOSC() {
@@ -4851,9 +4630,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_VAR() {
@@ -4875,9 +4653,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_VHF() {
@@ -4894,9 +4671,8 @@ public final class Functions {
                2, 100000, 14, 56, 7, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_VIDYA() {
@@ -4919,8 +4695,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_VORTEX() {
@@ -4937,10 +4712,9 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000501),
+            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000501)
+         ));
    }
 
    private static FuncInfo f_VWAP() {
@@ -4952,8 +4726,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_VWMA() {
@@ -4972,8 +4745,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_WAD() {
@@ -4984,9 +4756,8 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+         ));
    }
 
    private static FuncInfo f_WAVETREND() {
@@ -5013,10 +4784,9 @@ public final class Functions {
                1, 100000, 1, 50, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outWT1", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outWT2", 0x00000004)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outWT1", 0x00000701),
+            new OutputInfo(OutputType.REAL, "outWT2", 0x00000704)
+         ));
    }
 
    private static FuncInfo f_WCLPRICE() {
@@ -5028,8 +4798,7 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_WILLR() {
@@ -5046,9 +4815,8 @@ public final class Functions {
                2, 100000, 4, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000601)
+         ));
    }
 
    private static FuncInfo f_WMA() {
@@ -5066,8 +4834,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
    private static FuncInfo f_ZIGZAG() {
@@ -5090,10 +4857,9 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outZigZag", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outPivotIdx", 0x00000001)
-         ),
-         "{}");
+            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000301),
+            new OutputInfo(OutputType.INTEGER, "outPivotIdx", 0x00010001)
+         ));
    }
 
    private static FuncInfo f_ZLEMA() {
@@ -5111,8 +4877,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ),
-         "{}");
+         ));
    }
 
 }

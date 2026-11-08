@@ -48,7 +48,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the signal line (period length)', defaultValue: 5.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('ACCBANDS', 'Overlap Studies', 'Acceleration Bands', 0x03000000,
@@ -70,7 +70,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('AD', 'Volume Indicators', 'Chaikin A/D Line', 0x22000000,
@@ -79,7 +79,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ADD', 'Math Operators', 'Vector Arithmetic Add', 0x02000000,
@@ -89,7 +89,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ADOSC', 'Volume Indicators', 'Chaikin A/D Oscillator', 0x02000000,
@@ -101,7 +101,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSlowPeriod', key: 'slowPeriod', flags: 0x00000000, displayName: 'Slow Period', hint: 'Period of the slow MA', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ADR', 'Volatility Indicators', 'Average Day Range', 0x02000000,
@@ -112,7 +112,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ADX', 'Momentum Indicators', 'Average Directional Movement Index', 0x0A000000,
@@ -123,7 +123,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ADXR', 'Momentum Indicators', 'Average Directional Movement Index Rating', 0x02000000,
@@ -134,7 +134,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ALLIGATOR', 'Overlap Studies', 'Williams Alligator', 0x03000002,
@@ -177,7 +177,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSlowPeriod', key: 'slowPeriod', flags: 0x00000000, displayName: 'Slow Period', hint: 'Period of the slow MA', defaultValue: 34.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('APO', 'Momentum Indicators', 'Absolute Price Oscillator', 0x02000000,
@@ -190,7 +190,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 1.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('AROON', 'Momentum Indicators', 'Aroon', 0x02000000,
@@ -201,8 +201,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outAroonDown', key: 'outAroonDown', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outAroonUp', key: 'outAroonUp', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outAroonDown', key: 'outAroonDown', flags: 0x00000504 },
+      { type: OutputType.REAL, paramName: 'outAroonUp', key: 'outAroonUp', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('AROONOSC', 'Momentum Indicators', 'Aroon Oscillator', 0x02000000,
@@ -213,7 +213,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ASI', 'Momentum Indicators', 'Wilder Accumulative Swing Index', 0x22000000,
@@ -224,7 +224,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInLimitMove', key: 'limitMove', flags: 0x00000000, displayName: 'Limit Move', hint: 'Largest one-bar price move the index is scaled against, in price units', defaultValue: 3.0, min: 1e-8, max: 3e37, precision: 4, suggestedStart: 0.5, suggestedEnd: 30.0, suggestedIncrement: 0.5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ASIN', 'Math Transform', 'Vector Trigonometric ASin', 0x42000004,
@@ -233,7 +233,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ATAN', 'Math Transform', 'Vector Trigonometric ATan', 0x02000004,
@@ -242,7 +242,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ATR', 'Volatility Indicators', 'Average True Range', 0x0A000000,
@@ -253,10 +253,10 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
-  FuncInfo.of('AVGDEV', 'Price Transform', 'Average Deviation', 0x03000000,
+  FuncInfo.of('AVGDEV', 'Price Transform', 'Average Deviation', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
     ],
@@ -303,7 +303,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('BETA', 'Statistic Functions', 'Beta', 0x02000000,
@@ -315,7 +315,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 5.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('BOP', 'Momentum Indicators', 'Balance Of Power', 0x02000000,
@@ -324,7 +324,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CCI', 'Momentum Indicators', 'Commodity Channel Index', 0x02000000,
@@ -335,7 +335,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CDL2CROWS', 'Pattern Recognition', 'Two Crows', 0x12000000,
@@ -920,7 +920,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CG', 'Momentum Indicators', 'Center of Gravity Oscillator', 0x02000008,
@@ -931,7 +931,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of bars in the window', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000201 },
     ],
     '{}'),
   FuncInfo.of('CHOP', 'Momentum Indicators', 'Choppiness Index', 0x02000004,
@@ -942,7 +942,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('CHOPTR', 'Momentum Indicators', 'Choppiness Index (True Range Box)', 0x02000004,
@@ -953,7 +953,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('CKSP', 'Overlap Studies', 'Chande Kroll Stop', 0x03000000,
@@ -978,7 +978,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 20.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CMO', 'Momentum Indicators', 'Chande Momentum Oscillator', 0x0A000000,
@@ -989,7 +989,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CMOU', 'Momentum Indicators', 'Chande Momentum Oscillator (Unsmoothed)', 0x02000000,
@@ -1000,7 +1000,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('COPPOCK', 'Momentum Indicators', 'Coppock Curve', 0x02000008,
@@ -1013,7 +1013,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInROC2Period', key: 'roc2Period', flags: 0x00000000, displayName: 'ROC-2 Period', hint: 'Long rate-of-change period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CORREL', 'Statistic Functions', 'Pearson\'s Correlation Coefficient (r)', 0x02000000,
@@ -1025,7 +1025,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('COS', 'Math Transform', 'Vector Trigonometric Cos', 0x02000004,
@@ -1034,7 +1034,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000301 },
     ],
     '{}'),
   FuncInfo.of('COSH', 'Math Transform', 'Vector Trigonometric Cosh', 0x42000004,
@@ -1043,7 +1043,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
     '{}'),
   FuncInfo.of('CRSI', 'Momentum Indicators', 'Connors Relative Strength Index', 0x02000000,
@@ -1056,7 +1056,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInRankPeriod', key: 'rankPeriod', flags: 0x00000000, displayName: 'Rank Period', hint: 'Number of previous one-bar returns the current one is ranked against', defaultValue: 100.0, min: 2, max: 10000, suggestedStart: 20, suggestedEnd: 200, suggestedIncrement: 20 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('CTI', 'Momentum Indicators', 'Correlation Trend Indicator', 0x02000000,
@@ -1067,7 +1067,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of bars correlated against the ramp', defaultValue: 20.0, min: 2, max: 100000, suggestedStart: 5, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CUMSUM', 'Math Operators', 'Cumulative Sum', 0x22000000,
@@ -1076,7 +1076,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('CVI', 'Volatility Indicators', 'Chaikin\'s Volatility', 0x02000000,
@@ -1088,7 +1088,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInROCPeriod', key: 'rocPeriod', flags: 0x00000000, displayName: 'ROC Period', hint: 'Number of bars the rate of change reaches back', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('DEMA', 'Overlap Studies', 'Double Exponential Moving Average', 0x03000001,
@@ -1109,7 +1109,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('DONCHIAN', 'Overlap Studies', 'Donchian Channels', 0x03000000,
@@ -1136,7 +1136,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Period of the simple average subtracted from the smoothed line', defaultValue: 9.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('DPO', 'Momentum Indicators', 'Detrended Price Oscillator', 0x02000002,
@@ -1147,7 +1147,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 20.0, min: 2, max: 100000, suggestedStart: 10, suggestedEnd: 60, suggestedIncrement: 5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00004001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00004701 },
     ],
     '{}'),
   FuncInfo.of('DX', 'Momentum Indicators', 'Directional Movement Index', 0x0A000000,
@@ -1158,7 +1158,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('EFI', 'Volume Indicators', 'Elder\'s Force Index', 0x02000000,
@@ -1169,7 +1169,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 13.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('EMA', 'Overlap Studies', 'Exponential Moving Average', 0x0B000001,
@@ -1192,7 +1192,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInVolumeDivisor', key: 'volumeDivisor', flags: 0x00000000, displayName: 'Volume Divisor', hint: 'Volume is divided by this before forming the box ratio', defaultValue: 10000.0, min: 1.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ER', 'Momentum Indicators', 'Kaufman Efficiency Ratio', 0x02000000,
@@ -1203,7 +1203,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of one-bar changes in the path sum', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 100, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ERI', 'Momentum Indicators', 'Elder Ray Index (Bull Power / Bear Power)', 0x02000000,
@@ -1214,8 +1214,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of bars in the EMA of close', defaultValue: 13.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outBullPower', key: 'outBullPower', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outBearPower', key: 'outBearPower', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outBullPower', key: 'outBullPower', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outBearPower', key: 'outBearPower', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('EXP', 'Math Transform', 'Vector Arithmetic Exp', 0x42000004,
@@ -1224,7 +1224,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('FISHER', 'Momentum Indicators', 'Fisher Transform', 0x0A000004,
@@ -1235,8 +1235,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 5, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outFisher', key: 'outFisher', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outTrigger', key: 'outTrigger', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outFisher', key: 'outFisher', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outTrigger', key: 'outTrigger', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('FLOOR', 'Math Transform', 'Vector Floor', 0x02000000,
@@ -1245,7 +1245,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('FOSC', 'Momentum Indicators', 'Forecast Oscillator', 0x02000008,
@@ -1256,7 +1256,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 5.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('FRACTAL', 'Momentum Indicators', 'Williams Fractal', 0x02000002,
@@ -1312,7 +1312,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
     '{}'),
   FuncInfo.of('HT_DCPHASE', 'Cycle Indicators', 'Hilbert Transform - Dominant Cycle Phase', 0x0A000004,
@@ -1321,7 +1321,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000301 },
     ],
     '{}'),
   FuncInfo.of('HT_PHASOR', 'Cycle Indicators', 'Hilbert Transform - Phasor Components', 0x0A000004,
@@ -1330,8 +1330,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outInPhase', key: 'outInPhase', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outQuadrature', key: 'outQuadrature', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outInPhase', key: 'outInPhase', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outQuadrature', key: 'outQuadrature', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('HT_SINE', 'Cycle Indicators', 'Hilbert Transform - SineWave', 0x0A000004,
@@ -1340,8 +1340,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outSine', key: 'outSine', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outLeadSine', key: 'outLeadSine', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outSine', key: 'outSine', flags: 0x00000301 },
+      { type: OutputType.REAL, paramName: 'outLeadSine', key: 'outLeadSine', flags: 0x00000304 },
     ],
     '{}'),
   FuncInfo.of('HT_TRENDLINE', 'Overlap Studies', 'Hilbert Transform - Instantaneous Trendline', 0x0B000004,
@@ -1368,7 +1368,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ICHIMOKU', 'Overlap Studies', 'Ichimoku Kinko Hyo', 0x03000002,
@@ -1395,7 +1395,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('KAMA', 'Overlap Studies', 'Kaufman Adaptive Moving Average', 0x0B000001,
@@ -1436,9 +1436,9 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInSlowD_MAType', key: 'slowDMaType', flags: 0x00000000, displayName: 'Slow-D MA', hint: 'Type of Moving Average for Slow-D', defaultValue: 13.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outK', key: 'outK', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outD', key: 'outD', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outJ', key: 'outJ', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outK', key: 'outK', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outD', key: 'outD', flags: 0x00000704 },
+      { type: OutputType.REAL, paramName: 'outJ', key: 'outJ', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('KST', 'Momentum Indicators', 'Know Sure Thing (Pring)', 0x02000008,
@@ -1457,8 +1457,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing period of the signal line', defaultValue: 9.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outKST', key: 'outKst', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outKSTSignal', key: 'outKstSignal', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outKST', key: 'outKst', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outKSTSignal', key: 'outKstSignal', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('KSTEXT', 'Momentum Indicators', 'Know Sure Thing with controllable MA type', 0x02000008,
@@ -1479,8 +1479,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInSignalMAType', key: 'signalMaType', flags: 0x00000000, displayName: 'Signal MA', hint: 'Type of Moving Average for signal line', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outKST', key: 'outKst', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outKSTSignal', key: 'outKstSignal', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outKST', key: 'outKst', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outKSTSignal', key: 'outKstSignal', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('KURTOSIS', 'Statistic Functions', 'Rolling Excess Kurtosis', 0x42000000,
@@ -1491,7 +1491,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 4, max: 10000, suggestedStart: 10, suggestedEnd: 200, suggestedIncrement: 5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('KVO', 'Volume Indicators', 'Klinger Volume Oscillator', 0x02000000,
@@ -1504,8 +1504,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the trigger line', defaultValue: 13.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outKVO', key: 'outKvo', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outKVOSignal', key: 'outKvoSignal', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outKVO', key: 'outKvo', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outKVOSignal', key: 'outKvoSignal', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('LINEARREG', 'Statistic Functions', 'Linear Regression', 0x03000000,
@@ -1527,7 +1527,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('LINEARREG_INTERCEPT', 'Statistic Functions', 'Linear Regression Intercept', 0x03000000,
@@ -1549,7 +1549,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('LN', 'Math Transform', 'Vector Log Natural', 0x4200000C,
@@ -1558,7 +1558,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('LOG10', 'Math Transform', 'Vector Log10', 0x4200000C,
@@ -1567,7 +1567,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('MA', 'Overlap Studies', 'Moving average', 0x03000001,
@@ -1592,9 +1592,9 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the signal line (period length)', defaultValue: 9.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000704 },
+      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('MACDEXT', 'Momentum Indicators', 'MACD with controllable MA type', 0x02000000,
@@ -1610,9 +1610,9 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInSignalMAType', key: 'signalMaType', flags: 0x00000000, displayName: 'Signal MA', hint: 'Type of Moving Average for signal line', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000704 },
+      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('MACDFIX', 'Momentum Indicators', 'Moving Average Convergence/Divergence Fix 12/26', 0x02000000,
@@ -1623,9 +1623,9 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the signal line (period length)', defaultValue: 9.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outMACD', key: 'outMacd', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outMACDSignal', key: 'outMacdSignal', flags: 0x00000704 },
+      { type: OutputType.REAL, paramName: 'outMACDHist', key: 'outMacdHist', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('MACDV', 'Momentum Indicators', 'MACD-V, Volatility Normalised Momentum', 0x02000000,
@@ -1638,9 +1638,9 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the signal line (period length)', defaultValue: 9.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outMACDV', key: 'outMacdv', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outMACDVSignal', key: 'outMacdvSignal', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outMACDVHist', key: 'outMacdvHist', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outMACDV', key: 'outMacdv', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outMACDVSignal', key: 'outMacdvSignal', flags: 0x00000704 },
+      { type: OutputType.REAL, paramName: 'outMACDVHist', key: 'outMacdvHist', flags: 0x00000710 },
     ],
     '{}'),
   FuncInfo.of('MAMA', 'Overlap Studies', 'MESA Adaptive Moving Average', 0x0B000004,
@@ -1662,7 +1662,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('MASSI', 'Volatility Indicators', 'Mass Index', 0x02000000,
@@ -1674,7 +1674,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSlowPeriod', key: 'slowPeriod', flags: 0x00000000, displayName: 'Slow Period', hint: 'Number of bars the ratio is summed over', defaultValue: 25.0, min: 2, max: 100000, suggestedStart: 10, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
     '{}'),
   FuncInfo.of('MAVP', 'Overlap Studies', 'Moving average with variable period', 0x03000000,
@@ -1710,7 +1710,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000001 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00010001 },
     ],
     '{}'),
   FuncInfo.of('MCGD', 'Overlap Studies', 'McGinley Dynamic', 0x0B000008,
@@ -1752,7 +1752,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('MIDPOINT', 'Overlap Studies', 'MidPoint over period', 0x03000000,
@@ -1796,7 +1796,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000001 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00010001 },
     ],
     '{}'),
   FuncInfo.of('MINMAX', 'Math Operators', 'Lowest and highest values over a specified period', 0x03000000,
@@ -1819,8 +1819,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outMinIdx', key: 'outMinIdx', flags: 0x00000001 },
-      { type: OutputType.INTEGER, paramName: 'outMaxIdx', key: 'outMaxIdx', flags: 0x00000001 },
+      { type: OutputType.INTEGER, paramName: 'outMinIdx', key: 'outMinIdx', flags: 0x00010001 },
+      { type: OutputType.INTEGER, paramName: 'outMaxIdx', key: 'outMaxIdx', flags: 0x00010001 },
     ],
     '{}'),
   FuncInfo.of('MINUS_DI', 'Momentum Indicators', 'Minus Directional Indicator', 0x0A000000,
@@ -1831,7 +1831,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('MINUS_DM', 'Momentum Indicators', 'Minus Directional Movement', 0x0A000000,
@@ -1842,7 +1842,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('MOM', 'Momentum Indicators', 'Momentum', 0x02000000,
@@ -1853,7 +1853,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('MULT', 'Math Operators', 'Vector Arithmetic Mult', 0x02000000,
@@ -1863,7 +1863,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('NATR', 'Volatility Indicators', 'Normalized Average True Range', 0x0A000008,
@@ -1874,7 +1874,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('NVI', 'Volume Indicators', 'Negative Volume Index', 0x22000008,
@@ -1883,7 +1883,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('OBV', 'Volume Indicators', 'On Balance Volume', 0x22000000,
@@ -1893,7 +1893,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('PERCENTB', 'Volatility Indicators', 'Bollinger Bands %B', 0x02000000,
@@ -1907,7 +1907,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('PERCENTILE', 'Statistic Functions', 'Percentile (nearest rank)', 0x03000000,
@@ -1930,7 +1930,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 100.0, min: 2, max: 10000, suggestedStart: 20, suggestedEnd: 200, suggestedIncrement: 20 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('PLUS_DI', 'Momentum Indicators', 'Plus Directional Indicator', 0x0A000000,
@@ -1941,7 +1941,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('PLUS_DM', 'Momentum Indicators', 'Plus Directional Movement', 0x0A000000,
@@ -1952,7 +1952,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('PPO', 'Momentum Indicators', 'Percentage Price Oscillator', 0x02000008,
@@ -1965,7 +1965,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 1.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('PSO', 'Momentum Indicators', 'Premier Stochastic Oscillator', 0x02000004,
@@ -1977,7 +1977,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInEMAPeriod', key: 'emaPeriod', flags: 0x00000000, displayName: 'EMA Period', hint: 'Period of each of the two smoothing passes', defaultValue: 5.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('PVI', 'Volume Indicators', 'Positive Volume Index', 0x22000008,
@@ -1986,7 +1986,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('PVO', 'Volume Indicators', 'Percentage Volume Oscillator', 0x02000000,
@@ -1999,7 +1999,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInMAType', key: 'maType', flags: 0x00000000, displayName: 'MA Type', hint: 'Type of Moving Average', defaultValue: 1.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('PVT', 'Volume Indicators', 'Price Volume Trend', 0x22000008,
@@ -2008,7 +2008,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('QSTICK', 'Momentum Indicators', 'Qstick', 0x02000000,
@@ -2019,7 +2019,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('RMA', 'Overlap Studies', 'Wilder\'s Smoothed Moving Average', 0x0B000001,
@@ -2041,7 +2041,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ROCP', 'Momentum Indicators', 'Rate of change Percentage: (price-prevPrice)/prevPrice', 0x02000008,
@@ -2052,7 +2052,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('ROCR', 'Momentum Indicators', 'Rate of change ratio: (price/prevPrice)', 0x02000008,
@@ -2063,7 +2063,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
     '{}'),
   FuncInfo.of('ROCR100', 'Momentum Indicators', 'Rate of change ratio 100 scale: (price/prevPrice)*100', 0x02000008,
@@ -2074,7 +2074,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
     '{}'),
   FuncInfo.of('ROGERSSATCHELL', 'Volatility Indicators', 'Rogers-Satchell Volatility', 0x0200000C,
@@ -2086,7 +2086,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInAnnualization', key: 'annualization', flags: 0x00000000, displayName: 'Annualization', hint: 'Periods per year; 1 leaves the per-bar figure', defaultValue: 252.0, min: 0.0, max: 3e37, precision: 2, suggestedStart: 1.0, suggestedEnd: 365.0, suggestedIncrement: 1.0 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('RSI', 'Momentum Indicators', 'Relative Strength Index', 0x0A000000,
@@ -2097,7 +2097,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{"outputs":{"outReal":{"levels":[30,70]}}}'),
   FuncInfo.of('RVI', 'Volatility Indicators', 'Relative Volatility Index', 0x0A000000,
@@ -2109,7 +2109,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInStdDevPeriod', key: 'stdDevPeriod', flags: 0x00000000, displayName: 'StdDev Period', hint: 'Time period of the standard deviation', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('RVIR', 'Volatility Indicators', 'Relative Volatility Index, refined high/low form', 0x02000000,
@@ -2121,7 +2121,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInStdDevPeriod', key: 'stdDevPeriod', flags: 0x00000000, displayName: 'StdDev Period', hint: 'Time period of the standard deviation', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('RVOL', 'Volume Indicators', 'Relative Volume', 0x42000000,
@@ -2132,7 +2132,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 20.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('SAR', 'Overlap Studies', 'Parabolic SAR', 0x23000000,
@@ -2175,7 +2175,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInAnnualization', key: 'annualization', flags: 0x00000000, displayName: 'Annualization', hint: 'Bars per year', defaultValue: 252.0, min: 0.0, max: 3e37, precision: 2, suggestedStart: 1.0, suggestedEnd: 365.0, suggestedIncrement: 1.0 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SI', 'Momentum Indicators', 'Wilder Swing Index', 0x02000000,
@@ -2186,7 +2186,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInLimitMove', key: 'limitMove', flags: 0x00000000, displayName: 'Limit Move', hint: 'Largest one-bar price move the index is scaled against, in price units', defaultValue: 3.0, min: 1e-8, max: 3e37, precision: 4, suggestedStart: 0.5, suggestedEnd: 30.0, suggestedIncrement: 0.5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SIN', 'Math Transform', 'Vector Trigonometric Sin', 0x02000004,
@@ -2195,7 +2195,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SINH', 'Math Transform', 'Vector Trigonometric Sinh', 0x42000004,
@@ -2204,7 +2204,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SKEW', 'Statistic Functions', 'Rolling Skewness', 0x02000000,
@@ -2215,7 +2215,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 3, max: 100000, suggestedStart: 10, suggestedEnd: 200, suggestedIncrement: 5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SMA', 'Overlap Studies', 'Simple Moving Average', 0x03000001,
@@ -2240,8 +2240,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Smoothing for the signal line (period length)', defaultValue: 9.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outSMI', key: 'outSmi', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outSMISignal', key: 'outSmiSignal', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outSMI', key: 'outSmi', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outSMISignal', key: 'outSmiSignal', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('SORTINO', 'Statistic Functions', 'Rolling Sortino Ratio', 0x42000000,
@@ -2254,7 +2254,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInAnnualization', key: 'annualization', flags: 0x00000000, displayName: 'Annualization', hint: 'Bars per year', defaultValue: 252.0, min: 0.0, max: 3e37, precision: 2, suggestedStart: 1.0, suggestedEnd: 365.0, suggestedIncrement: 1.0 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SQRT', 'Math Transform', 'Vector Square Root', 0x42000008,
@@ -2263,7 +2263,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('SQZMOM', 'Momentum Indicators', 'Squeeze Momentum and Level', 0x02000000,
@@ -2279,7 +2279,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInFactorNarrow', key: 'factorNarrow', flags: 0x00000000, displayName: 'Narrow Factor', hint: 'Keltner width for the tightest compression test', defaultValue: 1.0, min: 0.0, max: 3e37, precision: 1, suggestedStart: 0.5, suggestedEnd: 2.0, suggestedIncrement: 0.5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outMomentum', key: 'outMomentum', flags: 0x00000010 },
+      { type: OutputType.REAL, paramName: 'outMomentum', key: 'outMomentum', flags: 0x00000710 },
       { type: OutputType.INTEGER, paramName: 'outSqueeze', key: 'outSqueeze', flags: 0x00000001 },
     ],
     '{}'),
@@ -2293,7 +2293,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInCyclePeriod', key: 'cyclePeriod', flags: 0x00000000, displayName: 'Cycle Period', hint: 'Window of both stochastic stages', defaultValue: 10.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('STDDEV', 'Statistic Functions', 'Standard Deviation', 0x02000000,
@@ -2305,7 +2305,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInNbDev', key: 'nbDev', flags: 0x00000000, displayName: 'Deviations', hint: 'Nb of deviations', defaultValue: 1.0, min: -3e37, max: 3e37, precision: 2, suggestedStart: -2.0, suggestedEnd: 2.0, suggestedIncrement: 0.2 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('STOCH', 'Momentum Indicators', 'Stochastic', 0x02000000,
@@ -2320,8 +2320,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInSlowD_MAType', key: 'slowDMaType', flags: 0x00000000, displayName: 'Slow-D MA', hint: 'Type of Moving Average for Slow-D', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outSlowK', key: 'outSlowK', flags: 0x00000004 },
-      { type: OutputType.REAL, paramName: 'outSlowD', key: 'outSlowD', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outSlowK', key: 'outSlowK', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outSlowD', key: 'outSlowD', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('STOCHF', 'Momentum Indicators', 'Stochastic Fast', 0x02000000,
@@ -2334,8 +2334,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInFastD_MAType', key: 'fastDMaType', flags: 0x00000000, displayName: 'Fast-D MA', hint: 'Type of Moving Average for Fast-D', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000501 },
+      { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('STOCHRSI', 'Momentum Indicators', 'Stochastic Relative Strength Index', 0x02000000,
@@ -2349,8 +2349,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_LIST, paramName: 'optInFastD_MAType', key: 'fastDMaType', flags: 0x00000000, displayName: 'Fast-D MA', hint: 'Type of Moving Average for Fast-D', defaultValue: 0.0, values: [{ value: 0, name: 'SMA' }, { value: 1, name: 'EMA' }, { value: 2, name: 'WMA' }, { value: 3, name: 'DEMA' }, { value: 4, name: 'TEMA' }, { value: 5, name: 'TRIMA' }, { value: 6, name: 'KAMA' }, { value: 7, name: 'MAMA' }, { value: 8, name: 'T3' }, { value: 9, name: 'HMA' }, { value: 10, name: 'DISABLED' }, { value: 11, name: 'DEFAULT' }, { value: 12, name: 'ZLEMA' }, { value: 13, name: 'RMA' }, { value: 14, name: 'VIDYA' }, { value: 15, name: 'ALMA' }] },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000501 },
+      { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('SUB', 'Math Operators', 'Vector Arithmetic Subtraction', 0x02000000,
@@ -2360,7 +2360,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SUM', 'Math Operators', 'Summation', 0x02000000,
@@ -2371,7 +2371,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SUPERTREND', 'Overlap Studies', 'SuperTrend', 0x23000000,
@@ -2383,8 +2383,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInMultiplier', key: 'multiplier', flags: 0x00000000, displayName: 'Multiplier', hint: 'ATR multiplier for band width', defaultValue: 3.0, min: 0.0, max: 3e37, precision: 1, suggestedStart: 1.0, suggestedEnd: 4.0, suggestedIncrement: 0.5 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outSupertrend', key: 'outSupertrend', flags: 0x00000001 },
-      { type: OutputType.INTEGER, paramName: 'outTrend', key: 'outTrend', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outSupertrend', key: 'outSupertrend', flags: 0x00020001 },
+      { type: OutputType.INTEGER, paramName: 'outTrend', key: 'outTrend', flags: 0x00000301 },
     ],
     '{}'),
   FuncInfo.of('SWAK_2PHP', 'Cycle Indicators', 'Swiss Army Knife - Two-Pole High-Pass Filter', 0x0A000004,
@@ -2395,7 +2395,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Cutoff period', defaultValue: 20.0, min: 2, max: 10000, suggestedStart: 5, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SWAK_BP', 'Cycle Indicators', 'Swiss Army Knife - Band-Pass Filter', 0x0A000004,
@@ -2407,7 +2407,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInDelta', key: 'delta', flags: 0x00000000, displayName: 'Delta', hint: 'Half-bandwidth as a fraction of the center period', defaultValue: 0.1, min: 0.05, max: 0.5, precision: 2, suggestedStart: 0.05, suggestedEnd: 0.5, suggestedIncrement: 0.05 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('SWAK_BUTTER', 'Overlap Studies', 'Swiss Army Knife - Butterworth Filter', 0x0B000004,
@@ -2440,7 +2440,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Cutoff period', defaultValue: 20.0, min: 5, max: 100000, suggestedStart: 5, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('T3', 'Overlap Studies', 'Triple Exponential Moving Average (T3)', 0x0B000001,
@@ -2461,7 +2461,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('TANH', 'Math Transform', 'Vector Trigonometric Tanh', 0x02000004,
@@ -2470,7 +2470,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('TEMA', 'Overlap Studies', 'Triple Exponential Moving Average', 0x03000001,
@@ -2490,7 +2490,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('TRIMA', 'Overlap Studies', 'Triangular Moving Average', 0x03000001,
@@ -2512,7 +2512,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 30.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('TSF', 'Statistic Functions', 'Time Series Forecast', 0x03000000,
@@ -2535,7 +2535,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSecondPeriod', key: 'secondPeriod', flags: 0x00000000, displayName: 'Second Smoothing Period', hint: 'Period of the second smoothing, applied to the first', defaultValue: 13.0, min: 2, max: 100000, suggestedStart: 2, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('TYPPRICE', 'Price Transform', 'Typical Price', 0x03000000,
@@ -2557,7 +2557,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod3', key: 'timePeriod3', flags: 0x00000000, displayName: 'Third Period', hint: 'Number of bars for 3rd period', defaultValue: 28.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('VAR', 'Statistic Functions', 'Variance', 0x02000000,
@@ -2569,7 +2569,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInNbDev', key: 'nbDev', flags: 0x00000000, displayName: 'Deviations', hint: 'Nb of deviations', defaultValue: 1.0, min: -3e37, max: 3e37, precision: 2, suggestedStart: -2.0, suggestedEnd: 2.0, suggestedIncrement: 0.2 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('VHF', 'Momentum Indicators', 'Vertical Horizontal Filter', 0x02000000,
@@ -2580,7 +2580,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 28.0, min: 2, max: 100000, suggestedStart: 14, suggestedEnd: 56, suggestedIncrement: 7 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('VIDYA', 'Overlap Studies', 'Variable Index Dynamic Average', 0x0B000001,
@@ -2603,8 +2603,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of bars in the rolling sums', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outPlusVI', key: 'outPlusVi', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outMinusVI', key: 'outMinusVi', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outPlusVI', key: 'outPlusVi', flags: 0x00000501 },
+      { type: OutputType.REAL, paramName: 'outMinusVI', key: 'outMinusVi', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('VWAP', 'Volume Indicators', 'Volume Weighted Average Price', 0x23000000,
@@ -2634,7 +2634,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
     '{}'),
   FuncInfo.of('WAVETREND', 'Momentum Indicators', 'WaveTrend Oscillator', 0x02000000,
@@ -2647,8 +2647,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInSignalPeriod', key: 'signalPeriod', flags: 0x00000000, displayName: 'Signal Period', hint: 'Simple average of the oscillator line, making the signal line', defaultValue: 4.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 50, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outWT1', key: 'outWt1', flags: 0x00000001 },
-      { type: OutputType.REAL, paramName: 'outWT2', key: 'outWt2', flags: 0x00000004 },
+      { type: OutputType.REAL, paramName: 'outWT1', key: 'outWt1', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outWT2', key: 'outWt2', flags: 0x00000704 },
     ],
     '{}'),
   FuncInfo.of('WCLPRICE', 'Price Transform', 'Weighted Close Price', 0x03000000,
@@ -2668,7 +2668,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 14.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000601 },
     ],
     '{}'),
   FuncInfo.of('WMA', 'Overlap Studies', 'Weighted Moving Average', 0x03000001,
@@ -2692,8 +2692,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [
       { type: OutputType.REAL, paramName: 'outZigZag', key: 'outZigZag', flags: 0x00000001 },
-      { type: OutputType.INTEGER, paramName: 'outTrend', key: 'outTrend', flags: 0x00000001 },
-      { type: OutputType.INTEGER, paramName: 'outPivotIdx', key: 'outPivotIdx', flags: 0x00000001 },
+      { type: OutputType.INTEGER, paramName: 'outTrend', key: 'outTrend', flags: 0x00000301 },
+      { type: OutputType.INTEGER, paramName: 'outPivotIdx', key: 'outPivotIdx', flags: 0x00010001 },
     ],
     '{}'),
   FuncInfo.of('ZLEMA', 'Overlap Studies', 'Zero-Lag Exponential Moving Average', 0x03000001,

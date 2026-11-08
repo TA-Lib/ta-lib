@@ -41,10 +41,10 @@ optional_inputs:
 outputs:
   - name: outK
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outD
     type: real
-    flags: [line]
+    flags: [dash_line, zero, positive, negative]
   - name: outJ
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]

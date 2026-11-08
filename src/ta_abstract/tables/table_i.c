@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* IBS BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_IBS_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_IBS_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -47,7 +50,7 @@ static const TA_InputParameterInfo    *TA_IBS_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_IBS_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_IBS_Default,
   NULL
 };
 
@@ -146,6 +149,9 @@ DEF_FUNCTION( ICHIMOKU,
 /* ICHIMOKU END */
 
 /* IMI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_IMI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_IMI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OC,
@@ -154,7 +160,7 @@ static const TA_InputParameterInfo    *TA_IMI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_IMI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_IMI_Default,
   NULL
 };
 

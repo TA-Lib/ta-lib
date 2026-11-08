@@ -16,4 +16,4 @@ optional_inputs:
 outputs:
   - name: outReal
     type: real
-    flags: [line, display_shift]
+    flags: [line, display_shift, zero, positive, negative]

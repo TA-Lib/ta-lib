@@ -174,6 +174,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_BBW_NbDevDn =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BBW_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_BBW_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -182,7 +185,7 @@ static const TA_InputParameterInfo    *TA_BBW_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_BBW_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_BBW_Default,
   NULL
 };
 
@@ -202,6 +205,9 @@ DEF_FUNCTION( BBW,
 /* BBW END */
 
 /* BETA BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BETA_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_BETA_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real0,
@@ -211,7 +217,7 @@ static const TA_InputParameterInfo    *TA_BETA_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_BETA_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_BETA_Default,
   NULL
 };
 
@@ -228,6 +234,9 @@ DEF_FUNCTION( BETA,
 /* BETA END */
 
 /* BOP BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_BOP_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_BOP_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_OHLC,
@@ -236,7 +245,7 @@ static const TA_InputParameterInfo    *TA_BOP_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_BOP_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_BOP_Default,
   NULL
 };
 

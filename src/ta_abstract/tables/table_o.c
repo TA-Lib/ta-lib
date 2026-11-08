@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* OBV BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_OBV_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_OBV_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -48,7 +51,7 @@ static const TA_InputParameterInfo    *TA_OBV_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_OBV_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_OBV_Default,
   NULL
 };
 

@@ -5,9 +5,9 @@
 //! and the IR. The string is public API in every language: never remove,
 //! rename or reorder a row, and never change what a key means.
 //!
-//! Two renderers walk this registry, `abstract_rows` (Rust, Java, C#, TS) and
-//! `ta_abstract_c` (C, and the XML), on purpose: `test_abstract.c` compares
-//! their strings byte for byte, which a single renderer would make vacuous.
+//! Two renderers walk this registry, one for C and the XML and one for the
+//! managed registries, and they must produce the same bytes: neither may call
+//! the other.
 
 use std::fmt::Write as _;
 
@@ -74,6 +74,9 @@ impl Type {
                 }
                 if let Some(x) = v.iter().find(|x| !x.is_finite()) {
                     return Err(format!("{x} is not finite"));
+                }
+                if v.iter().any(|x| *x == 0.0 && x.is_sign_negative()) {
+                    return Err("-0, which the JSON would spell `-0`: write 0".into());
                 }
                 if v.windows(2).any(|w| w[0] >= w[1]) {
                     return Err(format!("{v:?} is not strictly ascending"));

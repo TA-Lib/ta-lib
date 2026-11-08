@@ -25,7 +25,7 @@ optional_inputs:
 outputs:
   - name: outSupertrend
     type: real
-    flags: [line]
+    flags: [line, segmented]
   - name: outTrend
     type: integer
-    flags: [line]
+    flags: [line, positive, negative]

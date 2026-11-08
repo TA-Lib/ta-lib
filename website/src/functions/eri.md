@@ -15,7 +15,7 @@ Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading fo
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outBullPower: line` · `outBearPower: line`
+Metadata flags used: `inPriceHLC: high, low, close` · `outBullPower: line, positive, negative` · `outBearPower: line, positive, negative`
 
 :::
 

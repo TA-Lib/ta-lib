@@ -17,7 +17,7 @@ John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outMomentum: histogram` · `outSqueeze: integer`
+Metadata flags used: `inPriceHLC: high, low, close` · `outMomentum: histogram, positive, negative` · `outSqueeze: integer`
 
 :::
 

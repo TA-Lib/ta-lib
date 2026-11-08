@@ -64,6 +64,9 @@ DEF_FUNCTION( DEMA,
 /* DEMA END */
 
 /* DIV BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DIV_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_DIV_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real0,
@@ -73,7 +76,7 @@ static const TA_InputParameterInfo    *TA_DIV_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_DIV_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_DIV_Default,
   NULL
 };
 
@@ -208,7 +211,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_DOSC_SignalPeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DOSC_Default =
-                               { TA_Output_Real, "outReal", TA_OUT_HISTO };
+                               { TA_Output_Real, "outReal", TA_OUT_HISTO | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_DOSC_Inputs[]    =
 {
@@ -262,7 +265,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_DPO_TimePeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DPO_Default =
-                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_DPO_Inputs[]    =
 {
@@ -289,6 +292,9 @@ DEF_FUNCTION( DPO,
 /* DPO END */
 
 /* DX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DX_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_DX_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -297,7 +303,7 @@ static const TA_InputParameterInfo    *TA_DX_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_DX_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_DX_Default,
   NULL
 };
 

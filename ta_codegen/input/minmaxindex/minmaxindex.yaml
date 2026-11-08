@@ -16,7 +16,7 @@ optional_inputs:
 outputs:
   - name: outMinIdx
     type: integer
-    flags: [line]
+    flags: [line, bar_index]
   - name: outMaxIdx
     type: integer
-    flags: [line]
+    flags: [line, bar_index]

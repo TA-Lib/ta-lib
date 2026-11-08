@@ -161,6 +161,14 @@ fn render_ordered(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, order: &[
         emit_func(&mut o, f);
     }
     o.push_str("];\n\n");
+    // Not a `FuncInfo` field: its fields are all public, so a new one breaks every
+    // caller that constructs a `FuncInfo`.
+    let _ = writeln!(o, "/// [`FuncInfo::attributes`], indexed by [`FuncId`].");
+    let _ = writeln!(o, "static ATTRIBUTES: [&str; {n}] = [");
+    for f in &sorted {
+        let _ = writeln!(o, "    {:?},", f.attributes);
+    }
+    o.push_str("];\n\n");
     o.push_str(
         "/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.\n\
          ///\n\
@@ -209,7 +217,6 @@ fn emit_func(o: &mut String, f: &FuncRow) {
         emit_output(o, out);
     }
     o.push_str("],\n");
-    let _ = writeln!(o, "        attributes: {:?},", f.attributes);
 
     match &f.unst {
         Some(u) => {
@@ -1789,6 +1796,11 @@ flag_newtype!(
     DISPLAY_SHIFT = 0x0000_4000,
     /// Level 80 occurs too: a weaker form of the pattern, on the same bar.
     PATTERN_WEAK = 0x0000_8000,
+    /// The value is an absolute index into the input arrays.
+    BAR_INDEX = 0x0001_0000,
+    /// A line whose segments restart wherever the function's integer output
+    /// changes value: never connect across a change.
+    SEGMENTED = 0x0002_0000,
 });
 
 /// A required input parameter.
@@ -1895,11 +1907,6 @@ pub struct FuncInfo {
     pub opt_inputs: &'static [OptInputInfo],
     /// Outputs, in call order.
     pub outputs: &'static [OutputInfo],
-    /// Metadata no flag can carry, such as an output's reference levels, as one
-    /// JSON object; `"{}"` when none. The same bytes as C's `TA_GetFuncAttributes`.
-    /// Ignore a key you do not know: a release may add one
-    /// ([keys](https://ta-lib.org/spec/abstract/#attributes)).
-    pub attributes: &'static str,
     /// Stable unstable-period id (the one metadata kept aligned to C); `None` if N/A.
     pub unst_id: Option<FuncUnstId>,
 }
@@ -1911,6 +1918,11 @@ impl FuncInfo {
     #[inline] pub const fn nb_opt_input(&self) -> usize { self.opt_inputs.len() }
     /// Number of outputs.
     #[inline] pub const fn nb_output(&self) -> usize { self.outputs.len() }
+    /// Metadata no flag can carry, such as an output's reference levels, as one
+    /// JSON object; `"{}"` when none. The same bytes as C's `TA_GetFuncAttributes`.
+    /// Ignore a key you do not know: a release may add one
+    /// ([keys](https://ta-lib.org/spec/abstract/#attributes)).
+    #[inline] pub fn attributes(&self) -> &'static str { ATTRIBUTES[self.id as usize] }
 }
 
 "#;

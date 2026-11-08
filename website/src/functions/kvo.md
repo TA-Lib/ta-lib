@@ -15,7 +15,7 @@ Klinger Volume Oscillator: each bar's volume is signed by the direction of its h
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outKVO as a solid line and outKVOSignal as a dashed line, then a volume pane.
 
-Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outKVO: line` · `outKVOSignal: dash_line`
+Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outKVO: line, positive, negative` · `outKVOSignal: dash_line, positive, negative`
 
 :::
 

@@ -482,6 +482,10 @@ typedef int TA_OutputFlags;
                                              * never shifted. */
 #define TA_OUT_PATTERN_WEAK      0x00008000 /* Level 80 occurs too: a weaker form of the pattern,
                                              * on the same bar. */
+#define TA_OUT_BAR_INDEX         0x00010000 /* The value is an absolute index into the input arrays. */
+#define TA_OUT_SEGMENTED         0x00020000 /* A line whose segments restart wherever the function's
+                                             * integer output changes value: never connect across
+                                             * a change. */
 
 
 /* The following 3 structures will exist for each input, optional

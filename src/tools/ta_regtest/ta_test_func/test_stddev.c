@@ -363,6 +363,31 @@ static ErrorNumber test_stddev_scale_invariance( void )
    return TA_TEST_PASS;
 }
 
+/* optInNbDev may be negative: the output is the deviation times it, so the
+ * signs flip and TA_OUT_NEGATIVE holds. */
+static ErrorNumber test_stddev_negative_deviations( void )
+{
+   static const double x[] = { 91.5, 94.81, 94.37, 95.09, 93.78, 94.62, 92.31, 92.0 };
+   double up[8], down[8];
+   TA_Integer b0, n0, b1, n1;
+   int k;
+
+   if( TA_STDDEV( 0, 7, x, 3, 2.0, &b0, &n0, up ) != TA_SUCCESS ||
+       TA_STDDEV( 0, 7, x, 3, -2.0, &b1, &n1, down ) != TA_SUCCESS ||
+       b0 != b1 || n0 != n1 || n0 != 6 )
+   {
+      printf( "STDDEV nbDev=-2: the call failed or its range differs from nbDev=2\n" );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( k = 0; k < (int)n0; k++ )
+      if( !(up[k] > 0.0) || down[k] != -up[k] )
+      {
+         printf( "STDDEV nbDev=-2: bar %d is %.17g, nbDev=2 gives %.17g\n", k, down[k], up[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   return TA_TEST_PASS;
+}
+
 /* (P4) Non-negativity + exact-constant-zero over adversarial data:
  * high magnitude + low variance, a transient spike, and a mid-series level shift. */
 static ErrorNumber test_stddev_nonneg_constant( void )
@@ -868,6 +893,9 @@ ErrorNumber test_func_stddev( TA_History *history )
 
    retValue = test_stddev_peg_history();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV peg history (#434) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+
+   retValue = test_stddev_negative_deviations();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed STDDEV negative deviations (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    /* All test succeed. */
    return TA_TEST_PASS;

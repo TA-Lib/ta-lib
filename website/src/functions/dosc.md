@@ -15,7 +15,7 @@ Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in ser
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram.
 
-Metadata flags used: `outReal: histogram`
+Metadata flags used: `outReal: histogram, positive, negative`
 
 :::
 

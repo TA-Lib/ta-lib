@@ -370,6 +370,7 @@ static ErrorNumber test_kurt_contract( const TA_History *history );
 static ErrorNumber test_kurt_range( const TA_History *history );
 static ErrorNumber test_kurt_oracle( const TA_History *history );
 static ErrorNumber test_kurt_flat( void );
+static ErrorNumber test_kurt_exact_zero( void );
 static ErrorNumber test_kurt_history( void );
 static ErrorNumber test_kurt_departure( void );
 static ErrorNumber test_kurt_regimes( void );
@@ -423,6 +424,10 @@ ErrorNumber test_func_kurtosis( TA_History *history )
       return err;
 
    err = test_kurt_flat();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_exact_zero();
    if( err != TA_TEST_PASS )
       return err;
 
@@ -1102,6 +1107,24 @@ static unsigned int kurt_lcg( unsigned int *seed )
  * so only the second moment can tell that the anchor missed.
  */
 #define KURT_FLAT_BARS 6000
+/* Six zeros then two ones: excess kurtosis 0 exactly, the zero TA_OUT_ZERO
+ * declares on a window that is not flat. */
+static ErrorNumber test_kurt_exact_zero( void )
+{
+   static const TA_Real in[] = { 0, 0, 0, 0, 0, 0, 1, 1 };
+   TA_Real out[1];
+   TA_Integer begIdx, nbElement;
+
+   if( TA_KURTOSIS( 0, 7, in, 8, &begIdx, &nbElement, out ) != TA_SUCCESS ||
+       begIdx != 7 || nbElement != 1 || out[0] != 0.0 )
+   {
+      printf( "\nFail: KURTOSIS of six 0 then two 1 at period 8 is %.17g, want 0\n",
+              nbElement == 1 ? out[0] : -1.0 );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber test_kurt_flat( void )
 {
    static const double levels[] = { 0.1, 100.0, 100.37, 3.3, 31498938283.17,

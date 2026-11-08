@@ -63,10 +63,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_FISHER_TimePeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FISHER_outFisher =
-                               { TA_Output_Real, "outFisher", TA_OUT_LINE };
+                               { TA_Output_Real, "outFisher", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FISHER_outTrigger =
-                               { TA_Output_Real, "outTrigger", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outTrigger", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_FISHER_Inputs[]    =
 {
@@ -94,6 +94,9 @@ DEF_FUNCTION( FISHER,
 /* FISHER END */
 
 /* FLOOR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FLOOR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_FLOOR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -102,7 +105,7 @@ static const TA_InputParameterInfo    *TA_FLOOR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_FLOOR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_FLOOR_Default,
   NULL
 };
 
@@ -140,6 +143,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_FOSC_TimePeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FOSC_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_FOSC_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -148,7 +154,7 @@ static const TA_InputParameterInfo    *TA_FOSC_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_FOSC_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_FOSC_Default,
   NULL
 };
 

@@ -116,6 +116,9 @@ DEF_FUNCTION( HMA,
 /* HMA END */
 
 /* HT_DCPERIOD BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_DCPERIOD_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_HT_DCPERIOD_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -124,7 +127,7 @@ static const TA_InputParameterInfo    *TA_HT_DCPERIOD_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_HT_DCPERIOD_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_HT_DCPERIOD_Default,
   NULL
 };
 
@@ -139,6 +142,9 @@ DEF_FUNCTION( HT_DCPERIOD,
 /* HT_DCPERIOD END */
 
 /* HT_DCPHASE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_DCPHASE_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_HT_DCPHASE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -147,7 +153,7 @@ static const TA_InputParameterInfo    *TA_HT_DCPHASE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_HT_DCPHASE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_HT_DCPHASE_Default,
   NULL
 };
 
@@ -163,10 +169,10 @@ DEF_FUNCTION( HT_DCPHASE,
 
 /* HT_PHASOR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_PHASOR_outInPhase =
-                               { TA_Output_Real, "outInPhase", TA_OUT_LINE };
+                               { TA_Output_Real, "outInPhase", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_PHASOR_outQuadrature =
-                               { TA_Output_Real, "outQuadrature", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outQuadrature", TA_OUT_DASH_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_HT_PHASOR_Inputs[]    =
 {
@@ -193,10 +199,10 @@ DEF_FUNCTION( HT_PHASOR,
 
 /* HT_SINE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_SINE_outSine =
-                               { TA_Output_Real, "outSine", TA_OUT_LINE };
+                               { TA_Output_Real, "outSine", TA_OUT_LINE | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HT_SINE_outLeadSine =
-                               { TA_Output_Real, "outLeadSine", TA_OUT_DASH_LINE };
+                               { TA_Output_Real, "outLeadSine", TA_OUT_DASH_LINE | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_HT_SINE_Inputs[]    =
 {

@@ -89,6 +89,9 @@ DEF_FUNCTION( T3,
 /* T3 END */
 
 /* TAN BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_TAN_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_TAN_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -97,7 +100,7 @@ static const TA_InputParameterInfo    *TA_TAN_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_TAN_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_TAN_Default,
   NULL
 };
 
@@ -112,6 +115,9 @@ DEF_FUNCTION( TAN,
 /* TAN END */
 
 /* TANH BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_TANH_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_TANH_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -120,7 +126,7 @@ static const TA_InputParameterInfo    *TA_TANH_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_TANH_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_TANH_Default,
   NULL
 };
 
@@ -160,6 +166,9 @@ DEF_FUNCTION( TEMA,
 /* TEMA END */
 
 /* TRANGE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_TRANGE_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_TRANGE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -168,7 +177,7 @@ static const TA_InputParameterInfo    *TA_TRANGE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_TRANGE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_TRANGE_Default,
   NULL
 };
 
@@ -208,6 +217,9 @@ DEF_FUNCTION( TRIMA,
 /* TRIMA END */
 
 /* TRIX BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_TRIX_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_TRIX_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -216,7 +228,7 @@ static const TA_InputParameterInfo    *TA_TRIX_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_TRIX_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_TRIX_Default,
   NULL
 };
 
@@ -304,6 +316,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_TSI_SecondPeriod =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_TSI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_TSI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -312,7 +327,7 @@ static const TA_InputParameterInfo    *TA_TSI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_TSI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_TSI_Default,
   NULL
 };
 

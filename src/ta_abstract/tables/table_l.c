@@ -64,6 +64,9 @@ DEF_FUNCTION( LINEARREG,
 /* LINEARREG END */
 
 /* LINEARREG_ANGLE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_LINEARREG_ANGLE_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_LINEARREG_ANGLE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -72,7 +75,7 @@ static const TA_InputParameterInfo    *TA_LINEARREG_ANGLE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_LINEARREG_ANGLE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_LINEARREG_ANGLE_Default,
   NULL
 };
 
@@ -114,6 +117,9 @@ DEF_FUNCTION( LINEARREG_INTERCEPT,
 /* LINEARREG_INTERCEPT END */
 
 /* LINEARREG_SLOPE BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_LINEARREG_SLOPE_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_LINEARREG_SLOPE_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -122,7 +128,7 @@ static const TA_InputParameterInfo    *TA_LINEARREG_SLOPE_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_LINEARREG_SLOPE_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_LINEARREG_SLOPE_Default,
   NULL
 };
 
@@ -139,6 +145,9 @@ DEF_FUNCTION( LINEARREG_SLOPE,
 /* LINEARREG_SLOPE END */
 
 /* LN BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_LN_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_LN_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -147,7 +156,7 @@ static const TA_InputParameterInfo    *TA_LN_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_LN_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_LN_Default,
   NULL
 };
 
@@ -162,6 +171,9 @@ DEF_FUNCTION( LN,
 /* LN END */
 
 /* LOG10 BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_LOG10_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+
 static const TA_InputParameterInfo    *TA_LOG10_Inputs[]    =
 {
   &TA_DEF_UI_Input_Real,
@@ -170,7 +182,7 @@ static const TA_InputParameterInfo    *TA_LOG10_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_LOG10_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_LOG10_Default,
   NULL
 };
 

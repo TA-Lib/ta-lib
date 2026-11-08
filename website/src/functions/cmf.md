@@ -21,7 +21,7 @@ Created by Marc Chaikin, who also authored the [`AD`](/functions/ad.md) line thi
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
 
-Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outReal: line`
+Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outReal: line, positive, negative`
 
 :::
 

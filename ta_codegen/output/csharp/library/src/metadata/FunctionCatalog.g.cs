@@ -418,7 +418,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AcLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -467,7 +467,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AcosLookback(),
@@ -489,7 +489,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AdLookback(),
@@ -512,7 +512,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AddLookback(),
@@ -538,7 +538,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AdoscLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -563,7 +563,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AdrLookback(c.IntOpt(0)),
@@ -588,7 +588,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AdxLookback(c.IntOpt(0)),
@@ -613,7 +613,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AdxrLookback(c.IntOpt(0)),
@@ -698,7 +698,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AoLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -725,7 +725,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ApoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
@@ -750,8 +750,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outAroonDown", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outAroonUp", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outAroonDown", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outAroonUp", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AroonLookback(c.IntOpt(0)),
@@ -776,7 +776,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AroonoscLookback(c.IntOpt(0)),
@@ -801,7 +801,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AsiLookback(c.RealOpt(0)),
@@ -823,7 +823,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AsinLookback(),
@@ -845,7 +845,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AtanLookback(),
@@ -870,7 +870,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.AtrLookback(c.IntOpt(0)),
@@ -883,7 +883,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "AVGDEV",
         group: FunctionGroup.PriceTransform,
         hint: "Average Deviation",
-        flags: FuncFlags.Overlap | FuncFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -975,7 +975,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.BbwLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
@@ -1001,7 +1001,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.BetaLookback(c.IntOpt(0)),
@@ -1023,7 +1023,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.BopLookback(),
@@ -1048,7 +1048,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CciLookback(c.IntOpt(0)),
@@ -2460,7 +2460,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CeilLookback(),
@@ -2485,7 +2485,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Negative),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CgLookback(c.IntOpt(0)),
@@ -2510,7 +2510,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ChopLookback(c.IntOpt(0)),
@@ -2535,7 +2535,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ChoptrLookback(c.IntOpt(0)),
@@ -2588,7 +2588,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CmfLookback(c.IntOpt(0)),
@@ -2613,7 +2613,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CmoLookback(c.IntOpt(0)),
@@ -2638,7 +2638,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CmouLookback(c.IntOpt(0)),
@@ -2665,7 +2665,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CoppockLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -2691,7 +2691,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CorrelLookback(c.IntOpt(0)),
@@ -2713,7 +2713,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CosLookback(),
@@ -2735,7 +2735,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CoshLookback(),
@@ -2762,7 +2762,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CrsiLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -2787,7 +2787,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CtiLookback(c.IntOpt(0)),
@@ -2809,7 +2809,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CumsumLookback(),
@@ -2835,7 +2835,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.CviLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -2883,7 +2883,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.DivLookback(),
@@ -2938,7 +2938,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.DoscLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
@@ -2963,7 +2963,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero | OutputFlags.DisplayShift),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.DpoLookback(c.IntOpt(0)),
@@ -2988,7 +2988,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.DxLookback(c.IntOpt(0)),
@@ -3013,7 +3013,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.EfiLookback(c.IntOpt(0)),
@@ -3064,7 +3064,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.EmvLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -3089,7 +3089,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ErLookback(c.IntOpt(0)),
@@ -3114,8 +3114,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outBullPower", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outBearPower", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outBullPower", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outBearPower", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.EriLookback(c.IntOpt(0)),
@@ -3137,7 +3137,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ExpLookback(),
@@ -3162,8 +3162,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outFisher", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outTrigger", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outFisher", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outTrigger", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.FisherLookback(c.IntOpt(0)),
@@ -3185,7 +3185,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.FloorLookback(),
@@ -3210,7 +3210,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.FoscLookback(c.IntOpt(0)),
@@ -3334,7 +3334,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.HtDcperiodLookback(),
@@ -3356,7 +3356,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.HtDcphaseLookback(),
@@ -3378,8 +3378,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outInPhase", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outQuadrature", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outInPhase", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outQuadrature", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.HtPhasorLookback(),
@@ -3401,8 +3401,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outSine", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outLeadSine", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outSine", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative),
+            new OutputInfo(OutputKind.Real, "outLeadSine", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.HtSineLookback(),
@@ -3468,7 +3468,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.IbsLookback(),
@@ -3523,7 +3523,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ImiLookback(c.IntOpt(0)),
@@ -3606,9 +3606,9 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outK", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outD", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outJ", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outK", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outD", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outJ", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.KdjLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
@@ -3641,8 +3641,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outKST", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outKSTSignal", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outKST", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outKSTSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.KstLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8)),
@@ -3677,8 +3677,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outKST", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outKSTSignal", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outKST", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outKSTSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.KstextLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.IntOpt(6), c.IntOpt(7), c.IntOpt(8), (MAType)c.IntOpt(9), (MAType)c.IntOpt(10)),
@@ -3703,7 +3703,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.KurtosisLookback(c.IntOpt(0)),
@@ -3730,8 +3730,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outKVO", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outKVOSignal", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outKVO", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outKVOSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.KvoLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -3781,7 +3781,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.LinearregAngleLookback(c.IntOpt(0)),
@@ -3831,7 +3831,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.LinearregSlopeLookback(c.IntOpt(0)),
@@ -3853,7 +3853,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.LnLookback(),
@@ -3875,7 +3875,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.Log10Lookback(),
@@ -3928,9 +3928,9 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MacdLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -3960,9 +3960,9 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MacdextLookback(c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5)),
@@ -3987,9 +3987,9 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outMACD", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MacdfixLookback(c.IntOpt(0)),
@@ -4016,9 +4016,9 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMACDV", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outMACDVSignal", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outMACDVHist", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outMACDV", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDVSignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMACDVHist", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MacdvLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -4067,7 +4067,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MarketfiLookback(),
@@ -4093,7 +4093,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MassiLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -4171,7 +4171,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line | OutputFlags.BarIndex),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MaxindexLookback(c.IntOpt(0)),
@@ -4268,7 +4268,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MfiLookback(c.IntOpt(0)),
@@ -4368,7 +4368,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line | OutputFlags.BarIndex),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MinindexLookback(c.IntOpt(0)),
@@ -4419,8 +4419,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Integer, "outMinIdx", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outMaxIdx", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outMinIdx", OutputFlags.Line | OutputFlags.BarIndex),
+            new OutputInfo(OutputKind.Integer, "outMaxIdx", OutputFlags.Line | OutputFlags.BarIndex),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MinmaxindexLookback(c.IntOpt(0)),
@@ -4445,7 +4445,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MinusDiLookback(c.IntOpt(0)),
@@ -4470,7 +4470,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MinusDmLookback(c.IntOpt(0)),
@@ -4495,7 +4495,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MomLookback(c.IntOpt(0)),
@@ -4518,7 +4518,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.MultLookback(),
@@ -4543,7 +4543,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.NatrLookback(c.IntOpt(0)),
@@ -4565,7 +4565,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.NviLookback(),
@@ -4588,7 +4588,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ObvLookback(),
@@ -4616,7 +4616,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PercentbLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
@@ -4667,7 +4667,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PercentrankLookback(c.IntOpt(0)),
@@ -4692,7 +4692,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PlusDiLookback(c.IntOpt(0)),
@@ -4717,7 +4717,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PlusDmLookback(c.IntOpt(0)),
@@ -4744,7 +4744,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PpoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
@@ -4770,7 +4770,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PsoLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -4792,7 +4792,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PviLookback(),
@@ -4819,7 +4819,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PvoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
@@ -4841,7 +4841,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.PvtLookback(),
@@ -4866,7 +4866,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.QstickLookback(c.IntOpt(0)),
@@ -4916,7 +4916,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RocLookback(c.IntOpt(0)),
@@ -4941,7 +4941,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RocpLookback(c.IntOpt(0)),
@@ -4966,7 +4966,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RocrLookback(c.IntOpt(0)),
@@ -4991,7 +4991,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.Rocr100Lookback(c.IntOpt(0)),
@@ -5017,7 +5017,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RogerssatchellLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -5042,7 +5042,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}",
         lookback: static (core, c) => core.RsiLookback(c.IntOpt(0)),
@@ -5068,7 +5068,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RviLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -5094,7 +5094,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RvirLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -5119,7 +5119,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RvolLookback(c.IntOpt(0)),
@@ -5204,7 +5204,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SharpeLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
@@ -5229,7 +5229,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SiLookback(c.RealOpt(0)),
@@ -5251,7 +5251,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SinLookback(),
@@ -5273,7 +5273,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SinhLookback(),
@@ -5298,7 +5298,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SkewLookback(c.IntOpt(0)),
@@ -5351,8 +5351,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outSMI", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outSMISignal", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outSMI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outSMISignal", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SmiLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
@@ -5379,7 +5379,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SortinoLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
@@ -5401,7 +5401,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SqrtLookback(),
@@ -5431,7 +5431,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMomentum", OutputFlags.Histogram),
+            new OutputInfo(OutputKind.Real, "outMomentum", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
             new OutputInfo(OutputKind.Integer, "outSqueeze", OutputFlags.Line),
         ],
         attributes: "{}",
@@ -5459,7 +5459,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.StcLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -5485,7 +5485,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.StddevLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -5514,8 +5514,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outSlowK", OutputFlags.DashLine),
-            new OutputInfo(OutputKind.Real, "outSlowD", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outSlowK", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outSlowD", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.StochLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
@@ -5542,8 +5542,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.StochfLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
@@ -5571,8 +5571,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.StochrsiLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3)),
@@ -5595,7 +5595,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SubLookback(),
@@ -5620,7 +5620,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SumLookback(c.IntOpt(0)),
@@ -5646,8 +5646,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outSupertrend", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outSupertrend", OutputFlags.Line | OutputFlags.Segmented),
+            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SupertrendLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -5672,7 +5672,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.Swak2phpLookback(c.IntOpt(0)),
@@ -5698,7 +5698,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SwakBpLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -5773,7 +5773,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.SwakHpLookback(c.IntOpt(0)),
@@ -5821,7 +5821,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.TanLookback(),
@@ -5843,7 +5843,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.TanhLookback(),
@@ -5890,7 +5890,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.TrangeLookback(),
@@ -5940,7 +5940,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.TrixLookback(c.IntOpt(0)),
@@ -5991,7 +5991,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.TsiLookback(c.IntOpt(0), c.IntOpt(1)),
@@ -6040,7 +6040,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.UltoscLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -6066,7 +6066,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.VarLookback(c.IntOpt(0), c.RealOpt(1)),
@@ -6091,7 +6091,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.VhfLookback(c.IntOpt(0)),
@@ -6142,8 +6142,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outPlusVI", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outMinusVI", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outPlusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMinusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.VortexLookback(c.IntOpt(0)),
@@ -6213,7 +6213,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs: [],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.WadLookback(),
@@ -6240,8 +6240,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outWT1", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outWT2", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outWT1", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outWT2", OutputFlags.DashLine | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.WavetrendLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -6288,7 +6288,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Negative | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.WillrLookback(c.IntOpt(0)),
@@ -6340,8 +6340,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         outputs:
         [
             new OutputInfo(OutputKind.Real, "outZigZag", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outPivotIdx", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative),
+            new OutputInfo(OutputKind.Integer, "outPivotIdx", OutputFlags.Line | OutputFlags.BarIndex),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.ZigzagLookback(c.RealOpt(0), c.IntOpt(1)),

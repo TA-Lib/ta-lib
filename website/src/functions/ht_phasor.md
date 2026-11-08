@@ -17,7 +17,7 @@ This function is meant for building your own cycle analysis on top of the raw ph
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line.
 
-Metadata flags used: `outInPhase: line` · `outQuadrature: dash_line`
+Metadata flags used: `outInPhase: line, positive, negative` · `outQuadrature: dash_line, positive, negative`
 
 :::
 

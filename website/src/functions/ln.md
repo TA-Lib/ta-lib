@@ -15,7 +15,7 @@ Element-wise natural logarithm of the input series.
 
 Drawn on the price pane over a ramp from 0.1 to 10 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inReal: series ramp [0.1, 10]` · `outReal: line`
+Metadata flags used: `inReal: series ramp [0.1, 10]` · `outReal: line, positive, negative`
 
 :::
 

@@ -15,7 +15,7 @@ On Balance Volume: a running cumulative total of volume, added on up-price bars 
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
 
-Metadata flags used: `inPriceV: volume` · `outReal: line`
+Metadata flags used: `inPriceV: volume` · `outReal: line, positive, negative`
 
 :::
 

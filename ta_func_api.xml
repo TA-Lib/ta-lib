@@ -65,6 +65,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -157,6 +160,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -196,6 +201,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -226,6 +234,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -292,6 +303,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -337,6 +351,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -387,6 +403,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -436,6 +454,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -695,6 +715,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -755,6 +778,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -800,6 +826,8 @@
 				<Name>outAroonDown</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -807,6 +835,8 @@
 				<Name>outAroonUp</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -852,6 +882,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -907,6 +940,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -935,6 +971,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -962,6 +1001,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -1012,6 +1054,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -1024,7 +1068,6 @@
 		<ShortDescription>Average Deviation</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
-			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
@@ -1259,6 +1302,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -1304,6 +1350,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -1342,6 +1391,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -1391,6 +1443,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4191,6 +4246,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4233,6 +4291,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4283,6 +4342,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4333,6 +4394,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4470,6 +4533,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4512,6 +4578,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4553,6 +4622,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4621,6 +4693,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4666,6 +4741,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4693,6 +4771,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4721,6 +4801,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4788,6 +4869,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4829,6 +4912,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4856,6 +4942,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4914,6 +5003,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -4988,6 +5080,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5128,6 +5223,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5170,6 +5268,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
@@ -5221,6 +5322,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5266,6 +5369,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5373,6 +5479,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5414,6 +5523,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5463,6 +5574,9 @@
 				<Name>outBullPower</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5470,6 +5584,9 @@
 				<Name>outBearPower</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5498,6 +5615,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5545,6 +5664,9 @@
 				<Name>outFisher</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5552,6 +5674,9 @@
 				<Name>outTrigger</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5578,6 +5703,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5620,6 +5748,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5876,6 +6007,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5904,6 +6036,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5932,6 +6066,9 @@
 				<Name>outInPhase</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5939,6 +6076,9 @@
 				<Name>outQuadrature</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5967,6 +6107,8 @@
 				<Name>outSine</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -5974,6 +6116,8 @@
 				<Name>outLeadSine</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6065,6 +6209,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6206,6 +6352,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6428,13 +6576,19 @@
 				<Name>outK</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
 				<Type>Double Array</Type>
 				<Name>outD</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -6442,6 +6596,9 @@
 				<Name>outJ</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6588,6 +6745,9 @@
 				<Name>outKST</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -6595,6 +6755,9 @@
 				<Name>outKSTSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6753,6 +6916,9 @@
 				<Name>outKST</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -6760,6 +6926,9 @@
 				<Name>outKSTSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6802,6 +6971,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6881,6 +7053,9 @@
 				<Name>outKVO</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -6888,6 +7063,9 @@
 				<Name>outKVOSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -6972,6 +7150,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7055,6 +7236,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7084,6 +7268,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7113,6 +7300,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7229,6 +7419,9 @@
 				<Name>outMACD</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7236,6 +7429,9 @@
 				<Name>outMACDSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7243,6 +7439,9 @@
 				<Name>outMACDHist</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7328,6 +7527,9 @@
 				<Name>outMACD</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7335,6 +7537,9 @@
 				<Name>outMACDSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7342,6 +7547,9 @@
 				<Name>outMACDHist</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7383,6 +7591,9 @@
 				<Name>outMACD</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7390,6 +7601,9 @@
 				<Name>outMACDSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7397,6 +7611,9 @@
 				<Name>outMACDHist</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7472,6 +7689,9 @@
 				<Name>outMACDV</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7479,6 +7699,9 @@
 				<Name>outMACDVSignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -7486,6 +7709,9 @@
 				<Name>outMACDVHist</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7586,6 +7812,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7644,6 +7872,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7792,6 +8021,7 @@
 				<Name>outInteger</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Bar Index</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -7962,6 +8192,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8133,6 +8365,7 @@
 				<Name>outInteger</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Bar Index</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8223,6 +8456,7 @@
 				<Name>outMinIdx</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Bar Index</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -8230,6 +8464,7 @@
 				<Name>outMaxIdx</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Bar Index</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8280,6 +8515,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8326,6 +8563,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8367,6 +8606,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8397,6 +8639,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8448,6 +8693,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8480,6 +8727,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8511,6 +8760,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8586,6 +8838,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8686,6 +8941,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8736,6 +8993,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8782,6 +9041,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8843,6 +9104,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8906,6 +9170,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8938,6 +9205,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -8998,6 +9267,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9030,6 +9302,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9075,6 +9350,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9161,6 +9439,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9203,6 +9484,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9245,6 +9529,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9287,6 +9572,7 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9356,6 +9642,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9399,6 +9687,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9454,6 +9744,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9512,6 +9804,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9554,6 +9848,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9832,6 +10128,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9886,6 +10185,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9913,6 +10215,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9941,6 +10246,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9982,6 +10290,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10113,6 +10424,9 @@
 				<Name>outSMI</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -10120,6 +10434,9 @@
 				<Name>outSMISignal</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10190,6 +10507,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10218,6 +10538,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10336,6 +10658,9 @@
 				<Name>outMomentum</Name>
 				<Flags>
 					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -10411,6 +10736,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10466,6 +10793,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10552,7 +10882,10 @@
 				<Type>Double Array</Type>
 				<Name>outSlowK</Name>
 				<Flags>
-					<Flag>Dashed Line</Flag>
+					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -10560,6 +10893,9 @@
 				<Name>outSlowD</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10628,13 +10964,18 @@
 				<Name>outFastK</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
 				<Type>Double Array</Type>
 				<Name>outFastD</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10708,13 +11049,18 @@
 				<Name>outFastK</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
 				<Type>Double Array</Type>
 				<Name>outFastD</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10745,6 +11091,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10786,6 +11135,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10851,6 +11203,7 @@
 				<Name>outSupertrend</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Segmented</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -10858,6 +11211,8 @@
 				<Name>outTrend</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10901,6 +11256,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -10958,6 +11316,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11089,6 +11450,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11174,6 +11538,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11201,6 +11568,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11278,6 +11648,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11363,6 +11735,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11459,6 +11834,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11569,6 +11947,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11624,6 +12004,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11665,6 +12047,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11771,6 +12155,8 @@
 				<Name>outPlusVI</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -11778,6 +12164,8 @@
 				<Name>outMinusVI</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11901,6 +12289,9 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -11976,6 +12367,9 @@
 				<Name>outWT1</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -11983,6 +12377,9 @@
 				<Name>outWT2</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -12067,6 +12464,8 @@
 				<Name>outReal</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -12182,6 +12581,8 @@
 				<Name>outTrend</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Negative</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
@@ -12189,6 +12590,7 @@
 				<Name>outPivotIdx</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Bar Index</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

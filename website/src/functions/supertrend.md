@@ -9,13 +9,13 @@ An ATR-scaled trailing band that follows price on one side at a time and flips t
 
 ## Chart
 
-<ta-chart src="/functions/supertrend.svg" ratio="720:416" label="SUPERTREND over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend."></ta-chart>
+<ta-chart src="/functions/supertrend.svg" ratio="720:416" label="SUPERTREND over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSupertrend as a solid line broken wherever outTrend changes, in the up colour where outTrend is positive and the down colour where it is negative; below it, a step pane of its own for the integer output outTrend."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend.
+Drawn on the price pane over candles, with outSupertrend as a solid line broken wherever outTrend changes, in the up colour where outTrend is positive and the down colour where it is negative; below it, a step pane of its own for the integer output outTrend.
 
-Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outSupertrend: line` · `outTrend: integer`
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outSupertrend: line, segmented` · `outTrend: integer`
 
 :::
 

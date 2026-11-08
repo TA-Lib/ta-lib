@@ -17,7 +17,7 @@ Read it as a rate of expansion. Positive means the smoothed range is wider than 
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceHL: high, low` · `outReal: line`
+Metadata flags used: `inPriceHL: high, low` · `outReal: line, positive, negative`
 
 :::
 

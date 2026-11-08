@@ -31,7 +31,7 @@ optional_inputs:
 outputs:
   - name: outKVO
     type: real
-    flags: [line]
+    flags: [line, zero, positive, negative]
   - name: outKVOSignal
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive, negative]

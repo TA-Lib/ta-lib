@@ -15,7 +15,7 @@ Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a s
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceOC: open, close` · `outReal: line`
+Metadata flags used: `inPriceOC: open, close` · `outReal: line, positive, negative`
 
 :::
 

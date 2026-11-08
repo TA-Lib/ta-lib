@@ -15,7 +15,7 @@ Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures trend
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceHL: high, low` · `outReal: line`
+Metadata flags used: `inPriceHL: high, low` · `outReal: line, positive, negative`
 
 :::
 

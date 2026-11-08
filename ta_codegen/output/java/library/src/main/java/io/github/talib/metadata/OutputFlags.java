@@ -90,6 +90,12 @@ public final class OutputFlags {
    /** Level 80 occurs too: a weaker form of the pattern, on the same bar. */
    public static final int PATTERN_WEAK = 0x00008000;
 
+   /** The value is an absolute index into the input arrays. */
+   public static final int BAR_INDEX = 0x00010000;
+
+   /** A line whose segments restart wherever the function's integer output changes value: never connect across a change. */
+   public static final int SEGMENTED = 0x00020000;
+
    /** @deprecated Never set: every output is required. */
    @Deprecated(forRemoval = true)
    public static final int NULLABLE = 0x00002000;

@@ -15,7 +15,7 @@ Stochastic Momentum Index: where the close sits relative to the **midpoint** of 
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outSMI: line` · `outSMISignal: dash_line`
+Metadata flags used: `inPriceHLC: high, low, close` · `outSMI: line, positive, negative` · `outSMISignal: dash_line, positive, negative`
 
 :::
 

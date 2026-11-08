@@ -15,7 +15,7 @@ Balance Of Power compares where the close sits relative to the open, normalized 
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line, positive, negative`
 
 :::
 

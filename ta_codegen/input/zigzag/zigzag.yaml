@@ -29,7 +29,7 @@ outputs:
     flags: [line]
   - name: outTrend
     type: integer
-    flags: [line]
+    flags: [line, positive, negative]
   - name: outPivotIdx
     type: integer
-    flags: [line]
+    flags: [line, bar_index]

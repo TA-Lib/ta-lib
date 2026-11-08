@@ -17,7 +17,7 @@ Williams' Accumulation/Distribution: a cumulative line meant to expose whether a
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
+Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line, positive, negative`
 
 :::
 

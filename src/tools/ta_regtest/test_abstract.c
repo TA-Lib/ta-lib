@@ -5040,7 +5040,7 @@ static ErrorNumber test_default_calls(void)
           TA_GetFuncInfo( sma, &info ) != TA_SUCCESS ||
           TA_GetFuncAttributes( sma, &attributes ) != TA_SUCCESS || !attributes ||
           strcmp( attributes, "{}" ) != 0 ||
-          TA_GetFuncAttributes( forged, &attributes ) != TA_INVALID_HANDLE ||
+          TA_GetFuncAttributes( forged, &attributes ) != TA_INVALID_HANDLE || attributes != NULL ||
           TA_GetFuncAttributes( NULL, &attributes ) != TA_BAD_PARAM ||
           TA_GetFuncAttributes( sma, NULL ) != TA_BAD_PARAM ||
           TA_GetFuncInfo( forged, &noInfo ) != TA_INVALID_HANDLE ||

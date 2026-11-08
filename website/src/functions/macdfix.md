@@ -15,7 +15,7 @@ MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classi
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram.
 
-Metadata flags used: `outMACD: line` · `outMACDSignal: dash_line` · `outMACDHist: histogram`
+Metadata flags used: `outMACD: line, positive, negative` · `outMACDSignal: dash_line, positive, negative` · `outMACDHist: histogram, positive, negative`
 
 :::
 

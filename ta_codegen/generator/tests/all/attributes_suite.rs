@@ -47,6 +47,12 @@ fn a_repeated_level_is_rejected() {
 }
 
 #[test]
+#[should_panic(expected = "-0, which the JSON would spell")]
+fn a_negative_zero_level_is_rejected() {
+    both("  - name: outReal\n    type: real\n    levels: [-0.0, 30]\n");
+}
+
+#[test]
 #[should_panic(expected = "an empty list")]
 fn empty_levels_are_rejected() {
     both("  - name: outReal\n    type: real\n    levels: []\n");

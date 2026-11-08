@@ -15,7 +15,7 @@ Element-wise arcsine of the input series.
 
 Drawn on the price pane over a ramp from -1 to 1 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inReal: series ramp [-1, 1]` · `outReal: line`
+Metadata flags used: `inReal: series ramp [-1, 1]` · `outReal: line, positive, negative`
 
 :::
 

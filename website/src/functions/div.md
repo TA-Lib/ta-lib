@@ -15,7 +15,7 @@ Element-wise division of two input series.
 
 Drawn on the price pane over the inputs inReal0 and inReal1, a sine between -10 and 10 and a ramp from 1 to 6 as lines; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inReal0: series sine [-10, 10]` · `inReal1: series ramp [1, 6]` · `outReal: line`
+Metadata flags used: `inReal0: series sine [-10, 10]` · `inReal1: series ramp [1, 6]` · `outReal: line, positive, negative`
 
 :::
 

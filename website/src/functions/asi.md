@@ -15,7 +15,7 @@ Wilder's Accumulative Swing Index: the running total of the Swing Index (SI), a 
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line, positive, negative`
 
 :::
 

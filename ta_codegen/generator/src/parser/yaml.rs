@@ -235,6 +235,17 @@ pub fn check_flags(func: &FuncDef) -> Result<(), Vec<String>> {
         if has("pattern_confirm") && !has("pattern_bull_bear") {
             errs.push(format!("{name}: output `{out}`: `pattern_confirm` needs `pattern_bull_bear`"));
         }
+        if has("bar_index") && !integer {
+            errs.push(format!("{name}: output `{out}`: `bar_index` needs an integer output"));
+        }
+        if has("segmented") {
+            let n_int = func.outputs.iter().filter(|x| x.param_type == ParamType::Integer).count();
+            if integer || n_int != 1 {
+                errs.push(format!(
+                    "{name}: output `{out}`: `segmented` needs a real output in a function with exactly one integer output"
+                ));
+            }
+        }
         if candlestick && integer && sign.is_none() {
             errs.push(format!(
                 "{name}: output `{out}`: an integer output of a candlestick function is a pattern output: \

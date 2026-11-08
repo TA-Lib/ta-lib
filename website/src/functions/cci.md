@@ -15,7 +15,7 @@ Commodity Channel Index: measures the current typical price relative to its simp
 
 Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
+Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line, positive, negative`
 
 :::
 

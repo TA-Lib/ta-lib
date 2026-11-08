@@ -17,7 +17,7 @@ Each leg smooths a rate of change over a different span, and the longer legs car
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line.
 
-Metadata flags used: `outKST: line` · `outKSTSignal: dash_line`
+Metadata flags used: `outKST: line, positive, negative` · `outKSTSignal: dash_line, positive, negative`
 
 :::
 

@@ -17,7 +17,7 @@ optional_inputs:
 outputs:
   - name: outAroonDown
     type: real
-    flags: [dash_line]
+    flags: [dash_line, zero, positive]
   - name: outAroonUp
     type: real
-    flags: [line]
+    flags: [line, zero, positive]

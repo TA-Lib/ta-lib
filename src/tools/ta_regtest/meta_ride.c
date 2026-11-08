@@ -37,6 +37,14 @@
  * output is overflow, which TA_FUNC_FLG_NAN_INF_OUT does not describe. */
 #define ORDINARY_MAX 1e75
 
+/* What each in[] slot of a call holds, in the order the call passes them. */
+#define IN_OPEN   0
+#define IN_HIGH   1
+#define IN_LOW    2
+#define IN_CLOSE  3
+#define IN_VOLUME 4
+#define IN_OTHER  5
+
 typedef struct
 {
    const TA_FuncInfo *info;
@@ -46,6 +54,8 @@ typedef struct
    unsigned int required[MAX_OUT]; /* what some call of the run must show */
    unsigned int seen[MAX_OUT];
    unsigned long long calls;
+   int nbIn;
+   int inKind[MAX_IN];
 } Site;
 
 static Site sites[TA_META_FRAME_SIZE];
@@ -55,6 +65,7 @@ static long mismatches;
 static unsigned long long finiteJudged, nonFiniteExcused;
 static unsigned long long shiftJudged, patternJudged, pointerJudged;
 static unsigned long long rangeJudged, rangeEmpty;
+static unsigned long long signJudged, signOutOfDomain;
 
 static int report( const Site *s )
 {
@@ -113,6 +124,25 @@ static void resolve( void )
          s->info = NULL;
          mismatches++;
          continue;
+      }
+      s->nbIn = 0;
+      for( o = 0; o < s->info->nbInput; o++ )
+      {
+         const TA_InputParameterInfo *in;
+         static const int priceBit[] = { TA_IN_PRICE_OPEN, TA_IN_PRICE_HIGH, TA_IN_PRICE_LOW,
+                                         TA_IN_PRICE_CLOSE, TA_IN_PRICE_VOLUME,
+                                         TA_IN_PRICE_OPENINTEREST };
+         unsigned int k;
+
+         TA_GetInputParameterInfo( handle, o, &in );
+         if( in->type == TA_Input_Price )
+         {
+            for( k = 0; k < sizeof(priceBit) / sizeof(priceBit[0]); k++ )
+               if( (in->flags & priceBit[k]) && s->nbIn < MAX_IN )
+                  s->inKind[s->nbIn++] = k < IN_OTHER ? (int)k : IN_OTHER;
+         }
+         else if( in->type == TA_Input_Real && s->nbIn < MAX_IN )
+            s->inKind[s->nbIn++] = IN_OTHER;
       }
       for( o = 0; o < s->info->nbOutput; o++ )
       {
@@ -196,6 +226,62 @@ static int inputs_ordinary( int single, const void *const in[], int nbIn,
    return 1;
 }
 
+/* 1 when every bar the call could read is one the sign flags of a real output
+ * speak for: well-formed bars, and positive data under TA_FUNC_FLG_POSITIVE_INPUT. */
+static int inputs_in_sign_domain( const Site *s, int single, const void *const in[], int nbIn,
+                                  int first, int last )
+{
+   int positive = (s->info->flags & TA_FUNC_FLG_POSITIVE_INPUT) != 0;
+   int k, i;
+
+   for( i = first; i <= last; i++ )
+   {
+      double bar[IN_OTHER] = { 0 };
+      int has[IN_OTHER] = { 0 };
+
+      for( k = 0; k < nbIn; k++ )
+      {
+         double x;
+         if( !in[k] )
+            continue;
+         x = single ? (double)((const float *)in[k])[i] : ((const double *)in[k])[i];
+         if( positive && s->inKind[k] != IN_VOLUME && !(x > 0.0) )
+            return 0;
+         if( s->inKind[k] < IN_OTHER )
+         {
+            bar[s->inKind[k]] = x;
+            has[s->inKind[k]] = 1;
+         }
+      }
+      if( has[IN_VOLUME] && !(bar[IN_VOLUME] >= 0.0) )
+         return 0;
+      if( has[IN_HIGH] && has[IN_LOW] && !(bar[IN_LOW] <= bar[IN_HIGH]) )
+         return 0;
+      for( k = 0; k < 2; k++ )
+      {
+         int c = k ? IN_CLOSE : IN_OPEN;
+         if( has[c] && ((has[IN_LOW] && bar[c] < bar[IN_LOW]) ||
+                        (has[IN_HIGH] && bar[c] > bar[IN_HIGH])) )
+            return 0;
+      }
+   }
+   return 1;
+}
+
+/* The first finite value of an undeclared sign, or -1. */
+static int first_undeclared_real( const double *v, int nb, unsigned int declared )
+{
+   int i;
+
+   for( i = 0; i < nb; i++ )
+   {
+      unsigned int c = real_classes( &v[i], 1 ) & ~C_NONFINITE;
+      if( c && !(c & declared) )
+         return i;
+   }
+   return -1;
+}
+
 void meta_ride_check( int site, int single, int startIdx, int endIdx,
                       const void *const in[], int nbIn,
                       int outBegIdx, int outNBElement, int lookback,
@@ -204,6 +290,8 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
    Site *s = &sites[site];
    int first = startIdx > lookback ? startIdx : lookback;
    int nb = outNBElement;
+   int from = outBegIdx - lookback > 0 ? outBegIdx - lookback : 0;
+   int inDomain = -1;
    unsigned int o;
    int i;
 
@@ -238,6 +326,7 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
       int pattern = s->pattern[o];
       unsigned int declared = s->declared[o];
       unsigned int c = 0, bad;
+      int realSigns = !isInt && declared;
 
       shiftJudged++;
       if( shift[o] != 0 )
@@ -266,6 +355,19 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
          c = real_classes( (const double *)out[o], nb );
       else if( any_non_finite( (const double *)out[o], nb ) )
          c = C_NONFINITE;
+      if( realSigns && inDomain < 0 )
+      {
+         if( nbIn != s->nbIn )
+         {
+            inDomain = 0;
+            if( report( s ) )
+               printf( "a call passed %d input arrays, its metadata names %d\n", nbIn, s->nbIn );
+         }
+         else
+            inDomain = inputs_in_sign_domain( s, single, in, nbIn, from, endIdx );
+      }
+      if( realSigns && !inDomain )
+         signOutOfDomain++;
       s->seen[o] |= c & ~C_NONFINITE;
 
       if( !isInt )
@@ -276,7 +378,6 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
             finiteJudged += nb;
          if( c & C_NONFINITE )
          {
-            int from = outBegIdx - lookback;
             int inPlace = 0, k;
             unsigned int oo;
 
@@ -285,7 +386,7 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
                for( oo = 0; oo < s->info->nbOutput; oo++ )
                   inPlace |= in[k] && in[k] == out[oo];
             if( inPlace ||
-                !inputs_ordinary( single, in, nbIn, from > 0 ? from : 0, endIdx ) )
+                !inputs_ordinary( single, in, nbIn, from, endIdx ) )
                nonFiniteExcused++;
             else if( flagged )
                s->seen[o] |= C_NONFINITE;
@@ -304,6 +405,18 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
          continue;
       if( pattern )
          patternJudged += nb;
+      if( realSigns )
+      {
+         if( !inDomain )
+            continue;
+         signJudged += nb;
+         i = first_undeclared_real( (const double *)out[o], nb, declared );
+         if( i >= 0 && report( s ) )
+            printf( "%s[%d] is %g, which its flags 0x%x do not declare (range %d, %d)\n",
+                    info->paramName, i, ((const double *)out[o])[i],
+                    (unsigned int)info->flags, startIdx, endIdx );
+         continue;
+      }
 
       bad = c & ~declared & ~C_NONFINITE;
       if( !bad )
@@ -417,6 +530,8 @@ ErrorNumber meta_ride_whole_run( void )
       { "output pointers", pointerJudged },
       { "output ranges", rangeJudged },
       { "ranges too short for the lookback", rangeEmpty },
+      { "real output values judged for their sign", signJudged },
+      { "real outputs whose call left the sign flags' domain", signOutOfDomain },
    };
    ErrorNumber retValue = TA_TEST_PASS;
    unsigned int k, o, bit;

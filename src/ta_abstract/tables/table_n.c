@@ -39,6 +39,9 @@
 #include "ta_def_ui.h"
 
 /* NATR BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_NATR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_NATR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -47,7 +50,7 @@ static const TA_InputParameterInfo    *TA_NATR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_NATR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_NATR_Default,
   NULL
 };
 
@@ -64,6 +67,9 @@ DEF_FUNCTION( NATR,
 /* NATR END */
 
 /* NVI BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_NVI_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+
 static const TA_InputParameterInfo    *TA_NVI_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_CV,
@@ -72,7 +78,7 @@ static const TA_InputParameterInfo    *TA_NVI_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_NVI_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_NVI_Default,
   NULL
 };
 

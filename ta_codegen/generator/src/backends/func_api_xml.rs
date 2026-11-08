@@ -330,6 +330,8 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("lower_limit", "Lower Limit"),
     ("display_shift", "Display Shift"),
     ("pattern_weak", "Pattern Weak"),
+    ("bar_index", "Bar Index"),
+    ("segmented", "Segmented"),
 ];
 
 fn write_outputs(out: &mut String, func: &FuncDef) {

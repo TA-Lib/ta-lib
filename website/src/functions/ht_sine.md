@@ -15,7 +15,7 @@ Hilbert Transform SineWave: derives the dominant-cycle phase from price and emit
 
 Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outSine as a solid line and outLeadSine as a dashed line.
 
-Metadata flags used: `outSine: line` · `outLeadSine: dash_line`
+Metadata flags used: `outSine: line, positive, negative` · `outLeadSine: dash_line, positive, negative`
 
 :::
 

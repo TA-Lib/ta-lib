@@ -15,7 +15,7 @@ Element-wise sine of the input series.
 
 Drawn on the price pane over a ramp from -6.3 to 6.3 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
-Metadata flags used: `inReal: series ramp [-6.3, 6.3]` · `outReal: line`
+Metadata flags used: `inReal: series ramp [-6.3, 6.3]` · `outReal: line, positive, negative`
 
 :::
 

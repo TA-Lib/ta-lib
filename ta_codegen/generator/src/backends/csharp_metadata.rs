@@ -414,6 +414,12 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.",
     ),
     ("pattern_weak", "PatternWeak", "Level 80 occurs too: a weaker form of the pattern, on the same bar."),
+    ("bar_index", "BarIndex", "The value is an absolute index into the input arrays."),
+    (
+        "segmented",
+        "Segmented",
+        "A line whose segments restart wherever the function's integer output changes value: never connect across a change.",
+    ),
 ];
 
 /// Output members kept for compatibility: the C value stays defined, no output sets it.

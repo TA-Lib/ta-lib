@@ -345,8 +345,7 @@ fn row(f: &FuncDef, enums: &HashMap<String, EnumDef>) -> FuncRow {
 }
 
 /// Keyed by the row's `param_name`, so a price bundle is one input as it is in
-/// every registry. Must stay byte-identical to `ta_abstract_c`'s rendering,
-/// which `test_abstract.c` holds it to; neither may call the other.
+/// every registry.
 fn attributes_json(f: &FuncDef, inputs: &[InputRow]) -> String {
     use crate::attributes::{KEYS, INPUTS, OPT_INPUTS, OUTPUTS};
     fn object(entries: &[(&str, String)]) -> String {
@@ -631,6 +630,8 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "lower_limit" => b |= 0x0000_1000,
             "display_shift" => b |= 0x0000_4000, // TA_OUT_DISPLAY_SHIFT
             "pattern_weak" => b |= 0x0000_8000,
+            "bar_index" => b |= 0x0001_0000,
+            "segmented" => b |= 0x0002_0000,
             _ => {}
         }
     }
