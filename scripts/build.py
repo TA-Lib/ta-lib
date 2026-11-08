@@ -205,10 +205,11 @@ def show_help():
                         functions/<name>.csv) from src/tools/ta_refdata/corpus.
                         A file is rewritten only when missing or out of
                         tolerance; a CSV naming no function is removed.
-                        --check writes nothing and fails on any difference,
-                        missing or stale file, then replays every CSV from
-                        its own rows (ta_refdata --replay) and fails on a
-                        cell that does not reproduce.
+                        --check writes nothing there and fails on any
+                        difference, missing or stale file, then writes a
+                        fresh set under the build dir and replays each from
+                        its own rows (ta_refdata --replay), failing on a cell
+                        that does not reproduce bit for bit.
     ref                 Differential fuzz of the current library vs each frozen
                         release in ta_ref/ (builds bin/ta_ref_<X_Y_Z>_serve, then
                         runs ta_regtest --ref=<X_Y_Z> per member). C-only; needs
@@ -395,8 +396,8 @@ REFDATA_OUT = os.path.join('website', 'src', '.vuepress', 'public', 'functions')
 def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
                   check: bool) -> int:
     """Builds ta_refdata and runs it over the committed corpus into the website's
-    public/functions directory; --check compares and writes nothing, then replays
-    every written CSV from its own rows."""
+    public/functions directory; --check compares and writes nothing there, then
+    replays a freshly written set from its own rows."""
     if not os.path.isfile(os.path.join(root_dir, 'src', 'tools', 'ta_refdata', 'ta_refdata.c')):
         print("Error: src/tools/ta_refdata is not in this tree (it is not part of the "
               "released source tarball); refdata needs a git checkout.")
@@ -422,7 +423,18 @@ def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
         # The pages and charts are rendered from the CSVs just written.
         run_codegen(root_dir, 'run', '--release', '--', 'generate')
         return 0
-    csvs = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.endswith('.csv'))
+    # The committed CSVs were computed on another machine, and replay compares
+    # bits, so it replays a set written here; --check above holds the committed
+    # ones to the tolerance.
+    fresh = os.path.join(build_dir, 'refdata-replay')
+    shutil.rmtree(fresh, ignore_errors=True)
+    os.makedirs(fresh)
+    p = subprocess.run([binary, os.path.join(root_dir, REFDATA_CORPUS), fresh],
+                       capture_output=True, text=True)
+    if p.returncode != 0:
+        print(p.stdout + p.stderr, end='')
+        return p.returncode
+    csvs = sorted(os.path.join(fresh, f) for f in os.listdir(fresh) if f.endswith('.csv'))
     print(f"=== ta_refdata --replay ({len(csvs)} files) ===", flush=True)
     for i in range(0, len(csvs), 50):
         p = subprocess.run([binary, '--replay'] + csvs[i:i + 50], capture_output=True, text=True)

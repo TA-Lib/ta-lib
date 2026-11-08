@@ -959,11 +959,15 @@ fn level_items(levels: &[f64]) -> Vec<String> {
     levels.iter().map(|v| format!("{v}")).collect()
 }
 
+fn dashed_rules(levels: &[f64]) -> &'static str {
+    if levels.len() == 1 { "a dashed rule" } else { "dashed rules" }
+}
+
 fn level_phrase(o: &Output) -> String {
     if o.levels.is_empty() {
         String::new()
     } else {
-        format!(" with dashed rules at {}", join_and(&level_items(&o.levels)))
+        format!(" with {} at {}", dashed_rules(&o.levels), join_and(&level_items(&o.levels)))
     }
 }
 
@@ -1155,7 +1159,8 @@ fn draw_price_outputs<'p>(
         }
         if band.is_some_and(|(u, l)| u == slot || l == slot) {
             if !o.levels.is_empty() {
-                phrases.push(format!("dashed rules at {}'s levels {}", o.name, join_and(&level_items(&o.levels))));
+                let noun = if o.levels.len() == 1 { "level" } else { "levels" };
+                phrases.push(format!("{} at {}'s {noun} {}", dashed_rules(&o.levels), o.name, join_and(&level_items(&o.levels))));
             }
             continue;
         }

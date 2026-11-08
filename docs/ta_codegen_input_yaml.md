@@ -105,7 +105,7 @@ verbatim (batch) or idiomatically recast (streaming, #278).
 | `name` | string | yes | Parameter name (e.g., `outReal`) |
 | `type` | string | yes | Data type: `real` or `integer` |
 | `flags` | list | no | Display/value hints (see [Output Flags](#output-flags)) |
-| `levels` | [number, ...] | no | `real` only: the reference levels the function's author published (RSI: `[30, 70]`), drawn as horizontal rules; not bounds. Finite and strictly ascending. Published as an [attribute](https://ta-lib.org/spec/abstract/#attributes) |
+| `levels` | [number, ...] | no | `real` only: reference levels, author-published or common practice (RSI: `[30, 70]`), drawn as horizontal rules; not bounds. Finite and strictly ascending. Published as an [attribute](https://ta-lib.org/spec/abstract/#attributes) |
 
 ## Types
 
