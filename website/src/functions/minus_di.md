@@ -7,6 +7,12 @@ description: "Wilder's Minus Directional Indicator: the Wilder-smoothed downward
 
 Wilder's Minus Directional Indicator: the Wilder-smoothed downward directional movement (-DM) normalized by smoothed True Range. Measures the strength of downward price movement. Higher -DI indicates a stronger downtrend; compared against +DI to gauge directional dominance.
 
+## Chart
+
+<ta-chart src="/functions/minus_di.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/minus_di.csv) · [Chart (SVG)](/functions/minus_di.svg)
+
 ## Formula
 
 -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
@@ -52,6 +58,8 @@ Wilder's Minus Directional Indicator: the Wilder-smoothed downward directional m
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`minus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_di/minus_di.c) · [`minus_di.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_di/minus_di.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`minus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MINUS_DI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINUS_DI.cs) |
 | TypeScript | [`minusDi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minusDi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MINUS_DI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

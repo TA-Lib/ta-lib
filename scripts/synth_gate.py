@@ -196,6 +196,11 @@ def main():
             shutil.copytree(os.path.join(synth_src, f),
                             os.path.join(wt, "ta_codegen", "input", f))
         print(f"synth_gate: injected {nfix} fixture(s) into worktree input/")
+        # The fixtures are in no release: the ledger must list them before generate runs.
+        rc, _ = run([sys.executable, os.path.join(wt, "scripts", "function_releases.py"),
+                     "--sync"], cwd=wt, capture=True)
+        if rc != 0:
+            sys.exit(f"synth_gate: FAIL — ledger sync exited {rc}")
 
         # Build everything in the worktree via the usual pipeline, UNFILTERED:
         # a --function-scoped generate skips the full-registry surfaces

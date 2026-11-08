@@ -7,6 +7,12 @@ description: "Rolling standard deviation of a series over a window, scaled by a 
 
 Rolling standard deviation of a series over a window, scaled by a deviations multiplier. Delegates to VAR, then takes the square root.
 
+## Chart
+
+<ta-chart src="/functions/stddev.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/stddev.csv) · [Chart (SVG)](/functions/stddev.svg)
+
 ## Formula
 
 $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
@@ -51,6 +57,8 @@ $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`stddev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stddev/stddev.c) · [`stddev.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stddev/stddev.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`stddev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_STDDEV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STDDEV.cs) |
 | TypeScript | [`stddev.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stddev.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.STDDEV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

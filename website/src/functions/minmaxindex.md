@@ -7,6 +7,12 @@ description: "Returns the absolute input indices of the lowest and highest value
 
 Returns the absolute input indices of the lowest and highest values within each rolling window of optInTimePeriod bars. Index variant of MINMAX.
 
+## Chart
+
+<ta-chart src="/functions/minmaxindex.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer outputs outMinIdx and outMaxIdx."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer outputs outMinIdx and outMaxIdx. [Reference data (CSV)](/functions/minmaxindex.csv) · [Chart (SVG)](/functions/minmaxindex.svg)
+
 ## Formula
 
 outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])  
@@ -52,6 +58,8 @@ outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`minmaxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmaxindex/minmaxindex.c) · [`minmaxindex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmaxindex/minmaxindex.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`minmaxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_MINMAXINDEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINMAXINDEX.cs) |
 | TypeScript | [`minmaxindex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minmaxindex.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MINMAXINDEX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

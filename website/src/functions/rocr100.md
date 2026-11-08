@@ -7,6 +7,12 @@ description: "Rate-of-change ratio scaled by 100: current price as a percentage 
 
 Rate-of-change ratio scaled by 100: current price as a percentage of the price optInTimePeriod bars ago. Momentum measure centered at 100 and always positive. Above 100 = price rose vs n bars ago; below 100 = price fell.
 
+## Chart
+
+<ta-chart src="/functions/rocr100.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rocr100.csv) · [Chart (SVG)](/functions/rocr100.svg)
+
 ## Formula
 
 $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeriod
@@ -50,6 +56,8 @@ $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeri
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`rocr100.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr100/rocr100.c) · [`rocr100.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr100/rocr100.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`rocr100.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_ROCR100.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROCR100.cs) |
 | TypeScript | [`rocr100.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rocr100.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROCR100`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

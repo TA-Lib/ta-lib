@@ -7,6 +7,12 @@ description: "Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through
 
 Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic, each pass smoothed by half. Bounded 0 to 100, read against 25 and 75: turning up from below 25 is bullish, turning down from above 75 bearish.
 
+## Chart
+
+<ta-chart src="/functions/stc.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/stc.csv) · [Chart (SVG)](/functions/stc.svg)
+
 ## Formula
 
 MACD[t] = EMA(x, fast)[t] - EMA(x, slow)[t]
@@ -65,6 +71,8 @@ min and max are taken over the last cycle values, current one included. When a r
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`stc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stc/stc.c) · [`stc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stc/stc.yaml)
 
 | Native | File |
@@ -75,7 +83,9 @@ TA-Lib Definition: [`stc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_STC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STC.cs) |
 | TypeScript | [`stc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.STC` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

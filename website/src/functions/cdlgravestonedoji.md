@@ -7,6 +7,12 @@ description: "Single-candle doji whose open and close sit at the low of the day,
 
 Single-candle doji whose open and close sit at the low of the day, leaving a long upper shadow and no lower shadow. A doji variant whose bullish/bearish meaning depends on the surrounding trend, which the code does not judge. A hit marks a gravestone doji; its bullish vs bearish reversal meaning must be read against the prevailing trend, which this function does not check.
 
+## Chart
+
+<ta-chart src="/functions/cdlgravestonedoji.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdlgravestonedoji.csv) · [Chart (SVG)](/functions/cdlgravestonedoji.svg)
+
 ## Formula
 
 One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlgravestonedoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgravestonedoji/cdlgravestonedoji.c) · [`cdlgravestonedoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgravestonedoji/cdlgravestonedoji.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlgravestonedoji.c`](https://github.com/TA-Lib/ta-lib/blob
 | C# | [`Core_CDLGRAVESTONEDOJI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLGRAVESTONEDOJI.cs) |
 | TypeScript | [`cdlgravestonedoji.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlgravestonedoji.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLGRAVESTONEDOJI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

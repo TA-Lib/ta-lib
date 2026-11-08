@@ -7,6 +7,12 @@ description: "Stochastic Momentum Index: where the close sits relative to the mi
 
 Stochastic Momentum Index: where the close sits relative to the **midpoint** of the recent high/low range, double-smoothed. Lane's stochastic measures the close against the bottom of the range; Blau measures it against the middle, then smooths numerator and denominator separately with two exponential averages before dividing, which is what buys the low-lag, smooth-contoured curve. The result runs -100 to +100 rather than 0 to 100, so the zero line is the reference: positive means the close is above the midpoint of its range, negative below. Extreme readings mark overbought and oversold conditions, and crossings of the signal line are the usual trade trigger.
 
+## Chart
+
+<ta-chart src="/functions/smi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line. [Reference data (CSV)](/functions/smi.csv) · [Chart (SVG)](/functions/smi.svg)
+
 ## Formula
 
 HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
@@ -64,6 +70,8 @@ Signal = EMA(SMI, signalPeriod)
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.c) · [`smi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.yaml)
 
 | Native | File |
@@ -74,7 +82,9 @@ TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMI.cs) |
 | TypeScript | [`smi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/smi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SMI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

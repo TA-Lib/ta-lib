@@ -11,6 +11,12 @@ Read it as a smoothed price line. Its DC gain is 1, so a flat market returns the
 
 The alpha is the one the Gaussian construction asks for, not the exponential-moving-average alpha. Ehlers notes that the same shape can be had by taking an EMA of an EMA, but that doing so "leaves the computation of the correct alpha to be a little nebulous", and gives these coefficients instead. `TA_EMA` cannot stand in: its alpha is `2/(n+1)` for whole `n`, and at a cutoff period of 20 this filter's alpha is 0.38217, which would ask for `n = 4.233`.
 
+## Chart
+
+<ta-chart src="/functions/swak_gauss.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/swak_gauss.csv) · [Chart (SVG)](/functions/swak_gauss.svg)
+
 ## Formula
 
 ```
@@ -70,6 +76,8 @@ The output may alias the input. This row's `b1` and `b2` are zero, so it never r
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`swak_gauss.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_gauss/swak_gauss.c) · [`swak_gauss.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_gauss/swak_gauss.yaml)
 
 | Native | File |
@@ -80,7 +88,9 @@ TA-Lib Definition: [`swak_gauss.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_SWAK_GAUSS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_GAUSS.cs) |
 | TypeScript | [`swakGauss.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakGauss.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SWAK_GAUSS` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

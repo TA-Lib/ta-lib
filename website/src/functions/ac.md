@@ -11,6 +11,12 @@ Because acceleration turns before speed does, the reading changes sign ahead of 
 
 The oscillator is one leg of Williams' Profitunity system, alongside the Awesome Oscillator ([`AO`](/functions/ao.md)) and the Alligator.
 
+## Chart
+
+<ta-chart src="/functions/ac.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram. [Reference data (CSV)](/functions/ac.csv) · [Chart (SVG)](/functions/ac.svg)
+
 ## Formula
 
 median_t = ( high_t + low_t ) / 2  
@@ -55,6 +61,8 @@ AC_t = AO_t − SMA(AO, signal)_t
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`ac.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ac/ac.c) · [`ac.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ac/ac.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`ac.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_AC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AC.cs) |
 | TypeScript | [`ac.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ac.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AC` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

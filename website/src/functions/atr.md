@@ -7,6 +7,12 @@ description: "Wilder-smoothed average of the True Range over a period, measuring
 
 Wilder-smoothed average of the True Range over a period, measuring price volatility regardless of direction. Higher ATR means greater volatility; no directional bias.
 
+## Chart
+
+<ta-chart src="/functions/atr.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/atr.csv) · [Chart (SVG)](/functions/atr.svg)
+
 ## Formula
 
 TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
@@ -50,6 +56,8 @@ ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`atr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atr/atr.c) · [`atr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atr/atr.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`atr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ATR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ATR.cs) |
 | TypeScript | [`atr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/atr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ATR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

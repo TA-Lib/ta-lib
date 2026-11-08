@@ -7,6 +7,12 @@ description: "Element-wise ceiling (round up to the nearest integer) of the inpu
 
 Element-wise ceiling (round up to the nearest integer) of the input series.
 
+## Chart
+
+<ta-chart src="/functions/ceil.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/ceil.csv) · [Chart (SVG)](/functions/ceil.svg)
+
 ## Formula
 
 outReal[i] = ceil(inReal[i])
@@ -40,6 +46,8 @@ outReal[i] = ceil(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ceil.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ceil/ceil.c) · [`ceil.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ceil/ceil.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`ceil.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CEIL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CEIL.cs) |
 | TypeScript | [`ceil.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ceil.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CEIL`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

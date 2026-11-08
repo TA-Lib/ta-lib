@@ -5,6 +5,10 @@ description: "Every TA-Lib technical analysis function, grouped by category, wit
 
 All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript source.
 
+## Reference data
+
+Each page charts the function over one fixed price series (IBM, daily, 1999, the series `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, computed by the C library. Running TA-Lib over the CSV's own input columns from its first row reproduces the output columns. Compare with a tolerance rather than bit for bit: the values come from one platform, and a function that [uses a transcendental](/spec/versions/#transcendental) may differ in the last bits [across machines](/spec/versions/#machines).
+
 ## Cycle Indicators
 
 - [HT_DCPERIOD](/functions/ht_dcperiod.md) — Hilbert Transform - Dominant Cycle Period

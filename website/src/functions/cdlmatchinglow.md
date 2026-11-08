@@ -7,6 +7,12 @@ description: "A two-candle pattern of two consecutive black (bearish) candles wi
 
 A two-candle pattern of two consecutive black (bearish) candles with equal closes (within a tolerance). Treated as a bullish reversal signal. A hit signals a potential bullish reversal (shared support close after two down candles).
 
+## Chart
+
+<ta-chart src="/functions/cdlmatchinglow.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlmatchinglow.csv) · [Chart (SVG)](/functions/cdlmatchinglow.svg)
+
 ## Formula
 
 Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlmatchinglow.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmatchinglow/cdlmatchinglow.c) · [`cdlmatchinglow.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmatchinglow/cdlmatchinglow.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlmatchinglow.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDLMATCHINGLOW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMATCHINGLOW.cs) |
 | TypeScript | [`cdlmatchinglow.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmatchinglow.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLMATCHINGLOW`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

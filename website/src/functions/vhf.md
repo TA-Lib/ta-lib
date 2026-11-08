@@ -11,6 +11,12 @@ Bounded in [0,1]. Values near 1 mean the market covered most of its path in one 
 
 A common use is regime selection: run trend-following logic while VHF is high, oscillator logic while it is low.
 
+## Chart
+
+<ta-chart src="/functions/vhf.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/vhf.csv) · [Chart (SVG)](/functions/vhf.svg)
+
 ## Formula
 
 num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
@@ -57,6 +63,8 @@ The two windows are deliberately not co-terminal: the extrema span `optInTimePer
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`vhf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vhf/vhf.c) · [`vhf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vhf/vhf.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`vhf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_VHF.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VHF.cs) |
 | TypeScript | [`vhf.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vhf.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.VHF` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

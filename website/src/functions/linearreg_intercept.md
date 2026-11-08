@@ -7,6 +7,12 @@ description: "Returns the y-intercept (b) of the least-squares regression line f
 
 Returns the y-intercept (b) of the least-squares regression line fitted over the last optInTimePeriod values. Part of the linear-regression family (LINEARREG, SLOPE, ANGLE, TSF).
 
+## Chart
+
+<ta-chart src="/functions/linearreg_intercept.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/linearreg_intercept.csv) · [Chart (SVG)](/functions/linearreg_intercept.svg)
+
 ## Formula
 
 Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
@@ -48,6 +54,8 @@ b = (SumY − m·SumX) / period   ← output
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`linearreg_intercept.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_intercept/linearreg_intercept.c) · [`linearreg_intercept.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_intercept/linearreg_intercept.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`linearreg_intercept.c`](https://github.com/TA-Lib/ta-lib/bl
 | C# | [`Core_LINEARREG_INTERCEPT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG_INTERCEPT.cs) |
 | TypeScript | [`linearregIntercept.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/linearregIntercept.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.LINEARREG_INTERCEPT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

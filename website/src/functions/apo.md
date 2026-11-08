@@ -7,6 +7,12 @@ description: "Absolute Price Oscillator: the difference between a fast and a slo
 
 Absolute Price Oscillator: the difference between a fast and a slow moving average of the input, in price units. Measures short- vs long-term momentum. Positive when fast MA > slow MA (upward momentum); negative otherwise.
 
+## Chart
+
+<ta-chart src="/functions/apo.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/apo.csv) · [Chart (SVG)](/functions/apo.svg)
+
 ## Formula
 
 $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
@@ -57,6 +63,8 @@ The standard form is exponential — APO with EMA and periods 12/26 is the fast-
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`apo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/apo/apo.c) · [`apo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/apo/apo.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`apo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_APO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_APO.cs) |
 | TypeScript | [`apo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/apo.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.APO`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Minus Directional Movement, the downward component of Wilder's dir
 
 Minus Directional Movement, the downward component of Wilder's directional movement system. Measures Wilder-smoothed downward price motion over the period. Higher -DM indicates stronger downward directional movement.
 
+## Chart
+
+<ta-chart src="/functions/minus_dm.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/minus_dm.csv) · [Chart (SVG)](/functions/minus_dm.svg)
+
 ## Formula
 
 diffP = high - prevHigh; diffM = prevLow - low
@@ -51,6 +57,8 @@ period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`minus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_dm/minus_dm.c) · [`minus_dm.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_dm/minus_dm.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`minus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MINUS_DM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINUS_DM.cs) |
 | TypeScript | [`minusDm.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minusDm.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MINUS_DM`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

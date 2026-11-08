@@ -7,6 +7,12 @@ description: "Single-candle doji with two long shadows whose body sits near the 
 
 Single-candle doji with two long shadows whose body sits near the midpoint of the high-low range. It is a neutral indecision signal, not a directional (bullish/bearish) reversal. A hit marks market indecision/uncertainty; neutral, neither bullish nor bearish.
 
+## Chart
+
+<ta-chart src="/functions/cdlrickshawman.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdlrickshawman.csv) · [Chart (SVG)](/functions/cdlrickshawman.svg)
+
 ## Notes
 
 - Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))
@@ -52,6 +58,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlrickshawman.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrickshawman/cdlrickshawman.c) · [`cdlrickshawman.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrickshawman/cdlrickshawman.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`cdlrickshawman.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDLRICKSHAWMAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLRICKSHAWMAN.cs) |
 | TypeScript | [`cdlrickshawman.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlrickshawman.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLRICKSHAWMAN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

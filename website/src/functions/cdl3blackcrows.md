@@ -7,6 +7,12 @@ description: "A four-bar pattern: a white candle followed by three consecutive b
 
 A four-bar pattern: a white candle followed by three consecutive black (down) candles with successively lower closes, each opening inside the prior black's real body. It is a bearish reversal signal. A hit (-100) signals a bearish reversal.
 
+## Chart
+
+<ta-chart src="/functions/cdl3blackcrows.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdl3blackcrows.csv) · [Chart (SVG)](/functions/cdl3blackcrows.svg)
+
 ## Notes
 
 - Does not verify the prior mature uptrend the pattern classically assumes for significance.
@@ -52,6 +58,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdl3blackcrows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.c) · [`cdl3blackcrows.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`cdl3blackcrows.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDL3BLACKCROWS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL3BLACKCROWS.cs) |
 | TypeScript | [`cdl3blackcrows.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl3blackcrows.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDL3BLACKCROWS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

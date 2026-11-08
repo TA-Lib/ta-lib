@@ -7,6 +7,12 @@ description: "Bollinger Bands: a moving-average middle band with upper and lower
 
 Bollinger Bands: a moving-average middle band with upper and lower bands offset by a multiple of the standard deviation. Used to gauge relative price volatility.
 
+## Chart
+
+<ta-chart src="/functions/bbands.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/bbands.csv) · [Chart (SVG)](/functions/bbands.svg)
+
 ## Formula
 
 $$
@@ -71,6 +77,8 @@ and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`bbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbands/bbands.c) · [`bbands.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbands/bbands.yaml)
 
 | Native | File |
@@ -81,7 +89,9 @@ TA-Lib Definition: [`bbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_BBANDS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BBANDS.cs) |
 | TypeScript | [`bbands.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/bbands.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.BBANDS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

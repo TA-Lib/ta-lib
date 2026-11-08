@@ -224,7 +224,8 @@ export function tanhDisplayShift(outputIdx: number, options?: TanhOptions): numb
  * ```ts
  * import { tanh } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   3 * Math.sin(0.1 * i));
  * const { begIdx, values } = tanh(data);
  * // values[k] is the value at bar begIdx + k
  * ```
@@ -482,10 +483,11 @@ export function tanhOpenAndFillPositional(
  * ```ts
  * import { tanhOpen } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   3 * Math.sin(0.1 * i));
  * const stream = tanhOpen(data);
- * const peeked = stream.peek(0.42); // a forming bar: commits nothing
- * const updated = stream.update(0.42); // the bar closes
+ * const peeked = stream.peek(1.26); // a forming bar: commits nothing
+ * const updated = stream.update(1.26); // the bar closes
  * ```
  */
 export function tanhOpen(real: ArrayLike<number>, options?: TanhOptions): TanhStream {
@@ -515,7 +517,8 @@ export function tanhOpen(real: ArrayLike<number>, options?: TanhOptions): TanhSt
  * ```ts
  * import { tanhOpenAndFill } from 'ta-lib';
  *
- * const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   3 * Math.sin(0.1 * i));
  * const { stream, begIdx, values } = tanhOpenAndFill(data);
  * // values[k] is the value at bar begIdx + k
  * ```

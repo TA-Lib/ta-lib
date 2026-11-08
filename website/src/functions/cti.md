@@ -9,6 +9,12 @@ John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of the last
 
 Arithmetically it is [`CORREL`](/functions/correl.md) of the series against a ramp, with the ramp side collapsed to closed-form constants.
 
+## Chart
+
+<ta-chart src="/functions/cti.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cti.csv) · [Chart (SVG)](/functions/cti.svg)
+
 ## Formula
 
 With `n` = `optInTimePeriod`, `x` the window's closes and `y` a straight line rising with time:
@@ -58,6 +64,8 @@ A rising series therefore reads positive. The `y` side is data-independent and c
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`cti.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.c) · [`cti.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`cti.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CTI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CTI.cs) |
 | TypeScript | [`cti.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cti.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CTI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

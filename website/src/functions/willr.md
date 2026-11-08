@@ -7,6 +7,12 @@ description: "Williams' %R momentum oscillator over a rolling period, bounded in
 
 Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Measures where the current close sits relative to the high-low range of the last N bars. Near 0 = close at period high (overbought); near -100 = close at period low (oversold).
 
+## Chart
+
+<ta-chart src="/functions/willr.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/willr.csv) · [Chart (SVG)](/functions/willr.svg)
+
 ## Formula
 
 %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
@@ -48,6 +54,8 @@ Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Me
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`willr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/willr/willr.c) · [`willr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/willr/willr.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`willr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_WILLR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WILLR.cs) |
 | TypeScript | [`willr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/willr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.WILLR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

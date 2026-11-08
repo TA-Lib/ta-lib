@@ -7,6 +7,12 @@ description: "Extended Parabolic SAR (stop and reverse) giving the caller full c
 
 Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial state and separate acceleration factors for long and short positions. Unlike SAR, it returns negative values while short so reversals are distinguishable. Sign flip of the output marks a trend reversal (positive=long stop, negative=short stop).
 
+## Chart
+
+<ta-chart src="/functions/sarext.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as dots."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as dots. [Reference data (CSV)](/functions/sarext.csv) · [Chart (SVG)](/functions/sarext.svg)
+
 ## Formula
 
 SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
@@ -54,6 +60,8 @@ SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sarext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sarext/sarext.c) · [`sarext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sarext/sarext.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`sarext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_SAREXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SAREXT.cs) |
 | TypeScript | [`sarext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sarext.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SAREXT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

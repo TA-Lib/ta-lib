@@ -11,6 +11,12 @@ Read it as a smoothed price line. Its DC gain is 1, so a flat market returns the
 
 The name keeps the `SWAK` prefix on purpose. This is the Swiss Army Knife's Butterworth row, not the Butterworth filters of Ehlers' separate article, and not the SuperSmoother, which is a third two-pole low-pass with complex poles.
 
+## Chart
+
+<ta-chart src="/functions/swak_butter.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/swak_butter.csv) · [Chart (SVG)](/functions/swak_butter.svg)
+
 ## Formula
 
 ```
@@ -70,6 +76,8 @@ The output may alias the input. This row reads `x[i-1]` and `x[i-2]`, which an a
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`swak_butter.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_butter/swak_butter.c) · [`swak_butter.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_butter/swak_butter.yaml)
 
 | Native | File |
@@ -80,7 +88,9 @@ TA-Lib Definition: [`swak_butter.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_SWAK_BUTTER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_BUTTER.cs) |
 | TypeScript | [`swakButter.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakButter.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SWAK_BUTTER` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

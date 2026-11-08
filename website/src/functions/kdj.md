@@ -7,6 +7,12 @@ description: "The stochastic oscillator as it is drawn on Chinese-market platfor
 
 The stochastic oscillator as it is drawn on Chinese-market platforms: the Slow-%K and Slow-%D lines plus a third line J that amplifies the gap between them. K and D are read like any stochastic — above 80 overbought, below 20 oversold, a K/D crossing signalling a momentum shift — while J is a divergence gauge whose excursions outside the 0-100 band mark the strongest moves. Both smoothing stages default to Wilder's moving average, which is the smoother the original formula language specifies; selecting a simple moving average for both reproduces the classic Slow Stochastic with a J line attached.
 
+## Chart
+
+<ta-chart src="/functions/kdj.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line, outD as a solid line and outJ as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line, outD as a solid line and outJ as a solid line. [Reference data (CSV)](/functions/kdj.csv) · [Chart (SVG)](/functions/kdj.svg)
+
 ## Formula
 
 RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
@@ -66,6 +72,8 @@ J = 3*K - 2*D
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.c) · [`kdj.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.yaml)
 
 | Native | File |
@@ -76,7 +84,9 @@ TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_KDJ.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KDJ.cs) |
 | TypeScript | [`kdj.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kdj.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KDJ` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

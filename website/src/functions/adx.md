@@ -7,6 +7,12 @@ description: "Wilder's Average Directional Movement Index, a smoothed measure of
 
 Wilder's Average Directional Movement Index, a smoothed measure of trend strength derived from the directional indicators (+DI/-DI). Quantifies how strongly a market is trending, regardless of direction. Higher values indicate a stronger trend (a common convention treats >25 as trending); says nothing about direction.
 
+## Chart
+
+<ta-chart src="/functions/adx.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/adx.csv) · [Chart (SVG)](/functions/adx.svg)
+
 ## Formula
 
 +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
@@ -52,6 +58,8 @@ Wilder's Average Directional Movement Index, a smoothed measure of trend strengt
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`adx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adx/adx.c) · [`adx.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adx/adx.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`adx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ADX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADX.cs) |
 | TypeScript | [`adx.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/adx.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ADX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

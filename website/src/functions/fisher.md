@@ -9,6 +9,12 @@ Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's position in
 
 The output is unbounded and centred on zero. A peak or trough marks a likely turn, and the Fisher line crossing its Trigger, the same line one bar later, is the author's entry signal.
 
+## Chart
+
+<ta-chart src="/functions/fisher.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line. [Reference data (CSV)](/functions/fisher.csv) · [Chart (SVG)](/functions/fisher.svg)
+
 ## Formula
 
 With `P = (high + low) / 2` and `MaxP`, `MinP` its highest and lowest value over the last `optInTimePeriod` bars:
@@ -62,6 +68,8 @@ With `P = (high + low) / 2` and `MaxP`, `MinP` its highest and lowest value over
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`fisher.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fisher/fisher.c) · [`fisher.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fisher/fisher.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`fisher.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_FISHER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FISHER.cs) |
 | TypeScript | [`fisher.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fisher.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FISHER` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

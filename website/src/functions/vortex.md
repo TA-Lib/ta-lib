@@ -9,6 +9,12 @@ Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend indicator (
 
 A +VI line crossing above −VI is the bullish signal the authors describe; the two lines are conventionally plotted together.
 
+## Chart
+
+<ta-chart src="/functions/vortex.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line. [Reference data (CSV)](/functions/vortex.csv) · [Chart (SVG)](/functions/vortex.svg)
+
 ## Formula
 
 Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange.md)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
@@ -58,6 +64,8 @@ No smoothing, no recursion, no seeding — three rolling sums over per-bar terms
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`vortex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vortex/vortex.c) · [`vortex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vortex/vortex.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`vortex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_VORTEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VORTEX.cs) |
 | TypeScript | [`vortex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vortex.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.VORTEX` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

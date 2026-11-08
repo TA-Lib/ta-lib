@@ -11,6 +11,12 @@ The first is Wilder's RSI of the closes over `optInTimePeriod` bars. The second 
 
 High readings mark a short-term overbought market and low readings an oversold one.
 
+## Chart
+
+<ta-chart src="/functions/crsi.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/crsi.csv) · [Chart (SVG)](/functions/crsi.svg)
+
 ## Formula
 
 $$
@@ -70,6 +76,8 @@ where $\mathrm{Close}$ is the input series, $m_1$ is `optInTimePeriod`, $m_2$ is
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`crsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/crsi/crsi.c) · [`crsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/crsi/crsi.yaml)
 
 | Native | File |
@@ -80,7 +88,9 @@ TA-Lib Definition: [`crsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CRSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CRSI.cs) |
 | TypeScript | [`crsi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/crsi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CRSI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

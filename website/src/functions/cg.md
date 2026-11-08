@@ -7,6 +7,12 @@ description: "John Ehlers' Center of Gravity oscillator: the balance point of th
 
 John Ehlers' Center of Gravity oscillator: the balance point of the last `optInTimePeriod` values, each weighted by its value and placed at its position counting back from the current bar, which is position 1, negated so that it rises with price. It is smooth and has essentially no lag. Ehlers reads turning points from it and trades its crossings with a copy of itself delayed by one bar. For a positive series it stays between -optInTimePeriod and -1, and a flat window sits at the midpoint, -(optInTimePeriod+1)/2.
 
+## Chart
+
+<ta-chart src="/functions/cg.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/cg.csv) · [Chart (SVG)](/functions/cg.svg)
+
 ## Formula
 
 $$
@@ -58,6 +64,8 @@ where $X$ is the input series, $n$ is `optInTimePeriod` and $i$ counts bars back
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`cg.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cg/cg.c) · [`cg.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cg/cg.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`cg.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_CG.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CG.cs) |
 | TypeScript | [`cg.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cg.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CG` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Two-candle pattern: a long real body followed by a short real body
 
 Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body. A reversal signal whose direction is the opposite of the first candle's color.
 
+## Chart
+
+<ta-chart src="/functions/cdlharami.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow. [Reference data (CSV)](/functions/cdlharami.csv) · [Chart (SVG)](/functions/cdlharami.svg)
+
 ## Notes
 
 - Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.
@@ -56,6 +62,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlharami.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharami/cdlharami.c) · [`cdlharami.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharami/cdlharami.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`cdlharami.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_CDLHARAMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHARAMI.cs) |
 | TypeScript | [`cdlharami.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlharami.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHARAMI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

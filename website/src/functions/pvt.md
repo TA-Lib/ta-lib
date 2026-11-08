@@ -9,6 +9,12 @@ Price Volume Trend: a running cumulative total of each bar's volume weighted by 
 
 Read the slope and the divergences, not the level: the total's zero point is arbitrary, so only the shape of the curve carries information. A rising PVT while price is flat says volume is accumulating on the up moves; a falling PVT while price rises is the classic bearish divergence.
 
+## Chart
+
+<ta-chart src="/functions/pvt.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/pvt.csv) · [Chart (SVG)](/functions/pvt.svg)
+
 ## Formula
 
     PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
@@ -52,6 +58,8 @@ The series starts at zero on the first bar of the requested range.
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`pvt.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvt/pvt.c) · [`pvt.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvt/pvt.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`pvt.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_PVT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PVT.cs) |
 | TypeScript | [`pvt.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/pvt.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PVT` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

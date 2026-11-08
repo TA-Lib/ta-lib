@@ -7,6 +7,12 @@ description: "An estimate, from the trailing window, of the skewness of the dist
 
 An estimate, from the trailing window, of the skewness of the distribution its values come from: the third standardised moment. An asymmetry measure: above 0 the distribution has a longer tail above its mean, below 0 a longer tail below it, and a symmetric window reads 0. The companion to [`KURTOSIS`](/functions/kurtosis.md), [`VAR`](/functions/var.md) and [`STDDEV`](/functions/stddev.md) in the same group.
 
+## Chart
+
+<ta-chart src="/functions/skew.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/skew.csv) · [Chart (SVG)](/functions/skew.svg)
+
 ## Formula
 
 Adjusted Fisher-Pearson coefficient of skewness, the estimator usually written `G1`. With window size `n`, window mean `x̄` and population moments `mₖ = Σ(x−x̄)ᵏ / n`:
@@ -59,6 +65,8 @@ The result is 0 when `m₂ = 0`, that is when every value in the window is equal
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`skew.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/skew/skew.c) · [`skew.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/skew/skew.yaml)
 
 | Native | File |
@@ -69,7 +77,9 @@ TA-Lib Definition: [`skew.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_SKEW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SKEW.cs) |
 | TypeScript | [`skew.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/skew.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SKEW` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

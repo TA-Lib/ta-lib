@@ -7,6 +7,12 @@ description: "Generic moving-average dispatcher that forwards the job to the MA 
 
 Generic moving-average dispatcher that forwards the job to the MA implementation selected by optInMAType. Single uniform interface over all TA-Lib moving averages.
 
+## Chart
+
+<ta-chart src="/functions/ma.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/ma.csv) · [Chart (SVG)](/functions/ma.svg)
+
 ## Formula
 
 outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
@@ -55,6 +61,8 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ma/ma.c) · [`ma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ma/ma.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`ma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_MA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MA.cs) |
 | TypeScript | [`ma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

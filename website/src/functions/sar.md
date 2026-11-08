@@ -7,6 +7,12 @@ description: "Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse
 
 Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that accelerates toward price via an acceleration factor. Signals trend direction and trailing exit points. SAR below price = uptrend (long); SAR above price = downtrend (short). Price crossing SAR flips direction.
 
+## Chart
+
+<ta-chart src="/functions/sar.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as dots."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as dots. [Reference data (CSV)](/functions/sar.csv) · [Chart (SVG)](/functions/sar.svg)
+
 ## Formula
 
 SAR_next = SAR + af * (EP - SAR)
@@ -50,6 +56,8 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sar/sar.c) · [`sar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sar/sar.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`sar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SAR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SAR.cs) |
 | TypeScript | [`sar.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sar.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SAR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -11,6 +11,12 @@ Above zero the short window sits higher than the long one and momentum is with t
 
 The oscillator is the first leg of Williams' Profitunity system, alongside the Alligator and the Accelerator/Decelerator ([`AC`](/functions/ac.md)).
 
+## Chart
+
+<ta-chart src="/functions/ao.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram. [Reference data (CSV)](/functions/ao.csv) · [Chart (SVG)](/functions/ao.svg)
+
 ## Formula
 
 median_t = ( high_t + low_t ) / 2  
@@ -55,6 +61,8 @@ An inverted pair is not swapped: passing a fast period longer than the slow one 
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`ao.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ao/ao.c) · [`ao.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ao/ao.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`ao.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_AO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AO.cs) |
 | TypeScript | [`ao.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ao.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AO` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

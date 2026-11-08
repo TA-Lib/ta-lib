@@ -9,6 +9,12 @@ The two-pole high-pass row of John Ehlers' Swiss Army Knife filter: the same dou
 
 Read it as an oscillator, not as price. Its DC gain is 0, so a flat market returns zero and a trend returns its departure from itself. Against `TA_SWAK_HP` the difference is the slope of the transition: the second pole buys a sharper separation between what is kept and what is removed.
 
+## Chart
+
+<ta-chart src="/functions/swak_2php.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/swak_2php.csv) · [Chart (SVG)](/functions/swak_2php.svg)
+
 ## Formula
 
 ```
@@ -68,6 +74,8 @@ The output may alias the input. This row reads `x[i-1]` and `x[i-2]`, which an a
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`swak_2php.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_2php/swak_2php.c) · [`swak_2php.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_2php/swak_2php.yaml)
 
 | Native | File |
@@ -78,7 +86,9 @@ TA-Lib Definition: [`swak_2php.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_SWAK_2PHP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_2PHP.cs) |
 | TypeScript | [`swak2php.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swak2php.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SWAK_2PHP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

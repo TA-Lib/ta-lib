@@ -7,6 +7,12 @@ description: "Single-candle pattern: a long real body whose closing end has no o
 
 Single-candle pattern: a long real body whose closing end has no or very short shadow, so the close sits at the candle's extreme. A strong directional bar, not a defined reversal/continuation signal — white is bullish, black is bearish.
 
+## Chart
+
+<ta-chart src="/functions/cdlclosingmarubozu.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlclosingmarubozu.csv) · [Chart (SVG)](/functions/cdlclosingmarubozu.svg)
+
 ## Formula
 
 One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlclosingmarubozu.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlclosingmarubozu/cdlclosingmarubozu.c) · [`cdlclosingmarubozu.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlclosingmarubozu/cdlclosingmarubozu.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlclosingmarubozu.c`](https://github.com/TA-Lib/ta-lib/blo
 | C# | [`Core_CDLCLOSINGMARUBOZU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLCLOSINGMARUBOZU.cs) |
 | TypeScript | [`cdlclosingmarubozu.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlclosingmarubozu.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLCLOSINGMARUBOZU`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

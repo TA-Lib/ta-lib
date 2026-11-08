@@ -7,6 +7,12 @@ description: "A two-candle pattern of two opposite-color marubozu (long body, ve
 
 A two-candle pattern of two opposite-color marubozu (long body, very short shadows on both ends) separated by a gap. A strong directional/reversal signal whose bull/bear bias is set by the longer of the two marubozu.
 
+## Chart
+
+<ta-chart src="/functions/cdlkickingbylength.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlkickingbylength.csv) · [Chart (SVG)](/functions/cdlkickingbylength.svg)
+
 ## Inputs
 
 - `inOpen` — Open price of each bar
@@ -49,6 +55,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlkickingbylength.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkickingbylength/cdlkickingbylength.c) · [`cdlkickingbylength.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkickingbylength/cdlkickingbylength.yaml)
 
 | Native | File |
@@ -59,7 +67,9 @@ TA-Lib Definition: [`cdlkickingbylength.c`](https://github.com/TA-Lib/ta-lib/blo
 | C# | [`Core_CDLKICKINGBYLENGTH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLKICKINGBYLENGTH.cs) |
 | TypeScript | [`cdlkickingbylength.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlkickingbylength.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLKICKINGBYLENGTH`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

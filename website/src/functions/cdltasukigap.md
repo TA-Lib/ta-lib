@@ -7,6 +7,12 @@ description: "A three-candle pattern: a real-body-gapping candle followed by an 
 
 A three-candle pattern: a real-body-gapping candle followed by an opposite-color candle that opens inside its body and closes back into the gap without filling it. An upside gap is a bullish continuation signal; a downside gap is a bearish continuation signal.
 
+## Chart
+
+<ta-chart src="/functions/cdltasukigap.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdltasukigap.csv) · [Chart (SVG)](/functions/cdltasukigap.svg)
+
 ## Notes
 
 - This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdltasukigap.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltasukigap/cdltasukigap.c) · [`cdltasukigap.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltasukigap/cdltasukigap.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdltasukigap.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C# | [`Core_CDLTASUKIGAP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLTASUKIGAP.cs) |
 | TypeScript | [`cdltasukigap.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdltasukigap.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLTASUKIGAP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

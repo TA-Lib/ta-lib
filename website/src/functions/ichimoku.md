@@ -7,6 +7,12 @@ description: "Ichimoku Kinko Hyo, \"one glance equilibrium chart\": four lines b
 
 Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs and lows alone. Goichi Hosoda's reading is that a market's balance is visible without any smoothing — each line is the midpoint of a window, the mean of its highest high and its lowest low, so it marks the level at which that stretch of trading was evenly divided. The conversion line turns fastest, the base line is the reference, and the two leading spans are drawn ahead of price, where the band between them is read as support or resistance before it is reached.
 
+## Chart
+
+<ta-chart src="/functions/ichimoku.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward."></ta-chart>
+
+Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward. [Reference data (CSV)](/functions/ichimoku.csv) · [Chart (SVG)](/functions/ichimoku.svg)
+
 ## Formula
 
 MID(n) = ( highest high over n bars + lowest low over n bars ) / 2
@@ -68,6 +74,8 @@ Senkou Span B = MID(senkouBPeriod)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ichimoku/ichimoku.c) · [`ichimoku.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ichimoku/ichimoku.yaml)
 
 | Native | File |
@@ -78,7 +86,9 @@ TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_ICHIMOKU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ICHIMOKU.cs) |
 | TypeScript | [`ichimoku.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ichimoku.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ICHIMOKU` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

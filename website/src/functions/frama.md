@@ -7,6 +7,12 @@ description: "Fractal Adaptive Moving Average (John Ehlers): an EMA whose smooth
 
 Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing factor adapts each bar to the fractal dimension of the window, estimated from the high-low ranges of the window and of its two halves. A straight run gives dimension 1 and the output follows the price; dense congestion gives dimension 2 and very slow smoothing.
 
+## Chart
+
+<ta-chart src="/functions/frama.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/frama.csv) · [Chart (SVG)](/functions/frama.svg)
+
 ## Formula
 
 P[t] = (High[t] + Low[t]) / 2
@@ -56,6 +62,8 @@ FRAMA[t] = alpha * P[t] + (1 - alpha) * FRAMA[t-1], seeded with P on the bar bef
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`frama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/frama/frama.c) · [`frama.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/frama/frama.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`frama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_FRAMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FRAMA.cs) |
 | TypeScript | [`frama.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/frama.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FRAMA` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

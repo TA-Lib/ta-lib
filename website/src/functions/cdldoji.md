@@ -7,6 +7,12 @@ description: "Single-candle Doji recognizer: fires when the real body (|close-op
 
 Single-candle Doji recognizer: fires when the real body (|close-open|) is at or below the BodyDoji threshold. Market indecision; neither bullish nor bearish on its own.
 
+## Chart
+
+<ta-chart src="/functions/cdldoji.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdldoji.csv) · [Chart (SVG)](/functions/cdldoji.svg)
+
 ## Formula
 
 match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
@@ -52,6 +58,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdldoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldoji/cdldoji.c) · [`cdldoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldoji/cdldoji.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`cdldoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_CDLDOJI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLDOJI.cs) |
 | TypeScript | [`cdldoji.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdldoji.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLDOJI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

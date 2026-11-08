@@ -7,6 +7,12 @@ description: "An ATR-scaled trailing band that follows price on one side at a ti
 
 An ATR-scaled trailing band that follows price on one side at a time and flips to the other side when the close breaks through it. The trend rides the lower band while it is up and the upper band while it is down, so the line is usually below price in an uptrend and above it in a downtrend, and the flip is the signal. Attributed to Olivier Seban.
 
+## Chart
+
+<ta-chart src="/functions/supertrend.svg" ratio="720:416" alt="Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend."></ta-chart>
+
+Drawn on the price pane over candles, with outSupertrend as a solid line; below it, a step pane of its own for the integer output outTrend. [Reference data (CSV)](/functions/supertrend.csv) · [Chart (SVG)](/functions/supertrend.svg)
+
 ## Formula
 
 Median = (High + Low) / 2
@@ -67,6 +73,8 @@ SuperTrend = Upper while the trend is down, until Close > Upper flips it up
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.c) · [`supertrend.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.yaml)
 
 | Native | File |
@@ -77,7 +85,9 @@ TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_SUPERTREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUPERTREND.cs) |
 | TypeScript | [`supertrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/supertrend.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SUPERTREND` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

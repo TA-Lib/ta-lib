@@ -9669,7 +9669,7 @@ public static class FunctionDescription
 				<Type>Double Array</Type>
 				<Name>outReal</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dots</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9815,7 +9815,7 @@ public static class FunctionDescription
 				<Type>Double Array</Type>
 				<Name>outReal</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dots</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

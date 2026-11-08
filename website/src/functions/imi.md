@@ -7,6 +7,12 @@ description: "Intraday Momentum Index: an RSI-like 0-100 oscillator built from t
 
 Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of each bar. Over a rolling window it ratios cumulative up-body moves against total up+down body moves.
 
+## Chart
+
+<ta-chart src="/functions/imi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/imi.csv) · [Chart (SVG)](/functions/imi.svg)
+
 ## Formula
 
 upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
@@ -47,6 +53,8 @@ upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for ba
 
 ## Implementation
 
+Added in 0.6.0.
+
 TA-Lib Definition: [`imi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/imi/imi.c) · [`imi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/imi/imi.yaml)
 
 | Native | File |
@@ -57,7 +65,9 @@ TA-Lib Definition: [`imi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_IMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_IMI.cs) |
 | TypeScript | [`imi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/imi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.IMI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

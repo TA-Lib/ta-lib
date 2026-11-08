@@ -9,6 +9,12 @@ Williams' Accumulation/Distribution: a cumulative line meant to expose whether a
 
 **It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the industry kept Williams' name on that no-volume form. That industry-wide decision is enough for TA-Lib to ship the same form under the same name. What remains once the multiplier is dropped is a signed close-to-close move measured on the true range, so it is grouped as a momentum indicator, not a volume one.
 
+## Chart
+
+<ta-chart src="/functions/wad.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/wad.csv) · [Chart (SVG)](/functions/wad.svg)
+
 ## Formula
 
 For each bar t:
@@ -55,6 +61,8 @@ The first bar of the requested range has no previous close, so the first output 
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`wad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wad/wad.c) · [`wad.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wad/wad.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`wad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_WAD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAD.cs) |
 | TypeScript | [`wad.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wad.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.WAD` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

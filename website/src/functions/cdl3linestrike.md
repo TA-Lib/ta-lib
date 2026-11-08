@@ -7,6 +7,12 @@ description: "A four-candle pattern: three same-color candles with consecutively
 
 A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a fourth opposite-color candle that opens beyond the third close and closes past the first candle's open. TA-Lib emits a signed continuation-style signal keyed to the color of the first three candles, traditionally read as significant only inside a trend matching those three candles.
 
+## Chart
+
+<ta-chart src="/functions/cdl3linestrike.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdl3linestrike.csv) · [Chart (SVG)](/functions/cdl3linestrike.svg)
+
 ## Notes
 
 - Does not verify the surrounding trend the pattern classically assumes for significance.
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdl3linestrike.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3linestrike/cdl3linestrike.c) · [`cdl3linestrike.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3linestrike/cdl3linestrike.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdl3linestrike.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDL3LINESTRIKE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL3LINESTRIKE.cs) |
 | TypeScript | [`cdl3linestrike.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl3linestrike.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDL3LINESTRIKE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

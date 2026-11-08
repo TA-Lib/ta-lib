@@ -46,6 +46,8 @@ struct YamlInput {
     param_type: String,
     /// For price inputs: which OHLCV components are used.
     price_components: Option<Vec<String>>,
+    /// For `real` inputs: `[lo, hi]`, see `ir::Input::domain`.
+    domain: Option<Vec<f64>>,
 }
 
 #[derive(Deserialize)]
@@ -93,6 +95,28 @@ fn yaml_val_to_f64(v: &serde_yaml::Value) -> f64 {
         },
         other => panic!("Unexpected YAML range value: {other:?}"),
     }
+}
+
+/// An input's type and, checked against it, its `domain: [lo, hi]` (a `real`
+/// input's only).
+fn parse_input_type(p: &mut YamlInput, path: &Path) -> (ParamType, Option<(f64, f64)>) {
+    let pt = parse_param_type(&p.param_type, p.price_components.take());
+    let domain = p.domain.take().map(|d| {
+        assert!(
+            pt == ParamType::Real,
+            "{}: input `{}`: `domain` needs a `real` input",
+            path.display(),
+            p.name
+        );
+        assert!(
+            d.len() == 2 && d[0] < d[1],
+            "{}: input `{}`: `domain` is `[lo, hi]` with lo < hi, not {d:?}",
+            path.display(),
+            p.name
+        );
+        (d[0], d[1])
+    });
+    (pt, domain)
 }
 
 fn parse_param_type(s: &str, price_components: Option<Vec<String>>) -> ParamType {
@@ -230,8 +254,8 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
     let inputs: Vec<Input> = yaml
         .inputs
         .into_iter()
-        .flat_map(|p| {
-            let pt = parse_param_type(&p.param_type, p.price_components);
+        .flat_map(|mut p| {
+            let (pt, domain) = parse_input_type(&mut p, path);
             match pt {
                 ParamType::Price(components) => {
                     let group = next_price_group;
@@ -251,11 +275,12 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
                                 name: component.input_name().to_string(),
                                 param_type: ParamType::Real,
                                 price: Some(PriceRef { group, component }),
+                                domain: None,
                             }
                         })
                         .collect::<Vec<_>>()
                 }
-                other => vec![Input::new(p.name.clone(), other)],
+                other => vec![Input { name: p.name.clone(), param_type: other, price: None, domain }],
             }
         })
         .collect();

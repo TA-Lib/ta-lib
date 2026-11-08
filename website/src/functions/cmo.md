@@ -7,6 +7,12 @@ description: "Chande Momentum Oscillator: bounded momentum measure from Wilder-s
 
 Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed average up-moves and down-moves. Identical to RSI except the numerator uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net upward momentum, negative = net downward.
 
+## Chart
+
+<ta-chart src="/functions/cmo.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cmo.csv) · [Chart (SVG)](/functions/cmo.svg)
+
 ## Formula
 
 d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
@@ -50,6 +56,8 @@ d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, lo
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cmo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmo/cmo.c) · [`cmo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmo/cmo.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`cmo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CMO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMO.cs) |
 | TypeScript | [`cmo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cmo.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CMO`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

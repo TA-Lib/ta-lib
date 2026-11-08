@@ -959,6 +959,31 @@ if(_TA_BUILD_TOOLS)
 	set_target_properties(ta_regtest PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
 	)
+
+	##############
+	# ta_refdata #
+	##############
+	# Writes the reference CSVs behind the function pages (scripts/build.py
+	# refdata). CMake-only: the autotools dist never ships it, so it has no
+	# Makefile.am list to keep in step. It compiles ta_regtest's test_data.c
+	# to assert the committed corpus still equals the hard-coded arrays.
+	add_executable(ta_refdata
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_refdata/ta_refdata.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_data.c"
+	)
+	target_include_directories(ta_refdata PRIVATE
+		"${CMAKE_CURRENT_SOURCE_DIR}/include"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest"
+	)
+	if(WIN32)
+		target_link_libraries(ta_refdata PRIVATE ${TA_LIB_TOOL_TARGET})
+	else()
+		target_link_libraries(ta_refdata PRIVATE ${TA_LIB_TOOL_TARGET} m)
+	endif()
+	set_target_properties(ta_refdata PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
 	endif() # BUILD_TESTING
 
 	############

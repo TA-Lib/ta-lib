@@ -7,6 +7,12 @@ description: "Element-wise tangent of the input series."
 
 Element-wise tangent of the input series.
 
+## Chart
+
+<ta-chart src="/functions/tan.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/tan.csv) · [Chart (SVG)](/functions/tan.svg)
+
 ## Formula
 
 outReal[i] = tan(inReal[i])
@@ -40,6 +46,8 @@ outReal[i] = tan(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`tan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tan/tan.c) · [`tan.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tan/tan.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`tan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_TAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TAN.cs) |
 | TypeScript | [`tan.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/tan.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TAN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

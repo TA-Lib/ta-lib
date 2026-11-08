@@ -7,6 +7,12 @@ description: "Typical Price: the average of the high, low, and close of each bar
 
 Typical Price: the average of the high, low, and close of each bar. A single representative price per period.
 
+## Chart
+
+<ta-chart src="/functions/typprice.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/typprice.csv) · [Chart (SVG)](/functions/typprice.svg)
+
 ## Formula
 
 out[i] = (High[i] + Low[i] + Close[i]) / 3
@@ -42,6 +48,8 @@ out[i] = (High[i] + Low[i] + Close[i]) / 3
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`typprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/typprice/typprice.c) · [`typprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/typprice/typprice.yaml)
 
 | Native | File |
@@ -52,7 +60,9 @@ TA-Lib Definition: [`typprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_TYPPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TYPPRICE.cs) |
 | TypeScript | [`typprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/typprice.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TYPPRICE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

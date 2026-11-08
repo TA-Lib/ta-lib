@@ -7,6 +7,12 @@ description: "Hilbert Transform SineWave: derives the dominant-cycle phase from 
 
 Hilbert Transform SineWave: derives the dominant-cycle phase from price and emits its sine plus a 45-degree-lead sine. The two curves cross near cycle turning points. outSine and outLeadSine crossing marks cycle turning points.
 
+## Chart
+
+<ta-chart src="/functions/ht_sine.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outSine as a solid line and outLeadSine as a dashed line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outSine as a solid line and outLeadSine as a dashed line. [Reference data (CSV)](/functions/ht_sine.csv) · [Chart (SVG)](/functions/ht_sine.svg)
+
 ## Inputs
 
 - `inReal` — Source price series
@@ -37,6 +43,8 @@ Hilbert Transform SineWave: derives the dominant-cycle phase from price and emit
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.c) · [`ht_sine.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.yaml)
 
 | Native | File |
@@ -47,7 +55,9 @@ TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_HT_SINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_SINE.cs) |
 | TypeScript | [`htSine.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htSine.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_SINE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

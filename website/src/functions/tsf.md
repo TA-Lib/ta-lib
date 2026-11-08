@@ -7,6 +7,12 @@ description: "Time Series Forecast: fits a least-squares linear regression line 
 
 Time Series Forecast: fits a least-squares linear regression line over the last N bars and projects it one x-step beyond LINEARREG. Same regression as LINEARREG but evaluated at x=period instead of x=period-1.
 
+## Chart
+
+<ta-chart src="/functions/tsf.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/tsf.csv) · [Chart (SVG)](/functions/tsf.svg)
+
 ## Formula
 
 Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
@@ -46,6 +52,8 @@ Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSq
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`tsf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsf/tsf.c) · [`tsf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsf/tsf.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`tsf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_TSF.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TSF.cs) |
 | TypeScript | [`tsf.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/tsf.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TSF`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

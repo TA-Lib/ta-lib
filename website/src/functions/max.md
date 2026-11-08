@@ -7,6 +7,12 @@ description: "Highest input value over a rolling window of the last optInTimePer
 
 Highest input value over a rolling window of the last optInTimePeriod bars. A moving-window maximum.
 
+## Chart
+
+<ta-chart src="/functions/max.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/max.csv) · [Chart (SVG)](/functions/max.svg)
+
 ## Formula
 
 outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
@@ -46,6 +52,8 @@ outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`max.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/max/max.c) · [`max.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/max/max.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`max.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_MAX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MAX.cs) |
 | TypeScript | [`max.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/max.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MAX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

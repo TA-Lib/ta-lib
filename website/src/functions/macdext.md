@@ -7,6 +7,12 @@ description: "MACD variant where the fast, slow, and signal moving averages each
 
 MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign change (MACD crossing its signal line) flags momentum shifts.
 
+## Chart
+
+<ta-chart src="/functions/macdext.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macdext.csv) · [Chart (SVG)](/functions/macdext.svg)
+
 ## Formula
 
 MACD = MA_fast(inReal) - MA_slow(inReal)
@@ -64,6 +70,8 @@ Hist = MACD - Signal
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.c) · [`macdext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.yaml)
 
 | Native | File |
@@ -74,7 +82,9 @@ TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_MACDEXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDEXT.cs) |
 | TypeScript | [`macdext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdext.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACDEXT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

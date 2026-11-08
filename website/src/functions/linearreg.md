@@ -7,6 +7,12 @@ description: "Least-squares straight-line fit over the last optInTimePeriod bars
 
 Least-squares straight-line fit over the last optInTimePeriod bars, reported as the fitted line value at the window endpoint (b + m*(period-1)).
 
+## Chart
+
+<ta-chart src="/functions/linearreg.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/linearreg.csv) · [Chart (SVG)](/functions/linearreg.svg)
+
 ## Inputs
 
 - `inReal` — Series to fit
@@ -42,6 +48,8 @@ Least-squares straight-line fit over the last optInTimePeriod bars, reported as 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`linearreg.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg/linearreg.c) · [`linearreg.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg/linearreg.yaml)
 
 | Native | File |
@@ -52,7 +60,9 @@ TA-Lib Definition: [`linearreg.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_LINEARREG.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG.cs) |
 | TypeScript | [`linearreg.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/linearreg.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.LINEARREG`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

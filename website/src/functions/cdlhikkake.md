@@ -7,6 +7,12 @@ description: "A 3-bar pattern: an inside bar followed by a false breakout, optio
 
 A 3-bar pattern: an inside bar followed by a false breakout, optionally later confirmed by a follow-through bar. Signals a bullish or bearish reversal/continuation depending on the breakout direction. A false-breakout setup: positive = bullish, negative = bearish; magnitude 200 flags the confirming bar.
 
+## Chart
+
+<ta-chart src="/functions/cdlhikkake.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a confirmed call (200) ringed."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a confirmed call (200) ringed. [Reference data (CSV)](/functions/cdlhikkake.csv) · [Chart (SVG)](/functions/cdlhikkake.svg)
+
 ## Notes
 
 - The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))
@@ -56,6 +62,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlhikkake.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhikkake/cdlhikkake.c) · [`cdlhikkake.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhikkake/cdlhikkake.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`cdlhikkake.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_CDLHIKKAKE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHIKKAKE.cs) |
 | TypeScript | [`cdlhikkake.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlhikkake.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHIKKAKE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

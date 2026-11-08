@@ -7,6 +7,12 @@ description: "Ultimate Oscillator: momentum indicator combining buying-pressure/
 
 Ultimate Oscillator: momentum indicator combining buying-pressure/true-range ratios over three time periods into one 0-100 weighted average. Blends short-, medium-, and long-term momentum to damp single-period noise. Ranges 0-100; conventionally >70 overbought, <30 oversold.
 
+## Chart
+
+<ta-chart src="/functions/ultosc.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/ultosc.csv) · [Chart (SVG)](/functions/ultosc.svg)
+
 ## Formula
 
 trueLow = min(low, prevClose);  BP = close - trueLow
@@ -57,6 +63,8 @@ ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ultosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ultosc/ultosc.c) · [`ultosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ultosc/ultosc.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`ultosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_ULTOSC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ULTOSC.cs) |
 | TypeScript | [`ultosc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ultosc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ULTOSC`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

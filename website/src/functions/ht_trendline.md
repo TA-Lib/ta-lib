@@ -7,6 +7,12 @@ description: "Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low
 
 Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via Hilbert-transform quadrature (I/Q) analysis of price.
 
+## Chart
+
+<ta-chart src="/functions/ht_trendline.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/ht_trendline.csv) · [Chart (SVG)](/functions/ht_trendline.svg)
+
 ## Inputs
 
 - `inReal` — Source price series
@@ -36,6 +42,8 @@ Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay w
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_trendline.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendline/ht_trendline.c) · [`ht_trendline.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendline/ht_trendline.yaml)
 
 | Native | File |
@@ -46,7 +54,9 @@ TA-Lib Definition: [`ht_trendline.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C# | [`Core_HT_TRENDLINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_TRENDLINE.cs) |
 | TypeScript | [`htTrendline.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htTrendline.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_TRENDLINE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

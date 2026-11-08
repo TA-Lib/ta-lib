@@ -7,6 +7,12 @@ description: "1-day Rate-Of-Change of a triple-smoothed EMA of the input. Moment
 
 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator that filters out price moves shorter than the chosen period. Oscillates around zero; sign, zero-crossings and slope signal momentum direction.
 
+## Chart
+
+<ta-chart src="/functions/trix.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/trix.csv) · [Chart (SVG)](/functions/trix.svg)
+
 ## Formula
 
 E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
@@ -51,6 +57,8 @@ E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`trix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trix/trix.c) · [`trix.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trix/trix.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`trix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_TRIX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TRIX.cs) |
 | TypeScript | [`trix.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/trix.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TRIX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

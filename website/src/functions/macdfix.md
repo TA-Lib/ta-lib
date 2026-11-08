@@ -7,6 +7,12 @@ description: "MACD with the fast/slow EMAs fixed to the classic 12/26 periods (w
 
 MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers and histogram sign flag momentum shifts.
 
+## Chart
+
+<ta-chart src="/functions/macdfix.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macdfix.csv) · [Chart (SVG)](/functions/macdfix.svg)
+
 ## Formula
 
 MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
@@ -54,6 +60,8 @@ Hist = MACD - Signal
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`macdfix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.c) · [`macdfix.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`macdfix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_MACDFIX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDFIX.cs) |
 | TypeScript | [`macdfix.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdfix.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACDFIX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

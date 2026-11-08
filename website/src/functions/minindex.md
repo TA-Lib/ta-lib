@@ -7,6 +7,12 @@ description: "Returns the absolute index of the lowest value within a rolling wi
 
 Returns the absolute index of the lowest value within a rolling window of the given period. Same scan as MIN but outputs the position of the minimum rather than its value.
 
+## Chart
+
+<ta-chart src="/functions/minindex.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/minindex.csv) · [Chart (SVG)](/functions/minindex.svg)
+
 ## Formula
 
 outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
@@ -50,6 +56,8 @@ outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`minindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minindex/minindex.c) · [`minindex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minindex/minindex.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`minindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MININDEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MININDEX.cs) |
 | TypeScript | [`minindex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minindex.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MININDEX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Rolling percentile by the nearest-rank method: sort the trailing w
 
 Rolling percentile by the nearest-rank method: sort the trailing window ascending and report the value whose 1-based ordinal rank is the P-th percentile of the window size. The result is always a value that actually occurred in the window, never an interpolation, so it stays on the price scale and never invents a level the series never traded at. At P = 50 with an odd window it is the rolling median; at the extremes it degenerates to the rolling minimum and maximum.
 
+## Chart
+
+<ta-chart src="/functions/percentile.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/percentile.csv) · [Chart (SVG)](/functions/percentile.svg)
+
 ## Formula
 
 $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
@@ -53,6 +59,8 @@ $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cd
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`percentile.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentile/percentile.c) · [`percentile.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentile/percentile.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`percentile.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_PERCENTILE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PERCENTILE.cs) |
 | TypeScript | [`percentile.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/percentile.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PERCENTILE` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

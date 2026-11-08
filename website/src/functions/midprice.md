@@ -7,6 +7,12 @@ description: "Midpoint of the price range over a rolling window: the average of 
 
 Midpoint of the price range over a rolling window: the average of the highest high and lowest low across the last optInTimePeriod bars. An overlap-study line plotted on price.
 
+## Chart
+
+<ta-chart src="/functions/midprice.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/midprice.csv) · [Chart (SVG)](/functions/midprice.svg)
+
 ## Formula
 
 MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
@@ -49,6 +55,8 @@ This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middl
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`midprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midprice/midprice.c) · [`midprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midprice/midprice.yaml)
 
 | Native | File |
@@ -59,7 +67,9 @@ TA-Lib Definition: [`midprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MIDPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MIDPRICE.cs) |
 | TypeScript | [`midprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/midprice.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MIDPRICE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

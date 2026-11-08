@@ -7,6 +7,12 @@ description: "Chaikin Accumulation/Distribution Line, a cumulative volume-flow i
 
 Chaikin Accumulation/Distribution Line, a cumulative volume-flow indicator. Sums a volume-weighted money-flow multiplier per bar to gauge buying vs. selling pressure. Rising line = accumulation (buying pressure); falling = distribution.
 
+## Chart
+
+<ta-chart src="/functions/ad.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/ad.csv) · [Chart (SVG)](/functions/ad.svg)
+
 ## Formula
 
 MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
@@ -43,6 +49,8 @@ MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volum
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ad/ad.c) · [`ad.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ad/ad.yaml)
 
 | Native | File |
@@ -53,7 +61,9 @@ TA-Lib Definition: [`ad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_AD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AD.cs) |
 | TypeScript | [`ad.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ad.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

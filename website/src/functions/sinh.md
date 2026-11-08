@@ -7,6 +7,12 @@ description: "Element-wise hyperbolic sine of the input series."
 
 Element-wise hyperbolic sine of the input series.
 
+## Chart
+
+<ta-chart src="/functions/sinh.svg" ratio="720:416" alt="Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sinh.csv) · [Chart (SVG)](/functions/sinh.svg)
+
 ## Formula
 
 outReal[i] = sinh(inReal[i])
@@ -44,6 +50,8 @@ outReal[i] = sinh(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sinh.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sinh/sinh.c) · [`sinh.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sinh/sinh.yaml)
 
 | Native | File |
@@ -54,7 +62,9 @@ TA-Lib Definition: [`sinh.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_SINH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SINH.cs) |
 | TypeScript | [`sinh.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sinh.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SINH`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

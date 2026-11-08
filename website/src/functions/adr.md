@@ -9,6 +9,12 @@ Average Day Range: the arithmetic mean of the last `optInTimePeriod` bar ranges,
 
 Same family as ATR, and deliberately the narrower member: the range excludes the overnight gap, so on a gapping instrument ADR is systematically smaller than ATR. Having both is the point.
 
+## Chart
+
+<ta-chart src="/functions/adr.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/adr.csv) · [Chart (SVG)](/functions/adr.svg)
+
 ## Formula
 
 Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -60,6 +66,8 @@ The average is a plain SMA, so there is no seeding convention and none of the cr
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`adr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adr/adr.c) · [`adr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adr/adr.yaml)
 
 | Native | File |
@@ -70,7 +78,9 @@ TA-Lib Definition: [`adr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ADR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADR.cs) |
 | TypeScript | [`adr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/adr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ADR` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

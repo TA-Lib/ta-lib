@@ -7,6 +7,12 @@ description: "On Balance Volume: a running cumulative total of volume, added on 
 
 On Balance Volume: a running cumulative total of volume, added on up-price bars and subtracted on down-price bars. Relates volume flow to price direction.
 
+## Chart
+
+<ta-chart src="/functions/obv.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/obv.csv) · [Chart (SVG)](/functions/obv.svg)
+
 ## Formula
 
 OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
@@ -41,6 +47,8 @@ OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`obv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.c) · [`obv.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.yaml)
 
 | Native | File |
@@ -51,7 +59,9 @@ TA-Lib Definition: [`obv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_OBV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_OBV.cs) |
 | TypeScript | [`obv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/obv.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.OBV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

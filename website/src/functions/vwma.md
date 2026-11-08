@@ -11,6 +11,12 @@ Read like any moving average — price above is strength, below is weakness. Aga
 
 It has no attributable inventor — charting-package folklore — and every published definition agrees, so there is no competing variant.
 
+## Chart
+
+<ta-chart src="/functions/vwma.svg" ratio="720:342" alt="Drawn on the price pane over the close as a line, with outReal as a solid line; below it, a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line; below it, a volume pane. [Reference data (CSV)](/functions/vwma.csv) · [Chart (SVG)](/functions/vwma.svg)
+
 ## Formula
 
 VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
@@ -58,6 +64,8 @@ Equivalently, SMA(P * V, N) / SMA(V, N), the composition TradingView documents f
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`vwma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwma/vwma.c) · [`vwma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwma/vwma.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`vwma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_VWMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VWMA.cs) |
 | TypeScript | [`vwma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vwma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.VWMA` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

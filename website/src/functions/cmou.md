@@ -13,6 +13,12 @@ CMOU is the version as defined by Chande in his book *The New Technical Trader* 
 
 See [`CMO`](/functions/cmo.md) for a smoothed variant of CMOU.
 
+## Chart
+
+<ta-chart src="/functions/cmou.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cmou.csv) · [Chart (SVG)](/functions/cmou.svg)
+
 ## Formula
 
 d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
@@ -52,6 +58,8 @@ d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`cmou.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmou/cmou.c) · [`cmou.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmou/cmou.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`cmou.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CMOU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMOU.cs) |
 | TypeScript | [`cmou.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cmou.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CMOU` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

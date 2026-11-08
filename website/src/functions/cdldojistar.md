@@ -7,6 +7,12 @@ description: "A two-candle reversal pattern: a long real body followed by a doji
 
 A two-candle reversal pattern: a long real body followed by a doji whose real body gaps away from it (up after a white body, down after a black body). Signals a potential reversal of the prevailing trend. A hit flags a likely trend reversal; true direction depends on the prevailing trend (bullish in a downtrend, bearish in an uptrend), which the code does not itself verify.
 
+## Chart
+
+<ta-chart src="/functions/cdldojistar.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdldojistar.csv) · [Chart (SVG)](/functions/cdldojistar.svg)
+
 ## Formula
 
 Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
@@ -58,6 +64,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdldojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldojistar/cdldojistar.c) · [`cdldojistar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldojistar/cdldojistar.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`cdldojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDLDOJISTAR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLDOJISTAR.cs) |
 | TypeScript | [`cdldojistar.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdldojistar.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLDOJISTAR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

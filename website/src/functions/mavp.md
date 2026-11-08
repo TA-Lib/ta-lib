@@ -7,6 +7,12 @@ description: "Moving average whose period varies per bar, driven by a companion 
 
 Moving average whose period varies per bar, driven by a companion period series. For each bar it computes an MA of the selected type over the (clamped) period given by inPeriods.
 
+## Chart
+
+<ta-chart src="/functions/mavp.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/mavp.csv) · [Chart (SVG)](/functions/mavp.svg)
+
 ## Formula
 
 p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
@@ -57,6 +63,8 @@ p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`mavp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mavp/mavp.c) · [`mavp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mavp/mavp.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`mavp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_MAVP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MAVP.cs) |
 | TypeScript | [`mavp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mavp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MAVP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

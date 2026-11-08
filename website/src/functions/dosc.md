@@ -7,6 +7,12 @@ description: "Derivative Oscillator: Wilder's RSI, smoothed by two exponential a
 
 Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in series, with a simple average of that smoothed line subtracted from it. Constance Brown's reading is that the RSI's own swings are too noisy to time with, so she smooths it twice and then plots the distance from its own average as a histogram — MACD's histogram construction, applied to a smoothed RSI rather than to price. The result is in RSI points, centred on zero: crossings of the zero line mark the turn, and the height measures how far the smoothed RSI has run from its mean.
 
+## Chart
+
+<ta-chart src="/functions/dosc.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram. [Reference data (CSV)](/functions/dosc.csv) · [Chart (SVG)](/functions/dosc.svg)
+
 ## Formula
 
 RSI = RSI(inReal, timePeriod)   (Wilder, SMA-seeded)
@@ -62,6 +68,8 @@ DOSC = DS - SMA(DS, signalPeriod)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`dosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dosc/dosc.c) · [`dosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dosc/dosc.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`dosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_DOSC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DOSC.cs) |
 | TypeScript | [`dosc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/dosc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.DOSC` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

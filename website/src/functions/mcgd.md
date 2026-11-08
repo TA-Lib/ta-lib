@@ -9,6 +9,12 @@ McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed adjusts t
 
 McGinley suggests a period of about 60% of the simple moving average being emulated: a Dynamic of 12 to follow a 20-bar average.
 
+## Chart
+
+<ta-chart src="/functions/mcgd.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/mcgd.csv) · [Chart (SVG)](/functions/mcgd.svg)
+
 ## Formula
 
 N = optInTimePeriod
@@ -62,6 +68,8 @@ The first output is at bar N-1.
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`mcgd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mcgd/mcgd.c) · [`mcgd.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mcgd/mcgd.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`mcgd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_MCGD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MCGD.cs) |
 | TypeScript | [`mcgd.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mcgd.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MCGD` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

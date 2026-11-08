@@ -7,6 +7,12 @@ description: "Hilbert Transform Dominant Cycle Phase: the instantaneous phase (i
 
 Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed price. One real output per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
 
+## Chart
+
+<ta-chart src="/functions/ht_dcphase.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/ht_dcphase.csv) · [Chart (SVG)](/functions/ht_dcphase.svg)
+
 ## Interpretation
 
 DCPhase is a rotating angle: it locates the current bar within the dominant price cycle the Hilbert-transform model has locked onto. 90° is the modeled cycle's high, 270° its low, and 0°/180° are the midpoints where the cycle is moving fastest. `HT_SINE` plots this angle as a sine wave, crossing its 45°-lead companion near those highs and lows. `HT_TRENDMODE` separately flags bars where the market isn't cycling at all.
@@ -40,6 +46,8 @@ DCPhase is a rotating angle: it locates the current bar within the dominant pric
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_dcphase.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_dcphase/ht_dcphase.c) · [`ht_dcphase.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_dcphase/ht_dcphase.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`ht_dcphase.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_HT_DCPHASE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_DCPHASE.cs) |
 | TypeScript | [`htDcphase.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htDcphase.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_DCPHASE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

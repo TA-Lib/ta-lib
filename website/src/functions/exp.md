@@ -7,6 +7,12 @@ description: "Element-wise base-e exponential of the input series."
 
 Element-wise base-e exponential of the input series.
 
+## Chart
+
+<ta-chart src="/functions/exp.svg" ratio="720:416" alt="Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/exp.csv) · [Chart (SVG)](/functions/exp.svg)
+
 ## Formula
 
 outReal[i] = exp(inReal[i]) = e^{inReal[i]}
@@ -44,6 +50,8 @@ outReal[i] = exp(inReal[i]) = e^{inReal[i]}
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`exp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/exp/exp.c) · [`exp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/exp/exp.yaml)
 
 | Native | File |
@@ -54,7 +62,9 @@ TA-Lib Definition: [`exp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_EXP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_EXP.cs) |
 | TypeScript | [`exp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/exp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.EXP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

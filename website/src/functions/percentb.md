@@ -7,6 +7,12 @@ description: "Bollinger Bands %B: where the input sits relative to its Bollinger
 
 Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at the lower band and 1 at the upper band. Values below 0 or above 1 mean the input is outside the bands.
 
+## Chart
+
+<ta-chart src="/functions/percentb.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/percentb.csv) · [Chart (SVG)](/functions/percentb.svg)
+
 ## Formula
 
 $$
@@ -63,6 +69,8 @@ where $\mathrm{upper}_t$ and $\mathrm{lower}_t$ are the [`BBANDS`](/functions/bb
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`percentb.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentb/percentb.c) · [`percentb.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentb/percentb.yaml)
 
 | Native | File |
@@ -73,7 +81,9 @@ TA-Lib Definition: [`percentb.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_PERCENTB.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PERCENTB.cs) |
 | TypeScript | [`percentb.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/percentb.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PERCENTB` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

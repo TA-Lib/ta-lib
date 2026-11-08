@@ -11,6 +11,12 @@ Retail material commonly abbreviates this "MFI" or "BW MFI". TA-Lib already ship
 
 Charting packages often overlay a four-state colour code (green / fade / fake / squat) derived from the signs of the bar-to-bar change in this index and in volume. That is an interpretive layer on top of the series, not part of it; `outReal` is the scalar only.
 
+## Chart
+
+<ta-chart src="/functions/marketfi.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/marketfi.csv) · [Chart (SVG)](/functions/marketfi.svg)
+
 ## Formula
 
 MARKETFI_t = (high_t - low_t) / volume_t
@@ -48,6 +54,8 @@ A bar with zero volume reports 0 rather than dividing: it facilitated no movemen
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`marketfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/marketfi/marketfi.c) · [`marketfi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/marketfi/marketfi.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`marketfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MARKETFI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MARKETFI.cs) |
 | TypeScript | [`marketfi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/marketfi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MARKETFI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

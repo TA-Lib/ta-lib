@@ -630,6 +630,11 @@ pub struct Input {
     /// `parser::yaml` expands it into one `Input` per component, tagging each with the
     /// bundle it came from; `backends::price_bundle` folds them back for `ta_abstract`.
     pub price: Option<PriceRef>,
+    /// `[lo, hi]`: the range over which the function is defined or meaningful,
+    /// on an example scale (`[-1, 1]` for ACOS). Every example series, doctest
+    /// and reference-data input maps the default price series affinely into it;
+    /// `None` feeds the price series as is.
+    pub domain: Option<(f64, f64)>,
 }
 
 impl Input {
@@ -640,6 +645,7 @@ impl Input {
             name: name.into(),
             param_type,
             price: None,
+            domain: None,
         }
     }
 }

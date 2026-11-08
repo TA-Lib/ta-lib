@@ -11,6 +11,12 @@ Read the result as a trend filter rather than as price: consecutive candles of o
 
 `HA` is recursive: every candle carries the previous one, so the first candle of a request is seeded from its own bar and its influence halves on each bar that follows.
 
+## Chart
+
+<ta-chart src="/functions/ha.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill."></ta-chart>
+
+Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill. [Reference data (CSV)](/functions/ha.csv) · [Chart (SVG)](/functions/ha.svg)
+
 ## Formula
 
 HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
@@ -63,6 +69,8 @@ HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`ha.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ha/ha.c) · [`ha.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ha/ha.yaml)
 
 | Native | File |
@@ -73,7 +81,9 @@ TA-Lib Definition: [`ha.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_HA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HA.cs) |
 | TypeScript | [`ha.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ha.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HA` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

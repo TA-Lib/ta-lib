@@ -9,6 +9,12 @@ Know Sure Thing with selectable moving averages: Pring's weighted sum of four sm
 
 `KST` is Pring's definition, with simple averages throughout. Formulas published since then smooth the legs exponentially, and Pring allows a simple or an exponential signal line. The reading is the same as `KST`'s: above zero the combined momentum is positive, and the usual signals are the line crossing its signal line and the line changing direction.
 
+## Chart
+
+<ta-chart src="/functions/kstext.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line. [Reference data (CSV)](/functions/kstext.csv) · [Chart (SVG)](/functions/kstext.svg)
+
 ## Formula
 
 ROC_k[t] = (price[t] / price[t - X_k] - 1) × 100
@@ -81,6 +87,8 @@ MA_roc uses optInROCMAType, MA_signal uses optInSignalMAType
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`kstext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kstext/kstext.c) · [`kstext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kstext/kstext.yaml)
 
 | Native | File |
@@ -91,7 +99,9 @@ TA-Lib Definition: [`kstext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_KSTEXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KSTEXT.cs) |
 | TypeScript | [`kstext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kstext.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KSTEXT` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

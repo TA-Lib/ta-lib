@@ -229,7 +229,7 @@ export function expDisplayShift(outputIdx: number, options?: ExpOptions): number
  * import { exp } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { begIdx, values } = exp(data);
  * // values[k] is the value at bar begIdx + k
  * ```
@@ -487,10 +487,10 @@ export function expOpenAndFillPositional(
  * import { expOpen } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const stream = expOpen(data);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(2.1); // a forming bar: commits nothing
+ * const updated = stream.update(2.1); // the bar closes
  * ```
  */
 export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStream {
@@ -521,7 +521,7 @@ export function expOpen(real: ArrayLike<number>, options?: ExpOptions): ExpStrea
  * import { expOpenAndFill } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { stream, begIdx, values } = expOpenAndFill(data);
  * // values[k] is the value at bar begIdx + k
  * ```

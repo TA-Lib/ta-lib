@@ -7,6 +7,12 @@ description: "A three-candle continuation pattern: two same-color candles separa
 
 A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap. Bullish (upside) when the first two candles are white, bearish (downside) when they are black.
 
+## Chart
+
+<ta-chart src="/functions/cdlxsidegap3methods.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlxsidegap3methods.csv) · [Chart (SVG)](/functions/cdlxsidegap3methods.svg)
+
 ## Notes
 
 - This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlxsidegap3methods.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlxsidegap3methods/cdlxsidegap3methods.c) · [`cdlxsidegap3methods.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlxsidegap3methods/cdlxsidegap3methods.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdlxsidegap3methods.c`](https://github.com/TA-Lib/ta-lib/bl
 | C# | [`Core_CDLXSIDEGAP3METHODS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLXSIDEGAP3METHODS.cs) |
 | TypeScript | [`cdlxsidegap3methods.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlxsidegap3methods.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLXSIDEGAP3METHODS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

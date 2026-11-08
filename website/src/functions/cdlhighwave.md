@@ -7,6 +7,12 @@ description: "Single-candle pattern: a short real body with both a very long upp
 
 Single-candle pattern: a short real body with both a very long upper and a very long lower shadow. Signals market indecision; the output sign reports only candle color, not a bullish/bearish direction. A hit marks indecision (long-legged candle); not directional - sign encodes only the candle's color.
 
+## Chart
+
+<ta-chart src="/functions/cdlhighwave.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+
+Drawn on the price pane over candles; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/cdlhighwave.csv) · [Chart (SVG)](/functions/cdlhighwave.svg)
+
 ## Formula
 
 One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlhighwave.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhighwave/cdlhighwave.c) · [`cdlhighwave.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhighwave/cdlhighwave.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlhighwave.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDLHIGHWAVE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHIGHWAVE.cs) |
 | TypeScript | [`cdlhighwave.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlhighwave.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHIGHWAVE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

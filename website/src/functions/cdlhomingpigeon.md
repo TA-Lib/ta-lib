@@ -7,6 +7,12 @@ description: "Two-candle pattern: a long black candle followed by a small black 
 
 Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. A hit signals a bullish reversal, most meaningful in a downtrend, which the code does not verify.
 
+## Chart
+
+<ta-chart src="/functions/cdlhomingpigeon.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlhomingpigeon.csv) · [Chart (SVG)](/functions/cdlhomingpigeon.svg)
+
 ## Formula
 
 Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlhomingpigeon.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhomingpigeon/cdlhomingpigeon.c) · [`cdlhomingpigeon.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhomingpigeon/cdlhomingpigeon.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlhomingpigeon.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | C# | [`Core_CDLHOMINGPIGEON.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHOMINGPIGEON.cs) |
 | TypeScript | [`cdlhomingpigeon.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlhomingpigeon.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHOMINGPIGEON`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

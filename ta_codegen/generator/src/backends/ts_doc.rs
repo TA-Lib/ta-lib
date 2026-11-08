@@ -878,9 +878,12 @@ fn import_line(names: &BTreeSet<String>) -> String {
 /// The batch, open and fill examples feed the same history, and `open` and
 /// `close` stay inside `[low, high]`. See [`rust_doc::CLOSE_SERIES`] for why
 /// `close` carries a second harmonic and `volume` falls on some bars.
-fn series(func: &FuncDef, input: &str) -> Option<(&'static str, &'static str, &'static str)> {
-    Some(match input {
-        "inReal" if rust_doc::unit_domain(func) => ("data", "Math.sin(0.1 * i)", "0.42"),
+fn series(func: &FuncDef, input: &str) -> Option<(&'static str, String, String)> {
+    if let Some(domain) = rust_doc::input_domain(func, input) {
+        let expr = rust_doc::domain_series(domain, "Math.sin(0.1 * i)", doc_meta::fmt_real);
+        return Some(("data", expr, doc_meta::fmt_real(rust_doc::domain_bar(domain, 0.42))));
+    }
+    let (var, expr, bar) = match input {
         "inOpen" => ("open", "100 + 10 * Math.sin(0.1 * i - 0.05)", "100.2"),
         "inHigh" => ("high", "101 + 10 * Math.sin(0.1 * i)", "101.4"),
         "inLow" => ("low", "99 + 10 * Math.sin(0.1 * i)", "99.1"),
@@ -891,7 +894,8 @@ fn series(func: &FuncDef, input: &str) -> Option<(&'static str, &'static str, &'
         "inReal0" => ("data0", "100 + 10 * Math.sin(0.1 * i)", "100.9"),
         "inReal1" => ("data1", "100 + 10 * Math.sin(0.1 * i + 0.7)", "101.3"),
         _ => return None,
-    })
+    };
+    Some((var, expr.to_string(), bar.to_string()))
 }
 
 fn series_lines(var: &str, expr: &str) -> Vec<String> {
@@ -908,7 +912,7 @@ fn series_lines(var: &str, expr: &str) -> Vec<String> {
 /// What every example of a function shares: its series and argument literals.
 struct Setup {
     /// One `(variable, bar literal)` per bar input, in call order.
-    series: Vec<(&'static str, &'static str)>,
+    series: Vec<(&'static str, String)>,
     lines: Vec<String>,
     opts: Vec<String>,
     imports: BTreeSet<String>,
@@ -918,7 +922,7 @@ fn setup(func: &FuncDef, inputs: &[String], enums: &HashMap<String, EnumDef>) ->
     let mut s = Setup { series: Vec::new(), lines: Vec::new(), opts: Vec::new(), imports: BTreeSet::new() };
     for input in inputs {
         let (var, expr, bar) = series(func, input)?;
-        s.lines.extend(series_lines(var, expr));
+        s.lines.extend(series_lines(var, &expr));
         s.series.push((var, bar));
     }
     if s.series.is_empty() {
@@ -1129,7 +1133,7 @@ pub fn open_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option<
     let first = s.series[0].0;
     let mut imports = s.imports.clone();
     imports.insert(names.open.clone());
-    let bars: Vec<&str> = s.series.iter().map(|(_, b)| *b).collect();
+    let bars: Vec<&str> = s.series.iter().map(|(_, b)| b.as_str()).collect();
 
     let mut body = s.lines.clone();
     body.extend(api_call("const stream = ", &names.open, &api_args(func, &s), &example_opts(func, &s)));

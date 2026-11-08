@@ -7,6 +7,12 @@ description: "Double Exponential Moving Average: an EMA combined with an EMA-of-
 
 Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a plain EMA. Overlap Studies overlay on price.
 
+## Chart
+
+<ta-chart src="/functions/dema.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/dema.csv) · [Chart (SVG)](/functions/dema.svg)
+
 ## Formula
 
 EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
@@ -50,6 +56,8 @@ EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`dema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.c) · [`dema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`dema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_DEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DEMA.cs) |
 | TypeScript | [`dema.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/dema.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.DEMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Element-wise arctangent of the input series."
 
 Element-wise arctangent of the input series.
 
+## Chart
+
+<ta-chart src="/functions/atan.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/atan.csv) · [Chart (SVG)](/functions/atan.svg)
+
 ## Formula
 
 outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
@@ -40,6 +46,8 @@ outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`atan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atan/atan.c) · [`atan.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/atan/atan.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`atan.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ATAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ATAN.cs) |
 | TypeScript | [`atan.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/atan.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ATAN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Wilder's Accumulative Swing Index: the running total of the Swing 
 
 Wilder's Accumulative Swing Index: the running total of the Swing Index (SI), a line meant to trace the market's real swings through the noise of the daily closes. Wilder draws trendlines and breakout points on it as on a price chart: a breakout of the ASI that the price has not confirmed yet is his signal. J. Welles Wilder Jr. introduced both in 1978. The line starts at 0 on the first bar of the requested range, so only its shape carries meaning, not its level.
 
+## Chart
+
+<ta-chart src="/functions/asi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/asi.csv) · [Chart (SVG)](/functions/asi.svg)
+
 ## Formula
 
 $$
@@ -57,6 +63,8 @@ where $s$ is the first bar of the requested range and $\mathrm{SI}_t$ is the Swi
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`asi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asi/asi.c) · [`asi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asi/asi.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`asi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ASI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ASI.cs) |
 | TypeScript | [`asi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/asi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ASI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

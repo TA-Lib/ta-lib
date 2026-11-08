@@ -9,6 +9,12 @@ Bill Williams' Alligator (*Trading Chaos*, 1995): three smoothed moving averages
 
 The Alligator is a leg of Williams' Profitunity system, alongside the Awesome Oscillator ([`AO`](/functions/ao.md)) and the Accelerator/Decelerator ([`AC`](/functions/ac.md)).
 
+## Chart
+
+<ta-chart src="/functions/alligator.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward."></ta-chart>
+
+Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward. [Reference data (CSV)](/functions/alligator.csv) · [Chart (SVG)](/functions/alligator.svg)
+
 ## Formula
 
 median_t = ( high_t + low_t ) / 2  
@@ -66,6 +72,8 @@ SMMA is Wilder's smoothed moving average ([`RMA`](/functions/rma.md)): seeded wi
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`alligator.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/alligator/alligator.c) · [`alligator.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/alligator/alligator.yaml)
 
 | Native | File |
@@ -76,7 +84,9 @@ TA-Lib Definition: [`alligator.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_ALLIGATOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ALLIGATOR.cs) |
 | TypeScript | [`alligator.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/alligator.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ALLIGATOR` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

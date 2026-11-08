@@ -7,6 +7,12 @@ description: "Element-wise multiplication of two input series."
 
 Element-wise multiplication of two input series.
 
+## Chart
+
+<ta-chart src="/functions/mult.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/mult.csv) · [Chart (SVG)](/functions/mult.svg)
+
 ## Formula
 
 outReal[i] = inReal0[i] * inReal1[i]
@@ -41,6 +47,8 @@ outReal[i] = inReal0[i] * inReal1[i]
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`mult.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mult/mult.c) · [`mult.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mult/mult.yaml)
 
 | Native | File |
@@ -51,7 +59,9 @@ TA-Lib Definition: [`mult.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_MULT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MULT.cs) |
 | TypeScript | [`mult.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mult.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MULT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

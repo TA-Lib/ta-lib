@@ -7,6 +7,12 @@ description: "Single-candle doji (open ~ close) with at least one long shadow. S
 
 Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision, not a directional bias. Marks indecision/uncertainty; not inherently bullish or bearish despite the positive sign.
 
+## Chart
+
+<ta-chart src="/functions/cdllongleggeddoji.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdllongleggeddoji.csv) · [Chart (SVG)](/functions/cdllongleggeddoji.svg)
+
 ## Formula
 
 One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdllongleggeddoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdllongleggeddoji/cdllongleggeddoji.c) · [`cdllongleggeddoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdllongleggeddoji/cdllongleggeddoji.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdllongleggeddoji.c`](https://github.com/TA-Lib/ta-lib/blob
 | C# | [`Core_CDLLONGLEGGEDDOJI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLLONGLEGGEDDOJI.cs) |
 | TypeScript | [`cdllongleggeddoji.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdllongleggeddoji.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLLONGLEGGEDDOJI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

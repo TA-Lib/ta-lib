@@ -7,6 +7,12 @@ description: "Chaikin A/D Oscillator: the difference between a fast and a slow E
 
 Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the Accumulation/Distribution line. Highlights momentum in accumulation/distribution volume flow. Positive/rising suggests accumulation; negative/falling suggests distribution.
 
+## Chart
+
+<ta-chart src="/functions/adosc.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/adosc.csv) · [Chart (SVG)](/functions/adosc.svg)
+
 ## Formula
 
 ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
@@ -53,6 +59,8 @@ ADOSC = fastEMA - slowEMA
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`adosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adosc/adosc.c) · [`adosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adosc/adosc.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`adosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_ADOSC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADOSC.cs) |
 | TypeScript | [`adosc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/adosc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ADOSC`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

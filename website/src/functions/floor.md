@@ -7,6 +7,12 @@ description: "Element-wise floor (round down to the nearest integer) of the inpu
 
 Element-wise floor (round down to the nearest integer) of the input series.
 
+## Chart
+
+<ta-chart src="/functions/floor.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/floor.csv) · [Chart (SVG)](/functions/floor.svg)
+
 ## Formula
 
 outReal[i] = floor(inReal[i])
@@ -40,6 +46,8 @@ outReal[i] = floor(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`floor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/floor/floor.c) · [`floor.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/floor/floor.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`floor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_FLOOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FLOOR.cs) |
 | TypeScript | [`floor.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/floor.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FLOOR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

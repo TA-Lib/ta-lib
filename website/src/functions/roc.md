@@ -7,6 +7,12 @@ description: "Rate-of-change momentum oscillator: the percent change of price ve
 
 Rate-of-change momentum oscillator: the percent change of price versus the price optInTimePeriod bars earlier. Centered at zero with positive and negative values. Positive when price rose over the period, negative when it fell; magnitude scales the move.
 
+## Chart
+
+<ta-chart src="/functions/roc.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/roc.csv) · [Chart (SVG)](/functions/roc.svg)
+
 ## Formula
 
 ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePeriod]
@@ -50,6 +56,8 @@ ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePer
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`roc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/roc/roc.c) · [`roc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/roc/roc.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`roc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ROC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROC.cs) |
 | TypeScript | [`roc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/roc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROC`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

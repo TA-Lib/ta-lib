@@ -9,6 +9,12 @@ Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four s
 
 Each leg smooths a rate of change over a different span, and the longer legs carry the larger weights, so the line follows the dominant trend while the short legs make it turn early. Readings above zero mean the combined momentum is positive. The usual signals are the line crossing its signal line and the line changing direction. The level is unbounded, and the usual comparison is against the line's own history.
 
+## Chart
+
+<ta-chart src="/functions/kst.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line. [Reference data (CSV)](/functions/kst.csv) · [Chart (SVG)](/functions/kst.svg)
+
 ## Formula
 
 ROC_k[t] = (price[t] / price[t - X_k] - 1) × 100
@@ -74,6 +80,8 @@ X_k = optInROC{k}Period, A_k = optInSMA{k}Period, S = optInSignalPeriod
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`kst.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kst/kst.c) · [`kst.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kst/kst.yaml)
 
 | Native | File |
@@ -84,7 +92,9 @@ TA-Lib Definition: [`kst.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_KST.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KST.cs) |
 | TypeScript | [`kst.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kst.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KST` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

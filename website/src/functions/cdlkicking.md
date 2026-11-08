@@ -7,6 +7,12 @@ description: "Two-candle pattern of two opposite-color marubozu (long bodies wit
 
 Two-candle pattern of two opposite-color marubozu (long bodies with very short shadows) separated by a price gap. A reversal signal whose direction is set by the second candle's color.
 
+## Chart
+
+<ta-chart src="/functions/cdlkicking.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlkicking.csv) · [Chart (SVG)](/functions/cdlkicking.svg)
+
 ## Notes
 
 - Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlkicking.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkicking/cdlkicking.c) · [`cdlkicking.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkicking/cdlkicking.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdlkicking.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_CDLKICKING.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLKICKING.cs) |
 | TypeScript | [`cdlkicking.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlkicking.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLKICKING`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

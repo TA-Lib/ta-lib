@@ -7,6 +7,12 @@ description: "Linearly weighted moving average: each of the last N prices is wei
 
 Linearly weighted moving average: each of the last N prices is weighted by its position, oldest getting weight 1 and newest weight N. Smooths price while emphasizing recent bars.
 
+## Chart
+
+<ta-chart src="/functions/wma.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/wma.csv) · [Chart (SVG)](/functions/wma.svg)
+
 ## Formula
 
 WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
@@ -50,6 +56,8 @@ WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`wma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wma/wma.c) · [`wma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wma/wma.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`wma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_WMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WMA.cs) |
 | TypeScript | [`wma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.WMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

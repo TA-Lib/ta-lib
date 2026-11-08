@@ -11,6 +11,12 @@ The right arm cannot be known until it has closed, so the value is written on th
 
 The two outputs are independent flags rather than one signed value, because an outside bar can be a swing high and a swing low at once.
 
+## Chart
+
+<ta-chart src="/functions/fractal.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back."></ta-chart>
+
+Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back. [Reference data (CSV)](/functions/fractal.csv) · [Chart (SVG)](/functions/fractal.svg)
+
 ## Formula
 
 With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
@@ -80,6 +86,8 @@ The function's flags declare which values it can return: [rW7](/spec/inputs-outp
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.c) · [`fractal.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.yaml)
 
 | Native | File |
@@ -90,7 +98,9 @@ TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_FRACTAL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FRACTAL.cs) |
 | TypeScript | [`fractal.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fractal.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FRACTAL` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Median Price: the midpoint of each bar's high and low. A price-tra
 
 Median Price: the midpoint of each bar's high and low. A price-transform overlay.
 
+## Chart
+
+<ta-chart src="/functions/medprice.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/medprice.csv) · [Chart (SVG)](/functions/medprice.svg)
+
 ## Formula
 
 $MEDPRICE_i = (High_i + Low_i) / 2$
@@ -41,6 +47,8 @@ $MEDPRICE_i = (High_i + Low_i) / 2$
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`medprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/medprice/medprice.c) · [`medprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/medprice/medprice.yaml)
 
 | Native | File |
@@ -51,7 +59,9 @@ TA-Lib Definition: [`medprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MEDPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MEDPRICE.cs) |
 | TypeScript | [`medprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/medprice.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MEDPRICE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

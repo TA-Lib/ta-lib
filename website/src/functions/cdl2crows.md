@@ -7,6 +7,12 @@ description: "Three-candle bearish reversal pattern: a long white candle, then a
 
 Three-candle bearish reversal pattern: a long white candle, then a black candle gapping up, then a black candle that opens inside the second body and closes down inside the first white body. A hit (-100) signals a bearish reversal; significant in an uptrend, which this function does not verify.
 
+## Chart
+
+<ta-chart src="/functions/cdl2crows.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdl2crows.csv) · [Chart (SVG)](/functions/cdl2crows.svg)
+
 ## Notes
 
 - Does not verify the prior uptrend the pattern classically assumes for significance.
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdl2crows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl2crows/cdl2crows.c) · [`cdl2crows.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl2crows/cdl2crows.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdl2crows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_CDL2CROWS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL2CROWS.cs) |
 | TypeScript | [`cdl2crows.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl2crows.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDL2CROWS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -9614,7 +9614,7 @@
 				<Type>Double Array</Type>
 				<Name>outReal</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dots</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9760,7 +9760,7 @@
 				<Type>Double Array</Type>
 				<Name>outReal</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Dots</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

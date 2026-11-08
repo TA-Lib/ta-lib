@@ -7,6 +7,12 @@ description: "Average Price: the arithmetic mean of each bar's open, high, low, 
 
 Average Price: the arithmetic mean of each bar's open, high, low, and close. A price-transform overlap condensing OHLC into a single representative price.
 
+## Chart
+
+<ta-chart src="/functions/avgprice.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/avgprice.csv) · [Chart (SVG)](/functions/avgprice.svg)
+
 ## Formula
 
 outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
@@ -43,6 +49,8 @@ outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`avgprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/avgprice/avgprice.c) · [`avgprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/avgprice/avgprice.yaml)
 
 | Native | File |
@@ -53,7 +61,9 @@ TA-Lib Definition: [`avgprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_AVGPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AVGPRICE.cs) |
 | TypeScript | [`avgprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/avgprice.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AVGPRICE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

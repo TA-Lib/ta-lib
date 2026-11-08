@@ -155,7 +155,7 @@ How a chart or a settings dialog should present a function, an output or an opti
 | `TA_OUT_LINE` | Draw as a connected line. |
 | `TA_OUT_DOT_LINE` | Draw as a dotted line. No function sets it. |
 | `TA_OUT_DASH_LINE` | Draw as a dashed line. |
-| `TA_OUT_DOT` | Draw as dots only. No function sets it. |
+| `TA_OUT_DOT` | Draw as dots only. |
 | `TA_OUT_HISTO` | Draw as a histogram. |
 | `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
 | `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |

@@ -7,6 +7,12 @@ description: "Element-wise arc cosine of the input series."
 
 Element-wise arc cosine of the input series.
 
+## Chart
+
+<ta-chart src="/functions/acos.svg" ratio="720:416" alt="Drawn on the price pane over the input, close->[-1,1], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the input, close->[-1,1], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/acos.csv) · [Chart (SVG)](/functions/acos.svg)
+
 ## Formula
 
 outReal[i] = acos(inReal[i])
@@ -44,6 +50,8 @@ outReal[i] = acos(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`acos.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/acos/acos.c) · [`acos.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/acos/acos.yaml)
 
 | Native | File |
@@ -54,7 +62,9 @@ TA-Lib Definition: [`acos.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ACOS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ACOS.cs) |
 | TypeScript | [`acos.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/acos.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ACOS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

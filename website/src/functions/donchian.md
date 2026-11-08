@@ -7,6 +7,12 @@ description: "Donchian Channels: three overlap lines built from rolling price ex
 
 Donchian Channels: three overlap lines built from rolling price extrema. The upper band is the highest high and the lower band the lowest low over the period; the middle line is their midpoint. Richard Donchian's original four-week rule — generally credited as the first published systematic trend-following system — buys a break above the high of the preceding weeks and sells a break below their low.
 
+## Chart
+
+<ta-chart src="/functions/donchian.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
+
+Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/donchian.csv) · [Chart (SVG)](/functions/donchian.svg)
+
 ## Formula
 
 Window = the optInTimePeriod bars ending at the current bar
@@ -61,6 +67,8 @@ Middle = (Upper + Lower) / 2
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`donchian.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/donchian/donchian.c) · [`donchian.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/donchian/donchian.yaml)
 
 | Native | File |
@@ -71,4 +79,6 @@ TA-Lib Definition: [`donchian.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_DONCHIAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DONCHIAN.cs) |
 | TypeScript | [`donchian.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/donchian.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.DONCHIAN` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).

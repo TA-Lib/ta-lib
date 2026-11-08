@@ -7,6 +7,12 @@ description: "A two-candle continuation pattern: the second candle opposes the f
 
 A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold. Bullish (white second candle) or bearish (black second candle) continuation signal.
 
+## Chart
+
+<ta-chart src="/functions/cdlseparatinglines.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlseparatinglines.csv) · [Chart (SVG)](/functions/cdlseparatinglines.svg)
+
 ## Formula
 
 Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlseparatinglines.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlseparatinglines/cdlseparatinglines.c) · [`cdlseparatinglines.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlseparatinglines/cdlseparatinglines.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlseparatinglines.c`](https://github.com/TA-Lib/ta-lib/blo
 | C# | [`Core_CDLSEPARATINGLINES.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLSEPARATINGLINES.cs) |
 | TypeScript | [`cdlseparatinglines.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlseparatinglines.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLSEPARATINGLINES`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

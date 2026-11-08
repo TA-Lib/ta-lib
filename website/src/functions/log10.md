@@ -7,6 +7,12 @@ description: "Element-wise base-10 logarithm of the input series."
 
 Element-wise base-10 logarithm of the input series.
 
+## Chart
+
+<ta-chart src="/functions/log10.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/log10.csv) · [Chart (SVG)](/functions/log10.svg)
+
 ## Formula
 
 outReal[i] = log10(inReal[i])
@@ -44,6 +50,8 @@ outReal[i] = log10(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`log10.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/log10/log10.c) · [`log10.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/log10/log10.yaml)
 
 | Native | File |
@@ -54,7 +62,9 @@ TA-Lib Definition: [`log10.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_LOG10.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LOG10.cs) |
 | TypeScript | [`log10.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/log10.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.LOG10`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

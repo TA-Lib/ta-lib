@@ -7,6 +7,12 @@ description: "Returns the index of the highest input value within a rolling wind
 
 Returns the index of the highest input value within a rolling window of optInTimePeriod bars. Same as MAX but outputs the location instead of the value.
 
+## Chart
+
+<ta-chart src="/functions/maxindex.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/maxindex.csv) · [Chart (SVG)](/functions/maxindex.svg)
+
 ## Formula
 
 outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
@@ -50,6 +56,8 @@ outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`maxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/maxindex/maxindex.c) · [`maxindex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/maxindex/maxindex.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`maxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MAXINDEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MAXINDEX.cs) |
 | TypeScript | [`maxindex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/maxindex.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MAXINDEX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

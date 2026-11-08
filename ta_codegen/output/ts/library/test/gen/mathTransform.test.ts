@@ -247,7 +247,7 @@ test('COS: cosOpenAndFill example', () => {
 
 test('COSH: cosh example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { begIdx, values } = cosh(data);
   // values[k] is the value at bar begIdx + k
 
@@ -259,10 +259,10 @@ test('COSH: cosh example', () => {
 
 test('COSH: coshOpen example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const stream = coshOpen(data);
-  const peeked = stream.peek(100.9); // a forming bar: commits nothing
-  const updated = stream.update(100.9); // the bar closes
+  const peeked = stream.peek(2.1); // a forming bar: commits nothing
+  const updated = stream.update(2.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -272,7 +272,7 @@ test('COSH: coshOpen example', () => {
 
 test('COSH: coshOpenAndFill example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { stream, begIdx, values } = coshOpenAndFill(data);
   // values[k] is the value at bar begIdx + k
 
@@ -288,7 +288,7 @@ test('COSH: coshOpenAndFill example', () => {
 
 test('EXP: exp example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { begIdx, values } = exp(data);
   // values[k] is the value at bar begIdx + k
 
@@ -300,10 +300,10 @@ test('EXP: exp example', () => {
 
 test('EXP: expOpen example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const stream = expOpen(data);
-  const peeked = stream.peek(100.9); // a forming bar: commits nothing
-  const updated = stream.update(100.9); // the bar closes
+  const peeked = stream.peek(2.1); // a forming bar: commits nothing
+  const updated = stream.update(2.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -313,7 +313,7 @@ test('EXP: expOpen example', () => {
 
 test('EXP: expOpenAndFill example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { stream, begIdx, values } = expOpenAndFill(data);
   // values[k] is the value at bar begIdx + k
 
@@ -493,7 +493,7 @@ test('SIN: sinOpenAndFill example', () => {
 
 test('SINH: sinh example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { begIdx, values } = sinh(data);
   // values[k] is the value at bar begIdx + k
 
@@ -505,10 +505,10 @@ test('SINH: sinh example', () => {
 
 test('SINH: sinhOpen example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const stream = sinhOpen(data);
-  const peeked = stream.peek(100.9); // a forming bar: commits nothing
-  const updated = stream.update(100.9); // the bar closes
+  const peeked = stream.peek(2.1); // a forming bar: commits nothing
+  const updated = stream.update(2.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -518,7 +518,7 @@ test('SINH: sinhOpen example', () => {
 
 test('SINH: sinhOpenAndFill example', () => {
   const data = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i));
+    5 * Math.sin(0.1 * i));
   const { stream, begIdx, values } = sinhOpenAndFill(data);
   // values[k] is the value at bar begIdx + k
 
@@ -615,7 +615,8 @@ test('TAN: tanOpenAndFill example', () => {
 });
 
 test('TANH: tanh example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    3 * Math.sin(0.1 * i));
   const { begIdx, values } = tanh(data);
   // values[k] is the value at bar begIdx + k
 
@@ -626,10 +627,11 @@ test('TANH: tanh example', () => {
 });
 
 test('TANH: tanhOpen example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    3 * Math.sin(0.1 * i));
   const stream = tanhOpen(data);
-  const peeked = stream.peek(0.42); // a forming bar: commits nothing
-  const updated = stream.update(0.42); // the bar closes
+  const peeked = stream.peek(1.26); // a forming bar: commits nothing
+  const updated = stream.update(1.26); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -638,7 +640,8 @@ test('TANH: tanhOpen example', () => {
 });
 
 test('TANH: tanhOpenAndFill example', () => {
-  const data = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    3 * Math.sin(0.1 * i));
   const { stream, begIdx, values } = tanhOpenAndFill(data);
   // values[k] is the value at bar begIdx + k
 

@@ -9,6 +9,12 @@ Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator (*Barron
 
 Unbounded; positive turns from below zero are the signal the indicator was designed for (long-term buying opportunities on monthly index data).
 
+## Chart
+
+<ta-chart src="/functions/coppock.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/coppock.csv) · [Chart (SVG)](/functions/coppock.svg)
+
 ## Formula
 
 `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
@@ -62,6 +68,8 @@ The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale varia
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`coppock.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/coppock/coppock.c) · [`coppock.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/coppock/coppock.yaml)
 
 | Native | File |
@@ -72,4 +80,6 @@ TA-Lib Definition: [`coppock.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_COPPOCK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_COPPOCK.cs) |
 | TypeScript | [`coppock.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/coppock.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.COPPOCK` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).

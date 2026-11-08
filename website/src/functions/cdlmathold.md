@@ -7,6 +7,12 @@ description: "A five-candle bullish continuation pattern: a long white candle, a
 
 A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped small black candle, two more small falling candles that hold within the first body, and a final white candle closing above the reaction days' highs. Signals continuation of the prior uptrend. Hit = bullish continuation of the existing uptrend.
 
+## Chart
+
+<ta-chart src="/functions/cdlmathold.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlmathold.csv) · [Chart (SVG)](/functions/cdlmathold.svg)
+
 ## Notes
 
 - The colors of the third and fourth (reaction) candles are not checked, although they are classically black.
@@ -60,6 +66,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlmathold.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmathold/cdlmathold.c) · [`cdlmathold.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmathold/cdlmathold.yaml)
 
 | Native | File |
@@ -70,7 +78,9 @@ TA-Lib Definition: [`cdlmathold.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_CDLMATHOLD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMATHOLD.cs) |
 | TypeScript | [`cdlmathold.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmathold.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLMATHOLD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

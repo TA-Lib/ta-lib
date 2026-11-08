@@ -9,6 +9,12 @@ Cumulative Sum: the running total of a series from the anchor bar forward. A mat
 
 [`SUM`](/functions/sum.md) is a *rolling window* over `optInTimePeriod` bars; `CUMSUM` has no window — every bar since the anchor contributes.
 
+## Chart
+
+<ta-chart src="/functions/cumsum.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cumsum.csv) · [Chart (SVG)](/functions/cumsum.svg)
+
 ## Formula
 
 `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -51,6 +57,8 @@ Left-to-right in one double, no compensation — the same plain `+=` convention 
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`cumsum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cumsum/cumsum.c) · [`cumsum.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cumsum/cumsum.yaml)
 
 | Native | File |
@@ -61,4 +69,6 @@ TA-Lib Definition: [`cumsum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_CUMSUM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CUMSUM.cs) |
 | TypeScript | [`cumsum.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cumsum.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CUMSUM` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).

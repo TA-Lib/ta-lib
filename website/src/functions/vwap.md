@@ -9,6 +9,12 @@ Volume Weighted Average Price: the average price paid per unit of volume traded,
 
 VWAP is a running mean, not a moving average: it has no window and no decay, so each new bar carries a smaller share of the total and the line grows steadily more sluggish the further it runs from its anchor. It stays within the range of the typical prices it averages, but over a long trending range it can sit far from the current price.
 
+## Chart
+
+<ta-chart src="/functions/vwap.svg" ratio="720:342" alt="Drawn on the price pane over candles, with outReal as a solid line; below it, a volume pane."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line; below it, a volume pane. [Reference data (CSV)](/functions/vwap.csv) · [Chart (SVG)](/functions/vwap.svg)
+
 ## Formula
 
 TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
@@ -51,6 +57,8 @@ TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Vol
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`vwap.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwap/vwap.c) · [`vwap.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwap/vwap.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`vwap.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_VWAP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VWAP.cs) |
 | TypeScript | [`vwap.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vwap.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.VWAP` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

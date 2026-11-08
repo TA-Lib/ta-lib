@@ -7,6 +7,12 @@ description: "Commodity Channel Index: measures the current typical price relati
 
 Commodity Channel Index: measures the current typical price relative to its simple moving average, scaled by mean absolute deviation. Momentum oscillator flagging overbought/oversold extremes. CCI > +100 overbought; CCI < -100 oversold.
 
+## Chart
+
+<ta-chart src="/functions/cci.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cci.csv) · [Chart (SVG)](/functions/cci.svg)
+
 ## Formula
 
 TP_i = (High_i + Low_i + Close_i)/3
@@ -51,6 +57,8 @@ CCI = (TP_last - SMA) / (0.015 * meanDev)
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cci.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cci/cci.c) · [`cci.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cci/cci.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`cci.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CCI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CCI.cs) |
 | TypeScript | [`cci.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cci.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CCI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

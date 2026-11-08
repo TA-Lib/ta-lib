@@ -13,6 +13,12 @@ Above zero is accumulation, below zero is distribution, and the distance from ze
 
 Created by Marc Chaikin, who also authored the [`AD`](/functions/ad.md) line this shares its per-bar multiplier with. CMF is that same multiplier summed over a fixed window and normalised, where AD accumulates it from the start of the series without bound.
 
+## Chart
+
+<ta-chart src="/functions/cmf.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/cmf.csv) · [Chart (SVG)](/functions/cmf.svg)
+
 ## Formula
 
 t = high[i] - low[i]
@@ -70,6 +76,8 @@ There is no seeding and no recursion, hence no unstable period. Each output depe
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`cmf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmf/cmf.c) · [`cmf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmf/cmf.yaml)
 
 | Native | File |
@@ -80,7 +88,9 @@ TA-Lib Definition: [`cmf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CMF.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMF.cs) |
 | TypeScript | [`cmf.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cmf.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CMF` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

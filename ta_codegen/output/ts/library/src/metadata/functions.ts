@@ -1950,7 +1950,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInMaximum', key: 'maximum', flags: 0x00000000, displayName: 'AF Maximum', hint: 'Acceleration Factor Maximum value', defaultValue: 0.2, min: 0.0, max: 3e37, precision: 4, suggestedStart: 0.2, suggestedEnd: 0.4, suggestedIncrement: 0.01 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000008 },
     ]),
   FuncInfo.of('SAREXT', 'Overlap Studies', 'Parabolic SAR - Extended', 0x23000000,
     [
@@ -1967,7 +1967,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInAccelerationMaxShort', key: 'accelerationMaxShort', flags: 0x00000000, displayName: 'AF Max Short', hint: 'Acceleration Factor maximum value for the Short direction', defaultValue: 0.2, min: 0.0, max: 3e37, precision: 4, suggestedStart: 0.2, suggestedEnd: 0.4, suggestedIncrement: 0.01 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000008 },
     ]),
   FuncInfo.of('SHARPE', 'Statistic Functions', 'Rolling Sharpe Ratio', 0x42000000,
     [

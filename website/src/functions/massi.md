@@ -9,6 +9,12 @@ Mass Index: Donald Dorsey's non-directional measure of how the trading range its
 
 Read it as a bulge detector, not a direction. A ratio above one means the range is widening faster than its own smoothing can absorb, so the sum rises; a narrowing range pulls it back down. Dorsey's own rule is the "reversal bulge": the index rising above 27, then falling back under 26.5, warns that the prevailing trend is about to reverse. Which way it reverses has to come from a trend indicator, because the Mass Index has no sign of its own.
 
+## Chart
+
+<ta-chart src="/functions/massi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/massi.csv) · [Chart (SVG)](/functions/massi.svg)
+
 ## Formula
 
 HL = high - low
@@ -65,6 +71,8 @@ Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`massi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/massi/massi.c) · [`massi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/massi/massi.yaml)
 
 | Native | File |
@@ -75,7 +83,9 @@ TA-Lib Definition: [`massi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_MASSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MASSI.cs) |
 | TypeScript | [`massi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/massi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MASSI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

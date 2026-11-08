@@ -7,6 +7,12 @@ description: "MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of
 
 MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a slow EMA of the close over the Average True Range, times 100. Like MACD it comes with an EMA-smoothed signal line and their histogram. Dividing by the ATR expresses momentum in units of the instrument's own volatility, so one reading means the same thing across instruments, timeframes and volatility regimes, where the raw MACD spread does not. Spiroglou reads the line in ranges: beyond 150 or -150 is an overextended move, between -50 and 50 a ranging market, and the bands in between a trend.
 
+## Chart
+
+<ta-chart src="/functions/macdv.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macdv.csv) · [Chart (SVG)](/functions/macdv.svg)
+
 ## Formula
 
 MACDV = (EMA(Close, fastPeriod) - EMA(Close, slowPeriod)) / ATR(slowPeriod) * 100
@@ -62,6 +68,8 @@ Hist = MACDV - Signal
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdv/macdv.c) · [`macdv.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdv/macdv.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_MACDV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDV.cs) |
 | TypeScript | [`macdv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdv.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACDV` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

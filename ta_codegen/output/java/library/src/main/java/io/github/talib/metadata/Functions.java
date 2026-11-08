@@ -3848,7 +3848,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000008)
          ));
    }
 
@@ -3901,7 +3901,7 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000008)
          ));
    }
 

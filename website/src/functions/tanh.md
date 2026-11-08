@@ -7,6 +7,12 @@ description: "Element-wise hyperbolic tangent of the input series."
 
 Element-wise hyperbolic tangent of the input series.
 
+## Chart
+
+<ta-chart src="/functions/tanh.svg" ratio="720:416" alt="Drawn on the price pane over the input, close->[-3,3], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the input, close->[-3,3], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/tanh.csv) · [Chart (SVG)](/functions/tanh.svg)
+
 ## Formula
 
 outReal[i] = tanh(inReal[i])
@@ -40,6 +46,8 @@ outReal[i] = tanh(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`tanh.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tanh/tanh.c) · [`tanh.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tanh/tanh.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`tanh.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_TANH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TANH.cs) |
 | TypeScript | [`tanh.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/tanh.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TANH`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

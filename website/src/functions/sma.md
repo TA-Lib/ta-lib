@@ -7,6 +7,12 @@ description: "Simple Moving Average: the unweighted arithmetic mean of the last 
 
 Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to smooth a series.
 
+## Chart
+
+<ta-chart src="/functions/sma.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/sma.csv) · [Chart (SVG)](/functions/sma.svg)
+
 ## Formula
 
 SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
@@ -50,6 +56,8 @@ SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sma/sma.c) · [`sma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sma/sma.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`sma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMA.cs) |
 | TypeScript | [`sma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

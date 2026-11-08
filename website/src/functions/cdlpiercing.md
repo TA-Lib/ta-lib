@@ -7,6 +7,12 @@ description: "Two-candle pattern: a long black candle followed by a long white c
 
 Two-candle pattern: a long black candle followed by a long white candle that opens below the prior low and closes back above the midpoint of the prior black body. Bullish reversal signal. A hit (+100) is a bullish reversal signal.
 
+## Chart
+
+<ta-chart src="/functions/cdlpiercing.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlpiercing.csv) · [Chart (SVG)](/functions/cdlpiercing.svg)
+
 ## Notes
 
 - A prior downtrend is not verified.
@@ -52,6 +58,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlpiercing.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.c) · [`cdlpiercing.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`cdlpiercing.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDLPIERCING.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLPIERCING.cs) |
 | TypeScript | [`cdlpiercing.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlpiercing.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLPIERCING`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

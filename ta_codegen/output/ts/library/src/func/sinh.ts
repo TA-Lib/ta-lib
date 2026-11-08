@@ -229,7 +229,7 @@ export function sinhDisplayShift(outputIdx: number, options?: SinhOptions): numb
  * import { sinh } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { begIdx, values } = sinh(data);
  * // values[k] is the value at bar begIdx + k
  * ```
@@ -487,10 +487,10 @@ export function sinhOpenAndFillPositional(
  * import { sinhOpen } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const stream = sinhOpen(data);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(2.1); // a forming bar: commits nothing
+ * const updated = stream.update(2.1); // the bar closes
  * ```
  */
 export function sinhOpen(real: ArrayLike<number>, options?: SinhOptions): SinhStream {
@@ -521,7 +521,7 @@ export function sinhOpen(real: ArrayLike<number>, options?: SinhOptions): SinhSt
  * import { sinhOpenAndFill } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { stream, begIdx, values } = sinhOpenAndFill(data);
  * // values[k] is the value at bar begIdx + k
  * ```

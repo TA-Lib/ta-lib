@@ -9,6 +9,12 @@ Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian whose pea
 
 The weights are non-negative and sum to one, so the line stays within the range of its window, up to rounding. At the default shape and a period of 5 or more, it lags about half as much as an `SMA` of the same period and passes about twice its noise.
 
+## Chart
+
+<ta-chart src="/functions/alma.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/alma.csv) · [Chart (SVG)](/functions/alma.svg)
+
 ## Formula
 
 N = optInTimePeriod, m = floor( offset * (N-1) ), s = N / sigma
@@ -62,6 +68,8 @@ The first output is at bar N-1.
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`alma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/alma/alma.c) · [`alma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/alma/alma.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`alma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ALMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ALMA.cs) |
 | TypeScript | [`alma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/alma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ALMA` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

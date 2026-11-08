@@ -7,6 +7,12 @@ description: "Element-wise subtraction of two input series."
 
 Element-wise subtraction of two input series.
 
+## Chart
+
+<ta-chart src="/functions/sub.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/sub.csv) · [Chart (SVG)](/functions/sub.svg)
+
 ## Formula
 
 outReal[i] = inReal0[i] - inReal1[i]
@@ -41,6 +47,8 @@ outReal[i] = inReal0[i] - inReal1[i]
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sub.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sub/sub.c) · [`sub.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sub/sub.yaml)
 
 | Native | File |
@@ -51,7 +59,9 @@ TA-Lib Definition: [`sub.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SUB.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUB.cs) |
 | TypeScript | [`sub.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sub.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SUB`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

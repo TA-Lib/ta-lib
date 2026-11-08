@@ -7,6 +7,12 @@ description: "Rolling sum of the input over a fixed period. Each output is the s
 
 Rolling sum of the input over a fixed period. Each output is the sum of the most recent optInTimePeriod input values.
 
+## Chart
+
+<ta-chart src="/functions/sum.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/sum.csv) · [Chart (SVG)](/functions/sum.svg)
+
 ## Formula
 
 $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
@@ -46,6 +52,8 @@ $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`sum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sum/sum.c) · [`sum.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sum/sum.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`sum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SUM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUM.cs) |
 | TypeScript | [`sum.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sum.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SUM`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

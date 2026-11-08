@@ -11,6 +11,12 @@ This function does not emit the chart line, which is drawn with hindsight. It em
 
 The chart is rebuilt exactly from the outputs and the seed. A pivot is confirmed at bar `i > outBegIdx` whenever `outTrend[i]` differs from `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. When `outTrend[outBegIdx]` is +1 a reversal fired on the first output bar, and the pivot it confirmed is the seed, `(outBegIdx - optInMinTrendLength, inLow[outBegIdx - optInMinTrendLength])`, which no output row carries. The last, still-open pivot is `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
 
+## Chart
+
+<ta-chart src="/functions/zigzag.svg" ratio="720:416" alt="Drawn on the price pane over candles, with outZigZag as a solid line; below it, a step pane of its own for the integer outputs outTrend and outPivotIdx."></ta-chart>
+
+Drawn on the price pane over candles, with outZigZag as a solid line; below it, a step pane of its own for the integer outputs outTrend and outPivotIdx. [Reference data (CSV)](/functions/zigzag.csv) · [Chart (SVG)](/functions/zigzag.svg)
+
 ## Formula
 
 With `H = inHigh`, `L = inLow`, `m = optInMinTrendLength`, `s = optInSensitivity / 100`:
@@ -77,6 +83,8 @@ With `H = inHigh`, `L = inLow`, `m = optInMinTrendLength`, `s = optInSensitivity
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`zigzag.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zigzag/zigzag.c) · [`zigzag.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zigzag/zigzag.yaml)
 
 | Native | File |
@@ -87,7 +95,9 @@ TA-Lib Definition: [`zigzag.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_ZIGZAG.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ZIGZAG.cs) |
 | TypeScript | [`zigzag.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/zigzag.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ZIGZAG` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

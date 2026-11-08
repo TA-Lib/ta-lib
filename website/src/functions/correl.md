@@ -7,6 +7,12 @@ description: "Pearson's correlation coefficient (r) between two input series ove
 
 Pearson's correlation coefficient (r) between two input series over a rolling window of optInTimePeriod bars. Measures how linearly the two series move together. r near +1: strong positive co-movement; near -1: strong inverse; near 0: no linear relationship.
 
+## Chart
+
+<ta-chart src="/functions/correl.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/correl.csv) · [Chart (SVG)](/functions/correl.svg)
+
 ## Formula
 
 r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
@@ -51,6 +57,8 @@ r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`correl.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/correl/correl.c) · [`correl.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/correl/correl.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`correl.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_CORREL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CORREL.cs) |
 | TypeScript | [`correl.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/correl.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CORREL`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

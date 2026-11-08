@@ -7,6 +7,12 @@ description: "The rolling Sharpe ratio: the mean return in excess of a risk-free
 
 The rolling Sharpe ratio: the mean return in excess of a risk-free rate, divided by the standard deviation of that excess return, over a trailing window. A drift-over-volatility measure of the series itself, scaled to a year. Above 0 the window's returns beat the risk-free rate on average; the larger the value, the more return per unit of volatility.
 
+## Chart
+
+<ta-chart src="/functions/sharpe.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sharpe.csv) · [Chart (SVG)](/functions/sharpe.svg)
+
 ## Formula
 
 With simple returns $r_i = (x_i - x_{i-1}) / x_{i-1}$, per-bar risk-free rate $R_f$, excess returns $d_i = r_i - R_f$ and annualization $A$, over the trailing $n$ returns:
@@ -60,6 +66,8 @@ The result is $\pm\infty$ by the sign of $\bar{d}$ when every excess return in t
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`sharpe.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sharpe/sharpe.c) · [`sharpe.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sharpe/sharpe.yaml)
 
 | Native | File |
@@ -70,7 +78,9 @@ TA-Lib Definition: [`sharpe.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_SHARPE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SHARPE.cs) |
 | TypeScript | [`sharpe.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sharpe.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SHARPE` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

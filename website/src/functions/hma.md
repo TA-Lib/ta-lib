@@ -9,6 +9,12 @@ Hull Moving Average, published by Alan Hull in 2005: a moving average built to t
 
 HMA is also selectable as a moving-average type (`TA_MAType_HMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma.md), [`BBANDS`](/functions/bbands.md), [`STOCH`](/functions/stoch.md), [`MACDEXT`](/functions/macdext.md), ...).
 
+## Chart
+
+<ta-chart src="/functions/hma.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/hma.csv) · [Chart (SVG)](/functions/hma.svg)
+
 ## Formula
 
 HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
@@ -56,6 +62,8 @@ All three averages are the standard linearly-weighted moving average (TA-Lib's W
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`hma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/hma/hma.c) · [`hma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/hma/hma.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`hma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_HMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HMA.cs) |
 | TypeScript | [`hma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/hma.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HMA` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

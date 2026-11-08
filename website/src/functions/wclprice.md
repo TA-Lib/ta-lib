@@ -7,6 +7,12 @@ description: "Weighted Close Price: a per-bar price average giving the close dou
 
 Weighted Close Price: a per-bar price average giving the close double weight relative to high and low.
 
+## Chart
+
+<ta-chart src="/functions/wclprice.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/wclprice.csv) · [Chart (SVG)](/functions/wclprice.svg)
+
 ## Formula
 
 $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
@@ -42,6 +48,8 @@ $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`wclprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wclprice/wclprice.c) · [`wclprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wclprice/wclprice.yaml)
 
 | Native | File |
@@ -52,7 +60,9 @@ TA-Lib Definition: [`wclprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_WCLPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WCLPRICE.cs) |
 | TypeScript | [`wclprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wclprice.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.WCLPRICE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

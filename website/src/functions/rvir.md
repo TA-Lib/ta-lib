@@ -9,6 +9,12 @@ Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of his ow
 
 Output is bounded [0..100] and is interpreted like RVI: above 50 the highs and lows have been more volatile while rising than while falling, below 50 the reverse. Dorsey's stated reason for the revision is that a high and a low carry the day's range, so the pair answers the question the close alone can only approximate.
 
+## Chart
+
+<ta-chart src="/functions/rvir.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rvir.csv) · [Chart (SVG)](/functions/rvir.svg)
+
 ## Formula
 
     RVIR[i] = 0.5 * ( RVI(high)[i] + RVI(low)[i] )
@@ -56,6 +62,8 @@ Both legs use the same `optInTimePeriod` and `optInStdDevPeriod`, so they warm o
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`rvir.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvir/rvir.c) · [`rvir.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvir/rvir.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`rvir.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_RVIR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_RVIR.cs) |
 | TypeScript | [`rvir.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rvir.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.RVIR` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "A three-candle bullish reversal pattern: a long black candle, then
 
 A three-candle bullish reversal pattern: a long black candle, then a doji that gaps down, then a white candle closing well up into the first candle's body. It is the doji-star variant of the morning star. A hit (+100) signals a bullish reversal; most meaningful after a downtrend, which this function does not verify.
 
+## Chart
+
+<ta-chart src="/functions/cdlmorningdojistar.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlmorningdojistar.csv) · [Chart (SVG)](/functions/cdlmorningdojistar.svg)
+
 ## Notes
 
 - The gap-down is measured between the candles' real bodies, not between their high/low ranges.
@@ -59,6 +65,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlmorningdojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningdojistar/cdlmorningdojistar.c) · [`cdlmorningdojistar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningdojistar/cdlmorningdojistar.yaml)
 
 | Native | File |
@@ -69,7 +77,9 @@ TA-Lib Definition: [`cdlmorningdojistar.c`](https://github.com/TA-Lib/ta-lib/blo
 | C# | [`Core_CDLMORNINGDOJISTAR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMORNINGDOJISTAR.cs) |
 | TypeScript | [`cdlmorningdojistar.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmorningdojistar.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLMORNINGDOJISTAR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

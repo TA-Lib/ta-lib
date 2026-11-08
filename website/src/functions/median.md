@@ -9,6 +9,12 @@ The middle order statistic of the trailing window: the central value when `optIn
 
 Not to be confused with [`MEDPRICE`](/functions/medprice.md), which is `(High + Low) / 2` of one bar and is not an order statistic.
 
+## Chart
+
+<ta-chart src="/functions/median.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/median.csv) · [Chart (SVG)](/functions/median.svg)
+
 ## Formula
 
 With `W` the window sorted ascending and `W[1]` its smallest value:
@@ -58,6 +64,8 @@ With `W` the window sorted ascending and `W[1]` its smallest value:
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`median.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/median/median.c) · [`median.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/median/median.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`median.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_MEDIAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MEDIAN.cs) |
 | TypeScript | [`median.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/median.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MEDIAN` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

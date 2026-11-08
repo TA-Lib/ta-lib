@@ -7,6 +7,12 @@ description: "Rate of change expressed as a fraction of the price optInTimePerio
 
 Rate of change expressed as a fraction of the price optInTimePeriod bars ago. Normalized and centered at zero (positive or negative). >0 rising vs N bars ago, <0 falling; equals ROC/100.
 
+## Chart
+
+<ta-chart src="/functions/rocp.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/rocp.csv) · [Chart (SVG)](/functions/rocp.svg)
+
 ## Formula
 
 ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
@@ -50,6 +56,8 @@ ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`rocp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocp/rocp.c) · [`rocp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocp/rocp.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`rocp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ROCP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROCP.cs) |
 | TypeScript | [`rocp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rocp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROCP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

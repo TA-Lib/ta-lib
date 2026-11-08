@@ -7,6 +7,12 @@ description: "The angle, in degrees, of the least-squares best-fit line over the
 
 The angle, in degrees, of the least-squares best-fit line over the last N points. It is the LINEARREG_SLOPE value passed through atan and converted to degrees. Positive angle = rising fit line, negative = falling; magnitude reflects steepness.
 
+## Chart
+
+<ta-chart src="/functions/linearreg_angle.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/linearreg_angle.csv) · [Chart (SVG)](/functions/linearreg_angle.svg)
+
 ## Formula
 
 m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, SumXSqr=N(N−1)(2N−1)/6; angle = atan(m)·(180/π)
@@ -46,6 +52,8 @@ m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, S
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`linearreg_angle.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_angle/linearreg_angle.c) · [`linearreg_angle.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_angle/linearreg_angle.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`linearreg_angle.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | C# | [`Core_LINEARREG_ANGLE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG_ANGLE.cs) |
 | TypeScript | [`linearregAngle.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/linearregAngle.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.LINEARREG_ANGLE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

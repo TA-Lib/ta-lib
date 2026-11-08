@@ -7,6 +7,12 @@ description: "Money Flow Index: a volume-weighted momentum oscillator (0-100) co
 
 Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positive vs negative money flow over a period. A volume-based analog of RSI. >80 overbought, <20 oversold.
 
+## Chart
+
+<ta-chart src="/functions/mfi.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/mfi.csv) · [Chart (SVG)](/functions/mfi.svg)
+
 ## Formula
 
 TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
@@ -54,6 +60,8 @@ TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`mfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mfi/mfi.c) · [`mfi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mfi/mfi.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`mfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_MFI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MFI.cs) |
 | TypeScript | [`mfi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mfi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MFI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

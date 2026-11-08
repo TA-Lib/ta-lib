@@ -7,6 +7,12 @@ description: "Slope 'm' of the least-squares best-fit line (y = b + m*x) over th
 
 Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend line. Positive slope = rising trend, negative = falling; magnitude is price change per bar.
 
+## Chart
+
+<ta-chart src="/functions/linearreg_slope.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/linearreg_slope.csv) · [Chart (SVG)](/functions/linearreg_slope.svg)
+
 ## Formula
 
 m = (n·SumXY − SumX·SumY) / Divisor
@@ -48,6 +54,8 @@ SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`linearreg_slope.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.c) · [`linearreg_slope.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`linearreg_slope.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | C# | [`Core_LINEARREG_SLOPE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG_SLOPE.cs) |
 | TypeScript | [`linearregSlope.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/linearregSlope.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.LINEARREG_SLOPE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

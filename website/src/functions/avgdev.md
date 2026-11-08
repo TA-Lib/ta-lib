@@ -7,6 +7,12 @@ description: "Rolling average absolute deviation of a series from its own simple
 
 Rolling average absolute deviation of a series from its own simple moving average over the last N periods. Measures dispersion around the window mean. Higher values indicate greater spread; zero when all values in the window are equal.
 
+## Chart
+
+<ta-chart src="/functions/avgdev.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/avgdev.csv) · [Chart (SVG)](/functions/avgdev.svg)
+
 ## Formula
 
 $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
@@ -46,6 +52,8 @@ $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0
 
 ## Implementation
 
+Added in 0.6.0.
+
 TA-Lib Definition: [`avgdev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/avgdev/avgdev.c) · [`avgdev.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/avgdev/avgdev.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`avgdev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_AVGDEV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AVGDEV.cs) |
 | TypeScript | [`avgdev.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/avgdev.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AVGDEV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/price_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

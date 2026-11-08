@@ -9,6 +9,12 @@ Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted mo
 
 Elder reads two settings — 2 for the short term, which he pairs with a 22-period EMA of price to mark corrections against an established trend, and 13 for the intermediate term, the default here. A divergence against price can be confirmed by a zero-line cross. Beyond Elder, much longer settings are also in use, 100 or so, for the longer-term balance between buyers and sellers. Nothing normalises the result, so it scales with the instrument's own volume: read its sign and its shape over time, not its level against another instrument.
 
+## Chart
+
+<ta-chart src="/functions/efi.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/efi.csv) · [Chart (SVG)](/functions/efi.svg)
+
 ## Formula
 
 force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
@@ -51,6 +57,8 @@ The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod`
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`efi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/efi/efi.c) · [`efi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/efi/efi.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`efi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_EFI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_EFI.cs) |
 | TypeScript | [`efi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/efi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.EFI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

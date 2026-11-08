@@ -9,6 +9,12 @@ Zero-Lag Exponential Moving Average: an [`EMA`](/functions/ema.md) applied not t
 
 ZLEMA is also selectable as a moving-average type (`TA_MAType_ZLEMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma.md), [`BBANDS`](/functions/bbands.md), [`STOCH`](/functions/stoch.md), [`MACDEXT`](/functions/macdext.md), ...).
 
+## Chart
+
+<ta-chart src="/functions/zlema.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/zlema.csv) · [Chart (SVG)](/functions/zlema.svg)
+
 ## Formula
 
 lag = Integer( (n - 1) / 2 )
@@ -61,6 +67,8 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seed
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`zlema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zlema/zlema.c) · [`zlema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zlema/zlema.yaml)
 
 | Native | File |
@@ -71,7 +79,9 @@ TA-Lib Definition: [`zlema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_ZLEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ZLEMA.cs) |
 | TypeScript | [`zlema.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/zlema.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ZLEMA` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

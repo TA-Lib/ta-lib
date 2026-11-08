@@ -7,6 +7,12 @@ description: "The rolling Sortino ratio: the mean return in excess of a minimum 
 
 The rolling Sortino ratio: the mean return in excess of a minimum acceptable return (MAR), divided by the downside deviation, over a trailing window, scaled to a year. It is the Sharpe ratio with upside volatility taken out of the denominator: only returns below the MAR count as risk. Above 0 the window's returns beat the MAR on average; the larger the value, the more return per unit of downside.
 
+## Chart
+
+<ta-chart src="/functions/sortino.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sortino.csv) · [Chart (SVG)](/functions/sortino.svg)
+
 ## Formula
 
 With simple returns $r_i = (x_i - x_{i-1}) / x_{i-1}$, per-bar minimum acceptable return $\text{MAR}$, excess returns $d_i = r_i - \text{MAR}$ and annualization $A$, over the trailing $n$ returns:
@@ -61,6 +67,8 @@ The result is $+\infty$ when no return in the window is below the MAR, and NaN w
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`sortino.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sortino/sortino.c) · [`sortino.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sortino/sortino.yaml)
 
 | Native | File |
@@ -71,7 +79,9 @@ TA-Lib Definition: [`sortino.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_SORTINO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SORTINO.cs) |
 | TypeScript | [`sortino.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sortino.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SORTINO` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

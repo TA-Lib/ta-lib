@@ -7,6 +7,12 @@ description: "Le Beau's Chandelier Exit, a two-line volatility stop."
 
 Le Beau's Chandelier Exit, a two-line volatility stop. The highest high of the window is offset down, and the lowest low up, by a multiple of the Average True Range, so each line hangs from the recent extreme at a distance that widens as the true range grows. The long line is the exit for a long position and hangs below the recent highs; the short line is the mirror for a short position, above the recent lows.
 
+## Chart
+
+<ta-chart src="/functions/ce.svg" ratio="720:274" alt="Drawn on the price pane over candles, with a band between outRealShort and outRealLong with a soft fill."></ta-chart>
+
+Drawn on the price pane over candles, with a band between outRealShort and outRealLong with a soft fill. [Reference data (CSV)](/functions/ce.csv) · [Chart (SVG)](/functions/ce.svg)
+
 ## Formula
 
 Long = MAX(High, TimePeriod) - Multiplier * ATR(TimePeriod)
@@ -60,6 +66,8 @@ Short = MIN(Low, TimePeriod) + Multiplier * ATR(TimePeriod)
 
 ## Implementation
 
+Added in 0.8.4.
+
 TA-Lib Definition: [`ce.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ce/ce.c) · [`ce.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ce/ce.yaml)
 
 | Native | File |
@@ -70,7 +78,9 @@ TA-Lib Definition: [`ce.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_CE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CE.cs) |
 | TypeScript | [`ce.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ce.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CE` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

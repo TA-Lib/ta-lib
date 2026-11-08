@@ -9,6 +9,12 @@ Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure
 
 This is exactly the efficiency ratio [`KAMA`](/functions/kama.md) computes internally to set its adaptive smoothing constant, exposed standalone and kept bit-identical to it.
 
+## Chart
+
+<ta-chart src="/functions/er.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/er.csv) · [Chart (SVG)](/functions/er.svg)
+
 ## Formula
 
 `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
@@ -58,6 +64,8 @@ TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form h
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`er.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/er/er.c) · [`er.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/er/er.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`er.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_ER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ER.cs) |
 | TypeScript | [`er.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/er.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ER` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

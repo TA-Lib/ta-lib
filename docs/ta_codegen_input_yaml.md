@@ -82,6 +82,7 @@ verbatim (batch) or idiomatically recast (streaming, #278).
 | `name` | string | yes | Parameter name (e.g., `inReal`, `inReal0`) |
 | `type` | string | yes | Data type (see [Input Types](#input-types)) |
 | `price_components` | list | for `price` | OHLCV components for a `price`-type input (e.g., `[high, low, close]`) |
+| `domain` | [lo, hi] | no | `real` only: the input range over which the function is defined or meaningful, on an example scale (ACOS: `[-1, 1]`); every example series, doctest and reference-data input maps the example price series affinely into it |
 
 ### Optional input parameters
 

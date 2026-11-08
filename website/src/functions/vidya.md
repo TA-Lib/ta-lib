@@ -7,6 +7,12 @@ description: "Variable Index Dynamic Average (Tushar Chande): an EMA whose smoot
 
 Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is scaled every bar by the absolute value of the Chande Momentum Oscillator. It follows the price like an EMA in a one-way move and stops moving when up and down moves balance, so it flattens out in consolidations.
 
+## Chart
+
+<ta-chart src="/functions/vidya.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/vidya.csv) · [Chart (SVG)](/functions/vidya.svg)
+
 ## Formula
 
 n = optInTimePeriod, m = optInCMOPeriod, alpha = 2 / (n + 1)
@@ -63,6 +69,8 @@ The recursion starts from the first price. Until m price changes are available, 
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`vidya.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vidya/vidya.c) · [`vidya.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vidya/vidya.yaml)
 
 | Native | File |
@@ -73,7 +81,9 @@ TA-Lib Definition: [`vidya.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_VIDYA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VIDYA.cs) |
 | TypeScript | [`vidya.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vidya.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.VIDYA` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

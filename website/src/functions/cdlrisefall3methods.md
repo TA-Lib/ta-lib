@@ -7,6 +7,12 @@ description: "A five-candle continuation pattern: a long candle, three small cou
 
 A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a long same-color candle that resumes the trend. Bullish (rising) or bearish (falling) continuation signal.
 
+## Chart
+
+<ta-chart src="/functions/cdlrisefall3methods.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlrisefall3methods.csv) · [Chart (SVG)](/functions/cdlrisefall3methods.svg)
+
 ## Notes
 
 - Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.
@@ -56,6 +62,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlrisefall3methods.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrisefall3methods/cdlrisefall3methods.c) · [`cdlrisefall3methods.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlrisefall3methods/cdlrisefall3methods.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`cdlrisefall3methods.c`](https://github.com/TA-Lib/ta-lib/bl
 | C# | [`Core_CDLRISEFALL3METHODS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLRISEFALL3METHODS.cs) |
 | TypeScript | [`cdlrisefall3methods.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlrisefall3methods.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLRISEFALL3METHODS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

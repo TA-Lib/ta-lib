@@ -7,6 +7,12 @@ description: "Single candle with a long real body and no/very-short upper and lo
 
 Single candle with a long real body and no/very-short upper and lower shadows, so open and close sit at the range extremes. Bullish (white) or bearish (black) reversal/strength signal per the body color.
 
+## Chart
+
+<ta-chart src="/functions/cdlmarubozu.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlmarubozu.csv) · [Chart (SVG)](/functions/cdlmarubozu.svg)
+
 ## Formula
 
 One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlmarubozu.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmarubozu/cdlmarubozu.c) · [`cdlmarubozu.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmarubozu/cdlmarubozu.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlmarubozu.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDLMARUBOZU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMARUBOZU.cs) |
 | TypeScript | [`cdlmarubozu.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmarubozu.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLMARUBOZU`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -9,6 +9,12 @@ Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily tradin
 
 Read it as a rate of expansion. Positive means the smoothed range is wider than it was; negative means it has contracted. Chaikin's own interpretation is contrarian on the fast side: a range that widens sharply over a short span is typical of the panic near a market bottom, while a range that narrows steadily over a long span is typical of a market topping out. It measures range, not direction, so it says nothing about which way price is heading.
 
+## Chart
+
+<ta-chart src="/functions/cvi.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/cvi.csv) · [Chart (SVG)](/functions/cvi.svg)
+
 ## Formula
 
 HL = high - low
@@ -64,6 +70,8 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePer
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.c) · [`cvi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.yaml)
 
 | Native | File |
@@ -74,7 +82,9 @@ TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CVI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CVI.cs) |
 | TypeScript | [`cvi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cvi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CVI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

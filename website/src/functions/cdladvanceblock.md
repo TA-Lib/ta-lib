@@ -7,6 +7,12 @@ description: "Three-candle bearish reversal pattern: three white candles with co
 
 Three-candle bearish reversal pattern: three white candles with consecutively higher closes whose advance weakens (progressively smaller bodies and/or lengthening upper shadows). Signals that an uptrend's advance is being blocked. A hit (-100) is bearish: the advance is stalling/blocked; meaningful mainly within an existing uptrend.
 
+## Chart
+
+<ta-chart src="/functions/cdladvanceblock.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdladvanceblock.csv) · [Chart (SVG)](/functions/cdladvanceblock.svg)
+
 ## Notes
 
 - Does not verify the prior uptrend the pattern classically assumes for significance.
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdladvanceblock.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdladvanceblock/cdladvanceblock.c) · [`cdladvanceblock.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdladvanceblock/cdladvanceblock.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdladvanceblock.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | C# | [`Core_CDLADVANCEBLOCK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLADVANCEBLOCK.cs) |
 | TypeScript | [`cdladvanceblock.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdladvanceblock.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLADVANCEBLOCK`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Choppiness Index: a trend-versus-consolidation gauge, the true ran
 
 Choppiness Index: a trend-versus-consolidation gauge, the true range travelled over a window against the height of the box its bars span. Devised by Bill Dreiss. Log-scaled so that a straight run reads 0 and bars that each fill the whole box read 100. Like ADX and VHF it measures whether the market is trending, not in which direction: low values mean a directional run, high values sideways chop.
 
+## Chart
+
+<ta-chart src="/functions/chop.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/chop.csv) · [Chart (SVG)](/functions/chop.svg)
+
 ## Formula
 
 TR[j] = max(High[j], Close[j-1]) - min(Low[j], Close[j-1]), the true range.
@@ -61,6 +67,8 @@ The first true range reads the close one bar before the window, so the first val
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`chop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/chop/chop.c) · [`chop.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/chop/chop.yaml)
 
 | Native | File |
@@ -71,7 +79,9 @@ TA-Lib Definition: [`chop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CHOP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CHOP.cs) |
 | TypeScript | [`chop.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/chop.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CHOP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

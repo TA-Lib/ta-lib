@@ -7,6 +7,12 @@ description: "Aroon reports how recently the highest high and lowest low occurre
 
 Aroon reports how recently the highest high and lowest low occurred within a rolling window of length optInTimePeriod, as two 0-100 oscillators. Indicates trend strength and direction. Up near 100 = a very recent new high (strong uptrend); Down near 100 = a very recent new low. Up/Down crossovers signal trend shifts.
 
+## Chart
+
+<ta-chart src="/functions/aroon.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outAroonDown as a dashed line and outAroonUp as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outAroonDown as a dashed line and outAroonUp as a solid line. [Reference data (CSV)](/functions/aroon.csv) · [Chart (SVG)](/functions/aroon.svg)
+
 ## Formula
 
 Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
@@ -48,6 +54,8 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`aroon.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/aroon/aroon.c) · [`aroon.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/aroon/aroon.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`aroon.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_AROON.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AROON.cs) |
 | TypeScript | [`aroon.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/aroon.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AROON`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

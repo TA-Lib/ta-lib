@@ -7,6 +7,12 @@ description: "Wilder's Swing Index: one number rating each bar against the bar b
 
 Wilder's Swing Index: one number rating each bar against the bar before it, from both bars' open and close and the current bar's high and low, signed by the direction of the swing. A strong close above the prior close on a wide range reads high and positive, a strong down swing reads high and negative. It is scaled against the limit move, the largest one-bar move the market allows, and stays between -100 and +100 while every move is within that limit. J. Welles Wilder Jr. introduced it in 1978 and trades its running total, ASI.
 
+## Chart
+
+<ta-chart src="/functions/si.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/si.csv) · [Chart (SVG)](/functions/si.svg)
+
 ## Formula
 
 $$
@@ -66,6 +72,8 @@ where $a = |H_t - C_{t-1}|$, $b = |L_t - C_{t-1}|$, $d = |H_t - L_t|$, $q = \tfr
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/si/si.c) · [`si.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/si/si.yaml)
 
 | Native | File |
@@ -76,7 +84,9 @@ TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_SI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SI.cs) |
 | TypeScript | [`si.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/si.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

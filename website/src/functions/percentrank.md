@@ -11,6 +11,12 @@ Each bar is compared against the `optInTimePeriod` values immediately preceding 
 
 It is a distribution-relative reading rather than a price-relative one: unlike an oscillator built from ranges or averages, it says nothing about how far the value moved, only how many of its recent predecessors it overtook. That makes it flat-scaled across instruments and directly comparable between them. It is best known as the third leg of Connors' ConnorsRSI, applied there to one-day returns rather than to price.
 
+## Chart
+
+<ta-chart src="/functions/percentrank.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/percentrank.csv) · [Chart (SVG)](/functions/percentrank.svg)
+
 ## Formula
 
 For each bar t, over the previous optInTimePeriod values:
@@ -62,6 +68,8 @@ The comparison is strictly less-than, so a value tied with a predecessor does no
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`percentrank.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentrank/percentrank.c) · [`percentrank.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentrank/percentrank.yaml)
 
 | Native | File |
@@ -72,7 +80,9 @@ TA-Lib Definition: [`percentrank.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_PERCENTRANK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PERCENTRANK.cs) |
 | TypeScript | [`percentrank.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/percentrank.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PERCENTRANK` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

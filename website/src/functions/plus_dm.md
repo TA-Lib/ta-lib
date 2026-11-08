@@ -7,6 +7,12 @@ description: "Plus Directional Movement: the Wilder-smoothed accumulation of upw
 
 Plus Directional Movement: the Wilder-smoothed accumulation of upward directional movement (+DM1). A component of the Directional Movement System used to build +DI/DX/ADX.
 
+## Chart
+
+<ta-chart src="/functions/plus_dm.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/plus_dm.csv) · [Chart (SVG)](/functions/plus_dm.svg)
+
 ## Formula
 
 +DM1 = (high - prevHigh) if (high-prevHigh) > 0 and > (prevLow-low), else 0.
@@ -50,6 +56,8 @@ period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`plus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_dm/plus_dm.c) · [`plus_dm.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_dm/plus_dm.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`plus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_PLUS_DM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PLUS_DM.cs) |
 | TypeScript | [`plusDm.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/plusDm.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PLUS_DM`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

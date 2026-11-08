@@ -4951,7 +4951,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Dot),
         ],
         lookback: static (core, c) => core.SarLookback(c.RealOpt(0), c.RealOpt(1)),
         displayShift: static (core, c, outputIdx) => core.SarDisplayShift(c.RealOpt(0), c.RealOpt(1), outputIdx),
@@ -4982,7 +4982,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Dot),
         ],
         lookback: static (core, c) => core.SarextLookback(c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
         displayShift: static (core, c, outputIdx) => core.SarextDisplayShift(c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), outputIdx),

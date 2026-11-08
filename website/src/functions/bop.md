@@ -7,6 +7,12 @@ description: "Balance Of Power compares where the close sits relative to the ope
 
 Balance Of Power compares where the close sits relative to the open, normalized by the bar's high-low range. A per-bar oscillator with no smoothing. Positive: close above open (buyers dominated); negative: sellers dominated.
 
+## Chart
+
+<ta-chart src="/functions/bop.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/bop.csv) · [Chart (SVG)](/functions/bop.svg)
+
 ## Formula
 
 BOP = (Close - Open) / (High - Low)
@@ -43,6 +49,8 @@ BOP = (Close - Open) / (High - Low)
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`bop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bop/bop.c) · [`bop.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bop/bop.yaml)
 
 | Native | File |
@@ -53,7 +61,9 @@ TA-Lib Definition: [`bop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_BOP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BOP.cs) |
 | TypeScript | [`bop.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/bop.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.BOP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

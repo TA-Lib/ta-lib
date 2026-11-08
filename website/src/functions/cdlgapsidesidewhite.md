@@ -7,6 +7,12 @@ description: "A three-candle pattern: a first candle followed by two white candl
 
 A three-candle pattern: a first candle followed by two white candles of similar body size that both gap the same direction (up or down) from the first candle's real body and open at about the same level. It is a continuation signal whose sign reports the gap direction; the code does not verify a prior trend.
 
+## Chart
+
+<ta-chart src="/functions/cdlgapsidesidewhite.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlgapsidesidewhite.csv) · [Chart (SVG)](/functions/cdlgapsidesidewhite.svg)
+
 ## Notes
 
 - Does not verify the prior trend the continuation signal classically assumes.
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlgapsidesidewhite.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgapsidesidewhite/cdlgapsidesidewhite.c) · [`cdlgapsidesidewhite.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgapsidesidewhite/cdlgapsidesidewhite.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdlgapsidesidewhite.c`](https://github.com/TA-Lib/ta-lib/bl
 | C# | [`Core_CDLGAPSIDESIDEWHITE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLGAPSIDESIDEWHITE.cs) |
 | TypeScript | [`cdlgapsidesidewhite.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlgapsidesidewhite.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLGAPSIDESIDEWHITE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

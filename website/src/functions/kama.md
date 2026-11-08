@@ -7,6 +7,12 @@ description: "Kaufman Adaptive Moving Average: an EMA whose smoothing factor ada
 
 Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an efficiency ratio (directional move vs. total volatility). Reacts fast in trends and smooths in ranging markets. Flat KAMA = non-trending/ranging market. KAMA tracking price closely = efficient trend.
 
+## Chart
+
+<ta-chart src="/functions/kama.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/kama.csv) · [Chart (SVG)](/functions/kama.svg)
+
 ## Formula
 
 ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
@@ -53,6 +59,8 @@ KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`kama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kama/kama.c) · [`kama.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kama/kama.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`kama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_KAMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KAMA.cs) |
 | TypeScript | [`kama.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kama.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KAMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

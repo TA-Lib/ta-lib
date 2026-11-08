@@ -7,6 +7,12 @@ description: "Aroon Oscillator: AroonUp minus AroonDown over a lookback window. 
 
 Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures trend direction and strength on a -100..+100 scale. Positive when the high is more recent than the low (up-trend); negative when the low is more recent (down-trend).
 
+## Chart
+
+<ta-chart src="/functions/aroonosc.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/aroonosc.csv) · [Chart (SVG)](/functions/aroonosc.svg)
+
 ## Formula
 
 factor = 100 / optInTimePeriod
@@ -51,6 +57,8 @@ highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (p
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`aroonosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/aroonosc/aroonosc.c) · [`aroonosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/aroonosc/aroonosc.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`aroonosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_AROONOSC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AROONOSC.cs) |
 | TypeScript | [`aroonosc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/aroonosc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.AROONOSC`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Hilbert Transform classifier that labels each bar 1 (trending — 
 
 Hilbert Transform classifier that labels each bar 1 (trending — favor trend-following) or 0 (cycling — favor mean-reversion). Built from the same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used across the other HT_* functions.
 
+## Chart
+
+<ta-chart src="/functions/ht_trendmode.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/ht_trendmode.csv) · [Chart (SVG)](/functions/ht_trendmode.svg)
+
 ## Interpretation
 
 Mean-reversion is the trading assumption that price will swing back toward its recent average rather than keep moving in one direction — instead of chasing a breakout, it buys near the low end of the range and sells near the high end, betting on a reversal rather than continuation. A 0 reading is HT_TRENDMODE's signal that this bar fits that regime: price is oscillating rather than trending, so fading the extremes is expected to hold up better than following the move.
@@ -40,6 +46,8 @@ Mean-reversion is the trading assumption that price will swing back toward its r
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_trendmode.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendmode/ht_trendmode.c) · [`ht_trendmode.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_trendmode/ht_trendmode.yaml)
 
 | Native | File |
@@ -50,7 +58,9 @@ TA-Lib Definition: [`ht_trendmode.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C# | [`Core_HT_TRENDMODE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_TRENDMODE.cs) |
 | TypeScript | [`htTrendmode.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htTrendmode.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_TRENDMODE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

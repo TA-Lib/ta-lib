@@ -9,6 +9,12 @@ Hilbert Transform indicator that decomposes the price series into its in-phase (
 
 This function is meant for building your own cycle analysis on top of the raw phasor, not as a ready-made signal.
 
+## Chart
+
+<ta-chart src="/functions/ht_phasor.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line. [Reference data (CSV)](/functions/ht_phasor.csv) · [Chart (SVG)](/functions/ht_phasor.svg)
+
 ## Formula
 
 Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
@@ -47,6 +53,8 @@ I and Q are the Cartesian coordinates of the rotating cycle vector — the same 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_phasor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_phasor/ht_phasor.c) · [`ht_phasor.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_phasor/ht_phasor.yaml)
 
 | Native | File |
@@ -57,7 +65,9 @@ TA-Lib Definition: [`ht_phasor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_HT_PHASOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_PHASOR.cs) |
 | TypeScript | [`htPhasor.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htPhasor.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_PHASOR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

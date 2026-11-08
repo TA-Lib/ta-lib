@@ -7,6 +7,12 @@ description: "Moving Average Convergence/Divergence: the difference between a fa
 
 Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the input, plus an EMA-smoothed signal line and their histogram. MACD crossing its signal line and histogram sign changes flag momentum shifts.
 
+## Chart
+
+<ta-chart src="/functions/macd.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macd.csv) · [Chart (SVG)](/functions/macd.svg)
+
 ## Formula
 
 MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
@@ -55,6 +61,8 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`macd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macd/macd.c) · [`macd.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macd/macd.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`macd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_MACD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACD.cs) |
 | TypeScript | [`macd.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macd.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

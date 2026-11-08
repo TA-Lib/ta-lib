@@ -7,6 +7,12 @@ description: "Average True Range expressed as a percentage of the current close,
 
 Average True Range expressed as a percentage of the current close, making volatility comparable across price levels and securities. Same computation as ATR, then normalized by close. Higher values mean greater relative volatility; unit is percent of price.
 
+## Chart
+
+<ta-chart src="/functions/natr.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/natr.csv) · [Chart (SVG)](/functions/natr.svg)
+
 ## Formula
 
 NATR = (ATR / Close) * 100
@@ -53,6 +59,8 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`natr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/natr/natr.c) · [`natr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/natr/natr.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`natr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_NATR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_NATR.cs) |
 | TypeScript | [`natr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/natr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.NATR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

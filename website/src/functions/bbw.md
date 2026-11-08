@@ -7,6 +7,12 @@ description: "Bollinger BandWidth: the distance between the upper and lower Boll
 
 Bollinger BandWidth: the distance between the upper and lower Bollinger Bands as a percentage of the middle band. Low values mark contracting volatility, the setup John Bollinger calls the Squeeze; high values mark expanding volatility.
 
+## Chart
+
+<ta-chart src="/functions/bbw.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/bbw.csv) · [Chart (SVG)](/functions/bbw.svg)
+
 ## Formula
 
 $$
@@ -64,6 +70,8 @@ where $\mathrm{upper}_t$, $\mathrm{middle}_t$ and $\mathrm{lower}_t$ are the [`B
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`bbw.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbw/bbw.c) · [`bbw.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbw/bbw.yaml)
 
 | Native | File |
@@ -74,7 +82,9 @@ TA-Lib Definition: [`bbw.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_BBW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BBW.cs) |
 | TypeScript | [`bbw.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/bbw.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.BBW` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

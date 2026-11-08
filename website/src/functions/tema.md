@@ -7,6 +7,12 @@ description: "Triple Exponential Moving Average: a smoothed price overlay built 
 
 Triple Exponential Moving Average: a smoothed price overlay built from three successively-applied EMAs to reduce lag versus a plain EMA. Distinct from EMA3, also called "triple EMA" in the literature.
 
+## Chart
+
+<ta-chart src="/functions/tema.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/tema.csv) · [Chart (SVG)](/functions/tema.svg)
+
 ## Formula
 
 EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
@@ -50,6 +56,8 @@ EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`tema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tema/tema.c) · [`tema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tema/tema.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`tema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_TEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TEMA.cs) |
 | TypeScript | [`tema.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/tema.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TEMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

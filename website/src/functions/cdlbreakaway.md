@@ -7,6 +7,12 @@ description: "A five-candle reversal pattern: a long first candle, a same-colore
 
 A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the move, and an opposite-colored fifth candle that closes back inside the gap. Emits a bullish signal (bottom reversal) or bearish signal (top reversal).
 
+## Chart
+
+<ta-chart src="/functions/cdlbreakaway.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlbreakaway.csv) · [Chart (SVG)](/functions/cdlbreakaway.svg)
+
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlbreakaway.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbreakaway/cdlbreakaway.c) · [`cdlbreakaway.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbreakaway/cdlbreakaway.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdlbreakaway.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C# | [`Core_CDLBREAKAWAY.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLBREAKAWAY.cs) |
 | TypeScript | [`cdlbreakaway.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlbreakaway.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLBREAKAWAY`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

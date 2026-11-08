@@ -87,6 +87,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_SAR_Maximum =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SAR_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_DOT };
+
 static const TA_InputParameterInfo    *TA_SAR_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -95,7 +98,7 @@ static const TA_InputParameterInfo    *TA_SAR_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_SAR_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_SAR_Default,
   NULL
 };
 
@@ -305,6 +308,9 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_SAREXT_AccelerationMaxShort =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SAREXT_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_DOT };
+
 static const TA_InputParameterInfo    *TA_SAREXT_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HL,
@@ -313,7 +319,7 @@ static const TA_InputParameterInfo    *TA_SAREXT_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_SAREXT_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Real_SAREXT_Default,
   NULL
 };
 

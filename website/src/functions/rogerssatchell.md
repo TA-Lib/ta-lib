@@ -11,6 +11,12 @@ What separates it from the other range estimators is that it is unbiased **whate
 
 Read the output as a fraction in log-return units, not price units and not percent. At an `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
 
+## Chart
+
+<ta-chart src="/functions/rogerssatchell.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rogerssatchell.csv) · [Chart (SVG)](/functions/rogerssatchell.svg)
+
 ## Formula
 
 ```
@@ -79,6 +85,8 @@ Every term reads only its own bar, so the lookback is `n - 1`: the first output 
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`rogerssatchell.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rogerssatchell/rogerssatchell.c) · [`rogerssatchell.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rogerssatchell/rogerssatchell.yaml)
 
 | Native | File |
@@ -89,7 +97,9 @@ TA-Lib Definition: [`rogerssatchell.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_ROGERSSATCHELL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROGERSSATCHELL.cs) |
 | TypeScript | [`rogerssatchell.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rogerssatchell.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROGERSSATCHELL` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

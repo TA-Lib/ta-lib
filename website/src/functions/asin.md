@@ -7,6 +7,12 @@ description: "Element-wise arcsine of the input series."
 
 Element-wise arcsine of the input series.
 
+## Chart
+
+<ta-chart src="/functions/asin.svg" ratio="720:416" alt="Drawn on the price pane over the input, close->[-1,1], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the input, close->[-1,1], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/asin.csv) · [Chart (SVG)](/functions/asin.svg)
+
 ## Formula
 
 outReal[i] = asin(inReal[i])
@@ -44,6 +50,8 @@ outReal[i] = asin(inReal[i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`asin.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asin/asin.c) · [`asin.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asin/asin.yaml)
 
 | Native | File |
@@ -54,7 +62,9 @@ TA-Lib Definition: [`asin.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ASIN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ASIN.cs) |
 | TypeScript | [`asin.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/asin.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ASIN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

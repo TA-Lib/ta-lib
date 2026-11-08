@@ -7,6 +7,12 @@ description: "A two-candle in-neck pattern: a long black candle followed by a wh
 
 A two-candle in-neck pattern: a long black candle followed by a white candle that opens below the prior low and closes just barely into the prior body (near the prior close). It is a bearish continuation signal. A hit signals bearish continuation (the down move is expected to resume).
 
+## Chart
+
+<ta-chart src="/functions/cdlinneck.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlinneck.csv) · [Chart (SVG)](/functions/cdlinneck.svg)
+
 ## Formula
 
 Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlinneck.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinneck/cdlinneck.c) · [`cdlinneck.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinneck/cdlinneck.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdlinneck.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_CDLINNECK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLINNECK.cs) |
 | TypeScript | [`cdlinneck.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlinneck.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLINNECK`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

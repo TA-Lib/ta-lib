@@ -7,6 +7,12 @@ description: "Chande and Kroll's two-line volatility stop."
 
 Chande and Kroll's two-line volatility stop. The highest high is offset down, and the lowest low up, by a multiple of the Average True Range, and each line then takes the extreme of its own recent values, so it moves only when a new extreme enters the stop window or an old one leaves it. Price above both lines reads as an uptrend and price below both as a downtrend.
 
+## Chart
+
+<ta-chart src="/functions/cksp.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line."></ta-chart>
+
+Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line. [Reference data (CSV)](/functions/cksp.csv) · [Chart (SVG)](/functions/cksp.svg)
+
 ## Formula
 
 FirstHighStop = MAX(High, TimePeriod) - Multiplier * ATR(TimePeriod)
@@ -64,6 +70,8 @@ LowStop = MIN(FirstLowStop, StopPeriod)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`cksp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cksp/cksp.c) · [`cksp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cksp/cksp.yaml)
 
 | Native | File |
@@ -74,7 +82,9 @@ TA-Lib Definition: [`cksp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CKSP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CKSP.cs) |
 | TypeScript | [`cksp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cksp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CKSP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

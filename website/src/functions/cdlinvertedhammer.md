@@ -7,6 +7,12 @@ description: "Single-candle pattern: a small real body with a long upper shadow 
 
 Single-candle pattern: a small real body with a long upper shadow and little-to-no lower shadow that gaps down from the prior candle. A hit flags a potential bullish reversal.
 
+## Chart
+
+<ta-chart src="/functions/cdlinvertedhammer.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlinvertedhammer.csv) · [Chart (SVG)](/functions/cdlinvertedhammer.svg)
+
 ## Notes
 
 - Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlinvertedhammer.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinvertedhammer/cdlinvertedhammer.c) · [`cdlinvertedhammer.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinvertedhammer/cdlinvertedhammer.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdlinvertedhammer.c`](https://github.com/TA-Lib/ta-lib/blob
 | C# | [`Core_CDLINVERTEDHAMMER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLINVERTEDHAMMER.cs) |
 | TypeScript | [`cdlinvertedhammer.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlinvertedhammer.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLINVERTEDHAMMER`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

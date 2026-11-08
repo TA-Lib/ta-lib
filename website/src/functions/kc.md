@@ -7,6 +7,12 @@ description: "Keltner Channels: three overlap lines around price."
 
 Keltner Channels: three overlap lines around price. The centre line is an exponential moving average of the typical price; the outer bands sit a multiple of the Average True Range above and below it. The band width tracks volatility, so the channel widens in fast markets and narrows in quiet ones.
 
+## Chart
+
+<ta-chart src="/functions/kc.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
+
+Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/kc.csv) · [Chart (SVG)](/functions/kc.svg)
+
 ## Formula
 
 TP = (High + Low + Close) / 3
@@ -63,6 +69,8 @@ Lower = Middle - Deviations * Band
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`kc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kc/kc.c) · [`kc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kc/kc.yaml)
 
 | Native | File |
@@ -73,7 +81,9 @@ TA-Lib Definition: [`kc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_KC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KC.cs) |
 | TypeScript | [`kc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kc.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KC` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

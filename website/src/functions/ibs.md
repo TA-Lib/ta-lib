@@ -9,6 +9,12 @@ Internal Bar Strength: where the close sits inside its own bar's range. It is 0 
 
 It is the closing half of a stochastic oscillator taken over a single bar, which is how the paper that named the effect describes it. Low readings say the session ended on weakness, high readings on strength, and the published use is mean reversion on the next bar rather than trend confirmation.
 
+## Chart
+
+<ta-chart src="/functions/ibs.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/ibs.csv) · [Chart (SVG)](/functions/ibs.svg)
+
 ## Formula
 
 range[i] = high[i] - low[i]
@@ -58,6 +64,8 @@ Multiplying by 100 gives the percent form used by some platforms, and a moving a
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`ibs.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ibs/ibs.c) · [`ibs.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ibs/ibs.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`ibs.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_IBS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_IBS.cs) |
 | TypeScript | [`ibs.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ibs.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.IBS` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

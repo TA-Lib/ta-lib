@@ -7,6 +7,12 @@ description: "Rate of Change Ratio: the ratio of the current price to the price 
 
 Rate of Change Ratio: the ratio of the current price to the price optInTimePeriod bars ago. A momentum measure centered at 1. Always positive, centered at 1: >1 rising, <1 falling.
 
+## Chart
+
+<ta-chart src="/functions/rocr.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rocr.csv) · [Chart (SVG)](/functions/rocr.svg)
+
 ## Formula
 
 ROCR = price / price[t - optInTimePeriod]
@@ -50,6 +56,8 @@ ROCR = price / price[t - optInTimePeriod]
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`rocr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr/rocr.c) · [`rocr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr/rocr.yaml)
 
 | Native | File |
@@ -60,7 +68,9 @@ TA-Lib Definition: [`rocr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_ROCR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROCR.cs) |
 | TypeScript | [`rocr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rocr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROCR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

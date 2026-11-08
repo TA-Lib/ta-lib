@@ -9,6 +9,12 @@ True Strength Index: William Blau's double-smoothed momentum oscillator. The one
 
 Zero is the reference line — positive means the smoothed momentum is net upward, negative net downward — and its crossings are the usual trade trigger. Extreme readings mark overbought and oversold conditions, and divergence against price is the classic Blau reading. A signal line is not part of the output; apply `EMA` to `outReal` to obtain one, since no source agrees on its period.
 
+## Chart
+
+<ta-chart src="/functions/tsi.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/tsi.csv) · [Chart (SVG)](/functions/tsi.svg)
+
 ## Formula
 
 m = close - previous close
@@ -59,6 +65,8 @@ The first period is applied first, to the raw change; the second smooths its res
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`tsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsi/tsi.c) · [`tsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsi/tsi.yaml)
 
 | Native | File |
@@ -69,7 +77,9 @@ TA-Lib Definition: [`tsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_TSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TSI.cs) |
 | TypeScript | [`tsi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/tsi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TSI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

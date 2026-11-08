@@ -7,6 +7,12 @@ description: "Single-candle pattern with a long real body that opens at (or near
 
 Single-candle pattern with a long real body that opens at (or near) its extreme. A bullish belt-hold is a long white candle with no/very short lower shadow; a bearish belt-hold is a long black candle with no/very short upper shadow. A white hit is bullish (opens at the low, closes strong); a black hit is bearish (opens at the high, closes weak).
 
+## Chart
+
+<ta-chart src="/functions/cdlbelthold.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlbelthold.csv) · [Chart (SVG)](/functions/cdlbelthold.svg)
+
 ## Formula
 
 One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
@@ -58,6 +64,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlbelthold.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbelthold/cdlbelthold.c) · [`cdlbelthold.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbelthold/cdlbelthold.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`cdlbelthold.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDLBELTHOLD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLBELTHOLD.cs) |
 | TypeScript | [`cdlbelthold.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlbelthold.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLBELTHOLD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "An estimate, from the trailing window, of the excess kurtosis of t
 
 An estimate, from the trailing window, of the excess kurtosis of the distribution its values come from: the fourth standardised moment minus 3, so a normal distribution reads 0. A tail-weight measure: above 0 the distribution has heavier tails than a normal one with the same variance, below 0 lighter ones. The companion to the shipped [`VAR`](/functions/var.md) and [`STDDEV`](/functions/stddev.md) in the same group.
 
+## Chart
+
+<ta-chart src="/functions/kurtosis.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/kurtosis.csv) · [Chart (SVG)](/functions/kurtosis.svg)
+
 ## Formula
 
 Sample-adjusted Fisher excess kurtosis, the estimator usually written `G2`. With window size `n`, window mean `x̄`, and sample variance `s² = Σ(x−x̄)²/(n−1)`:
@@ -58,6 +64,8 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`kurtosis.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.c) · [`kurtosis.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`kurtosis.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_KURTOSIS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KURTOSIS.cs) |
 | TypeScript | [`kurtosis.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kurtosis.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KURTOSIS` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

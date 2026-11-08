@@ -1,4 +1,5 @@
-import { defineClientConfig } from "vuepress/client";
+import { defineComponent, h, onMounted, ref } from "vue";
+import { defineClientConfig, withBase } from "vuepress/client";
 
 // Recover a tab that was open across a deploy.
 //
@@ -17,6 +18,45 @@ const STALE_CHUNK =
 // most once; any successful navigation clears the mark.
 const RELOAD_TARGET = "vp-reload-stale-chunk";
 
+// A function page's chart. The SVG is fetched on mount and inlined, so the
+// site's stylesheet themes it and the page's HTML and JS chunk carry none of
+// it; until then the box holds the chart's height so nothing below it moves.
+// `<noscript>` holds an `<img>` of the same file for a reader without JS.
+const TaChart = defineComponent({
+  name: "TaChart",
+  props: {
+    src: { type: String, required: true },
+    ratio: { type: String, default: "720:285" },
+    alt: { type: String, default: "" },
+  },
+  setup(props) {
+    const url = withBase(props.src);
+    const svg = ref("");
+    const failed = ref(false);
+
+    onMounted(async () => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(response.statusText);
+        const text = await response.text();
+        if (!/^\s*(?:<\?xml[^>]*>\s*)?<svg[\s>]/u.test(text)) throw new Error("not an SVG");
+        svg.value = text;
+      } catch {
+        failed.value = true;
+      }
+    });
+
+    return () => {
+      const [w, hgt] = props.ratio.split(":");
+      const box = { class: "ta-chart-box", style: { aspectRatio: `${w} / ${hgt}`, maxWidth: "100%" } };
+      if (svg.value) return h("div", { ...box, role: "img", "aria-label": props.alt, innerHTML: svg.value });
+      if (failed.value) return h("div", box, h("a", { href: url }, "Chart (SVG)"));
+      const alt = props.alt.replace(/&/gu, "&amp;").replace(/"/gu, "&quot;");
+      return h("div", box, h("noscript", { innerHTML: `<img src="${url}" alt="${alt}">` }));
+    };
+  },
+});
+
 export default defineClientConfig({
   enhance({ app, router }) {
     // The llms plugin removes these tags only in some positions; anywhere else Vue meets
@@ -24,6 +64,7 @@ export default defineClientConfig({
     // <llm-exclude> vanishes from the server-rendered page. Both renders need these.
     app.component("llm-only", () => null);
     app.component("llm-exclude", (_props, { slots }) => slots.default?.());
+    app.component("ta-chart", TaChart);
 
     if (__VUEPRESS_SSR__) return;
 

@@ -7,6 +7,12 @@ description: "Wilder's Relative Strength Index, a momentum oscillator bounded 0-
 
 Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from the ratio of average gains to average losses over the period. Used to gauge overbought/oversold conditions. >70 overbought, <30 oversold.
 
+## Chart
+
+<ta-chart src="/functions/rsi.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rsi.csv) · [Chart (SVG)](/functions/rsi.svg)
+
 ## Formula
 
 $$
@@ -69,6 +75,8 @@ where $X$ is the input series and $n$ the period.
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`rsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rsi/rsi.c) · [`rsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rsi/rsi.yaml)
 
 | Native | File |
@@ -79,7 +87,9 @@ TA-Lib Definition: [`rsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_RSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_RSI.cs) |
 | TypeScript | [`rsi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rsi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.RSI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

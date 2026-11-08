@@ -7,6 +7,12 @@ description: "Applies the Fast Stochastic (STOCHF) oscillator to an RSI series i
 
 Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead of price, measuring where RSI sits within its recent min/max range. Oscillates 0-100; high = RSI near its recent top, low = near its recent bottom.
 
+## Chart
+
+<ta-chart src="/functions/stochrsi.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outFastK as a solid line and outFastD as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outFastK as a solid line and outFastD as a solid line. [Reference data (CSV)](/functions/stochrsi.csv) · [Chart (SVG)](/functions/stochrsi.svg)
+
 ## Formula
 
 rsi = RSI(inReal, optInTimePeriod)
@@ -59,6 +65,8 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`stochrsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stochrsi/stochrsi.c) · [`stochrsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stochrsi/stochrsi.yaml)
 
 | Native | File |
@@ -69,7 +77,9 @@ TA-Lib Definition: [`stochrsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_STOCHRSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STOCHRSI.cs) |
 | TypeScript | [`stochrsi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stochrsi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.STOCHRSI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

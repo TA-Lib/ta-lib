@@ -7,6 +7,12 @@ description: "Single-candle pattern: a small real body with both an upper and a 
 
 Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body. Signals indecision; the code does not classify it as bullish or bearish.
 
+## Chart
+
+<ta-chart src="/functions/cdlspinningtop.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a step pane of its own for the integer output outInteger."></ta-chart>
+
+Drawn on the price pane over candles; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/cdlspinningtop.csv) · [Chart (SVG)](/functions/cdlspinningtop.svg)
+
 ## Formula
 
 One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlspinningtop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlspinningtop/cdlspinningtop.c) · [`cdlspinningtop.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlspinningtop/cdlspinningtop.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdlspinningtop.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDLSPINNINGTOP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLSPINNINGTOP.cs) |
 | TypeScript | [`cdlspinningtop.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlspinningtop.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLSPINNINGTOP`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

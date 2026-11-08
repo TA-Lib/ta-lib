@@ -11,7 +11,9 @@
 #      across the files that need it; record the latest *published* release as
 #      the ABI baseline (ABI.released) and derive the shared library version
 #      (ABI.manifest, TALIB_LIBRARY_VERSION in configure.ac) from the public
-#      headers; update the TA-Lib source digest in ta_common.h; and point the
+#      headers; keep the function release ledger (ta_codegen/input/releases.yaml)
+#      covering every function, its untagged row at VERSION; update the TA-Lib
+#      source digest in ta_common.h; and point the
 #      website pages at the latest published release of each backend (the C
 #      install page from the GitHub release, the Java API page from Maven
 #      Central, so a backend that publishes on its own cadence is not pinned to
@@ -47,6 +49,7 @@
 
 from datetime import datetime
 import os
+from pathlib import Path
 import random
 import string
 import subprocess
@@ -56,6 +59,7 @@ from utilities.common import verify_git_repo, run_command
 from utilities.versions import sync_sources_digest, sync_versions
 from utilities.website import latest_release_version, sync_all
 import abi
+import function_releases
 
 def generate_short_unique_id(length=20) -> str:
     # Generate a "unique enough" short identifier.
@@ -122,8 +126,8 @@ def main(argv=None):
 
         if blocked:
             print(f"Skipping the dev/main merge: {blocked}.")
-            print("Doing the metadata half only (versions, shared library version, sources "
-                  "digest, website pages). That half needs "
+            print("Doing the metadata half only (versions, release ledger, shared library "
+                  "version, sources digest, website pages). That half needs "
                   "no branch switching, and updating dev is not what a feature branch "
                   "wants before a commit anyway.")
         else:
@@ -223,6 +227,9 @@ def main(argv=None):
         is_updated, version = sync_versions(root_dir)
         if not is_updated:
             print(f"No changes to version [{version}]")
+
+        for message in function_releases.sync_ledger(Path(root_dir), version):
+            print(message)
 
         released = latest_release_version()
 

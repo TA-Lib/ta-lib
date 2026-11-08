@@ -7,6 +7,12 @@ description: "Hilbert Transform estimate of the dominant cycle period (in bars) 
 
 Hilbert Transform estimate of the dominant cycle period (in bars) of the price series. Outputs the smoothed instantaneous cycle period. Output is the estimated dominant cycle length in bars (clamped to 6-50).
 
+## Chart
+
+<ta-chart src="/functions/ht_dcperiod.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/ht_dcperiod.csv) · [Chart (SVG)](/functions/ht_dcperiod.svg)
+
 ## Inputs
 
 - `inReal` — Source price/value series
@@ -36,6 +42,8 @@ Hilbert Transform estimate of the dominant cycle period (in bars) of the price s
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`ht_dcperiod.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_dcperiod/ht_dcperiod.c) · [`ht_dcperiod.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_dcperiod/ht_dcperiod.yaml)
 
 | Native | File |
@@ -46,7 +54,9 @@ TA-Lib Definition: [`ht_dcperiod.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_HT_DCPERIOD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_DCPERIOD.cs) |
 | TypeScript | [`htDcperiod.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htDcperiod.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_DCPERIOD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

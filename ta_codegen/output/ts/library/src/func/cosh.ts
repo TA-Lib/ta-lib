@@ -229,7 +229,7 @@ export function coshDisplayShift(outputIdx: number, options?: CoshOptions): numb
  * import { cosh } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { begIdx, values } = cosh(data);
  * // values[k] is the value at bar begIdx + k
  * ```
@@ -488,10 +488,10 @@ export function coshOpenAndFillPositional(
  * import { coshOpen } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const stream = coshOpen(data);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(2.1); // a forming bar: commits nothing
+ * const updated = stream.update(2.1); // the bar closes
  * ```
  */
 export function coshOpen(real: ArrayLike<number>, options?: CoshOptions): CoshStream {
@@ -522,7 +522,7 @@ export function coshOpen(real: ArrayLike<number>, options?: CoshOptions): CoshSt
  * import { coshOpenAndFill } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   5 * Math.sin(0.1 * i));
  * const { stream, begIdx, values } = coshOpenAndFill(data);
  * // values[k] is the value at bar begIdx + k
  * ```

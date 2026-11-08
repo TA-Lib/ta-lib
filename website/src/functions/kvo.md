@@ -7,6 +7,12 @@ description: "Klinger Volume Oscillator: each bar's volume is signed by the dire
 
 Klinger Volume Oscillator: each bar's volume is signed by the direction of its high-low-close sum and weighted by where the bar's own range sits inside the cumulative range of the current trend run, then the resulting volume force is smoothed twice and differenced. Klinger's reading is that volume alone says how much trading happened but not what it accomplished, so he scales it by the share of the trend's accumulated range that this bar actually covered. The oscillator crosses zero as the balance of that force changes hands, and crosses its own trigger line earlier.
 
+## Chart
+
+<ta-chart src="/functions/kvo.svg" ratio="720:484" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outKVO as a solid line and outKVOSignal as a dashed line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outKVO as a solid line and outKVOSignal as a dashed line, then a volume pane. [Reference data (CSV)](/functions/kvo.csv) · [Chart (SVG)](/functions/kvo.svg)
+
 ## Formula
 
 hlc = high + low + close;  dm = high - low
@@ -70,6 +76,8 @@ Signal = EMA(KVO, signalPeriod)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`kvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kvo/kvo.c) · [`kvo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kvo/kvo.yaml)
 
 | Native | File |
@@ -80,7 +88,9 @@ TA-Lib Definition: [`kvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_KVO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KVO.cs) |
 | TypeScript | [`kvo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kvo.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KVO` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

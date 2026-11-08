@@ -7,6 +7,12 @@ description: "Returns both the lowest and highest values of the input over a rol
 
 Returns both the lowest and highest values of the input over a rolling window of the last optInTimePeriod bars. An overlap-study companion to MIN and MAX that computes both extrema in one pass.
 
+## Chart
+
+<ta-chart src="/functions/minmax.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outMin as a solid line and outMax as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outMin as a solid line and outMax as a solid line. [Reference data (CSV)](/functions/minmax.csv) · [Chart (SVG)](/functions/minmax.svg)
+
 ## Formula
 
 outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])  
@@ -48,6 +54,8 @@ outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`minmax.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmax/minmax.c) · [`minmax.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmax/minmax.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`minmax.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_MINMAX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINMAX.cs) |
 | TypeScript | [`minmax.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minmax.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MINMAX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

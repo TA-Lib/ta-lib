@@ -7,6 +7,12 @@ description: "Single-candle pattern: a doji whose open and close sit at the high
 
 Single-candle pattern: a doji whose open and close sit at the high (no/very short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with an exceptionally long lower shadow. Emitted as a positive signal, but its directional meaning depends on the prevailing trend, which the code does not check. A hit marks a takuri (dragonfly-doji) line; a potential reversal only when read against the trend (typically a bottom/bullish reversal after a downtrend), which the code itself does not verify.
 
+## Chart
+
+<ta-chart src="/functions/cdltakuri.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdltakuri.csv) · [Chart (SVG)](/functions/cdltakuri.svg)
+
 ## Inputs
 
 - `inOpen` — Open price of each bar
@@ -48,6 +54,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdltakuri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltakuri/cdltakuri.c) · [`cdltakuri.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltakuri/cdltakuri.yaml)
 
 | Native | File |
@@ -58,7 +66,9 @@ TA-Lib Definition: [`cdltakuri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_CDLTAKURI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLTAKURI.cs) |
 | TypeScript | [`cdltakuri.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdltakuri.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLTAKURI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

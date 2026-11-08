@@ -7,6 +7,12 @@ description: "Wilder's Directional Movement Index: the normalized spread between
 
 Wilder's Directional Movement Index: the normalized spread between +DI and -DI. Measures the strength of directional (trending) movement, irrespective of direction. Higher DX = stronger trend (either direction); low DX = ranging market.
 
+## Chart
+
+<ta-chart src="/functions/dx.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/dx.csv) · [Chart (SVG)](/functions/dx.svg)
+
 ## Formula
 
 Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then Wilder-smooth each: X = X - X/period + today. +DI = 100*(+DM14/TR14), -DI = 100*(-DM14/TR14). DX = 100 * |(-DI) - (+DI)| / ((-DI) + (+DI)).
@@ -53,6 +59,8 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`dx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dx/dx.c) · [`dx.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dx/dx.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`dx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_DX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DX.cs) |
 | TypeScript | [`dx.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/dx.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.DX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

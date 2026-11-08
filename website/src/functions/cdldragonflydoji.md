@@ -7,6 +7,12 @@ description: "Single-candle pattern: a doji (open and close nearly equal) sittin
 
 Single-candle pattern: a doji (open and close nearly equal) sitting at the top of the range, with no meaningful upper shadow and a long lower shadow. A reversal signal, but its bullish/bearish meaning depends on the prior trend (the code does not judge direction). A hit marks a dragonfly doji; treated as a potential reversal, but direction (bullish/bearish) must be read from the trend it appears in.
 
+## Chart
+
+<ta-chart src="/functions/cdldragonflydoji.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdldragonflydoji.csv) · [Chart (SVG)](/functions/cdldragonflydoji.svg)
+
 ## Formula
 
 Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
@@ -57,6 +63,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdldragonflydoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldragonflydoji/cdldragonflydoji.c) · [`cdldragonflydoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldragonflydoji/cdldragonflydoji.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`cdldragonflydoji.c`](https://github.com/TA-Lib/ta-lib/blob/
 | C# | [`Core_CDLDRAGONFLYDOJI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLDRAGONFLYDOJI.cs) |
 | TypeScript | [`cdldragonflydoji.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdldragonflydoji.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLDRAGONFLYDOJI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

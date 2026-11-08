@@ -7,6 +7,12 @@ description: "Plus Directional Indicator: the Wilder-smoothed positive direction
 
 Plus Directional Indicator: the Wilder-smoothed positive directional movement expressed as a percentage of the true range. Measures the strength of upward price movement. Rising +DI signals strengthening upward direction; compared against MINUS_DI to judge trend direction.
 
+## Chart
+
+<ta-chart src="/functions/plus_di.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/plus_di.csv) · [Chart (SVG)](/functions/plus_di.svg)
+
 ## Formula
 
 +DM1 = (H-Hprev) if (H-Hprev) > 0 and (H-Hprev) > (Lprev-L), else 0.
@@ -56,6 +62,8 @@ When period <= 1: +DI = +DM1 / TR1 (no *100).
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`plus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_di/plus_di.c) · [`plus_di.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_di/plus_di.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`plus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_PLUS_DI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PLUS_DI.cs) |
 | TypeScript | [`plusDi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/plusDi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PLUS_DI`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

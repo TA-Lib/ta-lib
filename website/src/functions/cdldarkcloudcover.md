@@ -7,6 +7,12 @@ description: "A two-candle bearish reversal pattern: a long white candle followe
 
 A two-candle bearish reversal pattern: a long white candle followed by a black candle that opens above the prior high and closes deep into the prior white body past a penetration threshold. Signals a potential top. A hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
 
+## Chart
+
+<ta-chart src="/functions/cdldarkcloudcover.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdldarkcloudcover.csv) · [Chart (SVG)](/functions/cdldarkcloudcover.svg)
+
 ## Notes
 
 - Does not verify the preceding uptrend the bearish reversal classically assumes.
@@ -58,6 +64,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdldarkcloudcover.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldarkcloudcover/cdldarkcloudcover.c) · [`cdldarkcloudcover.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldarkcloudcover/cdldarkcloudcover.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`cdldarkcloudcover.c`](https://github.com/TA-Lib/ta-lib/blob
 | C# | [`Core_CDLDARKCLOUDCOVER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLDARKCLOUDCOVER.cs) |
 | TypeScript | [`cdldarkcloudcover.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdldarkcloudcover.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLDARKCLOUDCOVER`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

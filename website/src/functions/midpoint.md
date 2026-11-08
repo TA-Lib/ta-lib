@@ -7,6 +7,12 @@ description: "Midpoint over a period: the average of the highest and lowest inpu
 
 Midpoint over a period: the average of the highest and lowest input values within the lookback window. A single-series overlap smoother (use MIDPRICE for separate high/low price bars).
 
+## Chart
+
+<ta-chart src="/functions/midpoint.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/midpoint.csv) · [Chart (SVG)](/functions/midpoint.svg)
+
 ## Formula
 
 MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
@@ -46,6 +52,8 @@ MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`midpoint.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midpoint/midpoint.c) · [`midpoint.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midpoint/midpoint.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`midpoint.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_MIDPOINT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MIDPOINT.cs) |
 | TypeScript | [`midpoint.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/midpoint.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MIDPOINT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

@@ -7,6 +7,12 @@ description: "Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair fr
 
 Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading for a Living* (1993) — how far the bar's high and low sit from an EMA of the close. Bulls strong enough to push the high above the average read as positive Bull Power; bears dragging the low below it read as negative Bear Power.
 
+## Chart
+
+<ta-chart src="/functions/eri.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line. [Reference data (CSV)](/functions/eri.csv) · [Chart (SVG)](/functions/eri.svg)
+
 ## Formula
 
 `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
@@ -56,6 +62,8 @@ Because the underlying average is an [`EMA`](/functions/ema.md), ERI inherits it
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`eri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/eri/eri.c) · [`eri.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/eri/eri.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`eri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_ERI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ERI.cs) |
 | TypeScript | [`eri.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/eri.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ERI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

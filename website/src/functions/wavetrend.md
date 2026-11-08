@@ -7,6 +7,12 @@ description: "WaveTrend Oscillator: how far the typical price sits from its own 
 
 WaveTrend Oscillator: how far the typical price sits from its own exponential average, divided by an exponential average of that distance and by Lambert's CCI constant, then smoothed. The reading is the plain stochastic's complaint answered a different way — rather than bounding the oscillator by construction, it scales it by how far price has recently been travelling, so the same numeric level means the same thing in a quiet market and a fast one. The oscillator line and its short simple average cross; the crossings that matter are the ones beyond the extremes, which the author draws at ±53 and ±60.
 
+## Chart
+
+<ta-chart src="/functions/wavetrend.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outWT1 as a solid line and outWT2 as a dashed line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outWT1 as a solid line and outWT2 as a dashed line. [Reference data (CSV)](/functions/wavetrend.csv) · [Chart (SVG)](/functions/wavetrend.svg)
+
 ## Formula
 
 ap = (high + low + close) / 3
@@ -69,6 +75,8 @@ WT2 = SMA(WT1, signalPeriod)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`wavetrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wavetrend/wavetrend.c) · [`wavetrend.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wavetrend/wavetrend.yaml)
 
 | Native | File |
@@ -79,7 +87,9 @@ TA-Lib Definition: [`wavetrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_WAVETREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAVETREND.cs) |
 | TypeScript | [`wavetrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wavetrend.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.WAVETREND` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

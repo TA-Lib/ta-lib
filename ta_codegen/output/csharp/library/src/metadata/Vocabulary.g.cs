@@ -203,7 +203,7 @@ public enum OutputFlags : uint
     /// <summary>Draw as a dashed line.</summary>
     DashLine = 0x00000004,
 
-    /// <summary>Draw as unconnected dots. No shipped function sets this bit.</summary>
+    /// <summary>Draw as unconnected dots.</summary>
     Dot = 0x00000008,
 
     /// <summary>Draw as a histogram.</summary>

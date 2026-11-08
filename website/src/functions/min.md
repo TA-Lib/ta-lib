@@ -7,6 +7,12 @@ description: "Rolling minimum: the lowest input value over the trailing period."
 
 Rolling minimum: the lowest input value over the trailing period.
 
+## Chart
+
+<ta-chart src="/functions/min.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/min.csv) · [Chart (SVG)](/functions/min.svg)
+
 ## Formula
 
 outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
@@ -46,6 +52,8 @@ outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`min.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/min/min.c) · [`min.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/min/min.yaml)
 
 | Native | File |
@@ -56,7 +64,9 @@ TA-Lib Definition: [`min.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_MIN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MIN.cs) |
 | TypeScript | [`min.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/min.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MIN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

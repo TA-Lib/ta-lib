@@ -10,6 +10,12 @@ volume rises versus the prior day, compounding that day's percentage price chang
 The premise is that active, high-volume days reflect the actions of the
 less-informed "crowd", so PVI is read as a proxy for that cohort's positioning.
 
+## Chart
+
+<ta-chart src="/functions/pvi.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/pvi.csv) · [Chart (SVG)](/functions/pvi.svg)
+
 ## Formula
 
 PVI[startIdx] = 1000
@@ -58,6 +64,8 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`pvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvi/pvi.c) · [`pvi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvi/pvi.yaml)
 
 | Native | File |
@@ -68,7 +76,9 @@ TA-Lib Definition: [`pvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_PVI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PVI.cs) |
 | TypeScript | [`pvi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/pvi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PVI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "MESA Adaptive Moving Average: an adaptive EMA whose smoothing fact
 
 MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the dominant-cycle phase rate measured with a Hilbert transform. Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above FAMA is bullish; crossing below is bearish.
 
+## Chart
+
+<ta-chart src="/functions/mama.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outMAMA as a solid line and outFAMA as a dashed line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outMAMA as a solid line and outFAMA as a dashed line. [Reference data (CSV)](/functions/mama.csv) · [Chart (SVG)](/functions/mama.svg)
+
 ## Formula
 
 phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
@@ -51,6 +57,8 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`mama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mama/mama.c) · [`mama.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mama/mama.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`mama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_MAMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MAMA.cs) |
 | TypeScript | [`mama.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mama.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MAMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

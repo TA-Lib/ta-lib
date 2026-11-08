@@ -9,6 +9,12 @@ Detrended Price Oscillator: the price a half-cycle back, less the moving average
 
 It crosses zero as price crosses its own average, so peaks and troughs mark the cycle rather than the direction of the market. The distance between successive peaks estimates the cycle length, and the amplitude is in price units, so it is comparable across time only for one instrument.
 
+## Chart
+
+<ta-chart src="/functions/dpo.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back. [Reference data (CSV)](/functions/dpo.csv) · [Chart (SVG)](/functions/dpo.svg)
+
 ## Formula
 
 Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
@@ -55,6 +61,8 @@ Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd 
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`dpo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dpo/dpo.c) · [`dpo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dpo/dpo.yaml)
 
 | Native | File |
@@ -65,7 +73,9 @@ TA-Lib Definition: [`dpo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_DPO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DPO.cs) |
 | TypeScript | [`dpo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/dpo.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.DPO` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

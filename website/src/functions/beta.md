@@ -7,6 +7,12 @@ description: "Beta: the slope of a least-squares linear regression of one series
 
 Beta: the slope of a least-squares linear regression of one series' percentage returns (y, from inReal1) against another's (x, from inReal0) over a rolling window. Measures how much a security moves relative to a market index. Beta = 1 moves with the index; < 1 less volatile, > 1 more volatile.
 
+## Chart
+
+<ta-chart src="/functions/beta.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/beta.csv) · [Chart (SVG)](/functions/beta.svg)
+
 ## Formula
 
 Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1_{i-1})/p^1_{i-1}$ from inReal1. With $n$=period over the window: $\beta = \dfrac{n\,S_{xy}-S_x S_y}{n\,S_{xx}-S_x^2}$, where $S_{xx}=\sum x^2,\ S_{xy}=\sum xy,\ S_x=\sum x,\ S_y=\sum y$.
@@ -47,6 +53,8 @@ Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`beta.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/beta/beta.c) · [`beta.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/beta/beta.yaml)
 
 | Native | File |
@@ -57,7 +65,9 @@ TA-Lib Definition: [`beta.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_BETA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BETA.cs) |
 | TypeScript | [`beta.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/beta.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.BETA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

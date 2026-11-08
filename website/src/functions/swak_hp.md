@@ -11,6 +11,12 @@ Read it as an oscillator, not as price. Its DC gain is 0, so a flat market retur
 
 The alpha is the cutoff-period one. Ehlers notes that it "is computed exactly the same as it is for the EMA", meaning the same construction, not `TA_EMA`'s `2/(n+1)`.
 
+## Chart
+
+<ta-chart src="/functions/swak_hp.svg" ratio="720:416" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/swak_hp.csv) · [Chart (SVG)](/functions/swak_hp.svg)
+
 ## Formula
 
 ```
@@ -68,6 +74,8 @@ The output may alias the input. This row reads `x[i-1]`, which an aliased write 
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`swak_hp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_hp/swak_hp.c) · [`swak_hp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_hp/swak_hp.yaml)
 
 | Native | File |
@@ -78,7 +86,9 @@ TA-Lib Definition: [`swak_hp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_SWAK_HP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_HP.cs) |
 | TypeScript | [`swakHp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakHp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SWAK_HP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

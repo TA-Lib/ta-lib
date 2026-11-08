@@ -7,6 +7,12 @@ description: "A three-candle pattern: an engulfing pair (candle 2's body fully e
 
 A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body) followed by a third candle that confirms in the engulfing direction. Signals a bullish reversal (Three Outside Up) or bearish reversal (Three Outside Down).
 
+## Chart
+
+<ta-chart src="/functions/cdl3outside.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdl3outside.csv) · [Chart (SVG)](/functions/cdl3outside.svg)
+
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).
@@ -54,6 +60,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdl3outside.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3outside/cdl3outside.c) · [`cdl3outside.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3outside/cdl3outside.yaml)
 
 | Native | File |
@@ -64,7 +72,9 @@ TA-Lib Definition: [`cdl3outside.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_CDL3OUTSIDE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL3OUTSIDE.cs) |
 | TypeScript | [`cdl3outside.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl3outside.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDL3OUTSIDE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

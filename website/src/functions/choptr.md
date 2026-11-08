@@ -7,6 +7,12 @@ description: "Choppiness Index with a true-range box: the true range travelled o
 
 Choppiness Index with a true-range box: the true range travelled over a window against the span from its highest true high to its lowest true low. Bill Dreiss's form as published in 1993. Log-scaled so that a straight run reads 0 and bars that each fill the whole box read 100. Measures whether the market is trending, not in which direction: low values mean a directional run, high values sideways chop.
 
+## Chart
+
+<ta-chart src="/functions/choptr.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/choptr.csv) · [Chart (SVG)](/functions/choptr.svg)
+
 ## Formula
 
 TH[j] = max(High[j], Close[j-1]) and TL[j] = min(Low[j], Close[j-1]), the true high and true low. TR[j] = TH[j] - TL[j].
@@ -61,6 +67,8 @@ The first true range reads the close one bar before the window, so the first val
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`choptr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/choptr/choptr.c) · [`choptr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/choptr/choptr.yaml)
 
 | Native | File |
@@ -71,7 +79,9 @@ TA-Lib Definition: [`choptr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_CHOPTR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CHOPTR.cs) |
 | TypeScript | [`choptr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/choptr.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CHOPTR` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

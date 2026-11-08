@@ -7,6 +7,12 @@ description: "A three-candle bearish reversal pattern: a long white candle, a sh
 
 A three-candle bearish reversal pattern: a long white candle, a short-bodied star gapping up, then a black candle closing well down into the first candle's body. A hit signals a bearish reversal (most significant in an uptrend).
 
+## Chart
+
+<ta-chart src="/functions/cdleveningstar.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdleveningstar.csv) · [Chart (SVG)](/functions/cdleveningstar.svg)
+
 ## Notes
 
 - Does not verify the preceding uptrend the bearish reversal classically assumes.
@@ -59,6 +65,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdleveningstar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningstar/cdleveningstar.c) · [`cdleveningstar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningstar/cdleveningstar.yaml)
 
 | Native | File |
@@ -69,7 +77,9 @@ TA-Lib Definition: [`cdleveningstar.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDLEVENINGSTAR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLEVENINGSTAR.cs) |
 | TypeScript | [`cdleveningstar.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdleveningstar.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLEVENINGSTAR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -494,14 +494,33 @@ pub(super) const CLOSE_SERIES: &str =
 pub(super) const VOLUME_SERIES: &str =
     "10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin()";
 
-/// Input series for the functions that need small inputs: on the default ~100.0
-/// price series ACOS/ASIN are out of domain (every output `NaN`) and TANH saturates
-/// to a constant 1.0.
-pub(super) const UNIT_SERIES: &str = "(0.1 * i as f64).sin()";
+/// The default `inReal` series, `[90, 110]`, before any `domain` mapping.
+const REAL_SERIES: &str = "100.0 + 10.0 * (0.1 * i as f64).sin()";
 
-/// Functions whose example needs an input in `[-1, 1]` to be meaningful.
-pub(super) fn unit_domain(func: &FuncDef) -> bool {
-    matches!(func.name.to_uppercase().as_str(), "ACOS" | "ASIN" | "TANH")
+/// The default series mapped affinely onto the input's `domain`, with `sine`
+/// spelling `sin(0.1 * i)` in the target language and `lit` its real literals.
+/// Symmetric unit domains come out as the bare sine, so `[-1, 1]` reads as
+/// `sin(0.1 * i)` rather than `0.0 + 1.0 * sin(0.1 * i)`.
+#[allow(clippy::float_cmp)] // the half-width and midpoint are exact for the shipped domains
+pub fn domain_series(domain: (f64, f64), sine: &str, lit: impl Fn(f64) -> String) -> String {
+    let (mid, half) = domain_mid_half(domain);
+    let scaled = if half == 1.0 { sine.to_string() } else { format!("{} * {sine}", lit(half)) };
+    if mid == 0.0 { scaled } else { format!("{} + {scaled}", lit(mid)) }
+}
+
+/// One further bar of a domain-mapped series: `x` in `[-1, 1]` mapped onto it.
+pub fn domain_bar(domain: (f64, f64), x: f64) -> f64 {
+    let (mid, half) = domain_mid_half(domain);
+    mid + half * x
+}
+
+fn domain_mid_half((lo, hi): (f64, f64)) -> (f64, f64) {
+    (f64::midpoint(lo, hi), (hi - lo) / 2.0)
+}
+
+/// The `domain` of the input named `input`, if it carries one.
+pub(super) fn input_domain(func: &FuncDef, input: &str) -> Option<(f64, f64)> {
+    func.inputs.iter().find(|i| i.name == input).and_then(|i| i.domain)
 }
 
 /// The example input series for one input, as `(variable name, source lines)`.
@@ -509,8 +528,11 @@ pub(super) fn unit_domain(func: &FuncDef) -> bool {
 /// midpoint never reaches 1.0. Returns `None` for an unknown input shape, which
 /// drops the example.
 fn example_input(func: &FuncDef, input: &str) -> Option<(&'static str, Vec<String>)> {
+    if let Some(domain) = input_domain(func, input) {
+        let expr = domain_series(domain, "(0.1 * i as f64).sin()", fmt_real_literal);
+        return Some(("data", series_def("data", &expr)));
+    }
     Some(match input {
-        "inReal" if unit_domain(func) => ("data", series_def("data", UNIT_SERIES)),
         "inOpen" => (
             "open",
             series_def("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()"),
@@ -529,10 +551,7 @@ fn example_input(func: &FuncDef, input: &str) -> Option<(&'static str, Vec<Strin
             "periods",
             vec![format!("let periods = vec![14.0; {EXAMPLE_LEN}];")],
         ),
-        "inReal" => (
-            "data",
-            series_def("data", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
-        ),
+        "inReal" => ("data", series_def("data", REAL_SERIES)),
         "inReal0" => (
             "data0",
             series_def("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()"),
@@ -726,9 +745,8 @@ fn example_doctest(
 ///
 /// A pattern output's values come from its flags. For any other integer output the
 /// metadata does not carry the domain, so those shapes are spelled out in
-/// [`integer_claim`], the same way [`unit_domain`] names the three functions whose
-/// example input has to live in `[-1, 1]`. The Rust doctests and the TypeScript
-/// example tests both render from it.
+/// [`integer_claim`]. The Rust doctests and the TypeScript example tests both
+/// render from it.
 pub(crate) enum IntClaim {
     /// Only the values a pattern output's flags declare.
     Pattern(Vec<i32>),
@@ -958,7 +976,7 @@ fn camel_to_snake(s: &str) -> String {
 /// Format an f64 as a Rust literal (`2.0`, `0.02`). Distinct from `doc_meta::fmt_real`,
 /// which drops the fraction: this one feeds generated doctest source, where `2` would
 /// be an integer literal and fail to type-check as an `f64` argument.
-fn fmt_real_literal(v: f64) -> String {
+pub(super) fn fmt_real_literal(v: f64) -> String {
     if doc_meta::is_integral(v) {
         format!("{v:.1}")
     } else {

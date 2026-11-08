@@ -1,0 +1,19 @@
+# Reference corpus
+
+Daily OHLCV series the function pages on ta-lib.org are computed over
+(`scripts/build.py refdata`). One file per instrument, columns
+`date,open,high,low,close,volume`, dates `YYYY-MM-DD` ascending. An optional
+first line `# label: <text>` names the series the way a chart caption does
+(`# label: IBM, daily, 1999`); without one the file name is the label.
+
+`ibm_1999.csv`: IBM, 252 trading days of 1999. The prices are split-adjusted
+and the volume is unadjusted, exactly as in ta_regtest's
+`TA_SREF_*_daily_ref_0_PRIV` arrays (`src/tools/ta_regtest/test_data.c`), which
+is why a freshly downloaded series matches neither; the dates come from the
+`daily_ref_0.csv` that produced those arrays. `ta_refdata` refuses to run when
+the file and the arrays differ.
+
+Adding an instrument: one more file with the same columns, named after the
+symbol and the span it covers, and its source and adjustment basis stated
+here. Files are never spliced together; a pattern function picks the single
+file and window where it fires most.

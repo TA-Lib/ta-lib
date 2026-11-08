@@ -7,6 +7,12 @@ description: "A two-candle reversal pattern: a long real body followed by a doji
 
 A two-candle reversal pattern: a long real body followed by a doji whose real body is contained within the first candle's real body (the doji variant of the Harami). Bullish after a black first candle, bearish after a white first candle.
 
+## Chart
+
+<ta-chart src="/functions/cdlharamicross.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow. [Reference data (CSV)](/functions/cdlharamicross.csv) · [Chart (SVG)](/functions/cdlharamicross.svg)
+
 ## Notes
 
 - Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.
@@ -56,6 +62,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlharamicross.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharamicross/cdlharamicross.c) · [`cdlharamicross.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharamicross/cdlharamicross.yaml)
 
 | Native | File |
@@ -66,7 +74,9 @@ TA-Lib Definition: [`cdlharamicross.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_CDLHARAMICROSS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHARAMICROSS.cs) |
 | TypeScript | [`cdlharamicross.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlharamicross.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHARAMICROSS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

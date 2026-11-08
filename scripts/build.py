@@ -200,6 +200,13 @@ def show_help():
                         bars are identical) and the differential gates see only
                         where the data happens to straddle.
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
+    refdata             Build ta_refdata and refresh the reference CSVs the
+                        function pages chart (website/src/.vuepress/public/
+                        functions/<name>.csv) from src/tools/ta_refdata/corpus.
+                        A file is rewritten only when missing or out of
+                        tolerance; a CSV naming no function is removed.
+                        --check writes nothing and fails on any difference,
+                        missing or stale file.
     ref                 Differential fuzz of the current library vs each frozen
                         release in ta_ref/ (builds bin/ta_ref_<X_Y_Z>_serve, then
                         runs ta_regtest --ref=<X_Y_Z> per member). C-only; needs
@@ -234,6 +241,7 @@ def show_help():
                         on first use), so no system Node is needed
     --sanitize          Build with AddressSanitizer + UBSan into cmake-build-asan
                         (Debug, static-only; e.g. build.py ta_regtest --sanitize)
+    --check             For refdata: compare the committed CSVs, write nothing
 """)
 
 def run_codegen(root_dir: str, *cargo_args: str, path_prefix: str = None):
@@ -378,6 +386,29 @@ def build_ref(root_dir: str, build_dir: str, jobs: int, versions, build_only: bo
     print(f"ref: {len(selected) - len(failed)}/{len(selected)} member(s) passed"
           + (f"; FAILED: {', '.join(failed)}" if failed else ""))
     return 1 if failed else 0
+
+REFDATA_CORPUS = os.path.join('src', 'tools', 'ta_refdata', 'corpus')
+REFDATA_OUT = os.path.join('website', 'src', '.vuepress', 'public', 'functions')
+
+def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
+                  check: bool) -> int:
+    """Builds ta_refdata and runs it over the committed corpus into the website's
+    public/functions directory; --check compares and writes nothing."""
+    cmake_build(build_dir, target='ta_refdata', jobs=jobs, config=build_type)
+    exe = 'ta_refdata' + ('.exe' if os.name == 'nt' else '')
+    candidates = [os.path.join(build_dir, 'bin', exe),
+                  os.path.join(build_dir, 'bin', build_type, exe)]
+    binary = next((c for c in candidates if os.path.exists(c)), None)
+    if binary is None:
+        print(f"Error: ta_refdata was built but not found at {' or '.join(candidates)}")
+        return 1
+    out_dir = os.path.join(root_dir, REFDATA_OUT)
+    os.makedirs(out_dir, exist_ok=True)
+    cmd = [binary] + (['--check'] if check else []) + \
+          [os.path.join(root_dir, REFDATA_CORPUS), out_dir]
+    print(f"=== {' '.join(os.path.relpath(c, root_dir) if c.startswith(root_dir) else c for c in cmd)} ===",
+          flush=True)
+    return subprocess.run(cmd).returncode
 
 def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) -> int:
     """Cross-language BITWISE parity gate (issue #113). Diffs each generated
@@ -617,6 +648,7 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/c/tools/ta_bench_stream.c',
     'ta_codegen/output/c/tools/ta_bench_icount.c',
     'website/src/functions/sma.md',
+    'website/src/.vuepress/public/functions/sma.svg',
 )
 
 # These two are SPLICED, not rewritten: everything outside the GENCODE markers
@@ -828,6 +860,7 @@ TARGET_PREREQS = {
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
     'ref':          [PREREQS_CMAKE, PREREQS_GCC],
+    'refdata':      PREREQS_BUILD_BASIC,
     # build_xlanghash builds --backend=rust,java,csharp,ts, so the .NET SDK and
     # Node are as required here as the JDK. Without one, that server silently
     # never builds.
@@ -863,6 +896,8 @@ def main():
                              'pinned Node major')
     parser.add_argument('--sanitize', action='store_true',
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
+    parser.add_argument('--check', action='store_true',
+                        help='refdata: compare the committed CSVs, write nothing')
     parser.add_argument('--help', '-h', action='store_true')
     args = parser.parse_args()
     global JOBS
@@ -933,6 +968,9 @@ def main():
     if args.node and args.target != 'libraries':
         print(f"Error: --node applies only to the libraries target.")
         sys.exit(2)
+    if args.check and args.target != 'refdata':
+        print(f"Error: --check applies only to the refdata target.")
+        sys.exit(2)
     _backends = backends_for_languages(args.language)
     if args.target == 'libraries':
         # cargo runs the generator; everything else comes from the backends that
@@ -969,6 +1007,9 @@ def main():
 
     if args.target == 'ref':
         sys.exit(build_ref(root_dir, build_dir, args.jobs, args.versions, args.build_only))
+
+    if args.target == 'refdata':
+        sys.exit(build_refdata(root_dir, build_dir, args.jobs, args.build_type, args.check))
 
     # Cross-language BITWISE parity gate (opt-in; issue #113). Composite: build the
     # Rust server + ta_regtest, then diff each server vs the in-process C golden.

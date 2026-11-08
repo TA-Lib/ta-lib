@@ -35,7 +35,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::common;
 use super::fma;
-use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME_SERIES};
+use super::rust_doc::{fmt_real_literal, series_def, CLOSE_SERIES, VOLUME_SERIES};
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
     collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
@@ -2925,9 +2925,12 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
 fn stream_example_input(
     func: &FuncDef,
     input: &str,
-) -> Option<(&'static str, &'static str, &'static str)> {
-    Some(match input {
-        "inReal" if unit_domain(func) => ("data", UNIT_SERIES, "0.42"),
+) -> Option<(&'static str, String, String)> {
+    if let Some(domain) = super::rust_doc::input_domain(func, input) {
+        let expr = super::rust_doc::domain_series(domain, "(0.1 * i as f64).sin()", fmt_real_literal);
+        return Some(("data", expr, fmt_real_literal(super::rust_doc::domain_bar(domain, 0.42))));
+    }
+    let (var, expr, bar) = match input {
         "inOpen" => ("open", "100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin()", "100.2"),
         "inHigh" => ("high", "101.0 + 10.0 * (0.1 * i as f64).sin()", "101.4"),
         "inLow" => ("low", "99.0 + 10.0 * (0.1 * i as f64).sin()", "99.1"),
@@ -2938,7 +2941,8 @@ fn stream_example_input(
         "inReal0" => ("data0", "100.0 + 10.0 * (0.1 * i as f64).sin()", "100.9"),
         "inReal1" => ("data1", "100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin()", "101.3"),
         _ => return None,
-    })
+    };
+    Some((var, expr.to_string(), bar.to_string()))
 }
 
 /// A runnable peek==update doctest (the per-function bit-exactness witness).
@@ -2956,9 +2960,9 @@ fn stream_doctest(
     let mut bar_args: Vec<String> = Vec::new();
     for input in &func.inputs {
         let (var, def, bar) = stream_example_input(func, &input.name)?;
-        lines.extend(series_def(var, def));
+        lines.extend(series_def(var, &def));
         args.push(format!("&{var}"));
-        bar_args.push(bar.to_string());
+        bar_args.push(bar);
     }
     for opt in &func.optional_inputs {
         args.push(super::rust_doc::example_opt_literal(opt, enums));
@@ -3037,7 +3041,7 @@ fn open_and_fill_doctest(
     let mut series: Vec<&str> = Vec::new();
     for input in &func.inputs {
         let (var, def, _bar) = stream_example_input(func, &input.name)?;
-        lines.extend(series_def(var, def));
+        lines.extend(series_def(var, &def));
         series.push(var);
     }
     // A function with no series input has no example to write.

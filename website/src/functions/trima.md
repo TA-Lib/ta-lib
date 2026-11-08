@@ -7,6 +7,12 @@ description: "Triangular Moving Average: a double-smoothed moving average that w
 
 Triangular Moving Average: a double-smoothed moving average that weights prices toward the middle of the window most heavily. Equivalent to an SMA of an SMA, computed here via an incremental triangular-weighted running numerator.
 
+## Chart
+
+<ta-chart src="/functions/trima.svg" ratio="720:274" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/trima.csv) · [Chart (SVG)](/functions/trima.svg)
+
 ## Formula
 
 Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
@@ -51,6 +57,8 @@ Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9)
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`trima.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trima/trima.c) · [`trima.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trima/trima.yaml)
 
 | Native | File |
@@ -61,7 +69,9 @@ TA-Lib Definition: [`trima.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_TRIMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TRIMA.cs) |
 | TypeScript | [`trima.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/trima.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.TRIMA`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

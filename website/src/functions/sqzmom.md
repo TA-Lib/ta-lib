@@ -9,6 +9,12 @@ John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014
 
 "Squeeze Pro" tests the bands against three Keltner widths instead of one, so compression becomes a level rather than a boolean. `outSqueeze` carries that level: 3, 2 and 1 for the narrow, normal and wide channels, -1 once the bands are outside the wide channel, and 0 in between. The classic squeeze-on flag is `outSqueeze >= 2`, and with `wide == normal` the three states are exactly LazyBear's on / off / none.
 
+## Chart
+
+<ta-chart src="/functions/sqzmom.svg" ratio="720:498" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze. [Reference data (CSV)](/functions/sqzmom.csv) · [Chart (SVG)](/functions/sqzmom.svg)
+
 ## Formula
 
 With `b = optInBBPeriod` and `k = optInKCPeriod`:
@@ -80,6 +86,8 @@ With `b = optInBBPeriod` and `k = optInKCPeriod`:
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`sqzmom.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sqzmom/sqzmom.c) · [`sqzmom.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sqzmom/sqzmom.yaml)
 
 | Native | File |
@@ -90,7 +98,9 @@ TA-Lib Definition: [`sqzmom.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_SQZMOM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SQZMOM.cs) |
 | TypeScript | [`sqzmom.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sqzmom.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SQZMOM` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

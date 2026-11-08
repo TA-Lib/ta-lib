@@ -7,6 +7,12 @@ description: "Slow Stochastic oscillator: locates the close within the high-low 
 
 Slow Stochastic oscillator: locates the close within the high-low range over a lookback period, then double-smooths it. Returns the Slow-%K and Slow-%D lines. SlowK/SlowD > 80 overbought, < 20 oversold; %K crossing %D signals momentum shifts.
 
+## Chart
+
+<ta-chart src="/functions/stoch.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a dashed line and outSlowD as a dashed line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a dashed line and outSlowD as a dashed line. [Reference data (CSV)](/functions/stoch.csv) · [Chart (SVG)](/functions/stoch.svg)
+
 ## Formula
 
 FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
@@ -61,6 +67,8 @@ SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`stoch.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stoch/stoch.c) · [`stoch.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stoch/stoch.yaml)
 
 | Native | File |
@@ -71,7 +79,9 @@ TA-Lib Definition: [`stoch.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_STOCH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STOCH.cs) |
 | TypeScript | [`stoch.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stoch.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.STOCH`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

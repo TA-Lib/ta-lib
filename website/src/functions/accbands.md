@@ -7,6 +7,12 @@ description: "Acceleration Bands: three overlap lines around price."
 
 Acceleration Bands: three overlap lines around price. The middle band is an SMA of the close; the upper/lower bands are SMAs of the high/low scaled by an intraday-range factor.
 
+## Chart
+
+<ta-chart src="/functions/accbands.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
+
+Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/accbands.csv) · [Chart (SVG)](/functions/accbands.svg)
+
 ## Formula
 
 factor = 4*(H-L)/(H+L)
@@ -52,6 +58,8 @@ Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
 
 ## Implementation
 
+Added in 0.5.0.
+
 TA-Lib Definition: [`accbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/accbands/accbands.c) · [`accbands.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/accbands/accbands.yaml)
 
 | Native | File |
@@ -62,7 +70,9 @@ TA-Lib Definition: [`accbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_ACCBANDS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ACCBANDS.cs) |
 | TypeScript | [`accbands.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/accbands.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ACCBANDS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -7,6 +7,12 @@ description: "Percentage Volume Oscillator: a variation of the Percentage Price 
 
 Percentage Volume Oscillator: a variation of the [Percentage Price Oscillator](/functions/ppo.md) (PPO, created by Gerald Appel) applied to the **volume** series instead of price. It is the difference between a fast and slow moving average of volume, expressed as a percentage of the slow MA. Positive when short-term volume is above its longer-term average (rising participation), negative when below. The default periods (12, 26) match MACD and PPO.
 
+## Chart
+
+<ta-chart src="/functions/pvo.svg" ratio="720:484" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/pvo.csv) · [Chart (SVG)](/functions/pvo.svg)
+
 ## Formula
 
 PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
@@ -57,6 +63,8 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volu
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`pvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvo/pvo.c) · [`pvo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pvo/pvo.yaml)
 
 | Native | File |
@@ -67,7 +75,9 @@ TA-Lib Definition: [`pvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_PVO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PVO.cs) |
 | TypeScript | [`pvo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/pvo.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PVO` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

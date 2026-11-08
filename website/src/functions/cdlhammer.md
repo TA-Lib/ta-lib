@@ -7,6 +7,12 @@ description: "Single-candle pattern: a small real body at the top of the range w
 
 Single-candle pattern: a small real body at the top of the range with a long lower shadow and little or no upper shadow, sitting at or near the prior candle's low. A hit flags a potential bullish reversal.
 
+## Chart
+
+<ta-chart src="/functions/cdlhammer.svg" ratio="720:274" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlhammer.csv) · [Chart (SVG)](/functions/cdlhammer.svg)
+
 ## Notes
 
 - Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.
@@ -53,6 +59,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 ## Implementation
 
+Added in 0.4.0.
+
 TA-Lib Definition: [`cdlhammer.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhammer/cdlhammer.c) · [`cdlhammer.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhammer/cdlhammer.yaml)
 
 | Native | File |
@@ -63,7 +71,9 @@ TA-Lib Definition: [`cdlhammer.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C# | [`Core_CDLHAMMER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHAMMER.cs) |
 | TypeScript | [`cdlhammer.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlhammer.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CDLHAMMER`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

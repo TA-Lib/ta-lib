@@ -7,6 +7,12 @@ description: "Tushar Chande and Stanley Kroll's Qstick (The New Technical Trader
 
 Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a simple moving average of the candle body, close minus open. It measures how bullish or bearish the bodies have been over the window, independently of the wicks — above zero the bodies closed up on balance, below zero they closed down, and the zero-line crossings are the signal.
 
+## Chart
+
+<ta-chart src="/functions/qstick.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/qstick.csv) · [Chart (SVG)](/functions/qstick.svg)
+
 ## Formula
 
 body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -49,6 +55,8 @@ The moving average is a plain SMA, so there is no seeding convention and none of
 
 ## Implementation
 
+Added in 0.8.1 (ta-lib-python 0.8.1).
+
 TA-Lib Definition: [`qstick.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/qstick/qstick.c) · [`qstick.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/qstick/qstick.yaml)
 
 | Native | File |
@@ -59,7 +67,9 @@ TA-Lib Definition: [`qstick.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_QSTICK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_QSTICK.cs) |
 | TypeScript | [`qstick.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/qstick.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.QSTICK` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

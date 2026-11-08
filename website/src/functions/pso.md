@@ -7,6 +7,12 @@ description: "Premier Stochastic Oscillator: a short-period Fast %K, recentred o
 
 Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero and rescaled, double-smoothed and then squashed into the range -1 to +1. Leibfarth's reading is that the plain stochastic spends most of its life pinned at one end or the other, so the extremes stop meaning anything; the two exponential passes strip the bar-to-bar noise out of it, and the squash gives back a scale on which the extremes are rare again. Readings beyond ±0.9 are the extremes, and ±0.2 the band Leibfarth watches for the crossing back toward the middle.
 
+## Chart
+
+<ta-chart src="/functions/pso.svg" ratio="720:416" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/pso.csv) · [Chart (SVG)](/functions/pso.svg)
+
 ## Formula
 
 K = STOCHF(high, low, close, fastKPeriod)   (Fast-K only)
@@ -63,6 +69,8 @@ PSO = (e^SS - 1) / (e^SS + 1) = tanh(SS / 2)
 
 ## Implementation
 
+Added in 0.8.3 (ta-lib-python 0.8.3).
+
 TA-Lib Definition: [`pso.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pso/pso.c) · [`pso.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/pso/pso.yaml)
 
 | Native | File |
@@ -73,7 +81,9 @@ TA-Lib Definition: [`pso.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_PSO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PSO.cs) |
 | TypeScript | [`pso.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/pso.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PSO` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 
