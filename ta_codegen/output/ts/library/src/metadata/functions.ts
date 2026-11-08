@@ -2063,7 +2063,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ROCR100', 'Momentum Indicators', 'Rate of change ratio 100 scale: (price/prevPrice)*100', 0x02000008,
@@ -2074,7 +2074,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Time period', defaultValue: 10.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('ROGERSSATCHELL', 'Volatility Indicators', 'Rogers-Satchell Volatility', 0x0200000C,

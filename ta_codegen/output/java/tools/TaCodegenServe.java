@@ -239466,11 +239466,11 @@ public class TaCodegenServe {
         ABSTRACT.put("ROCR", new AbsFunc("ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
-            new AbsOut[]{ new AbsOut(0,"outReal",257) }));
+            new AbsOut[]{ new AbsOut(0,"outReal",1281) }));
         ABSTRACT.put("ROCR100", new AbsFunc("ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
-            new AbsOut[]{ new AbsOut(0,"outReal",257) }));
+            new AbsOut[]{ new AbsOut(0,"outReal",1281) }));
         ABSTRACT.put("ROGERSSATCHELL", new AbsFunc("ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 33554444,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",10.0, 0,0,0,0,0,0, 1,100000,2,200,1, null), new AbsOpt(0,"optInAnnualization",0,"Annualization","Periods per year; 1 leaves the per-bar figure",252.0, 0.0,3e37,2,1.0,365.0,1.0, 0,0,0,0,0, null) },

@@ -2,8 +2,7 @@
 //! function's metadata and a reference run over a fixed daily series.
 //!
 //! The metadata decides the drawing: `overlap` puts real outputs on the price
-//! pane, otherwise they get an indicator pane, which has a zero line when an
-//! output is a histogram or declares both `positive` and `negative`; four real
+//! pane, otherwise they get an indicator pane; four real
 //! outputs named `…Open`, `…High`, `…Low`, `…Close` are a candle pane of their
 //! own; each integer output that is not a pattern gets a step pane of its own,
 //! and a `bar_index` one also draws, on the price pane, the function's one real
@@ -1023,12 +1022,14 @@ fn input_line_class(k: usize) -> (&'static str, &'static str) {
 }
 
 /// Per output class, the flags its drawing reads; an integer output's deciding fact
-/// is its type, which is no flag. An indicator-pane output adds `positive, negative`
-/// when it declares both, since that pair draws the zero line.
+/// is its type, which is no flag. An indicator-pane output lists `positive, negative`
+/// only when they drew its zero line.
 const PRICE_FLAGS_READ: [&str; 8] =
     ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "segmented", "display_shift"];
-const IND_FLAGS_READ: [&str; 9] =
-    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "positive", "negative", "display_shift"];
+const IND_FLAGS_READ: [&str; 10] = [
+    "line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "segmented", "positive", "negative",
+    "display_shift",
+];
 const PATTERN_FLAGS_READ: [&str; 4] = ["positive", "negative", "zero", "display_shift"];
 const SIGN_FLAGS_READ: [&str; 3] = ["positive", "negative", "display_shift"];
 const STEP_FLAGS_READ: [&str; 1] = ["display_shift"];
@@ -1064,11 +1065,12 @@ fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
         }
     }
     let named = |outs: &[&Output], o: &Output| outs.iter().any(|p| p.name == o.name);
+    let near = near_zero(data, &plan.ind_outs);
     for o in &func.outputs {
         let shift = data.shift(&o.name);
         let pattern = named(&plan.pattern_outs, o);
         let ind = named(&plan.ind_outs, o);
-        let unread_signs = ind && !(has(&o.flags, "positive") && has(&o.flags, "negative"));
+        let unread_signs = ind && !(near && has(&o.flags, "positive") && has(&o.flags, "negative"));
         let (lead, keep): (Option<&str>, &[&str]) = if pattern {
             (None, &PATTERN_FLAGS_READ)
         } else if named(&plan.sign_outs, o) {
@@ -1141,23 +1143,7 @@ fn draw_price_outputs<'p>(
             let _ = writeln!(cv.out, "<path class=\"f{}\" d=\"{d}\"/>", slot_digit(cls));
             legend.push(LegendItem { mark: LegendMark::Dot(cls), text: o.name.clone() });
         } else if let Some(key) = plan.segment_key.filter(|_| has(&o.flags, "segmented")) {
-            let dashed = has(&o.flags, "dash_line");
-            cv.segmented_line(price, vals, data.output(&key.name), &line_class(cls, dashed), sh);
-            legend.push(LegendItem {
-                mark: LegendMark::Line { cls: "up", dashed },
-                text: format!("{} where {} > 0", o.name, key.name),
-            });
-            legend.push(LegendItem { mark: LegendMark::Line { cls: "down", dashed }, text: "< 0".to_string() });
-            let mut ph = format!(
-                "{} as {} broken wherever {} changes, in the up colour where {} is positive and the down colour where it is negative",
-                o.name,
-                stroke_word(&o.flags),
-                key.name,
-                key.name
-            );
-            ph.push_str(&shift_phrase(sh));
-            ph.push_str(&level_phrase(o));
-            phrases.push(ph);
+            phrases.push(draw_segmented(cv, price, o, key, cls, sh, legend));
             continue;
         } else if is_edge {
             cv.polyline(price, vals, &format!("edge {cls}"), sh);
@@ -1419,20 +1405,62 @@ fn draw_sign_markers<'p>(
     phrases
 }
 
+/// A `segmented` output: one run per value of the function's integer output, coloured
+/// by its sign. Returns the sentence phrase.
+fn draw_segmented<'p>(
+    cv: &mut Canvas<'_>,
+    pane: &Pane,
+    o: &'p Output,
+    key: &Output,
+    cls: &str,
+    sh: i32,
+    legend: &mut Vec<LegendItem<'p>>,
+) -> String {
+    let dashed = has(&o.flags, "dash_line");
+    let data = cv.data;
+    cv.segmented_line(pane, data.output(&o.name), data.output(&key.name), &line_class(cls, dashed), sh);
+    legend.push(LegendItem {
+        mark: LegendMark::Line { cls: "up", dashed },
+        text: format!("{} where {} > 0", o.name, key.name),
+    });
+    legend.push(LegendItem { mark: LegendMark::Line { cls: "down", dashed }, text: "< 0".to_string() });
+    format!(
+        "{} as {} broken wherever {} changes, in the up colour where {} is positive and the down colour where it is negative{}{}",
+        o.name,
+        stroke_word(&o.flags),
+        key.name,
+        key.name,
+        shift_phrase(sh),
+        level_phrase(o)
+    )
+}
+
+/// Whether zero lies within one data span of the indicator pane's data and levels:
+/// farther, a zero baseline would flatten a signed output such as SUM of prices.
+fn near_zero(data: &RefData, outs: &[&Output]) -> bool {
+    let mut p = Pane::new(0.0, 1.0);
+    for o in outs {
+        p.extend(data.output(&o.name));
+        p.extend_plain(&o.levels);
+    }
+    let (lo, hi) = (p.lo(), p.hi());
+    lo.min(0.0) >= lo - (hi - lo) && hi.max(0.0) <= hi + (hi - lo)
+}
+
+/// The indicator pane takes in zero, and rules it, for a histogram, or for an output
+/// declaring both signs when zero is near its data.
+fn wants_zero(o: &Output, near: bool) -> bool {
+    has(&o.flags, "histogram") || (near && has(&o.flags, "positive") && has(&o.flags, "negative"))
+}
+
 fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> String {
     let data = cv.data;
     for o in &plan.ind_outs {
         ind.extend(data.output(&o.name));
         ind.extend_plain(&o.levels);
     }
-    // A signed output whose data sits far from zero (SUM of prices) would be
-    // flattened against a zero baseline; within one data span, zero joins the axis.
-    let (lo, hi) = (ind.lo(), ind.hi());
-    let near_zero = lo.min(0.0) >= lo - (hi - lo) && hi.max(0.0) <= hi + (hi - lo);
-    let want_zero = plan.ind_outs.iter().any(|o| {
-        has(&o.flags, "histogram")
-            || (near_zero && has(&o.flags, "positive") && has(&o.flags, "negative"))
-    });
+    let near = near_zero(data, &plan.ind_outs);
+    let want_zero = plan.ind_outs.iter().any(|o| wants_zero(o, near));
     ind.finish(0.08, want_zero);
     cv.grid(ind, want_zero);
     for o in &plan.ind_outs {
@@ -1449,6 +1477,9 @@ fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> 
             cv.histogram(ind, vals, sh);
             legend.push(LegendItem { mark: LegendMark::Hist, text: o.name.clone() });
             phrases.push(format!("{} as a sign-coloured histogram{}{}", o.name, shift_phrase(sh), level_phrase(o)));
+        } else if let Some(key) = plan.segment_key.filter(|_| has(&o.flags, "segmented")) {
+            phrases.push(draw_segmented(cv, ind, o, key, cls, sh, &mut legend));
+            slot += 1;
         } else {
             let dashed = has(&o.flags, "dash_line");
             cv.polyline(ind, vals, &line_class(cls, dashed), sh);
@@ -2391,6 +2422,12 @@ mod tests {
         assert!(chart.sentence.ends_with("a step pane of its own for the integer output outTrend."), "{}", chart.sentence);
         assert_eq!(chart.flags_used, vec!["overlap", "outSupertrend: line, segmented", "outTrend: integer"]);
 
+        let osc = func("OSC", &[], vec![], vec![out("outLine", ParamType::Real, &["line", "segmented"]), out("outTrend", ParamType::Integer, &["line", "positive", "negative"])]);
+        let d_osc = candle_csv("", "outLine (shift 0) outTrend (shift 0)", &["15,1", "25,1", "45,-1", "55,-1", "45,1"]);
+        let on_ind = render(&osc, &d_osc);
+        assert_eq!(polyline_points(&on_ind.svg, "<polyline class=\"line down\"").len(), 2, "segmented off the price pane too: {}", on_ind.svg);
+        assert!(on_ind.flags_used.contains(&"outLine: line, segmented".to_string()), "{:?}", on_ind.flags_used);
+
         let plain = render(&st(&["line"]), &d);
         assert!(!plain.svg.contains("class=\"line up\""), "{}", plain.svg);
         assert_eq!(polyline_points(&plain.svg, "<polyline class=\"line s1\"").len(), 5, "{}", plain.svg);
@@ -2461,6 +2498,7 @@ mod tests {
         let c = render(&ind(&["line", "positive", "negative"]), &far);
         assert!(!zero_line(&c) && !c.svg.contains(">0</text>"), "data more than a span from zero: {}", c.svg);
         assert!(zero_line(&render(&ind(&["histogram"]), &far)));
+        assert_eq!(c.flags_used, vec!["outReal: line"], "no zero line drawn, so the signs decided nothing");
         assert_eq!(render(&ind(&["line", "zero", "positive"]), &high).flags_used, vec!["outReal: line"]);
         assert_eq!(render(&ind(&["line", "zero", "positive", "negative"]), &high).flags_used, vec!["outReal: line, positive, negative"]);
     }

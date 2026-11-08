@@ -9585,6 +9585,7 @@ public static class FunctionDescription
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9628,6 +9629,7 @@ public static class FunctionDescription
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

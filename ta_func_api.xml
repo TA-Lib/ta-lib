@@ -9530,6 +9530,7 @@
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -9573,6 +9574,7 @@
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

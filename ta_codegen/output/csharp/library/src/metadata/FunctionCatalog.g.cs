@@ -4966,7 +4966,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.RocrLookback(c.IntOpt(0)),
@@ -4991,7 +4991,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.Rocr100Lookback(c.IntOpt(0)),

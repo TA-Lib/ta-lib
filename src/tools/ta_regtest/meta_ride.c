@@ -37,6 +37,11 @@
  * output is overflow, which TA_FUNC_FLG_NAN_INF_OUT does not describe. */
 #define ORDINARY_MAX 1e75
 
+/* A nonzero real value of an undeclared sign this close to zero, relative to
+ * the call's largest output, is running-sum drift, which the sign flags do not
+ * count. An exact 0 is never excused. */
+#define SIGN_SLACK 1e-9
+
 /* What each in[] slot of a call holds, in the order the call passes them. */
 #define IN_OPEN   0
 #define IN_HIGH   1
@@ -65,7 +70,7 @@ static long mismatches;
 static unsigned long long finiteJudged, nonFiniteExcused;
 static unsigned long long shiftJudged, patternJudged, pointerJudged;
 static unsigned long long rangeJudged, rangeEmpty;
-static unsigned long long signJudged, signOutOfDomain;
+static unsigned long long signJudged, signOutOfDomain, signRounding;
 
 static int report( const Site *s )
 {
@@ -268,17 +273,26 @@ static int inputs_in_sign_domain( const Site *s, int single, const void *const i
    return 1;
 }
 
-/* The first finite value of an undeclared sign, or -1. */
+/* The first finite value of an undeclared sign past the drift slack, or -1. */
 static int first_undeclared_real( const double *v, int nb, unsigned int declared )
 {
-   int i;
+   double slack = 0.0;
+   int i, drift = 0;
 
+   for( i = 0; i < nb; i++ )
+      if( v[i] - v[i] == 0.0 && fabs( v[i] ) > slack )
+         slack = fabs( v[i] );
+   slack *= SIGN_SLACK;
    for( i = 0; i < nb; i++ )
    {
       unsigned int c = real_classes( &v[i], 1 ) & ~C_NONFINITE;
-      if( c && !(c & declared) )
+      if( !c || (c & declared) )
+         continue;
+      if( v[i] == 0.0 || fabs( v[i] ) > slack )
          return i;
+      drift = 1;
    }
+   signRounding += drift;
    return -1;
 }
 
@@ -291,7 +305,7 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
    int first = startIdx > lookback ? startIdx : lookback;
    int nb = outNBElement;
    int from = outBegIdx - lookback > 0 ? outBegIdx - lookback : 0;
-   int inDomain = -1;
+   int inDomain = -1, inPlace = 0, k;
    unsigned int o;
    int i;
 
@@ -300,6 +314,12 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
    if( !s->info )
       return;
    s->calls++;
+   /* Computed in place, the inputs are gone: nothing that reads them is judged. */
+   for( k = 0; k < nbIn; k++ )
+      for( o = 0; o < s->info->nbOutput; o++ )
+         inPlace |= in[k] && in[k] == out[o];
+   if( inPlace )
+      inDomain = 0;
 
    rangeJudged++;
    if( first > endIdx )
@@ -378,13 +398,6 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
             finiteJudged += nb;
          if( c & C_NONFINITE )
          {
-            int inPlace = 0, k;
-            unsigned int oo;
-
-            /* Computed in place, the inputs are gone and nothing is judged. */
-            for( k = 0; k < nbIn; k++ )
-               for( oo = 0; oo < s->info->nbOutput; oo++ )
-                  inPlace |= in[k] && in[k] == out[oo];
             if( inPlace ||
                 !inputs_ordinary( single, in, nbIn, from, endIdx ) )
                nonFiniteExcused++;
@@ -532,6 +545,7 @@ ErrorNumber meta_ride_whole_run( void )
       { "ranges too short for the lookback", rangeEmpty },
       { "real output values judged for their sign", signJudged },
       { "real outputs whose call left the sign flags' domain", signOutOfDomain },
+      { "real outputs excused a running-sum drift past zero", signRounding },
    };
    ErrorNumber retValue = TA_TEST_PASS;
    unsigned int k, o, bit;

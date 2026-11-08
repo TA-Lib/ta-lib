@@ -626,6 +626,9 @@ typedef enum
   /* (#572) SORTINO legs that ran while comparing nothing. */
   TA_SORTINO_VACUOUS           = 1731,
 
+  /* ADR's running sum no longer leaves the drift the metadata ride's slack is held to. */
+  TA_ADR_DRIFT                 = 1732,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

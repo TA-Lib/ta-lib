@@ -297,6 +297,7 @@ static ErrorNumber test_adr_sref_oracle( const TA_History *history );
 static ErrorNumber test_adr_edges( const TA_History *history );
 static ErrorNumber test_adr_inplace( const TA_History *history );
 static ErrorNumber test_adr_range( const TA_History *history );
+static ErrorNumber test_adr_drift( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_adr( TA_History *history )
@@ -331,6 +332,10 @@ ErrorNumber test_func_adr( TA_History *history )
       return retValue;
 
    retValue = test_adr_range( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_adr_drift();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -843,4 +848,29 @@ static ErrorNumber test_adr_range( const TA_History *history )
    return doRangeTestEx( adrRangeTestFunction,
                          TA_STABLE_EPSILON, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* A flat run after a spike leaves ADR's running sum a few units in the last place
+ * below zero on well-formed bars. The sign flags do not count that drift, and this
+ * call is what keeps the metadata ride's allowance for it exercised. */
+static ErrorNumber test_adr_drift( void )
+{
+   static const TA_Real high[] = { 1.4399, 1.3056, 3.5343, 1.0, 1.0, 1.0 };
+   static const TA_Real low[]  = { 0.728, 0.5588, 1.6469, 1.0, 1.0, 1.0 };
+   TA_Real out[6];
+   TA_Integer outBeg, outNb;
+   TA_RetCode rc;
+
+   rc = TA_ADR( 0, 5, high, low, 3, &outBeg, &outNb, out );
+   if( rc != TA_SUCCESS || outBeg != 2 || outNb != 4 )
+   {
+      printf( "ADR Fail: drift call rc %d, outBegIdx %d, outNBElement %d\n", rc, outBeg, outNb );
+      return TA_ADR_DRIFT;
+   }
+   if( !(out[3] < 0.0 && out[3] > -1e-15) )
+   {
+      printf( "ADR Fail: drift call gave %.17g at its last bar, not a drift below zero\n", out[3] );
+      return TA_ADR_DRIFT;
+   }
+   return TA_TEST_PASS;
 }

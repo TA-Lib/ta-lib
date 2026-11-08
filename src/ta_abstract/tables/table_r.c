@@ -121,7 +121,7 @@ DEF_FUNCTION( ROCP,
 
 /* ROCR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROCR_Default =
-                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_ROCR_Inputs[]    =
 {
@@ -149,7 +149,7 @@ DEF_FUNCTION( ROCR,
 
 /* ROCR100 BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ROCR100_Default =
-                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_POSITIVE };
+                               { TA_Output_Real, "outReal", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_ROCR100_Inputs[]    =
 {

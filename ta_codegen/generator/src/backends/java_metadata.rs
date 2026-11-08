@@ -744,7 +744,7 @@ fn functions_registry(rows: &[FuncRow]) -> String {
     s.push_str("   private static final Map<String, FuncInfo> BY_NAME = build();\n\n");
     s.push_str(
         "   static String attributesOf(String name) {\n\
-         \x20     return ATTRIBUTES.getOrDefault(name, \"{}\");\n\
+         \x20     return name == null ? \"{}\" : ATTRIBUTES.getOrDefault(name, \"{}\");\n\
          \x20  }\n\n",
     );
     s.push_str(

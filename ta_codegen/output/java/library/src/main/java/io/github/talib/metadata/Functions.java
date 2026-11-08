@@ -73,7 +73,7 @@ public final class Functions {
    private static final Map<String, FuncInfo> BY_NAME = build();
 
    static String attributesOf(String name) {
-      return ATTRIBUTES.getOrDefault(name, "{}");
+      return name == null ? "{}" : ATTRIBUTES.getOrDefault(name, "{}");
    }
 
    /** Every function, in canonical name order. */
@@ -3710,7 +3710,7 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
          ));
    }
 
@@ -3728,7 +3728,7 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000101)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
          ));
    }
 
