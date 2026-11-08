@@ -21,8 +21,8 @@ charted whole, for a pattern IBM 1999 never shows. Such a pattern takes the
 excerpt where it fires most, a market one before a synthetic one.
 
 - `simulated_*`: generated rather than taken from a market, for the patterns
-  that neither IBM 1999 nor any `wbtc_usdc_*` excerpt shows.
-- `wbtc_usdc_*`: daily UTC bars of Uniswap v3's WBTC/USDC pools on Ethereum,
-  built from the pools' Swap event logs merged in block order, each block's
-  last price; the volume is in WBTC. The `# source:` line names the pools, so
-  anyone can rebuild them from the chain.
+  that neither IBM 1999 nor any on-chain excerpt shows.
+- The others (`wbtc_usdc_*`, `link_weth_*`): daily UTC bars of Uniswap v3
+  pools on Ethereum, built from the pools' Swap event logs merged in block
+  order, each block's last price; the volume is in the pair's first token. The
+  `# source:` line names the pools, so anyone can rebuild them from the chain.

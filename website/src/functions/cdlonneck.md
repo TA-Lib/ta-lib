@@ -9,7 +9,7 @@ A two-candle on-neck pattern: a long black candle followed by a white candle tha
 
 ## Chart
 
-<ta-chart src="/functions/cdlonneck.svg" ratio="720:274" label="CDLONNECK over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlonneck.svg" ratio="720:274" label="CDLONNECK over LINK/WETH (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
