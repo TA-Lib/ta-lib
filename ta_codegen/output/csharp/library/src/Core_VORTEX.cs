@@ -57,6 +57,7 @@ public partial class Core
     *  090626 KL     First version (issue #349).
     *  102326 MF,CC  #554 branch-free zero run, rare reset.
     *  102426 MF,CC  #554 zero-run test on the true range itself.
+    *  110926 KL     #588 rebuild a sum that comes out negative.
     */
    /// <summary>
    /// Number of leading input bars <c>Vortex</c> consumes before it can produce
@@ -127,6 +128,10 @@ public partial class Core
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -241,6 +246,34 @@ public partial class Core
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = inLow[i];
+                  tempHT = inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.Abs(prevClose - tempHT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  tempDouble = Math.Abs(prevClose - tempLT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  sTR += trueRange;
+                  sVMP += Math.Abs(tempHT - prevLow);
+                  sVMM += Math.Abs(tempLT - prevHigh);
+               }
+               prevHigh = inHigh[i];
+               prevLow = inLow[i];
+               prevClose = inClose[i];
+               seeded = 1;
+            }
+         }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
           */
@@ -313,6 +346,10 @@ public partial class Core
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -389,6 +426,30 @@ public partial class Core
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sTR = 0.0;
+         }
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = (double)inLow[i];
+                  tempHT = (double)inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.Abs(prevClose - tempHT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  tempDouble = Math.Abs(prevClose - tempLT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  sTR += trueRange;
+                  sVMP += Math.Abs(tempHT - prevLow);
+                  sVMM += Math.Abs(tempLT - prevHigh);
+               }
+               prevHigh = (double)inHigh[i];
+               prevLow = (double)inLow[i];
+               prevClose = (double)inClose[i];
+               seeded = 1;
+            }
          }
          curTR = sTR;
          curVMP = sVMP;
@@ -653,6 +714,9 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal int nullRun;
+      internal double prevHigh;
+      internal double prevLow;
+      internal double prevClose;
       internal double sTR;
       internal double sVMP;
       internal double sVMM;
@@ -665,6 +729,11 @@ public partial class Core
       internal double[] ring_trailingIdx_inHigh = [];
       internal double[] ring_trailingIdx_inLow = [];
       internal double[] ring_trailingIdx_inClose = [];
+      internal int winPos_i;
+      internal int winCap_i;
+      internal double[] win_i_inHigh = [];
+      internal double[] win_i_inLow = [];
+      internal double[] win_i_inClose = [];
       internal double cur_outPlusVI;
       internal double cur_outMinusVI;
       internal int outRangeBegIdx;
@@ -710,6 +779,9 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.prevClose = other.prevClose;
          this.sTR = other.sTR;
          this.sVMP = other.sVMP;
          this.sVMM = other.sVMM;
@@ -725,6 +797,14 @@ public partial class Core
          Array.Copy( other.ring_trailingIdx_inLow, this.ring_trailingIdx_inLow, other.ring_trailingIdx_inLow.Length );
          this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
          Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.winPos_i = other.winPos_i;
+         this.winCap_i = other.winCap_i;
+         this.win_i_inHigh = new double[other.win_i_inHigh.Length];
+         Array.Copy( other.win_i_inHigh, this.win_i_inHigh, other.win_i_inHigh.Length );
+         this.win_i_inLow = new double[other.win_i_inLow.Length];
+         Array.Copy( other.win_i_inLow, this.win_i_inLow, other.win_i_inLow.Length );
+         this.win_i_inClose = new double[other.win_i_inClose.Length];
+         Array.Copy( other.win_i_inClose, this.win_i_inClose, other.win_i_inClose.Length );
          this.cur_outPlusVI = other.cur_outPlusVI;
          this.cur_outMinusVI = other.cur_outMinusVI;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -779,7 +859,9 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("VORTEX", "peek", !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          VortexStream sp = this;
+         int i = 0;
          int live = 0;
+         int seeded = 0;
          double curTR = 0.0;
          double curVMP = 0.0;
          double curVMM = 0.0;
@@ -791,6 +873,9 @@ public partial class Core
          double cur_outMinusVI = 0.0;
          double cur_outPlusVI = 0.0;
          int nullRun = sp.nullRun;
+         double prevClose = sp.prevClose;
+         double prevHigh = sp.prevHigh;
+         double prevLow = sp.prevLow;
          double sTR = sp.sTR;
          double sVMM = sp.sVMM;
          double sVMP = sp.sVMP;
@@ -800,12 +885,24 @@ public partial class Core
          double pkVal1 = 0.0;
          int pkSlot2 = -1;
          double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int pkSlot4 = -1;
+         double pkVal4 = 0.0;
+         int pkSlot5 = -1;
+         double pkVal5 = 0.0;
          pkSlot0 = sp.ringPos_trailingIdx;
          pkVal0 = inHigh;
          pkSlot1 = sp.ringPos_trailingIdx;
          pkVal1 = inLow;
          pkSlot2 = sp.ringPos_trailingIdx;
          pkVal2 = inClose;
+         pkSlot3 = sp.winPos_i;
+         pkVal3 = inHigh;
+         pkSlot4 = sp.winPos_i;
+         pkVal4 = inLow;
+         pkSlot5 = sp.winPos_i;
+         pkVal5 = inClose;
          /* Add on today's terms. */
          tempLT = inLow;
          tempHT = inHigh;
@@ -835,6 +932,34 @@ public partial class Core
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sTR = 0.0;
+         }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+                  tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.Abs(prevClose - tempHT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  tempDouble = Math.Abs(prevClose - tempLT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  sTR += trueRange;
+                  sVMP += Math.Abs(tempHT - prevLow);
+                  sVMM += Math.Abs(tempLT - prevHigh);
+               }
+               prevHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+               prevLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+               prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot5) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal5;
+               seeded = 1;
+            }
          }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
@@ -902,7 +1027,9 @@ public partial class Core
 
    private void VortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
+      int i = 0;
       int live = 0;
+      int seeded = 0;
       double curTR = 0.0;
       double curVMP = 0.0;
       double curVMM = 0.0;
@@ -915,6 +1042,9 @@ public partial class Core
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.win_i_inHigh[sp.winPos_i] = inHigh;
+      sp.win_i_inLow[sp.winPos_i] = inLow;
+      sp.win_i_inClose[sp.winPos_i] = inClose;
       /* Add on today's terms. */
       tempLT = inLow;
       tempHT = inHigh;
@@ -944,6 +1074,34 @@ public partial class Core
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sTR = 0.0;
+      }
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired;
+       * rebuild all three from the window.
+       */
+      if( sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
+         sp.sTR = 0.0;
+         sp.sVMP = 0.0;
+         sp.sVMM = 0.0;
+         seeded = 0;
+         for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+            if( seeded != 0 ) {
+               tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+               tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+               trueRange = tempHT - tempLT;
+               tempDouble = Math.Abs(sp.prevClose - tempHT);
+               trueRange = MaxGt(tempDouble, trueRange);
+               tempDouble = Math.Abs(sp.prevClose - tempLT);
+               trueRange = MaxGt(tempDouble, trueRange);
+               sp.sTR += trueRange;
+               sp.sVMP += Math.Abs(tempHT - sp.prevLow);
+               sp.sVMM += Math.Abs(tempLT - sp.prevHigh);
+            }
+            sp.prevHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            sp.prevLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            sp.prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            seeded = 1;
+         }
       }
       /* Record the current window sums, then retire the trailing bar's
        * terms so the sums are ready for the next iteration.
@@ -998,6 +1156,10 @@ public partial class Core
          ringPosL_trailingIdx = 0;
       }
       sp.ringPos_trailingIdx = ringPosL_trailingIdx;
+      sp.winPos_i = sp.winPos_i + 1;
+      if( sp.winPos_i >= sp.winCap_i ) {
+         sp.winPos_i = 0;
+      }
    }
 
    private RetCode VortexOpenImpl( VortexStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outPlusVI, Span<double> outMinusVI, int outStride )
@@ -1011,6 +1173,10 @@ public partial class Core
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -1126,6 +1292,34 @@ public partial class Core
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = inLow[i];
+                  tempHT = inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.Abs(prevClose - tempHT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  tempDouble = Math.Abs(prevClose - tempLT);
+                  trueRange = MaxGt(tempDouble, trueRange);
+                  sTR += trueRange;
+                  sVMP += Math.Abs(tempHT - prevLow);
+                  sVMM += Math.Abs(tempLT - prevHigh);
+               }
+               prevHigh = inHigh[i];
+               prevLow = inLow[i];
+               prevClose = inClose[i];
+               seeded = 1;
+            }
+         }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
           */
@@ -1195,8 +1389,21 @@ public partial class Core
       for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
          capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
       }
+      int cap_i = (int)(optInTimePeriod + 1);
+      if( cap_i < 1 || cap_i > historyLen ) {
+         return RetCode.InternalError;
+      }
+      double[] capWin_i_inHigh = new double[cap_i];
+      inHigh.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inHigh);
+      double[] capWin_i_inLow = new double[cap_i];
+      inLow.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inLow);
+      double[] capWin_i_inClose = new double[cap_i];
+      inClose.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inClose);
       sp.optInTimePeriod = optInTimePeriod;
       sp.nullRun = nullRun;
+      sp.prevHigh = prevHigh;
+      sp.prevLow = prevLow;
+      sp.prevClose = prevClose;
       sp.sTR = sTR;
       sp.sVMP = sVMP;
       sp.sVMM = sVMM;
@@ -1209,6 +1416,11 @@ public partial class Core
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
       sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
       sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.winPos_i = 0;
+      sp.winCap_i = cap_i;
+      sp.win_i_inHigh = capWin_i_inHigh;
+      sp.win_i_inLow = capWin_i_inLow;
+      sp.win_i_inClose = capWin_i_inClose;
       sp.cur_outPlusVI = outPlusVI[(outNBElement - 1) * outStride];
       sp.cur_outMinusVI = outMinusVI[(outNBElement - 1) * outStride];
       return RetCode.Success;

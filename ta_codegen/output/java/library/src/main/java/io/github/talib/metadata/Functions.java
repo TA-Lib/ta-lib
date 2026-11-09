@@ -4698,7 +4698,7 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000701)
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000501)
          ));
    }
 
@@ -4780,8 +4780,8 @@ public final class Functions {
                1, 100000, 1, 200, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000701),
-            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000701)
+            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000501),
+            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000501)
          ));
    }
 

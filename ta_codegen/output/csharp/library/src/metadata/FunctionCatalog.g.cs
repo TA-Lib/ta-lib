@@ -6072,7 +6072,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}",
         lookback: static (core, c) => core.UltoscLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
@@ -6174,8 +6174,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outPlusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
-            new OutputInfo(OutputKind.Real, "outMinusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Negative | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outPlusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
+            new OutputInfo(OutputKind.Real, "outMinusVI", OutputFlags.Line | OutputFlags.Positive | OutputFlags.Zero),
         ],
         attributes: "{}",
         lookback: static (core, c) => core.VortexLookback(c.IntOpt(0)),

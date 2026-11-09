@@ -225906,6 +225906,7 @@ public final class Core {
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  KL       Kevin Lin
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
@@ -225921,6 +225922,7 @@ public final class Core {
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
  *  102426 MF,CC #554 zero-run test on the true range itself.
+ *  110926 KL    #588 rebuild a total that comes out negative.
  */
 
    /**
@@ -226222,6 +226224,34 @@ public final class Core {
                }
             }
          }
+         /* On well-formed bars every term is non-negative, so a total below zero
+          * is the residue a term far larger than the rest of its window left
+          * when it retired; rebuild all six from the ring, oldest bar first.
+          */
+         if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
+               j = term_Idx - i;
+               if( j < 0 ) {
+                  j += optInTimePeriod3;
+               }
+               if( i < optInTimePeriod1 ) {
+                  a1Total += term_closeMinusTrueLow[j];
+                  b1Total += term_trueRange[j];
+               }
+               if( i < optInTimePeriod2 ) {
+                  a2Total += term_closeMinusTrueLow[j];
+                  b2Total += term_trueRange[j];
+               }
+               a3Total += term_closeMinusTrueLow[j];
+               b3Total += term_trueRange[j];
+            }
+         }
          /* Calculate the oscillator value for today. Each window contributes only
           * when it holds a true range; the totals are sums of non-negative terms
           * and the reseed above removes their residue, so the test is exact.
@@ -226456,6 +226486,30 @@ public final class Core {
                   a3Total = 0.0;
                   b3Total = 0.0;
                }
+            }
+         }
+         if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
+               j = term_Idx - i;
+               if( j < 0 ) {
+                  j += optInTimePeriod3;
+               }
+               if( i < optInTimePeriod1 ) {
+                  a1Total += term_closeMinusTrueLow[j];
+                  b1Total += term_trueRange[j];
+               }
+               if( i < optInTimePeriod2 ) {
+                  a2Total += term_closeMinusTrueLow[j];
+                  b2Total += term_trueRange[j];
+               }
+               a3Total += term_closeMinusTrueLow[j];
+               b3Total += term_trueRange[j];
             }
          }
          output = 0.0;
@@ -226794,6 +226848,8 @@ public final class Core {
          double tempHT = 0.0;
          double tempLT = 0.0;
          double tempCY = 0.0;
+         int i = 0;
+         int j = 0;
          int live = 0;
          double a1Total = sp.a1Total;
          double a2Total = sp.a2Total;
@@ -226854,6 +226910,34 @@ public final class Core {
                   a3Total = 0.0;
                   b3Total = 0.0;
                }
+            }
+         }
+         /* On well-formed bars every term is non-negative, so a total below zero
+          * is the residue a term far larger than the rest of its window left
+          * when it retired; rebuild all six from the ring, oldest bar first.
+          */
+         if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
+               j = term_Idx - i;
+               if( j < 0 ) {
+                  j += sp.optInTimePeriod3;
+               }
+               if( i < sp.optInTimePeriod1 ) {
+                  a1Total += (j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+                  b1Total += (j != pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+               }
+               if( i < sp.optInTimePeriod2 ) {
+                  a2Total += (j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+                  b2Total += (j != pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+               }
+               a3Total += (j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+               b3Total += (j != pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
             }
          }
          /* Calculate the oscillator value for today. Each window contributes only
@@ -226937,6 +227021,8 @@ public final class Core {
       double tempHT = 0.0;
       double tempLT = 0.0;
       double tempCY = 0.0;
+      int i = 0;
+      int j = 0;
       int live = 0;
       /* Add on today's terms */
       tempLT = inLow;
@@ -226980,6 +227066,34 @@ public final class Core {
                sp.a3Total = 0.0;
                sp.b3Total = 0.0;
             }
+         }
+      }
+      /* On well-formed bars every term is non-negative, so a total below zero
+       * is the residue a term far larger than the rest of its window left
+       * when it retired; rebuild all six from the ring, oldest bar first.
+       */
+      if( sp.a1Total < 0.0 || sp.b1Total < 0.0 || sp.a2Total < 0.0 || sp.b2Total < 0.0 || sp.a3Total < 0.0 || sp.b3Total < 0.0 ) {
+         sp.a1Total = 0.0;
+         sp.b1Total = 0.0;
+         sp.a2Total = 0.0;
+         sp.b2Total = 0.0;
+         sp.a3Total = 0.0;
+         sp.b3Total = 0.0;
+         for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
+            j = sp.term_Idx - i;
+            if( j < 0 ) {
+               j += sp.optInTimePeriod3;
+            }
+            if( i < sp.optInTimePeriod1 ) {
+               sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
+               sp.b1Total += sp.cb_term_trueRange[j];
+            }
+            if( i < sp.optInTimePeriod2 ) {
+               sp.a2Total += sp.cb_term_closeMinusTrueLow[j];
+               sp.b2Total += sp.cb_term_trueRange[j];
+            }
+            sp.a3Total += sp.cb_term_closeMinusTrueLow[j];
+            sp.b3Total += sp.cb_term_trueRange[j];
          }
       }
       /* Calculate the oscillator value for today. Each window contributes only
@@ -227255,6 +227369,34 @@ public final class Core {
                   a3Total = 0.0;
                   b3Total = 0.0;
                }
+            }
+         }
+         /* On well-formed bars every term is non-negative, so a total below zero
+          * is the residue a term far larger than the rest of its window left
+          * when it retired; rebuild all six from the ring, oldest bar first.
+          */
+         if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
+               j = term_Idx - i;
+               if( j < 0 ) {
+                  j += optInTimePeriod3;
+               }
+               if( i < optInTimePeriod1 ) {
+                  a1Total += term_closeMinusTrueLow[j];
+                  b1Total += term_trueRange[j];
+               }
+               if( i < optInTimePeriod2 ) {
+                  a2Total += term_closeMinusTrueLow[j];
+                  b2Total += term_trueRange[j];
+               }
+               a3Total += term_closeMinusTrueLow[j];
+               b3Total += term_trueRange[j];
             }
          }
          /* Calculate the oscillator value for today. Each window contributes only
@@ -230487,6 +230629,7 @@ public final class Core {
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
  *  102426 MF,CC  #554 zero-run test on the true range itself.
+ *  110926 KL     #588 rebuild a sum that comes out negative.
  */
 
    /**
@@ -230555,6 +230698,10 @@ public final class Core {
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -230674,6 +230821,38 @@ public final class Core {
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = inLow[i];
+                  tempHT = inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.abs(prevClose - tempHT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  tempDouble = Math.abs(prevClose - tempLT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  sTR += trueRange;
+                  sVMP += Math.abs(tempHT - prevLow);
+                  sVMM += Math.abs(tempLT - prevHigh);
+               }
+               prevHigh = inHigh[i];
+               prevLow = inLow[i];
+               prevClose = inClose[i];
+               seeded = 1;
+            }
+         }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
           */
@@ -230748,6 +230927,10 @@ public final class Core {
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -230829,6 +231012,34 @@ public final class Core {
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sTR = 0.0;
+         }
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = (double)inLow[i];
+                  tempHT = (double)inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.abs(prevClose - tempHT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  tempDouble = Math.abs(prevClose - tempLT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  sTR += trueRange;
+                  sVMP += Math.abs(tempHT - prevLow);
+                  sVMM += Math.abs(tempLT - prevHigh);
+               }
+               prevHigh = (double)inHigh[i];
+               prevLow = (double)inLow[i];
+               prevClose = (double)inClose[i];
+               seeded = 1;
+            }
          }
          curTR = sTR;
          curVMP = sVMP;
@@ -231042,6 +231253,9 @@ public final class Core {
       private Core core;
       private int optInTimePeriod;
       private int nullRun;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
       private double sTR;
       private double sVMP;
       private double sVMM;
@@ -231054,6 +231268,11 @@ public final class Core {
       private double[] ring_trailingIdx_inHigh;
       private double[] ring_trailingIdx_inLow;
       private double[] ring_trailingIdx_inClose;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inHigh;
+      private double[] win_i_inLow;
+      private double[] win_i_inClose;
       private double cur_outPlusVI;
       private double cur_outMinusVI;
       private int outRangeBegIdx;
@@ -231099,6 +231318,9 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.prevClose = other.prevClose;
          this.sTR = other.sTR;
          this.sVMP = other.sVMP;
          this.sVMM = other.sVMM;
@@ -231111,6 +231333,11 @@ public final class Core {
          this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
          this.ring_trailingIdx_inLow = other.ring_trailingIdx_inLow.clone();
          this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+         this.winPos_i = other.winPos_i;
+         this.winCap_i = other.winCap_i;
+         this.win_i_inHigh = other.win_i_inHigh.clone();
+         this.win_i_inLow = other.win_i_inLow.clone();
+         this.win_i_inClose = other.win_i_inClose.clone();
          this.cur_outPlusVI = other.cur_outPlusVI;
          this.cur_outMinusVI = other.cur_outMinusVI;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -231160,7 +231387,9 @@ public final class Core {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw nonFiniteBar("VORTEX peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          VortexStream sp = this;
+         int i = 0;
          int live = 0;
+         int seeded = 0;
          double curTR = 0.0;
          double curVMP = 0.0;
          double curVMM = 0.0;
@@ -231172,6 +231401,9 @@ public final class Core {
          double cur_outMinusVI = 0.0;
          double cur_outPlusVI = 0.0;
          int nullRun = sp.nullRun;
+         double prevClose = sp.prevClose;
+         double prevHigh = sp.prevHigh;
+         double prevLow = sp.prevLow;
          double sTR = sp.sTR;
          double sVMM = sp.sVMM;
          double sVMP = sp.sVMP;
@@ -231181,12 +231413,24 @@ public final class Core {
          double pkVal1 = 0.0;
          int pkSlot2 = -1;
          double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int pkSlot4 = -1;
+         double pkVal4 = 0.0;
+         int pkSlot5 = -1;
+         double pkVal5 = 0.0;
          pkSlot0 = sp.ringPos_trailingIdx;
          pkVal0 = inHigh;
          pkSlot1 = sp.ringPos_trailingIdx;
          pkVal1 = inLow;
          pkSlot2 = sp.ringPos_trailingIdx;
          pkVal2 = inClose;
+         pkSlot3 = sp.winPos_i;
+         pkVal3 = inHigh;
+         pkSlot4 = sp.winPos_i;
+         pkVal4 = inLow;
+         pkSlot5 = sp.winPos_i;
+         pkVal5 = inClose;
          /* Add on today's terms. */
          tempLT = inLow;
          tempHT = inHigh;
@@ -231220,6 +231464,38 @@ public final class Core {
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sTR = 0.0;
+         }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+                  tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.abs(prevClose - tempHT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  tempDouble = Math.abs(prevClose - tempLT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  sTR += trueRange;
+                  sVMP += Math.abs(tempHT - prevLow);
+                  sVMM += Math.abs(tempLT - prevHigh);
+               }
+               prevHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+               prevLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+               prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot5) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal5;
+               seeded = 1;
+            }
          }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
@@ -231325,7 +231601,9 @@ public final class Core {
    }
    private void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
+      int i = 0;
       int live = 0;
+      int seeded = 0;
       double curTR = 0.0;
       double curVMP = 0.0;
       double curVMM = 0.0;
@@ -231338,6 +231616,9 @@ public final class Core {
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.win_i_inHigh[sp.winPos_i] = inHigh;
+      sp.win_i_inLow[sp.winPos_i] = inLow;
+      sp.win_i_inClose[sp.winPos_i] = inClose;
       /* Add on today's terms. */
       tempLT = inLow;
       tempHT = inHigh;
@@ -231371,6 +231652,38 @@ public final class Core {
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sTR = 0.0;
+      }
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired;
+       * rebuild all three from the window.
+       */
+      if( sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
+         sp.sTR = 0.0;
+         sp.sVMP = 0.0;
+         sp.sVMM = 0.0;
+         seeded = 0;
+         for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
+            if( seeded != 0 ) {
+               tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+               tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+               trueRange = tempHT - tempLT;
+               tempDouble = Math.abs(sp.prevClose - tempHT);
+               if( tempDouble > trueRange ) {
+                  trueRange = tempDouble;
+               }
+               tempDouble = Math.abs(sp.prevClose - tempLT);
+               if( tempDouble > trueRange ) {
+                  trueRange = tempDouble;
+               }
+               sp.sTR += trueRange;
+               sp.sVMP += Math.abs(tempHT - sp.prevLow);
+               sp.sVMM += Math.abs(tempLT - sp.prevHigh);
+            }
+            sp.prevHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            sp.prevLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            sp.prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            seeded = 1;
+         }
       }
       /* Record the current window sums, then retire the trailing bar's
        * terms so the sums are ready for the next iteration.
@@ -231427,6 +231740,10 @@ public final class Core {
       ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
       ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
       sp.ringPos_trailingIdx = ringPosL_trailingIdx;
+      sp.winPos_i = sp.winPos_i + 1;
+      if( sp.winPos_i >= sp.winCap_i ) {
+         sp.winPos_i = 0;
+      }
    }
    private RetCode vortexOpenImpl( VortexStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
    {
@@ -231437,6 +231754,10 @@ public final class Core {
       int i = 0;
       int nullRun = 0;
       int live = 0;
+      int seeded = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double prevClose = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -231560,6 +231881,38 @@ public final class Core {
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired;
+          * rebuild all three from the window.
+          */
+         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 ) {
+               if( seeded != 0 ) {
+                  tempLT = inLow[i];
+                  tempHT = inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = Math.abs(prevClose - tempHT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  tempDouble = Math.abs(prevClose - tempLT);
+                  if( tempDouble > trueRange ) {
+                     trueRange = tempDouble;
+                  }
+                  sTR += trueRange;
+                  sVMP += Math.abs(tempHT - prevLow);
+                  sVMM += Math.abs(tempLT - prevHigh);
+               }
+               prevHigh = inHigh[i];
+               prevLow = inLow[i];
+               prevClose = inClose[i];
+               seeded = 1;
+            }
+         }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
           */
@@ -231633,8 +231986,21 @@ public final class Core {
       for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
          capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
       }
+      int cap_i = (int)(optInTimePeriod + 1);
+      if( cap_i < 1 || cap_i > historyLen ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      double[] capWin_i_inHigh = new double[cap_i];
+      System.arraycopy(inHigh, historyLen - cap_i, capWin_i_inHigh, 0, cap_i);
+      double[] capWin_i_inLow = new double[cap_i];
+      System.arraycopy(inLow, historyLen - cap_i, capWin_i_inLow, 0, cap_i);
+      double[] capWin_i_inClose = new double[cap_i];
+      System.arraycopy(inClose, historyLen - cap_i, capWin_i_inClose, 0, cap_i);
       sp.optInTimePeriod = optInTimePeriod;
       sp.nullRun = nullRun;
+      sp.prevHigh = prevHigh;
+      sp.prevLow = prevLow;
+      sp.prevClose = prevClose;
       sp.sTR = sTR;
       sp.sVMP = sVMP;
       sp.sVMM = sVMM;
@@ -231647,6 +232013,11 @@ public final class Core {
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
       sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
       sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.winPos_i = 0;
+      sp.winCap_i = cap_i;
+      sp.win_i_inHigh = capWin_i_inHigh;
+      sp.win_i_inLow = capWin_i_inLow;
+      sp.win_i_inClose = capWin_i_inClose;
       sp.cur_outPlusVI = outPlusVI[(outNBElement.value - 1) * outStride];
       sp.cur_outMinusVI = outMinusVI[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
