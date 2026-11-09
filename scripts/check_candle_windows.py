@@ -240,6 +240,30 @@ def unfold_range_types(src):
     return "".join(out)
 
 
+def fold_ring_locals(src):
+    """A step may advance a ring cursor in a local: load it, use it, wrap it,
+    store it last. Spell that local as the field it mirrors, so the rules below
+    see one form. Folded only when the field is untouched between the load and
+    the store; any other shape is left as written and fails the cursor rule."""
+    for name in sorted(set(re.findall(r"\bint\s+ringPosL_(\w+)\s*;", src))):
+        local, field = r"\bringPosL_%s\b" % name, "sp->ringPos_%s" % name
+        load = re.compile(r"(?<![\w>.])ringPosL_%s\s*=\s*sp->ringPos_%s\s*;" % (name, name))
+        store = re.compile(r"sp->ringPos_%s\s*=\s*ringPosL_%s\s*;" % (name, name))
+        out, pos = [], 0
+        for ld in load.finditer(src):
+            st = store.search(src, ld.end())
+            if (ld.start() < pos or st is None
+                    or re.search(r"sp->ringPos_%s\b" % name, src[ld.end():st.start()])
+                    or load.search(src, ld.end(), st.start())):
+                continue
+            out.append(src[pos:ld.start()])
+            out.append(re.sub(local, field, src[ld.end():st.start()]))
+            pos = st.end()
+        out.append(src[pos:])
+        src = re.sub(r"\bint\s+ringPosL_%s\s*;" % name, "", "".join(out))
+    return src
+
+
 def _blank_comments(src):
     """Comments as spaces, newlines kept: code in a comment is not code, and the
     statement and brace scans below must not see one."""
@@ -953,7 +977,8 @@ def main():
 
     for path in files:
         name = os.path.basename(path)
-        src = unfold_range_types(_blank_comments(open(path, encoding="utf-8").read()))
+        src = unfold_range_types(fold_ring_locals(_blank_comments(
+            open(path, encoding="utf-8").read())))
         reads, problems, read_sets, read_offs = scan(src)
         if not reads:
             continue

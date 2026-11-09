@@ -1764,9 +1764,6 @@ jobs:
       # nothing that is committed. It probes one file per generated tier first,
       # so "the tree stayed clean" cannot pass for a file the generator no
       # longer writes at all (#211).
-      #
-      # This job still earns its place next to the PR gate: dev also takes
-      # direct pushes, which no pull_request trigger ever sees.
       - name: Regenerate all backends and verify committed output matches
         shell: bash
         run: |
@@ -1775,10 +1772,6 @@ jobs:
             exit 1
           fi
 
-      # The PR gate runs this too, in the job that has the C toolchain. It is
-      # repeated here for the same reason regen-check is: most commits reach dev
-      # as direct pushes, which `on: pull_request` never sees, so a header edit
-      # pushed straight to dev would otherwise meet no ABI gate at all.
       - name: Public C ABI matches ABI.manifest
         shell: bash
         run: |
