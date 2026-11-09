@@ -45,6 +45,7 @@ MEMBER_RE = re.compile(r'^ta_ref_(\d+)_(\d+)_(\d+)\.c$')
 SHARED_FILES = ('ta_ref.h', 'ta_ref_serve.c')
 
 RELEASE_URL = 'https://github.com/TA-Lib/ta-lib/releases/download/{tag}/{asset}'
+API_URL = 'https://api.github.com/repos/TA-Lib/ta-lib'
 DEB_ARCH = {'x86_64': 'amd64', 'aarch64': 'arm64'}
 SERVES_KEPT = 32
 
@@ -260,19 +261,40 @@ def _shipped(root, v, commit):
     return asset, json.loads(record)['package_sha256'], None
 
 
+def _fetch(url, accept=None):
+    req = urllib.request.Request(url, headers={'User-Agent': 'ta-lib-ref'})
+    if accept:
+        req.add_header('Accept', accept)
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return r.read()
+
+
+def _fetch_api(tag, asset):
+    # The release download URL can answer 5xx while the API serves the same bytes.
+    rel = json.loads(_fetch(f'{API_URL}/releases/tags/{tag}'))
+    aid = next((a['id'] for a in rel['assets'] if a['name'] == asset), None)
+    if aid is None:
+        raise OSError(f'release {tag} has no asset {asset}')
+    return _fetch(f'{API_URL}/releases/assets/{aid}', 'application/octet-stream')
+
+
 def _download(v, asset, sha):
     url = RELEASE_URL.format(tag=_tag(v), asset=asset)
     print(f"  downloading {url}")
     for attempt in range(1, 4):
         try:
-            with urllib.request.urlopen(url, timeout=120) as r:
-                data = r.read()
+            data = _fetch(url)
             break
         except OSError as e:
-            if attempt == 3:
-                raise RefError(f"download of {url} failed after {attempt} tries: {e}")
-            print(f"  attempt {attempt} failed ({e}); retrying")
-            time.sleep(10 * attempt)
+            try:
+                data = _fetch_api(_tag(v), asset)
+                print(f"  {e}; fetched through the API instead")
+                break
+            except OSError as e2:
+                if attempt == 3:
+                    raise RefError(f"download of {url} failed after {attempt} tries: {e}; API: {e2}")
+                print(f"  attempt {attempt} failed ({e}; API: {e2}); retrying")
+                time.sleep(10 * attempt)
     if _sha256(data) != sha:
         raise RefError(f"{asset}: sha256 {_sha256(data)} is not the {sha} its release recorded")
     return data
