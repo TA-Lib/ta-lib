@@ -1060,6 +1060,10 @@ impl Core {
         let mut BodyLongPeriodTotalTrailRange1: f64 = 0.0_f64;
         let mut NearPeriodTotalRange1: f64 = 0.0_f64;
         let mut NearPeriodTotalTrailRange1: f64 = 0.0_f64;
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
+        let mut ringPosL_BodyShortTrailingIdx: usize = 0_usize;
+        let mut ringPosL_NearTrailingIdx: usize = 0_usize;
+        let mut ringPosL_ShadowVeryShortTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -1256,10 +1260,13 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+        ringPosL_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
         let mut _candlerange_8: f64;
         match BodyShort_rangeType {
             0 => {
@@ -1275,19 +1282,24 @@ impl Core {
                 _candlerange_8 = 0.0;
             }
         }
-        sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx] = _candlerange_8;
-        sp.ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx + 1;
-        if sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
-            sp.ringPos_BodyShortTrailingIdx = 0;
+        sp.ring_BodyShortTrailingIdx_derived[ringPosL_BodyShortTrailingIdx] = _candlerange_8;
+        ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+        if ringPosL_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
+            ringPosL_BodyShortTrailingIdx = 0;
         }
-        sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-        if sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-            sp.ringPos_NearTrailingIdx = 0;
+        sp.ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
+        ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+        ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+        if ringPosL_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
+            ringPosL_NearTrailingIdx = 0;
         }
-        sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
-        if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
-            sp.ringPos_ShadowVeryShortTrailingIdx = 0;
+        sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+        ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+        ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+        if ringPosL_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
+            ringPosL_ShadowVeryShortTrailingIdx = 0;
         }
+        sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlstalledpattern_open_internal`]

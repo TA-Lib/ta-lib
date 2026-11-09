@@ -289,6 +289,7 @@ static void TA_RVOL_StepImpl( struct TA_RVOL_Stream *sp, double inVolume, double
    double todayVolume;
    double trailingVolume;
    int liveIn;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    /* Drop the trailing bar BEFORE adding today's. Up to the first dead
@@ -313,12 +314,14 @@ static void TA_RVOL_StepImpl( struct TA_RVOL_Stream *sp, double inVolume, double
    }
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_RVOL_OpenBody( struct TA_RVOL_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

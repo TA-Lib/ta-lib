@@ -240,17 +240,20 @@ static void TA_MOM_ReleaseImpl( struct TA_MOM_Stream *sp )
 /* Private function, not in public API. */
 static void TA_MOM_StepImpl( struct TA_MOM_Stream *sp, double inReal, double *outReal )
 {
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    *outReal= inReal - sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_MOM_OpenBody( struct TA_MOM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

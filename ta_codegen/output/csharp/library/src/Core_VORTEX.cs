@@ -911,6 +911,7 @@ public partial class Core
       double tempLT = 0.0;
       double tempHT = 0.0;
       double tempCY = 0.0;
+      int ringPosL_trailingIdx = 0;
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -991,10 +992,12 @@ public partial class Core
       sp.lag1_inHigh = inHigh;
       sp.lag1_inLow = inLow;
       sp.lag1_inClose = inClose;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= sp.ringCap_trailingIdx ) {
+         ringPosL_trailingIdx = 0;
       }
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 
    private RetCode VortexOpenImpl( VortexStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outPlusVI, Span<double> outMinusVI, int outStride )

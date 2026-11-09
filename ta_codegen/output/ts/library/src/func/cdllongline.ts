@@ -528,6 +528,8 @@ export class CdllonglineStream {
 }
 
 function cdllonglineStepImpl(sp: CdllonglineStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyTrailingIdx = 0;
+  let ringPosL_ShadowTrailingIdx = 0;
   const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
   const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
   const BodyLong_factor = sp.cs_BodyLong_factor;
@@ -550,16 +552,16 @@ function cdllonglineStepImpl(sp: CdllonglineStream, inOpen: number, inHigh: numb
    */
   sp.BodyPeriodTotal += ((BodyLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType === 1) ? (inHigh - inLow) : ((BodyLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
   sp.ShadowPeriodTotal += ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx];
-  sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType === 1) ? (inHigh - inLow) : ((BodyLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-  if (sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx) {
-    sp.ringPos_BodyTrailingIdx = 0;
-  }
-  sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx + 1;
-  if (sp.ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx) {
-    sp.ringPos_ShadowTrailingIdx = 0;
-  }
+  ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+  sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType === 1) ? (inHigh - inLow) : ((BodyLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx & (ringPosL_BodyTrailingIdx - sp.ringCap_BodyTrailingIdx >> 31);
+  sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+  ringPosL_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+  sp.ring_ShadowTrailingIdx_derived[ringPosL_ShadowTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx + 1;
+  ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx & (ringPosL_ShadowTrailingIdx - sp.ringCap_ShadowTrailingIdx >> 31);
+  sp.ringPos_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx;
 }
 
 function cdllonglineOpenImpl(

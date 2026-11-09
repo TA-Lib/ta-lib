@@ -572,6 +572,8 @@
    }
    private void cdlgapsidesidewhiteStepImpl( CdlgapsidesidewhiteStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
+      int ringPosL_EqualTrailingIdx = 0;
+      int ringPosL_NearTrailingIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
       double Equal_factor = sp.cs_Equal_factor;
@@ -606,14 +608,14 @@
       sp.lag1_inLow = inLow;
       sp.lag2_inClose = sp.lag1_inClose;
       sp.lag1_inClose = inClose;
-      sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
-      if( sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
-         sp.ringPos_EqualTrailingIdx = 0;
-      }
-      sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-      if( sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
-         sp.ringPos_NearTrailingIdx = 0;
-      }
+      ringPosL_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx & (ringPosL_EqualTrailingIdx - sp.ringCap_EqualTrailingIdx >> 31);
+      sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+      ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+      ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+      ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
+      sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
    }
    private RetCode cdlgapsidesidewhiteOpenImpl( CdlgapsidesidewhiteStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {

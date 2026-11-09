@@ -411,6 +411,7 @@ static void TA_ACCBANDS_StepImpl( struct TA_ACCBANDS_Stream *sp, double inHigh, 
    double tempMiddle;
    double tempLower;
    double tempReal;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    /* Add the incoming bar to each running sum. */
@@ -451,14 +452,16 @@ static void TA_ACCBANDS_StepImpl( struct TA_ACCBANDS_Stream *sp, double inHigh, 
    sp->cur_outRealMiddleBand = *outRealMiddleBand;
    sp->cur_outRealLowerBand = *outRealLowerBand;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] = inHigh;
-   sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] = inLow;
-   sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] = inClose;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh;
+   sp->ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow;
+   sp->ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_ACCBANDS_OpenBody( struct TA_ACCBANDS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )

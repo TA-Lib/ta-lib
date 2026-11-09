@@ -535,6 +535,8 @@ export class CdlhighwaveStream {
 }
 
 function cdlhighwaveStepImpl(sp: CdlhighwaveStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyTrailingIdx = 0;
+  let ringPosL_ShadowTrailingIdx = 0;
   const BodyShort_rangeType = sp.cs_BodyShort_rangeType;
   const BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
   const BodyShort_factor = sp.cs_BodyShort_factor;
@@ -557,16 +559,16 @@ function cdlhighwaveStepImpl(sp: CdlhighwaveStream, inOpen: number, inHigh: numb
    */
   sp.BodyPeriodTotal += ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
   sp.ShadowPeriodTotal += ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx];
-  sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-  if (sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx) {
-    sp.ringPos_BodyTrailingIdx = 0;
-  }
-  sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx] = ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx + 1;
-  if (sp.ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx) {
-    sp.ringPos_ShadowTrailingIdx = 0;
-  }
+  ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+  sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx & (ringPosL_BodyTrailingIdx - sp.ringCap_BodyTrailingIdx >> 31);
+  sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+  ringPosL_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+  sp.ring_ShadowTrailingIdx_derived[ringPosL_ShadowTrailingIdx] = ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx + 1;
+  ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx & (ringPosL_ShadowTrailingIdx - sp.ringCap_ShadowTrailingIdx >> 31);
+  sp.ringPos_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx;
 }
 
 function cdlhighwaveOpenImpl(

@@ -962,6 +962,10 @@ static TA_FMA_STEP_INLINE void TA_KST_StepImpl( struct TA_KST_Stream *sp, double
    double rcma2;
    double rcma3;
    double rcma4;
+   int ringPosL_den1;
+   int ringPosL_den2;
+   int ringPosL_den3;
+   int ringPosL_den4;
    double total1;
    double total2;
    double total3;
@@ -1047,30 +1051,38 @@ static TA_FMA_STEP_INLINE void TA_KST_StepImpl( struct TA_KST_Stream *sp, double
    *outKSTSignal= sig;
    sp->cur_outKST = *outKST;
    sp->cur_outKSTSignal = *outKSTSignal;
-   sp->ring_den1_inReal[sp->ringPos_den1] = inReal;
-   sp->ringPos_den1 = sp->ringPos_den1 + 1;
-   if( sp->ringPos_den1 >= sp->ringCap_den1 )
+   ringPosL_den1 = sp->ringPos_den1;
+   sp->ring_den1_inReal[ringPosL_den1] = inReal;
+   ringPosL_den1 = ringPosL_den1 + 1;
+   if( ringPosL_den1 >= sp->ringCap_den1 )
    {
-      sp->ringPos_den1 = 0;
+      ringPosL_den1 = 0;
    }
-   sp->ring_den2_inReal[sp->ringPos_den2] = inReal;
-   sp->ringPos_den2 = sp->ringPos_den2 + 1;
-   if( sp->ringPos_den2 >= sp->ringCap_den2 )
+   sp->ringPos_den1 = ringPosL_den1;
+   ringPosL_den2 = sp->ringPos_den2;
+   sp->ring_den2_inReal[ringPosL_den2] = inReal;
+   ringPosL_den2 = ringPosL_den2 + 1;
+   if( ringPosL_den2 >= sp->ringCap_den2 )
    {
-      sp->ringPos_den2 = 0;
+      ringPosL_den2 = 0;
    }
-   sp->ring_den3_inReal[sp->ringPos_den3] = inReal;
-   sp->ringPos_den3 = sp->ringPos_den3 + 1;
-   if( sp->ringPos_den3 >= sp->ringCap_den3 )
+   sp->ringPos_den2 = ringPosL_den2;
+   ringPosL_den3 = sp->ringPos_den3;
+   sp->ring_den3_inReal[ringPosL_den3] = inReal;
+   ringPosL_den3 = ringPosL_den3 + 1;
+   if( ringPosL_den3 >= sp->ringCap_den3 )
    {
-      sp->ringPos_den3 = 0;
+      ringPosL_den3 = 0;
    }
-   sp->ring_den4_inReal[sp->ringPos_den4] = inReal;
-   sp->ringPos_den4 = sp->ringPos_den4 + 1;
-   if( sp->ringPos_den4 >= sp->ringCap_den4 )
+   sp->ringPos_den3 = ringPosL_den3;
+   ringPosL_den4 = sp->ringPos_den4;
+   sp->ring_den4_inReal[ringPosL_den4] = inReal;
+   ringPosL_den4 = ringPosL_den4 + 1;
+   if( ringPosL_den4 >= sp->ringCap_den4 )
    {
-      sp->ringPos_den4 = 0;
+      ringPosL_den4 = 0;
    }
+   sp->ringPos_den4 = ringPosL_den4;
    sp->total1 = total1;
    sp->total2 = total2;
    sp->total3 = total3;

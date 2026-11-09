@@ -1267,6 +1267,7 @@ function cgStepImpl(sp: CgStream, inReal: number): void {
   let c = 0;
   let q = 0;
   let t = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_trailingIdx = 0;
   sp.win_j_inReal[sp.winPos_j] = inReal;
   /* Between bars the sums hold the window less its oldest value. */
@@ -1552,11 +1553,11 @@ function cgStepImpl(sp: CgStream, inReal: number): void {
   /* After the trailing value is read: outReal may be inReal. */
   sp.cur_outReal = value;
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
   sp.winPos_j = sp.winPos_j + 1;
   if (sp.winPos_j >= sp.winCap_j) {
     sp.winPos_j = 0;

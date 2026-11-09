@@ -358,6 +358,8 @@ impl Core {
     fn dpo_step_impl(sp: &mut DpoStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut dispVal: f64 = 0.0_f64;
+        let mut ringPosL_dispIdx: usize = 0_usize;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_dispIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         sp.periodTotal += inReal;
@@ -372,17 +374,21 @@ impl Core {
         (*outReal) = dispVal - tempReal / (sp.optInTimePeriod as f64);
         sp.cur_outReal = (*outReal);
         ringCapL_dispIdx = sp.ringCap_dispIdx;
-        sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
-        sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-        if sp.ringPos_dispIdx >= ringCapL_dispIdx {
-            sp.ringPos_dispIdx = 0;
+        ringPosL_dispIdx = sp.ringPos_dispIdx;
+        sp.ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
+        ringPosL_dispIdx = ringPosL_dispIdx + 1;
+        if ringPosL_dispIdx >= ringCapL_dispIdx {
+            ringPosL_dispIdx = 0;
         }
+        sp.ringPos_dispIdx = ringPosL_dispIdx;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::dpo_open_internal`]

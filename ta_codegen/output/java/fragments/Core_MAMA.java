@@ -1387,6 +1387,7 @@
       double Q2 = 0.0;
       double I2 = 0.0;
       double todayValue = 0.0;
+      int ringPosL_trailingWMAIdx = 0;
       int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -1554,11 +1555,11 @@
       sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
       /* Ooof... let's do the next price bar now! */
       ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-      sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-      sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
-         sp.ringPos_trailingWMAIdx = 0;
-      }
+      ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+      sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx & (ringPosL_trailingWMAIdx - ringCapL_trailingWMAIdx >> 31);
+      sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
       sp.streamParity = 1 - sp.streamParity;
    }
    private RetCode mamaOpenImpl( MamaStream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )

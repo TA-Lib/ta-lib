@@ -598,6 +598,7 @@ export class Cdl3linestrikeStream {
 function cdl3linestrikeStepImpl(sp: Cdl3linestrikeStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
   let NearPeriodTotalRange2 = 0;
   let NearPeriodTotalTrailRange2 = 0;
+  let ringPosL_NearTrailingIdx = 0;
   const Near_rangeType = sp.cs_Near_rangeType;
   const Near_avgPeriod = sp.cs_Near_avgPeriod;
   const Near_factor = sp.cs_Near_factor;
@@ -645,10 +646,10 @@ function cdl3linestrikeStepImpl(sp: Cdl3linestrikeStream, inOpen: number, inHigh
   sp.lag3_inClose = sp.lag2_inClose;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-  if (sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx) {
-    sp.ringPos_NearTrailingIdx = 0;
-  }
+  ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
+  sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
 }
 
 function cdl3linestrikeOpenImpl(

@@ -490,6 +490,7 @@ export class CdlspinningtopStream {
 }
 
 function cdlspinningtopStepImpl(sp: CdlspinningtopStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyTrailingIdx = 0;
   const BodyShort_rangeType = sp.cs_BodyShort_rangeType;
   const BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
   const BodyShort_factor = sp.cs_BodyShort_factor;
@@ -505,11 +506,11 @@ function cdlspinningtopStepImpl(sp: CdlspinningtopStream, inOpen: number, inHigh
    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
    */
   sp.BodyPeriodTotal += ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
-  sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-  if (sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx) {
-    sp.ringPos_BodyTrailingIdx = 0;
-  }
+  ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+  sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType === 1) ? (inHigh - inLow) : ((BodyShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx & (ringPosL_BodyTrailingIdx - sp.ringCap_BodyTrailingIdx >> 31);
+  sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
 }
 
 function cdlspinningtopOpenImpl(

@@ -396,6 +396,7 @@ struct CdldojiStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdldoji_step_impl(sp: &mut CdldojiStreamState, cs_body_doji: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyDojiTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
@@ -444,6 +445,7 @@ impl Core {
         }
         sp.BodyDojiPeriodTotal += _candlerange_1 - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
         sp.cur_outInteger = (*outInteger);
+        ringPosL_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
         let mut _candlerange_2: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -459,11 +461,12 @@ impl Core {
                 _candlerange_2 = 0.0;
             }
         }
-        sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = _candlerange_2;
-        sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
-        if sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
-            sp.ringPos_BodyDojiTrailingIdx = 0;
+        sp.ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = _candlerange_2;
+        ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+        if ringPosL_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
+            ringPosL_BodyDojiTrailingIdx = 0;
         }
+        sp.ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdldoji_open_internal`]

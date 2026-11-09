@@ -380,6 +380,7 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    double tempV;
    double tempReal;
    double trailingVolume;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    if( sp->optInTimePeriod == 1 )
@@ -426,13 +427,15 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    sp->zeroCount -= (fabs(trailingVolume) <= 0.0) ? 1 : 0;
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   sp->ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_VWMA_OpenBody( struct TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

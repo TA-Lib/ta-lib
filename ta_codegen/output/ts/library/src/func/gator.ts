@@ -923,33 +923,25 @@ function gatorStepImpl(sp: GatorStream, inHigh: number, inLow: number): void {
   lagPosL0 = sp.lagPos0;
   sp.lagBuf0[lagPosL0] = lagIn0;
   lagPosL0 = lagPosL0 + 1;
-  if (lagPosL0 >= lagCapL0) {
-    lagPosL0 = 0;
-  }
+  lagPosL0 = lagPosL0 & (lagPosL0 - lagCapL0 >> 31);
   sp.lagPos0 = lagPosL0;
   lagCapL1 = sp.lagCap1;
   lagPosL1 = sp.lagPos1;
   sp.lagBuf1[lagPosL1] = lagIn1;
   lagPosL1 = lagPosL1 + 1;
-  if (lagPosL1 >= lagCapL1) {
-    lagPosL1 = 0;
-  }
+  lagPosL1 = lagPosL1 & (lagPosL1 - lagCapL1 >> 31);
   sp.lagPos1 = lagPosL1;
   lagCapL2 = sp.lagCap2;
   lagPosL2 = sp.lagPos2;
   sp.lagBuf2[lagPosL2] = lagIn2;
   lagPosL2 = lagPosL2 + 1;
-  if (lagPosL2 >= lagCapL2) {
-    lagPosL2 = 0;
-  }
+  lagPosL2 = lagPosL2 & (lagPosL2 - lagCapL2 >> 31);
   sp.lagPos2 = lagPosL2;
   lagCapL3 = sp.lagCap3;
   lagPosL3 = sp.lagPos3;
   sp.lagBuf3[lagPosL3] = lagIn3;
   lagPosL3 = lagPosL3 + 1;
-  if (lagPosL3 >= lagCapL3) {
-    lagPosL3 = 0;
-  }
+  lagPosL3 = lagPosL3 & (lagPosL3 - lagCapL3 >> 31);
   sp.lagPos3 = lagPosL3;
   sp.cur_outUpper = cur_outUpper;
   sp.cur_outLower = cur_outLower;

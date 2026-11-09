@@ -500,6 +500,7 @@ struct CdlbreakawayStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlbreakaway_step_impl(sp: &mut CdlbreakawayStreamState, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -586,10 +587,12 @@ impl Core {
         sp.lag3_inClose = sp.lag2_inClose;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlbreakaway_open_internal`]

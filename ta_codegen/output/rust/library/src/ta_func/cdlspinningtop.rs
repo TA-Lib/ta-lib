@@ -396,6 +396,7 @@ struct CdlspinningtopStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlspinningtop_step_impl(sp: &mut CdlspinningtopStreamState, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = cs_body_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -444,6 +445,7 @@ impl Core {
         }
         sp.BodyPeriodTotal += _candlerange_1 - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
         sp.cur_outInteger = (*outInteger);
+        ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
         let mut _candlerange_2: f64;
         match BodyShort_rangeType {
             0 => {
@@ -459,11 +461,12 @@ impl Core {
                 _candlerange_2 = 0.0;
             }
         }
-        sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = _candlerange_2;
-        sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-        if sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
-            sp.ringPos_BodyTrailingIdx = 0;
+        sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = _candlerange_2;
+        ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+        if ringPosL_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
+            ringPosL_BodyTrailingIdx = 0;
         }
+        sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlspinningtop_open_internal`]

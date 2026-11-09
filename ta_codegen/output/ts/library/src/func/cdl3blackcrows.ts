@@ -597,6 +597,7 @@ export class Cdl3blackcrowsStream {
 function cdl3blackcrowsStepImpl(sp: Cdl3blackcrowsStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
   let range0 = 0;
   let trailRange0 = 0;
+  let ringPosL_ShadowVeryShortTrailingIdx = 0;
   const ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
   const ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
   const ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -646,11 +647,11 @@ function cdl3blackcrowsStepImpl(sp: Cdl3blackcrowsStream, inOpen: number, inHigh
   sp.lag3_inClose = sp.lag2_inClose;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
-  if (sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) {
-    sp.ringPos_ShadowVeryShortTrailingIdx = 0;
-  }
+  ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+  sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+  ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
+  sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
 }
 
 function cdl3blackcrowsOpenImpl(

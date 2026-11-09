@@ -1201,6 +1201,7 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_
    double trendline;
    double prevSine;
    double prevLeadSine;
+   int ringPosL_trailingWMAIdx;
    int ringCapL_trailingWMAIdx;
 
    sp->win_j_inReal[sp->winPos_j] = inReal;
@@ -1479,12 +1480,14 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_
    }
    sp->cur_outInteger = *outInteger;
    ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
-   sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+   ringPosL_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   sp->ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+   ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+   if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
-      sp->ringPos_trailingWMAIdx = 0;
+      ringPosL_trailingWMAIdx = 0;
    }
+   sp->ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
    sp->winPos_j = sp->winPos_j + 1;
    if( sp->winPos_j >= sp->winCap_j )
    {

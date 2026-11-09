@@ -484,6 +484,7 @@ export class CdldojiStream {
 }
 
 function cdldojiStepImpl(sp: CdldojiStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyDojiTrailingIdx = 0;
   const BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
   const BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
   const BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -499,11 +500,11 @@ function cdldojiStepImpl(sp: CdldojiStream, inOpen: number, inHigh: number, inLo
    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
    */
   sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType === 1) ? (inHigh - inLow) : ((BodyDoji_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
-  sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = ((BodyDoji_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType === 1) ? (inHigh - inLow) : ((BodyDoji_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
-  if (sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx) {
-    sp.ringPos_BodyDojiTrailingIdx = 0;
-  }
+  ringPosL_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+  sp.ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = ((BodyDoji_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType === 1) ? (inHigh - inLow) : ((BodyDoji_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+  ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx & (ringPosL_BodyDojiTrailingIdx - sp.ringCap_BodyDojiTrailingIdx >> 31);
+  sp.ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
 }
 
 function cdldojiOpenImpl(

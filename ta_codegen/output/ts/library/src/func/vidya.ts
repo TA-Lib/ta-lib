@@ -719,6 +719,7 @@ function vidyaStepImpl(sp: VidyaStream, inReal: number): void {
   let up = 0;
   let tempReal = 0;
   let k = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_trailingIdx = 0;
   if (sp.optInTimePeriod === 1) {
     sp.cur_outReal = inReal;
@@ -754,11 +755,11 @@ function vidyaStepImpl(sp: VidyaStream, inReal: number): void {
   sp.upSum -= up;
   sp.downSum -= up - diff;
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function vidyaOpenImpl(

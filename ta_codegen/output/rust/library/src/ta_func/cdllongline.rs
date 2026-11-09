@@ -451,6 +451,8 @@ struct CdllonglineStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdllongline_step_impl(sp: &mut CdllonglineStreamState, cs_body_long: &CandleSetting, cs_shadow_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyTrailingIdx: usize = 0_usize;
+        let mut ringPosL_ShadowTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -539,6 +541,7 @@ impl Core {
         }
         sp.ShadowPeriodTotal += _candlerange_3 - sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx];
         sp.cur_outInteger = (*outInteger);
+        ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
         let mut _candlerange_4: f64;
         match BodyLong_rangeType {
             0 => {
@@ -554,11 +557,13 @@ impl Core {
                 _candlerange_4 = 0.0;
             }
         }
-        sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = _candlerange_4;
-        sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-        if sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
-            sp.ringPos_BodyTrailingIdx = 0;
+        sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = _candlerange_4;
+        ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+        if ringPosL_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
+            ringPosL_BodyTrailingIdx = 0;
         }
+        sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+        ringPosL_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
         let mut _candlerange_5: f64;
         match ShadowShort_rangeType {
             0 => {
@@ -574,11 +579,12 @@ impl Core {
                 _candlerange_5 = 0.0;
             }
         }
-        sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx] = _candlerange_5;
-        sp.ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx + 1;
-        if sp.ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx {
-            sp.ringPos_ShadowTrailingIdx = 0;
+        sp.ring_ShadowTrailingIdx_derived[ringPosL_ShadowTrailingIdx] = _candlerange_5;
+        ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx + 1;
+        if ringPosL_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx {
+            ringPosL_ShadowTrailingIdx = 0;
         }
+        sp.ringPos_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdllongline_open_internal`]

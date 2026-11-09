@@ -574,6 +574,7 @@ static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, doub
    double tempReal2;
    double periodROC;
    int live;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    if( sp->optInTimePeriod == 1 )
@@ -629,12 +630,14 @@ static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, doub
    sp->cur_outReal = *outReal;
    sp->lag1_inReal = inReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

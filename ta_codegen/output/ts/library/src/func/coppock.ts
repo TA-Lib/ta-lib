@@ -760,6 +760,8 @@ function coppockStepImpl(sp: CoppockStream, inReal: number): void {
   let base2 = 0;
   let roc1 = 0;
   let roc2 = 0;
+  let ringPosL_roc1Idx = 0;
+  let ringPosL_roc2Idx = 0;
   let ringCapL_roc1Idx = 0;
   let ringCapL_roc2Idx = 0;
   base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
@@ -819,17 +821,17 @@ function coppockStepImpl(sp: CoppockStream, inReal: number): void {
   }
   sp.periodSum -= sp.periodSub;
   ringCapL_roc1Idx = sp.ringCap_roc1Idx;
-  sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
-  sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-  if (sp.ringPos_roc1Idx >= ringCapL_roc1Idx) {
-    sp.ringPos_roc1Idx = 0;
-  }
+  ringPosL_roc1Idx = sp.ringPos_roc1Idx;
+  sp.ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
+  ringPosL_roc1Idx = ringPosL_roc1Idx + 1;
+  ringPosL_roc1Idx = ringPosL_roc1Idx & (ringPosL_roc1Idx - ringCapL_roc1Idx >> 31);
+  sp.ringPos_roc1Idx = ringPosL_roc1Idx;
   ringCapL_roc2Idx = sp.ringCap_roc2Idx;
-  sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
-  sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-  if (sp.ringPos_roc2Idx >= ringCapL_roc2Idx) {
-    sp.ringPos_roc2Idx = 0;
-  }
+  ringPosL_roc2Idx = sp.ringPos_roc2Idx;
+  sp.ring_roc2Idx_inReal[ringPosL_roc2Idx] = inReal;
+  ringPosL_roc2Idx = ringPosL_roc2Idx + 1;
+  ringPosL_roc2Idx = ringPosL_roc2Idx & (ringPosL_roc2Idx - ringCapL_roc2Idx >> 31);
+  sp.ringPos_roc2Idx = ringPosL_roc2Idx;
 }
 
 function coppockOpenImpl(

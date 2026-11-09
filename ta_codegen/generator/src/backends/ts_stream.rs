@@ -171,6 +171,9 @@ macro_rules! names_through {
                 #[allow(clippy::redundant_closure_call)]
                 ($tape)(self)
             }
+            fn ring_wrap(&self) -> streaming::RingWrap {
+                streaming::RingWrap::SignMask
+            }
         }
     };
 }

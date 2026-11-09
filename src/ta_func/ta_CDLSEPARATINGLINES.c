@@ -476,6 +476,10 @@ static void TA_CDLSEPARATINGLINES_ReleaseImpl( struct TA_CDLSEPARATINGLINES_Stre
 /* Private function, not in public API. */
 static void TA_CDLSEPARATINGLINES_StepImpl( struct TA_CDLSEPARATINGLINES_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyLongTrailingIdx;
+   int ringPosL_EqualTrailingIdx;
+   int ringPosL_ShadowVeryShortTrailingIdx;
+
    if( sp->ringCap_BodyLongTrailingIdx == 0 )
    {
       sp->ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
@@ -515,23 +519,29 @@ static void TA_CDLSEPARATINGLINES_StepImpl( struct TA_CDLSEPARATINGLINES_Stream 
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   ringPosL_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+   if( ringPosL_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
-      sp->ringPos_EqualTrailingIdx = 0;
+      ringPosL_EqualTrailingIdx = 0;
    }
-   sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
+   sp->ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+   ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+   if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
+      ringPosL_ShadowVeryShortTrailingIdx = 0;
    }
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLSEPARATINGLINES_OpenBody( struct TA_CDLSEPARATINGLINES_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

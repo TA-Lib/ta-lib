@@ -540,7 +540,12 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
             let text = render_stream(&func, &enums, lang);
             let lines: Vec<&str> = text.lines().map(str::trim).collect();
             for k in 0..cp.lines.len() {
-                let (local, wrap) = (format!("lagPosL{k}"), format!("lagPosL{k} = 0;"));
+                let local = format!("lagPosL{k}");
+                let wrap = if matches!(lang, "java" | "ts") {
+                    format!("{local} = {local} & ({local} - lagCapL{k} >> 31);")
+                } else {
+                    format!("{local} = 0;")
+                };
                 let mut from_local = Vec::new();
                 for (i, l) in lines.iter().enumerate() {
                     let Some(rhs) = ["sp.", "sp->"]
@@ -570,4 +575,48 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
         }
     }
     assert!(pushes >= 5, "no delay line was pushed in any backend: the gate checks nothing");
+}
+
+/// A ring position advances in a step local, wrapped in the form its backend's
+/// compiler keeps branch-free: the compare-reset gcc, LLVM and RyuJIT turn into
+/// a conditional move, or in Java and TypeScript, whose JITs keep that compare a
+/// branch, a sign mask. Advanced in place on the handle, the compare stays a
+/// branch in every backend. Both regressions leave every value unchanged.
+#[test]
+fn every_ring_position_advances_in_a_local() {
+    let mut advanced = 0usize;
+    for name in streaming_funcs() {
+        let (func, enums) = load(&name);
+        for lang in ["c", "rust", "java", "csharp", "ts"] {
+            let text = render_stream(&func, &enums, lang);
+            let lines: Vec<&str> = text.lines().map(str::trim).collect();
+            for (i, l) in lines.iter().enumerate() {
+                let advance = l.strip_suffix(';').and_then(|s| s.split_once(" = "));
+                let Some((lhs, rhs)) = advance else { continue };
+                if rhs != format!("{lhs} + 1") {
+                    continue;
+                }
+                let field = lhs.strip_prefix("sp.").or_else(|| lhs.strip_prefix("sp->"));
+                assert!(
+                    !field.unwrap_or(lhs).starts_with("ringPos_"),
+                    "{} {lang}: `{l}` advances a ring position in place",
+                    func.name
+                );
+                if !lhs.starts_with("ringPosL_") {
+                    continue;
+                }
+                let next = lines.get(i + 1).copied().unwrap_or("");
+                let wrapped = if matches!(lang, "java" | "ts") {
+                    next.starts_with(&format!("{lhs} = {lhs} & ({lhs} - "))
+                        && next.ends_with(" >> 31);")
+                } else {
+                    next.starts_with("if") && next.contains(&format!("{lhs} >="))
+                };
+                let fname = &func.name;
+                assert!(wrapped, "{fname} {lang}: `{l}` is not followed by its wrap: `{next}`");
+                advanced += 1;
+            }
+        }
+    }
+    assert!(advanced > 0, "no ring position advanced in any backend: the gate checks nothing");
 }

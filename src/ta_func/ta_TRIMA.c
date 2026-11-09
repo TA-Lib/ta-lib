@@ -556,6 +556,9 @@ static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double
 {
    if( sp->optInTimePeriod % 2 == 1 )
    {
+      int ringPosL_middleIdx;
+      int ringPosL_trailingIdx;
+
       if( sp->ringCap_middleIdx == 0 )
       {
          sp->ring_middleIdx_inReal[0] = inReal;
@@ -580,21 +583,27 @@ static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double
       sp->tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
       *outReal= sp->numerator * sp->factor;
       sp->cur_outReal = *outReal;
-      sp->ring_middleIdx_inReal[sp->ringPos_middleIdx] = inReal;
-      sp->ringPos_middleIdx = sp->ringPos_middleIdx + 1;
-      if( sp->ringPos_middleIdx >= sp->ringCap_middleIdx )
+      ringPosL_middleIdx = sp->ringPos_middleIdx;
+      sp->ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+      ringPosL_middleIdx = ringPosL_middleIdx + 1;
+      if( ringPosL_middleIdx >= sp->ringCap_middleIdx )
       {
-         sp->ringPos_middleIdx = 0;
+         ringPosL_middleIdx = 0;
       }
-      sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-      sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-      if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+      sp->ringPos_middleIdx = ringPosL_middleIdx;
+      ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+      sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= sp->ringCap_trailingIdx )
       {
-         sp->ringPos_trailingIdx = 0;
+         ringPosL_trailingIdx = 0;
       }
+      sp->ringPos_trailingIdx = ringPosL_trailingIdx;
    }
    else
    {
+      int ringPosL_middleIdx;
+      int ringPosL_trailingIdx;
       int ringCapL_middleIdx;
       int ringCapL_trailingIdx;
 
@@ -615,19 +624,23 @@ static void TA_TRIMA_StepImpl( struct TA_TRIMA_Stream *sp, double inReal, double
       *outReal= sp->numerator * sp->factor;
       sp->cur_outReal = *outReal;
       ringCapL_middleIdx = sp->ringCap_middleIdx;
-      sp->ring_middleIdx_inReal[sp->ringPos_middleIdx] = inReal;
-      sp->ringPos_middleIdx = sp->ringPos_middleIdx + 1;
-      if( sp->ringPos_middleIdx >= ringCapL_middleIdx )
+      ringPosL_middleIdx = sp->ringPos_middleIdx;
+      sp->ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+      ringPosL_middleIdx = ringPosL_middleIdx + 1;
+      if( ringPosL_middleIdx >= ringCapL_middleIdx )
       {
-         sp->ringPos_middleIdx = 0;
+         ringPosL_middleIdx = 0;
       }
+      sp->ringPos_middleIdx = ringPosL_middleIdx;
       ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-      sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-      sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-      if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+      ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+      sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
       {
-         sp->ringPos_trailingIdx = 0;
+         ringPosL_trailingIdx = 0;
       }
+      sp->ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 }
 

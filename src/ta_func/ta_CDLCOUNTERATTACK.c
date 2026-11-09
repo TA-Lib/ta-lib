@@ -442,6 +442,8 @@ static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp,
 {
    double BodyLongPeriodTotalRange0;
    double BodyLongPeriodTotalTrailRange0;
+   int ringPosL_BodyLongTrailingIdx;
+   int ringPosL_EqualTrailingIdx;
 
    if( sp->ringCap_BodyLongTrailingIdx == 0 )
    {
@@ -474,17 +476,21 @@ static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp,
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   ringPosL_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+   if( ringPosL_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
-      sp->ringPos_EqualTrailingIdx = 0;
+      ringPosL_EqualTrailingIdx = 0;
    }
+   sp->ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUNTERATTACK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

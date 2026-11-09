@@ -823,6 +823,7 @@ static TA_FMA_STEP_INLINE void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_St
    double Q2;
    double I2;
    double todayValue;
+   int ringPosL_trailingWMAIdx;
    int ringCapL_trailingWMAIdx;
 
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
@@ -969,12 +970,14 @@ static TA_FMA_STEP_INLINE void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_St
    /* Ooof... let's do the next price bar now! */
    sp->cur_outReal = *outReal;
    ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
-   sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+   ringPosL_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   sp->ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+   ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+   if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
-      sp->ringPos_trailingWMAIdx = 0;
+      ringPosL_trailingWMAIdx = 0;
    }
+   sp->ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
    sp->streamParity = 1 - sp->streamParity;
 }
 

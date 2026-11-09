@@ -532,6 +532,8 @@ impl Core {
         let mut base2: f64 = 0.0_f64;
         let mut roc1: f64 = 0.0_f64;
         let mut roc2: f64 = 0.0_f64;
+        let mut ringPosL_roc1Idx: usize = 0_usize;
+        let mut ringPosL_roc2Idx: usize = 0_usize;
         let mut ringCapL_roc1Idx: usize = 0_usize;
         let mut ringCapL_roc2Idx: usize = 0_usize;
         base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
@@ -592,17 +594,21 @@ impl Core {
         sp.periodSum -= sp.periodSub;
         sp.cur_outReal = (*outReal);
         ringCapL_roc1Idx = sp.ringCap_roc1Idx;
-        sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
-        sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-        if sp.ringPos_roc1Idx >= ringCapL_roc1Idx {
-            sp.ringPos_roc1Idx = 0;
+        ringPosL_roc1Idx = sp.ringPos_roc1Idx;
+        sp.ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
+        ringPosL_roc1Idx = ringPosL_roc1Idx + 1;
+        if ringPosL_roc1Idx >= ringCapL_roc1Idx {
+            ringPosL_roc1Idx = 0;
         }
+        sp.ringPos_roc1Idx = ringPosL_roc1Idx;
         ringCapL_roc2Idx = sp.ringCap_roc2Idx;
-        sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
-        sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-        if sp.ringPos_roc2Idx >= ringCapL_roc2Idx {
-            sp.ringPos_roc2Idx = 0;
+        ringPosL_roc2Idx = sp.ringPos_roc2Idx;
+        sp.ring_roc2Idx_inReal[ringPosL_roc2Idx] = inReal;
+        ringPosL_roc2Idx = ringPosL_roc2Idx + 1;
+        if ringPosL_roc2Idx >= ringCapL_roc2Idx {
+            ringPosL_roc2Idx = 0;
         }
+        sp.ringPos_roc2Idx = ringPosL_roc2Idx;
     }
 
     /// The single whole-history transcription behind [`Core::coppock_open_internal`]

@@ -1366,6 +1366,7 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
             ctx.index_vars.insert(format!("ringPos_{v}"));
             ctx.index_vars.insert(format!("ringCap_{v}"));
             ctx.index_vars.insert(format!("ringLag_{v}"));
+            ctx.index_vars.insert(streaming::ring_pos_local(v));
             for arr in &ring.arrays {
                 ctx.vec_vars.insert(format!("ring_{v}_{arr}"));
                 ctx.real_array_vars.insert(format!("ring_{v}_{arr}"));

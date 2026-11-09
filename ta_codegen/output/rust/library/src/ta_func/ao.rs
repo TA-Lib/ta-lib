@@ -444,6 +444,8 @@ impl Core {
     fn ao_step_impl(sp: &mut AoStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut ringPosL_trailingFastIdx: usize = 0_usize;
+        let mut ringPosL_trailingSlowIdx: usize = 0_usize;
         let mut ringCapL_trailingFastIdx: usize = 0_usize;
         let mut ringCapL_trailingSlowIdx: usize = 0_usize;
         medianPrice = (inHigh + inLow) / 2.0;
@@ -462,17 +464,21 @@ impl Core {
         (*outReal) = tempReal;
         sp.cur_outReal = (*outReal);
         ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
-        sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
-        sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-        if sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx {
-            sp.ringPos_trailingFastIdx = 0;
+        ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
+        sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+        ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
+        if ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx {
+            ringPosL_trailingFastIdx = 0;
         }
+        sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
         ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
-        sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
-        sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-        if sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx {
-            sp.ringPos_trailingSlowIdx = 0;
+        ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+        sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+        ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
+        if ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx {
+            ringPosL_trailingSlowIdx = 0;
         }
+        sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
     }
 
     /// The single whole-history transcription behind [`Core::ao_open_internal`]

@@ -461,6 +461,7 @@ struct CdltristarStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdltristar_step_impl(sp: &mut CdltristarStreamState, cs_body_doji: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
@@ -530,6 +531,7 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
+        ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
         let mut _candlerange_2: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -545,11 +547,12 @@ impl Core {
                 _candlerange_2 = 0.0;
             }
         }
-        sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = _candlerange_2;
-        sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-        if sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
-            sp.ringPos_BodyTrailingIdx = 0;
+        sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = _candlerange_2;
+        ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+        if ringPosL_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
+            ringPosL_BodyTrailingIdx = 0;
         }
+        sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdltristar_open_internal`]

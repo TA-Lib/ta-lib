@@ -354,6 +354,8 @@ static void TA_AO_StepImpl( struct TA_AO_Stream *sp, double inHigh, double inLow
 {
    double medianPrice;
    double tempReal;
+   int ringPosL_trailingFastIdx;
+   int ringPosL_trailingSlowIdx;
    int ringCapL_trailingFastIdx;
    int ringCapL_trailingSlowIdx;
 
@@ -375,19 +377,23 @@ static void TA_AO_StepImpl( struct TA_AO_Stream *sp, double inHigh, double inLow
    *outReal= tempReal;
    sp->cur_outReal = *outReal;
    ringCapL_trailingFastIdx = sp->ringCap_trailingFastIdx;
-   sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
-   sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
-   if( sp->ringPos_trailingFastIdx >= ringCapL_trailingFastIdx )
+   ringPosL_trailingFastIdx = sp->ringPos_trailingFastIdx;
+   sp->ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+   ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
+   if( ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx )
    {
-      sp->ringPos_trailingFastIdx = 0;
+      ringPosL_trailingFastIdx = 0;
    }
+   sp->ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
    ringCapL_trailingSlowIdx = sp->ringCap_trailingSlowIdx;
-   sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
-   sp->ringPos_trailingSlowIdx = sp->ringPos_trailingSlowIdx + 1;
-   if( sp->ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx )
+   ringPosL_trailingSlowIdx = sp->ringPos_trailingSlowIdx;
+   sp->ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+   ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
+   if( ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx )
    {
-      sp->ringPos_trailingSlowIdx = 0;
+      ringPosL_trailingSlowIdx = 0;
    }
+   sp->ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_AO_OpenBody( struct TA_AO_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

@@ -378,6 +378,7 @@ struct QstickStreamState {
 impl Core {
     fn qstick_step_impl(sp: &mut QstickStreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_derived[0] = (inClose - inOpen) as f64;
         }
@@ -386,11 +387,13 @@ impl Core {
         sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
         (*outReal) = tempReal / (sp.optInTimePeriod as f64);
         sp.cur_outReal = (*outReal);
-        sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (inClose - inOpen) as f64;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_derived[ringPosL_trailingIdx] = (inClose - inOpen) as f64;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::qstick_open_internal`]

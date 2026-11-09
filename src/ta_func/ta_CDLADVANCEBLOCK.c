@@ -847,6 +847,11 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
    double FarPeriodTotalTrailRange1;
    double NearPeriodTotalRange1;
    double NearPeriodTotalTrailRange1;
+   int ringPosL_BodyLongTrailingIdx;
+   int ringPosL_FarTrailingIdx;
+   int ringPosL_NearTrailingIdx;
+   int ringPosL_ShadowLongTrailingIdx;
+   int ringPosL_ShadowShortTrailingIdx;
 
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_FarTrailingIdx_derived[sp->ringPos_FarTrailingIdx] = TA_STREAM_CANDLERANGE(Far,inOpen,inHigh,inLow,inClose);
@@ -930,33 +935,43 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
-   sp->ringPos_FarTrailingIdx = sp->ringPos_FarTrailingIdx + 1;
-   if( sp->ringPos_FarTrailingIdx >= sp->ringCap_FarTrailingIdx )
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   ringPosL_FarTrailingIdx = sp->ringPos_FarTrailingIdx;
+   ringPosL_FarTrailingIdx = ringPosL_FarTrailingIdx + 1;
+   if( ringPosL_FarTrailingIdx >= sp->ringCap_FarTrailingIdx )
    {
-      sp->ringPos_FarTrailingIdx = 0;
+      ringPosL_FarTrailingIdx = 0;
    }
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
+   sp->ringPos_FarTrailingIdx = ringPosL_FarTrailingIdx;
+   ringPosL_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+   if( ringPosL_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {
-      sp->ringPos_NearTrailingIdx = 0;
+      ringPosL_NearTrailingIdx = 0;
    }
-   sp->ring_ShadowLongTrailingIdx_derived[sp->ringPos_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx + 1;
-   if( sp->ringPos_ShadowLongTrailingIdx >= sp->ringCap_ShadowLongTrailingIdx )
+   sp->ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+   ringPosL_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx;
+   sp->ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
+   if( ringPosL_ShadowLongTrailingIdx >= sp->ringCap_ShadowLongTrailingIdx )
    {
-      sp->ringPos_ShadowLongTrailingIdx = 0;
+      ringPosL_ShadowLongTrailingIdx = 0;
    }
-   sp->ring_ShadowShortTrailingIdx_derived[sp->ringPos_ShadowShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowShortTrailingIdx = sp->ringPos_ShadowShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowShortTrailingIdx >= sp->ringCap_ShadowShortTrailingIdx )
+   sp->ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
+   ringPosL_ShadowShortTrailingIdx = sp->ringPos_ShadowShortTrailingIdx;
+   sp->ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx + 1;
+   if( ringPosL_ShadowShortTrailingIdx >= sp->ringCap_ShadowShortTrailingIdx )
    {
-      sp->ringPos_ShadowShortTrailingIdx = 0;
+      ringPosL_ShadowShortTrailingIdx = 0;
    }
+   sp->ringPos_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLADVANCEBLOCK_OpenBody( struct TA_CDLADVANCEBLOCK_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

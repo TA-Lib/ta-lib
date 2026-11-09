@@ -977,6 +977,7 @@ static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, doub
    double Q2;
    double I2;
    double todayValue;
+   int ringPosL_trailingWMAIdx;
    int ringCapL_trailingWMAIdx;
    double mama;
 
@@ -1165,12 +1166,14 @@ static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, doub
    sp->cur_outMAMA = *outMAMA;
    sp->cur_outFAMA = *outFAMA;
    ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
-   sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+   ringPosL_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   sp->ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+   ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+   if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
-      sp->ringPos_trailingWMAIdx = 0;
+      ringPosL_trailingWMAIdx = 0;
    }
+   sp->ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
    sp->streamParity = 1 - sp->streamParity;
    sp->mama = mama;
 }

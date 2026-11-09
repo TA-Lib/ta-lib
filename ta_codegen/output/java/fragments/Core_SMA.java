@@ -471,6 +471,7 @@
    private void smaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
+      int ringPosL_trailingIdx = 0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
@@ -478,11 +479,11 @@
       tempReal = sp.periodTotal;
       sp.periodTotal -= (double)sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
-      }
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
    private RetCode smaOpenImpl( SmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {

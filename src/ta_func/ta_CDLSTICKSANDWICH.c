@@ -518,6 +518,8 @@ static void TA_CDLSTICKSANDWICH_ReleaseImpl( struct TA_CDLSTICKSANDWICH_Stream *
 /* Private function, not in public API. */
 static void TA_CDLSTICKSANDWICH_StepImpl( struct TA_CDLSTICKSANDWICH_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_EqualTrailingIdx;
+
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* first black */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&  /* second white */
@@ -549,11 +551,13 @@ static void TA_CDLSTICKSANDWICH_StepImpl( struct TA_CDLSTICKSANDWICH_Stream *sp,
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   ringPosL_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+   if( ringPosL_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
-      sp->ringPos_EqualTrailingIdx = 0;
+      ringPosL_EqualTrailingIdx = 0;
    }
+   sp->ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLSTICKSANDWICH_OpenBody( struct TA_CDLSTICKSANDWICH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

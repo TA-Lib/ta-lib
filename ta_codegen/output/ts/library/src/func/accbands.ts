@@ -733,6 +733,7 @@ function accbandsStepImpl(sp: AccbandsStream, inHigh: number, inLow: number, inC
   let tempMiddle = 0;
   let tempLower = 0;
   let tempReal = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_trailingIdx = 0;
   /* Add the incoming bar to each running sum. */
   tempReal = inHigh + inLow;
@@ -765,13 +766,13 @@ function accbandsStepImpl(sp: AccbandsStream, inHigh: number, inLow: number, inC
   sp.cur_outRealMiddleBand = tempMiddle / sp.optInTimePeriod;
   sp.cur_outRealLowerBand = tempLower / sp.optInTimePeriod;
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
-  sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
-  sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh;
+  sp.ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow;
+  sp.ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function accbandsOpenImpl(

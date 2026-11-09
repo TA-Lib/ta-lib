@@ -672,6 +672,7 @@ impl Core {
     fn cdl3linestrike_step_impl(sp: &mut Cdl3linestrikeStreamState, cs_near: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut NearPeriodTotalRange2: f64 = 0.0_f64;
         let mut NearPeriodTotalTrailRange2: f64 = 0.0_f64;
+        let mut ringPosL_NearTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = cs_near.range_type as i32;
         #[allow(non_snake_case)]
@@ -756,10 +757,12 @@ impl Core {
         sp.lag3_inClose = sp.lag2_inClose;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-        if sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-            sp.ringPos_NearTrailingIdx = 0;
+        ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+        ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+        if ringPosL_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
+            ringPosL_NearTrailingIdx = 0;
         }
+        sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdl3linestrike_open_internal`]

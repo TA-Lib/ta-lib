@@ -861,6 +861,8 @@ public partial class Core
       double medianPrice = 0.0;
       double osc = 0.0;
       double tempReal = 0.0;
+      int ringPosL_trailingFastIdx = 0;
+      int ringPosL_trailingSlowIdx = 0;
       int ringCapL_trailingFastIdx = 0;
       int ringCapL_trailingSlowIdx = 0;
       medianPrice = (inHigh + inLow) / 2.0;
@@ -895,17 +897,21 @@ public partial class Core
        */
       sp.cur_outReal = tempReal;
       ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
-      sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
-      sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-      if( sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx ) {
-         sp.ringPos_trailingFastIdx = 0;
+      ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
+      sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+      ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
+      if( ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx ) {
+         ringPosL_trailingFastIdx = 0;
       }
+      sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
       ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
-      sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
-      sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-      if( sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx ) {
-         sp.ringPos_trailingSlowIdx = 0;
+      ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+      sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+      ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
+      if( ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx ) {
+         ringPosL_trailingSlowIdx = 0;
       }
+      sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
    }
 
    private RetCode AcOpenImpl( AcStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )

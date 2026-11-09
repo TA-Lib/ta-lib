@@ -536,6 +536,8 @@ static void TA_CDLDARKCLOUDCOVER_ReleaseImpl( struct TA_CDLDARKCLOUDCOVER_Stream
 /* Private function, not in public API. */
 static void TA_CDLDARKCLOUDCOVER_StepImpl( struct TA_CDLDARKCLOUDCOVER_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyLongTrailingIdx;
+
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 && /* 1st: white */
        ((inClose >= inOpen) ? 1 : -1) == -1 &&                  /* 2nd: black */
@@ -563,11 +565,13 @@ static void TA_CDLDARKCLOUDCOVER_StepImpl( struct TA_CDLDARKCLOUDCOVER_Stream *s
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLDARKCLOUDCOVER_OpenBody( struct TA_CDLDARKCLOUDCOVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

@@ -556,6 +556,8 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    double base2;
    double roc1;
    double roc2;
+   int ringPosL_roc1Idx;
+   int ringPosL_roc2Idx;
    int ringCapL_roc1Idx;
    int ringCapL_roc2Idx;
    double periodSum;
@@ -627,19 +629,23 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    periodSum -= periodSub;
    sp->cur_outReal = *outReal;
    ringCapL_roc1Idx = sp->ringCap_roc1Idx;
-   sp->ring_roc1Idx_inReal[sp->ringPos_roc1Idx] = inReal;
-   sp->ringPos_roc1Idx = sp->ringPos_roc1Idx + 1;
-   if( sp->ringPos_roc1Idx >= ringCapL_roc1Idx )
+   ringPosL_roc1Idx = sp->ringPos_roc1Idx;
+   sp->ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
+   ringPosL_roc1Idx = ringPosL_roc1Idx + 1;
+   if( ringPosL_roc1Idx >= ringCapL_roc1Idx )
    {
-      sp->ringPos_roc1Idx = 0;
+      ringPosL_roc1Idx = 0;
    }
+   sp->ringPos_roc1Idx = ringPosL_roc1Idx;
    ringCapL_roc2Idx = sp->ringCap_roc2Idx;
-   sp->ring_roc2Idx_inReal[sp->ringPos_roc2Idx] = inReal;
-   sp->ringPos_roc2Idx = sp->ringPos_roc2Idx + 1;
-   if( sp->ringPos_roc2Idx >= ringCapL_roc2Idx )
+   ringPosL_roc2Idx = sp->ringPos_roc2Idx;
+   sp->ring_roc2Idx_inReal[ringPosL_roc2Idx] = inReal;
+   ringPosL_roc2Idx = ringPosL_roc2Idx + 1;
+   if( ringPosL_roc2Idx >= ringCapL_roc2Idx )
    {
-      sp->ringPos_roc2Idx = 0;
+      ringPosL_roc2Idx = 0;
    }
+   sp->ringPos_roc2Idx = ringPosL_roc2Idx;
    sp->periodSum = periodSum;
    sp->periodSub = periodSub;
 }

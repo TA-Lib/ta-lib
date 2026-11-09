@@ -448,6 +448,7 @@ impl Core {
         let mut diff: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         // Add the newest change: inReal[today] - inReal[today-1].
         tempReal = inReal;
@@ -483,11 +484,13 @@ impl Core {
         sp.downSum -= up - diff;
         sp.cur_outReal = (*outReal);
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cmou_open_internal`]

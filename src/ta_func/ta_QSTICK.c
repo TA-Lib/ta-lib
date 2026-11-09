@@ -276,6 +276,7 @@ static void TA_QSTICK_ReleaseImpl( struct TA_QSTICK_Stream *sp )
 static void TA_QSTICK_StepImpl( struct TA_QSTICK_Stream *sp, double inOpen, double inClose, double *outReal )
 {
    double tempReal;
+   int ringPosL_trailingIdx;
 
    if( sp->ringCap_trailingIdx == 0 )
    {
@@ -286,12 +287,14 @@ static void TA_QSTICK_StepImpl( struct TA_QSTICK_Stream *sp, double inOpen, doub
    sp->periodTotal -= sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx];
    *outReal= tempReal / (double)sp->optInTimePeriod;
    sp->cur_outReal = *outReal;
-   sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] = (double)(inClose - inOpen);
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_derived[ringPosL_trailingIdx] = (double)(inClose - inOpen);
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= sp->ringCap_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_QSTICK_OpenBody( struct TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

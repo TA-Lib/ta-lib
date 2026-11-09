@@ -386,6 +386,9 @@ static void TA_CDLDOJISTAR_ReleaseImpl( struct TA_CDLDOJISTAR_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CDLDOJISTAR_StepImpl( struct TA_CDLDOJISTAR_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyDojiTrailingIdx;
+   int ringPosL_BodyLongTrailingIdx;
+
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
       sp->ring_BodyDojiTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
@@ -416,18 +419,22 @@ static void TA_CDLDOJISTAR_StepImpl( struct TA_CDLDOJISTAR_Stream *sp, double in
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
-   if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
+   ringPosL_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx;
+   sp->ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+   if( ringPosL_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
    {
-      sp->ringPos_BodyDojiTrailingIdx = 0;
+      ringPosL_BodyDojiTrailingIdx = 0;
    }
-   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   sp->ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLDOJISTAR_OpenBody( struct TA_CDLDOJISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

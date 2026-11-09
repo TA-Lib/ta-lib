@@ -322,6 +322,8 @@ static void TA_ZLEMA_ReleaseImpl( struct TA_ZLEMA_Stream *sp )
 /* Private function, not in public API. */
 static TA_FMA_STEP_INLINE void TA_ZLEMA_StepImpl( struct TA_ZLEMA_Stream *sp, double inReal, double *outReal )
 {
+   int ringPosL_trailingIdx;
+
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
@@ -335,12 +337,14 @@ static TA_FMA_STEP_INLINE void TA_ZLEMA_StepImpl( struct TA_ZLEMA_Stream *sp, do
    sp->prevMA = fma(sp->emaBeta, sp->prevMA, sp->optInK_1 * (2.0 * inReal - sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx]));
    *outReal= sp->prevMA;
    sp->cur_outReal = *outReal;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= sp->ringCap_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_FMA_STEP_INLINE TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

@@ -330,6 +330,7 @@ struct SmaStreamState {
 impl Core {
     fn sma_step_impl(sp: &mut SmaStreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -338,11 +339,13 @@ impl Core {
         sp.periodTotal -= sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] as f64;
         (*outReal) = tempReal / (sp.optInTimePeriod as f64);
         sp.cur_outReal = (*outReal);
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     fn sma_step_tape_impl(sp: &mut SmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {

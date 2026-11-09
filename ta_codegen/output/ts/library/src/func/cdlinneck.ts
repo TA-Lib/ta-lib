@@ -565,6 +565,8 @@ export class CdlinneckStream {
 }
 
 function cdlinneckStepImpl(sp: CdlinneckStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyLongTrailingIdx = 0;
+  let ringPosL_EqualTrailingIdx = 0;
   const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
   const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
   const BodyLong_factor = sp.cs_BodyLong_factor;
@@ -593,14 +595,14 @@ function cdlinneckStepImpl(sp: CdlinneckStream, inOpen: number, inHigh: number, 
   sp.lag1_inHigh = inHigh;
   sp.lag1_inLow = inLow;
   sp.lag1_inClose = inClose;
-  sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-  if (sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx) {
-    sp.ringPos_BodyLongTrailingIdx = 0;
-  }
-  sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
-  if (sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx) {
-    sp.ringPos_EqualTrailingIdx = 0;
-  }
+  ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
+  sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+  ringPosL_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+  ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+  ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx & (ringPosL_EqualTrailingIdx - sp.ringCap_EqualTrailingIdx >> 31);
+  sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
 }
 
 function cdlinneckOpenImpl(

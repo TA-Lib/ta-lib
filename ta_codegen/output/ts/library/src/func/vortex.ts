@@ -845,6 +845,7 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   let tempLT = 0;
   let tempHT = 0;
   let tempCY = 0;
+  let ringPosL_trailingIdx = 0;
   sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
   sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
   sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -933,10 +934,10 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   sp.lag1_inHigh = inHigh;
   sp.lag1_inLow = inLow;
   sp.lag1_inClose = inClose;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function vortexOpenImpl(

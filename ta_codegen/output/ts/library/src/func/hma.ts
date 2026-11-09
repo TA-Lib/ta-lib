@@ -1022,6 +1022,7 @@ function hmaStepImpl(sp: HmaStream, inReal: number): void {
     let jFull = 0;
     let tempReal2 = 0;
     let rw = 0;
+    let ringPosL_trailingIdxFull = 0;
     let ringCapL_trailingIdxFull = 0;
     sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
     tempReal = inReal;
@@ -1046,11 +1047,11 @@ function hmaStepImpl(sp: HmaStream, inReal: number): void {
     sp.periodSumFull -= sp.periodSubFull;
     sp.cur_outReal = 2.0 * tempReal - fullOut;
     ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
-    sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
-    sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-    if (sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull) {
-      sp.ringPos_trailingIdxFull = 0;
-    }
+    ringPosL_trailingIdxFull = sp.ringPos_trailingIdxFull;
+    sp.ring_trailingIdxFull_inReal[ringPosL_trailingIdxFull] = inReal;
+    ringPosL_trailingIdxFull = ringPosL_trailingIdxFull + 1;
+    ringPosL_trailingIdxFull = ringPosL_trailingIdxFull & (ringPosL_trailingIdxFull - ringCapL_trailingIdxFull >> 31);
+    sp.ringPos_trailingIdxFull = ringPosL_trailingIdxFull;
     sp.winPos_jFull = sp.winPos_jFull + 1;
     if (sp.winPos_jFull >= sp.winCap_jFull) {
       sp.winPos_jFull = 0;
@@ -1066,6 +1067,8 @@ function hmaStepImpl(sp: HmaStream, inReal: number): void {
     let ringWalk = 0;
     let tempReal2 = 0;
     let rw = 0;
+    let ringPosL_trailingIdxFull = 0;
+    let ringPosL_trailingIdxHalf = 0;
     let ringCapL_trailingIdxFull = 0;
     let ringCapL_trailingIdxHalf = 0;
     sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
@@ -1147,17 +1150,17 @@ function hmaStepImpl(sp: HmaStream, inReal: number): void {
     sp.cur_outReal = sp.periodSumSqrt / sp.dividerSqrt;
     sp.periodSumSqrt -= sp.periodSubSqrt;
     ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
-    sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
-    sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-    if (sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull) {
-      sp.ringPos_trailingIdxFull = 0;
-    }
+    ringPosL_trailingIdxFull = sp.ringPos_trailingIdxFull;
+    sp.ring_trailingIdxFull_inReal[ringPosL_trailingIdxFull] = inReal;
+    ringPosL_trailingIdxFull = ringPosL_trailingIdxFull + 1;
+    ringPosL_trailingIdxFull = ringPosL_trailingIdxFull & (ringPosL_trailingIdxFull - ringCapL_trailingIdxFull >> 31);
+    sp.ringPos_trailingIdxFull = ringPosL_trailingIdxFull;
     ringCapL_trailingIdxHalf = sp.ringCap_trailingIdxHalf;
-    sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
-    sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
-    if (sp.ringPos_trailingIdxHalf >= ringCapL_trailingIdxHalf) {
-      sp.ringPos_trailingIdxHalf = 0;
-    }
+    ringPosL_trailingIdxHalf = sp.ringPos_trailingIdxHalf;
+    sp.ring_trailingIdxHalf_inReal[ringPosL_trailingIdxHalf] = inReal;
+    ringPosL_trailingIdxHalf = ringPosL_trailingIdxHalf + 1;
+    ringPosL_trailingIdxHalf = ringPosL_trailingIdxHalf & (ringPosL_trailingIdxHalf - ringCapL_trailingIdxHalf >> 31);
+    sp.ringPos_trailingIdxHalf = ringPosL_trailingIdxHalf;
     sp.winPos_jFull = sp.winPos_jFull + 1;
     if (sp.winPos_jFull >= sp.winCap_jFull) {
       sp.winPos_jFull = 0;

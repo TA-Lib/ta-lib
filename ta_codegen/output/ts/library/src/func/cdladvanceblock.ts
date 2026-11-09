@@ -833,6 +833,11 @@ function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHi
   let FarPeriodTotalTrailRange1 = 0;
   let NearPeriodTotalRange1 = 0;
   let NearPeriodTotalTrailRange1 = 0;
+  let ringPosL_BodyLongTrailingIdx = 0;
+  let ringPosL_FarTrailingIdx = 0;
+  let ringPosL_NearTrailingIdx = 0;
+  let ringPosL_ShadowLongTrailingIdx = 0;
+  let ringPosL_ShadowShortTrailingIdx = 0;
   const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
   const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
   const BodyLong_factor = sp.cs_BodyLong_factor;
@@ -921,28 +926,28 @@ function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHi
   sp.lag1_inLow = inLow;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-  if (sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx) {
-    sp.ringPos_BodyLongTrailingIdx = 0;
-  }
-  sp.ringPos_FarTrailingIdx = sp.ringPos_FarTrailingIdx + 1;
-  if (sp.ringPos_FarTrailingIdx >= sp.ringCap_FarTrailingIdx) {
-    sp.ringPos_FarTrailingIdx = 0;
-  }
-  sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-  if (sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx) {
-    sp.ringPos_NearTrailingIdx = 0;
-  }
-  sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx + 1;
-  if (sp.ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx) {
-    sp.ringPos_ShadowLongTrailingIdx = 0;
-  }
-  sp.ring_ShadowShortTrailingIdx_derived[sp.ringPos_ShadowShortTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx + 1;
-  if (sp.ringPos_ShadowShortTrailingIdx >= sp.ringCap_ShadowShortTrailingIdx) {
-    sp.ringPos_ShadowShortTrailingIdx = 0;
-  }
+  ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
+  sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+  ringPosL_FarTrailingIdx = sp.ringPos_FarTrailingIdx;
+  ringPosL_FarTrailingIdx = ringPosL_FarTrailingIdx + 1;
+  ringPosL_FarTrailingIdx = ringPosL_FarTrailingIdx & (ringPosL_FarTrailingIdx - sp.ringCap_FarTrailingIdx >> 31);
+  sp.ringPos_FarTrailingIdx = ringPosL_FarTrailingIdx;
+  ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
+  sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+  ringPosL_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+  sp.ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
+  ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx & (ringPosL_ShadowLongTrailingIdx - sp.ringCap_ShadowLongTrailingIdx >> 31);
+  sp.ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
+  ringPosL_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx;
+  sp.ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx + 1;
+  ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx & (ringPosL_ShadowShortTrailingIdx - sp.ringCap_ShadowShortTrailingIdx >> 31);
+  sp.ringPos_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx;
 }
 
 function cdladvanceblockOpenImpl(

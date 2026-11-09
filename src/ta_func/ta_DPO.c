@@ -275,6 +275,8 @@ static void TA_DPO_StepImpl( struct TA_DPO_Stream *sp, double inReal, double *ou
 {
    double tempReal;
    double dispVal;
+   int ringPosL_dispIdx;
+   int ringPosL_trailingIdx;
    int ringCapL_dispIdx;
    int ringCapL_trailingIdx;
 
@@ -291,19 +293,23 @@ static void TA_DPO_StepImpl( struct TA_DPO_Stream *sp, double inReal, double *ou
    *outReal= dispVal - tempReal / (double)sp->optInTimePeriod;
    sp->cur_outReal = *outReal;
    ringCapL_dispIdx = sp->ringCap_dispIdx;
-   sp->ring_dispIdx_inReal[sp->ringPos_dispIdx] = inReal;
-   sp->ringPos_dispIdx = sp->ringPos_dispIdx + 1;
-   if( sp->ringPos_dispIdx >= ringCapL_dispIdx )
+   ringPosL_dispIdx = sp->ringPos_dispIdx;
+   sp->ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
+   ringPosL_dispIdx = ringPosL_dispIdx + 1;
+   if( ringPosL_dispIdx >= ringCapL_dispIdx )
    {
-      sp->ringPos_dispIdx = 0;
+      ringPosL_dispIdx = 0;
    }
+   sp->ringPos_dispIdx = ringPosL_dispIdx;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_DPO_OpenBody( struct TA_DPO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

@@ -1536,6 +1536,7 @@ function htSineStepImpl(sp: HtSineStream, inReal: number): void {
   let DCPeriod = 0;
   let imagPart = 0;
   let realPart = 0;
+  let ringPosL_trailingWMAIdx = 0;
   let ringCapL_trailingWMAIdx = 0;
   {
     const _a: number = 0.075, _b: number = sp.period, _c: number = 0.54;
@@ -1867,11 +1868,11 @@ function htSineStepImpl(sp: HtSineStream, inReal: number): void {
     sp.smoothPrice_Idx = 0;
   }
   ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-  sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-  sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-  if (sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx) {
-    sp.ringPos_trailingWMAIdx = 0;
-  }
+  ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+  sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx & (ringPosL_trailingWMAIdx - ringCapL_trailingWMAIdx >> 31);
+  sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
   sp.streamParity = 1 - sp.streamParity;
 }
 

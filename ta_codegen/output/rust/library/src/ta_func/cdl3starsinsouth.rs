@@ -882,6 +882,10 @@ impl Core {
     fn cdl3starsinsouth_step_impl(sp: &mut Cdl3starsinsouthStreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, cs_shadow_long: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut ShadowVeryShortPeriodTotalRange0: f64 = 0.0_f64;
         let mut ShadowVeryShortPeriodTotalTrailRange0: f64 = 0.0_f64;
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
+        let mut ringPosL_BodyShortTrailingIdx: usize = 0_usize;
+        let mut ringPosL_ShadowLongTrailingIdx: usize = 0_usize;
+        let mut ringPosL_ShadowVeryShortTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -1079,10 +1083,13 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+        ringPosL_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
         let mut _candlerange_8: f64;
         match BodyShort_rangeType {
             0 => {
@@ -1098,15 +1105,19 @@ impl Core {
                 _candlerange_8 = 0.0;
             }
         }
-        sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx] = _candlerange_8;
-        sp.ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx + 1;
-        if sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
-            sp.ringPos_BodyShortTrailingIdx = 0;
+        sp.ring_BodyShortTrailingIdx_derived[ringPosL_BodyShortTrailingIdx] = _candlerange_8;
+        ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+        if ringPosL_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
+            ringPosL_BodyShortTrailingIdx = 0;
         }
-        sp.ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx + 1;
-        if sp.ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx {
-            sp.ringPos_ShadowLongTrailingIdx = 0;
+        sp.ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
+        ringPosL_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+        ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
+        if ringPosL_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx {
+            ringPosL_ShadowLongTrailingIdx = 0;
         }
+        sp.ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
+        ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
         let mut _candlerange_9: f64;
         match ShadowVeryShort_rangeType {
             0 => {
@@ -1122,11 +1133,12 @@ impl Core {
                 _candlerange_9 = 0.0;
             }
         }
-        sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = _candlerange_9;
-        sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
-        if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
-            sp.ringPos_ShadowVeryShortTrailingIdx = 0;
+        sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = _candlerange_9;
+        ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+        if ringPosL_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
+            ringPosL_ShadowVeryShortTrailingIdx = 0;
         }
+        sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdl3starsinsouth_open_internal`]

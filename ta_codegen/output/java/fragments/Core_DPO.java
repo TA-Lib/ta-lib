@@ -513,6 +513,8 @@
    {
       double tempReal = 0.0;
       double dispVal = 0.0;
+      int ringPosL_dispIdx = 0;
+      int ringPosL_trailingIdx = 0;
       int ringCapL_dispIdx = 0;
       int ringCapL_trailingIdx = 0;
       sp.periodTotal += inReal;
@@ -527,17 +529,17 @@
       dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
       sp.cur_outReal = dispVal - tempReal / (double)sp.optInTimePeriod;
       ringCapL_dispIdx = sp.ringCap_dispIdx;
-      sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
-      sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-      if( sp.ringPos_dispIdx >= ringCapL_dispIdx ) {
-         sp.ringPos_dispIdx = 0;
-      }
+      ringPosL_dispIdx = sp.ringPos_dispIdx;
+      sp.ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
+      ringPosL_dispIdx = ringPosL_dispIdx + 1;
+      ringPosL_dispIdx = ringPosL_dispIdx & (ringPosL_dispIdx - ringCapL_dispIdx >> 31);
+      sp.ringPos_dispIdx = ringPosL_dispIdx;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
-      }
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
    private RetCode dpoOpenImpl( DpoStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {

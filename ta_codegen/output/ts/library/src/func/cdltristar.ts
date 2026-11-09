@@ -547,6 +547,7 @@ export class CdltristarStream {
 }
 
 function cdltristarStepImpl(sp: CdltristarStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_BodyTrailingIdx = 0;
   const BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
   const BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
   const BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -583,11 +584,11 @@ function cdltristarStepImpl(sp: CdltristarStream, inOpen: number, inHigh: number
   sp.lag1_inLow = inLow;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = ((BodyDoji_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType === 1) ? (inHigh - inLow) : ((BodyDoji_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
-  if (sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx) {
-    sp.ringPos_BodyTrailingIdx = 0;
-  }
+  ringPosL_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+  sp.ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = ((BodyDoji_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType === 1) ? (inHigh - inLow) : ((BodyDoji_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+  ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx & (ringPosL_BodyTrailingIdx - sp.ringCap_BodyTrailingIdx >> 31);
+  sp.ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
 }
 
 function cdltristarOpenImpl(

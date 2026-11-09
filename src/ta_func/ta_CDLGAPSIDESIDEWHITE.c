@@ -427,6 +427,9 @@ static void TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( struct TA_CDLGAPSIDESIDEWHITE_St
 /* Private function, not in public API. */
 static void TA_CDLGAPSIDESIDEWHITE_StepImpl( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_EqualTrailingIdx;
+   int ringPosL_NearTrailingIdx;
+
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 && /* 2nd: white */
@@ -462,16 +465,20 @@ static void TA_CDLGAPSIDESIDEWHITE_StepImpl( struct TA_CDLGAPSIDESIDEWHITE_Strea
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   ringPosL_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+   if( ringPosL_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
-      sp->ringPos_EqualTrailingIdx = 0;
+      ringPosL_EqualTrailingIdx = 0;
    }
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
+   sp->ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+   ringPosL_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+   if( ringPosL_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {
-      sp->ringPos_NearTrailingIdx = 0;
+      ringPosL_NearTrailingIdx = 0;
    }
+   sp->ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenBody( struct TA_CDLGAPSIDESIDEWHITE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

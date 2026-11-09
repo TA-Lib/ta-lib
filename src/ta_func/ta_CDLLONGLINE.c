@@ -376,6 +376,9 @@ static void TA_CDLLONGLINE_ReleaseImpl( struct TA_CDLLONGLINE_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CDLLONGLINE_StepImpl( struct TA_CDLLONGLINE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyTrailingIdx;
+   int ringPosL_ShadowTrailingIdx;
+
    if( sp->ringCap_BodyTrailingIdx == 0 )
    {
       sp->ring_BodyTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
@@ -397,18 +400,22 @@ static void TA_CDLLONGLINE_StepImpl( struct TA_CDLLONGLINE_Stream *sp, double in
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx];
    sp->ShadowPeriodTotal += TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowTrailingIdx_derived[sp->ringPos_ShadowTrailingIdx];
    sp->cur_outInteger = *outInteger;
-   sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx + 1;
-   if( sp->ringPos_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
+   ringPosL_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx;
+   sp->ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+   if( ringPosL_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
    {
-      sp->ringPos_BodyTrailingIdx = 0;
+      ringPosL_BodyTrailingIdx = 0;
    }
-   sp->ring_ShadowTrailingIdx_derived[sp->ringPos_ShadowTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowTrailingIdx = sp->ringPos_ShadowTrailingIdx + 1;
-   if( sp->ringPos_ShadowTrailingIdx >= sp->ringCap_ShadowTrailingIdx )
+   sp->ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+   ringPosL_ShadowTrailingIdx = sp->ringPos_ShadowTrailingIdx;
+   sp->ring_ShadowTrailingIdx_derived[ringPosL_ShadowTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx + 1;
+   if( ringPosL_ShadowTrailingIdx >= sp->ringCap_ShadowTrailingIdx )
    {
-      sp->ringPos_ShadowTrailingIdx = 0;
+      ringPosL_ShadowTrailingIdx = 0;
    }
+   sp->ringPos_ShadowTrailingIdx = ringPosL_ShadowTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLLONGLINE_OpenBody( struct TA_CDLLONGLINE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

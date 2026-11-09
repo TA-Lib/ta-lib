@@ -1486,6 +1486,7 @@ function htTrendlineStepImpl(sp: HtTrendlineStream, inReal: number): void {
   let todayValue = 0;
   let DCPeriodInt = 0;
   let DCPeriod = 0;
+  let ringPosL_trailingWMAIdx = 0;
   let ringCapL_trailingWMAIdx = 0;
   sp.win_i_inReal[sp.winPos_i] = inReal;
   {
@@ -1830,11 +1831,11 @@ function htTrendlineStepImpl(sp: HtTrendlineStream, inReal: number): void {
   sp.cur_outReal = tempReal2;
   /* Ooof... let's do the next price bar now! */
   ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-  sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-  sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-  if (sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx) {
-    sp.ringPos_trailingWMAIdx = 0;
-  }
+  ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+  sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx & (ringPosL_trailingWMAIdx - ringCapL_trailingWMAIdx >> 31);
+  sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
   sp.winPos_i = sp.winPos_i + 1;
   if (sp.winPos_i >= sp.winCap_i) {
     sp.winPos_i = 0;

@@ -275,6 +275,7 @@ static void TA_ADR_ReleaseImpl( struct TA_ADR_Stream *sp )
 static void TA_ADR_StepImpl( struct TA_ADR_Stream *sp, double inHigh, double inLow, double *outReal )
 {
    double tempReal;
+   int ringPosL_trailingIdx;
 
    if( sp->ringCap_trailingIdx == 0 )
    {
@@ -285,12 +286,14 @@ static void TA_ADR_StepImpl( struct TA_ADR_Stream *sp, double inHigh, double inL
    sp->periodTotal -= sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx];
    *outReal= tempReal / (double)sp->optInTimePeriod;
    sp->cur_outReal = *outReal;
-   sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] = (double)(inHigh - inLow);
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_derived[ringPosL_trailingIdx] = (double)(inHigh - inLow);
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= sp->ringCap_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_ADR_OpenBody( struct TA_ADR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

@@ -1022,6 +1022,7 @@ static TA_FMA_STEP_INLINE void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp
    double DCPeriod;
    double imagPart;
    double realPart;
+   int ringPosL_trailingWMAIdx;
    int ringCapL_trailingWMAIdx;
    double DCPhase;
 
@@ -1236,12 +1237,14 @@ static TA_FMA_STEP_INLINE void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp
    sp->cur_outSine = *outSine;
    sp->cur_outLeadSine = *outLeadSine;
    ringCapL_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
-   sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+   ringPosL_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   sp->ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+   ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+   if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
    {
-      sp->ringPos_trailingWMAIdx = 0;
+      ringPosL_trailingWMAIdx = 0;
    }
+   sp->ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
    sp->streamParity = 1 - sp->streamParity;
    sp->DCPhase = DCPhase;
 }

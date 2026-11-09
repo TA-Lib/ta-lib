@@ -543,6 +543,8 @@ struct CdlinneckStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlinneck_step_impl(sp: &mut CdlinneckStreamState, cs_body_long: &CandleSetting, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
+        let mut ringPosL_EqualTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -641,14 +643,18 @@ impl Core {
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
         sp.lag1_inClose = inClose;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
-        sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
-        if sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
-            sp.ringPos_EqualTrailingIdx = 0;
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+        ringPosL_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+        ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+        if ringPosL_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
+            ringPosL_EqualTrailingIdx = 0;
         }
+        sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlinneck_open_internal`]

@@ -624,6 +624,7 @@ public partial class Core
    private void AdrStepImpl( AdrStream sp, double inHigh, double inLow )
    {
       double tempReal = 0.0;
+      int ringPosL_trailingIdx = 0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_derived[0] = (double)(inHigh - inLow);
       }
@@ -631,11 +632,13 @@ public partial class Core
       tempReal = sp.periodTotal;
       sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
       sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
-      sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inHigh - inLow);
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_derived[ringPosL_trailingIdx] = (double)(inHigh - inLow);
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= sp.ringCap_trailingIdx ) {
+         ringPosL_trailingIdx = 0;
       }
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 
    private RetCode AdrOpenImpl( AdrStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )

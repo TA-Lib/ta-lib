@@ -461,6 +461,10 @@ static void TA_CDLTAKURI_ReleaseImpl( struct TA_CDLTAKURI_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CDLTAKURI_StepImpl( struct TA_CDLTAKURI_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyDojiTrailingIdx;
+   int ringPosL_ShadowVeryLongTrailingIdx;
+   int ringPosL_ShadowVeryShortTrailingIdx;
+
    if( sp->ringCap_BodyDojiTrailingIdx == 0 )
    {
       sp->ring_BodyDojiTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
@@ -499,24 +503,30 @@ static void TA_CDLTAKURI_StepImpl( struct TA_CDLTAKURI_Stream *sp, double inOpen
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx];
    sp->ShadowVeryLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryLong,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowVeryLongTrailingIdx_derived[sp->ringPos_ShadowVeryLongTrailingIdx];
    sp->cur_outInteger = *outInteger;
-   sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
-   if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
+   ringPosL_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx;
+   sp->ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+   if( ringPosL_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
    {
-      sp->ringPos_BodyDojiTrailingIdx = 0;
+      ringPosL_BodyDojiTrailingIdx = 0;
    }
-   sp->ring_ShadowVeryLongTrailingIdx_derived[sp->ringPos_ShadowVeryLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryLong,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowVeryLongTrailingIdx = sp->ringPos_ShadowVeryLongTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryLongTrailingIdx >= sp->ringCap_ShadowVeryLongTrailingIdx )
+   sp->ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+   ringPosL_ShadowVeryLongTrailingIdx = sp->ringPos_ShadowVeryLongTrailingIdx;
+   sp->ring_ShadowVeryLongTrailingIdx_derived[ringPosL_ShadowVeryLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryLong,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowVeryLongTrailingIdx = ringPosL_ShadowVeryLongTrailingIdx + 1;
+   if( ringPosL_ShadowVeryLongTrailingIdx >= sp->ringCap_ShadowVeryLongTrailingIdx )
    {
-      sp->ringPos_ShadowVeryLongTrailingIdx = 0;
+      ringPosL_ShadowVeryLongTrailingIdx = 0;
    }
-   sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
+   sp->ringPos_ShadowVeryLongTrailingIdx = ringPosL_ShadowVeryLongTrailingIdx;
+   ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+   if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
+      ringPosL_ShadowVeryShortTrailingIdx = 0;
    }
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLTAKURI_OpenBody( struct TA_CDLTAKURI_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

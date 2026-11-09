@@ -423,6 +423,9 @@ static void TA_CDLTHRUSTING_ReleaseImpl( struct TA_CDLTHRUSTING_Stream *sp )
 /* Private function, not in public API. */
 static TA_FMA_STEP_INLINE void TA_CDLTHRUSTING_StepImpl( struct TA_CDLTHRUSTING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyLongTrailingIdx;
+   int ringPosL_EqualTrailingIdx;
+
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* 1st: black */
@@ -452,16 +455,20 @@ static TA_FMA_STEP_INLINE void TA_CDLTHRUSTING_StepImpl( struct TA_CDLTHRUSTING_
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   ringPosL_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+   if( ringPosL_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
-      sp->ringPos_EqualTrailingIdx = 0;
+      ringPosL_EqualTrailingIdx = 0;
    }
+   sp->ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
 }
 
 static TA_FMA_STEP_INLINE TA_RetCode TA_CDLTHRUSTING_OpenImpl( struct TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

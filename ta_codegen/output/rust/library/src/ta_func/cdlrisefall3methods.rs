@@ -859,6 +859,8 @@ impl Core {
     fn cdlrisefall3methods_step_impl(sp: &mut Cdlrisefall3methodsStreamState, cs_body_long: &CandleSetting, cs_body_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         let mut BodyPeriodTotalRange1: f64 = 0.0_f64;
         let mut BodyPeriodTotalTrailRange1: f64 = 0.0_f64;
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
+        let mut ringPosL_BodyShortTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = cs_body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -1006,14 +1008,18 @@ impl Core {
         sp.lag3_inClose = sp.lag2_inClose;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
-        sp.ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx + 1;
-        if sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
-            sp.ringPos_BodyShortTrailingIdx = 0;
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+        ringPosL_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+        ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+        if ringPosL_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
+            ringPosL_BodyShortTrailingIdx = 0;
         }
+        sp.ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlrisefall3methods_open_internal`]

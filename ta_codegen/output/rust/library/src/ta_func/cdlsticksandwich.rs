@@ -463,6 +463,7 @@ struct CdlsticksandwichStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlsticksandwich_step_impl(sp: &mut CdlsticksandwichStreamState, cs_equal: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_EqualTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = cs_equal.range_type as i32;
         #[allow(non_snake_case)]
@@ -527,10 +528,12 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
-        if sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
-            sp.ringPos_EqualTrailingIdx = 0;
+        ringPosL_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+        ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+        if ringPosL_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
+            ringPosL_EqualTrailingIdx = 0;
         }
+        sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlsticksandwich_open_internal`]

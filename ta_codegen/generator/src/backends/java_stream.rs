@@ -216,6 +216,9 @@ impl streaming::NameMap for JavaStreamNames {
     fn extrema_mask(&self) -> String {
         "sp.xMask".to_string()
     }
+    fn ring_wrap(&self) -> streaming::RingWrap {
+        streaming::RingWrap::SignMask
+    }
 }
 
 /// [`JavaStreamNames`] for a tape frame (#445).
@@ -263,6 +266,9 @@ impl streaming::NameMap for JavaTapeNames {
     }
     fn tape(&self) -> Option<streaming::TapeNames> {
         Some(self.0.clone())
+    }
+    fn ring_wrap(&self) -> streaming::RingWrap {
+        streaming::NameMap::ring_wrap(&JavaStreamNames)
     }
 }
 
@@ -4079,6 +4085,9 @@ impl streaming::NameMap for JavaComposedNames {
     }
     fn extrema_mask(&self) -> String {
         "sp.xMask".to_string()
+    }
+    fn ring_wrap(&self) -> streaming::RingWrap {
+        streaming::RingWrap::SignMask
     }
 }
 

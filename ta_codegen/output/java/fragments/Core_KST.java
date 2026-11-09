@@ -1331,6 +1331,10 @@
       double rcma2 = 0.0;
       double rcma3 = 0.0;
       double rcma4 = 0.0;
+      int ringPosL_den1 = 0;
+      int ringPosL_den2 = 0;
+      int ringPosL_den3 = 0;
+      int ringPosL_den4 = 0;
       if( sp.ringCap_den1 == 0 ) {
          sp.ring_den1_inReal[0] = inReal;
       }
@@ -1394,26 +1398,26 @@
       sp.sigTotal -= sp.cb_sigRing[sp.sigRing_Idx];
       sp.cur_outKST = kst;
       sp.cur_outKSTSignal = sig;
-      sp.ring_den1_inReal[sp.ringPos_den1] = inReal;
-      sp.ringPos_den1 = sp.ringPos_den1 + 1;
-      if( sp.ringPos_den1 >= sp.ringCap_den1 ) {
-         sp.ringPos_den1 = 0;
-      }
-      sp.ring_den2_inReal[sp.ringPos_den2] = inReal;
-      sp.ringPos_den2 = sp.ringPos_den2 + 1;
-      if( sp.ringPos_den2 >= sp.ringCap_den2 ) {
-         sp.ringPos_den2 = 0;
-      }
-      sp.ring_den3_inReal[sp.ringPos_den3] = inReal;
-      sp.ringPos_den3 = sp.ringPos_den3 + 1;
-      if( sp.ringPos_den3 >= sp.ringCap_den3 ) {
-         sp.ringPos_den3 = 0;
-      }
-      sp.ring_den4_inReal[sp.ringPos_den4] = inReal;
-      sp.ringPos_den4 = sp.ringPos_den4 + 1;
-      if( sp.ringPos_den4 >= sp.ringCap_den4 ) {
-         sp.ringPos_den4 = 0;
-      }
+      ringPosL_den1 = sp.ringPos_den1;
+      sp.ring_den1_inReal[ringPosL_den1] = inReal;
+      ringPosL_den1 = ringPosL_den1 + 1;
+      ringPosL_den1 = ringPosL_den1 & (ringPosL_den1 - sp.ringCap_den1 >> 31);
+      sp.ringPos_den1 = ringPosL_den1;
+      ringPosL_den2 = sp.ringPos_den2;
+      sp.ring_den2_inReal[ringPosL_den2] = inReal;
+      ringPosL_den2 = ringPosL_den2 + 1;
+      ringPosL_den2 = ringPosL_den2 & (ringPosL_den2 - sp.ringCap_den2 >> 31);
+      sp.ringPos_den2 = ringPosL_den2;
+      ringPosL_den3 = sp.ringPos_den3;
+      sp.ring_den3_inReal[ringPosL_den3] = inReal;
+      ringPosL_den3 = ringPosL_den3 + 1;
+      ringPosL_den3 = ringPosL_den3 & (ringPosL_den3 - sp.ringCap_den3 >> 31);
+      sp.ringPos_den3 = ringPosL_den3;
+      ringPosL_den4 = sp.ringPos_den4;
+      sp.ring_den4_inReal[ringPosL_den4] = inReal;
+      ringPosL_den4 = ringPosL_den4 + 1;
+      ringPosL_den4 = ringPosL_den4 & (ringPosL_den4 - sp.ringCap_den4 >> 31);
+      sp.ringPos_den4 = ringPosL_den4;
    }
    private RetCode kstOpenImpl( KstStream sp, double inReal[], int startIdx, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outKST[], double outKSTSignal[], int outStride )
    {

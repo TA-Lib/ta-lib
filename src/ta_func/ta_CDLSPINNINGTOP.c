@@ -432,6 +432,8 @@ static void TA_CDLSPINNINGTOP_ReleaseImpl( struct TA_CDLSPINNINGTOP_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CDLSPINNINGTOP_StepImpl( struct TA_CDLSPINNINGTOP_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyTrailingIdx;
+
    if( sp->ringCap_BodyTrailingIdx == 0 )
    {
       sp->ring_BodyTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
@@ -448,12 +450,14 @@ static void TA_CDLSPINNINGTOP_StepImpl( struct TA_CDLSPINNINGTOP_Stream *sp, dou
     */
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx];
    sp->cur_outInteger = *outInteger;
-   sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx + 1;
-   if( sp->ringPos_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
+   ringPosL_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx;
+   sp->ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+   if( ringPosL_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
    {
-      sp->ringPos_BodyTrailingIdx = 0;
+      ringPosL_BodyTrailingIdx = 0;
    }
+   sp->ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLSPINNINGTOP_OpenBody( struct TA_CDLSPINNINGTOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

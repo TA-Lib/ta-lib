@@ -734,6 +734,7 @@ public partial class Core
       double tempV = 0.0;
       double tempReal = 0.0;
       double trailingVolume = 0.0;
+      int ringPosL_trailingIdx = 0;
       int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -774,12 +775,14 @@ public partial class Core
       }
       sp.zeroCount -= (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx ) {
+         ringPosL_trailingIdx = 0;
       }
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 
    private RetCode VwmaOpenImpl( VwmaStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )

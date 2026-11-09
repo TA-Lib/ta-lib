@@ -1009,6 +1009,10 @@ impl Core {
         let mut rcma2: f64 = 0.0_f64;
         let mut rcma3: f64 = 0.0_f64;
         let mut rcma4: f64 = 0.0_f64;
+        let mut ringPosL_den1: usize = 0_usize;
+        let mut ringPosL_den2: usize = 0_usize;
+        let mut ringPosL_den3: usize = 0_usize;
+        let mut ringPosL_den4: usize = 0_usize;
         if sp.ringCap_den1 == 0 {
             sp.ring_den1_inReal[0] = inReal;
         }
@@ -1074,26 +1078,34 @@ impl Core {
         (*outKSTSignal) = sig;
         sp.cur_outKST = (*outKST);
         sp.cur_outKSTSignal = (*outKSTSignal);
-        sp.ring_den1_inReal[sp.ringPos_den1] = inReal;
-        sp.ringPos_den1 = sp.ringPos_den1 + 1;
-        if sp.ringPos_den1 >= sp.ringCap_den1 {
-            sp.ringPos_den1 = 0;
+        ringPosL_den1 = sp.ringPos_den1;
+        sp.ring_den1_inReal[ringPosL_den1] = inReal;
+        ringPosL_den1 = ringPosL_den1 + 1;
+        if ringPosL_den1 >= sp.ringCap_den1 {
+            ringPosL_den1 = 0;
         }
-        sp.ring_den2_inReal[sp.ringPos_den2] = inReal;
-        sp.ringPos_den2 = sp.ringPos_den2 + 1;
-        if sp.ringPos_den2 >= sp.ringCap_den2 {
-            sp.ringPos_den2 = 0;
+        sp.ringPos_den1 = ringPosL_den1;
+        ringPosL_den2 = sp.ringPos_den2;
+        sp.ring_den2_inReal[ringPosL_den2] = inReal;
+        ringPosL_den2 = ringPosL_den2 + 1;
+        if ringPosL_den2 >= sp.ringCap_den2 {
+            ringPosL_den2 = 0;
         }
-        sp.ring_den3_inReal[sp.ringPos_den3] = inReal;
-        sp.ringPos_den3 = sp.ringPos_den3 + 1;
-        if sp.ringPos_den3 >= sp.ringCap_den3 {
-            sp.ringPos_den3 = 0;
+        sp.ringPos_den2 = ringPosL_den2;
+        ringPosL_den3 = sp.ringPos_den3;
+        sp.ring_den3_inReal[ringPosL_den3] = inReal;
+        ringPosL_den3 = ringPosL_den3 + 1;
+        if ringPosL_den3 >= sp.ringCap_den3 {
+            ringPosL_den3 = 0;
         }
-        sp.ring_den4_inReal[sp.ringPos_den4] = inReal;
-        sp.ringPos_den4 = sp.ringPos_den4 + 1;
-        if sp.ringPos_den4 >= sp.ringCap_den4 {
-            sp.ringPos_den4 = 0;
+        sp.ringPos_den3 = ringPosL_den3;
+        ringPosL_den4 = sp.ringPos_den4;
+        sp.ring_den4_inReal[ringPosL_den4] = inReal;
+        ringPosL_den4 = ringPosL_den4 + 1;
+        if ringPosL_den4 >= sp.ringCap_den4 {
+            ringPosL_den4 = 0;
         }
+        sp.ringPos_den4 = ringPosL_den4;
     }
 
     /// The single whole-history transcription behind [`Core::kst_open_internal`]

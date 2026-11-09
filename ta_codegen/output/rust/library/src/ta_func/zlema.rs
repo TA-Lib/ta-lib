@@ -430,6 +430,7 @@ struct ZlemaStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn zlema_step_impl(sp: &mut ZlemaStreamState, inReal: f64, outReal: &mut f64) {
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             sp.cur_outReal = (*outReal);
@@ -441,11 +442,13 @@ impl Core {
         sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= sp.ringCap_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     fn zlema_step_tape_impl(sp: &mut ZlemaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {

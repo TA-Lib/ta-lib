@@ -1519,6 +1519,7 @@ public partial class Core
       double DCPeriod = 0.0;
       double imagPart = 0.0;
       double realPart = 0.0;
+      int ringPosL_trailingWMAIdx = 0;
       int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -1707,11 +1708,13 @@ public partial class Core
          sp.smoothPrice_Idx = 0;
       }
       ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-      sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-      sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
-         sp.ringPos_trailingWMAIdx = 0;
+      ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+      sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+      if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
+         ringPosL_trailingWMAIdx = 0;
       }
+      sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
       sp.streamParity = 1 - sp.streamParity;
    }
 

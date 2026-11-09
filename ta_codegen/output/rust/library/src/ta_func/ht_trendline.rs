@@ -730,6 +730,7 @@ impl Core {
         let mut todayValue: f64 = 0.0_f64;
         let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPeriod: f64 = 0.0_f64;
+        let mut ringPosL_trailingWMAIdx: usize = 0_usize;
         let mut ringCapL_trailingWMAIdx: usize = 0_usize;
         sp.win_i_inReal[sp.winPos_i] = inReal;
         adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
@@ -902,11 +903,13 @@ impl Core {
         // Ooof... let's do the next price bar now!
         sp.cur_outReal = (*outReal);
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-        sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-        sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-        if sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx {
-            sp.ringPos_trailingWMAIdx = 0;
+        ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+        sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+        ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+        if ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx {
+            ringPosL_trailingWMAIdx = 0;
         }
+        sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;

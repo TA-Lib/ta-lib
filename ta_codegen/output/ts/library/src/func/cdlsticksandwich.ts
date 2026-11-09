@@ -536,6 +536,7 @@ export class CdlsticksandwichStream {
 }
 
 function cdlsticksandwichStepImpl(sp: CdlsticksandwichStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_EqualTrailingIdx = 0;
   const Equal_rangeType = sp.cs_Equal_rangeType;
   const Equal_avgPeriod = sp.cs_Equal_avgPeriod;
   const Equal_factor = sp.cs_Equal_factor;
@@ -563,10 +564,10 @@ function cdlsticksandwichStepImpl(sp: CdlsticksandwichStream, inOpen: number, in
   sp.lag1_inLow = inLow;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
-  if (sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx) {
-    sp.ringPos_EqualTrailingIdx = 0;
-  }
+  ringPosL_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+  ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+  ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx & (ringPosL_EqualTrailingIdx - sp.ringCap_EqualTrailingIdx >> 31);
+  sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
 }
 
 function cdlsticksandwichOpenImpl(

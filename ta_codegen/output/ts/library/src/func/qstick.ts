@@ -502,6 +502,7 @@ export class QstickStream {
 
 function qstickStepImpl(sp: QstickStream, inOpen: number, inClose: number): void {
   let tempReal = 0;
+  let ringPosL_trailingIdx = 0;
   if (sp.ringCap_trailingIdx === 0) {
     sp.ring_trailingIdx_derived[0] = (inClose - inOpen);
   }
@@ -509,11 +510,11 @@ function qstickStepImpl(sp: QstickStream, inOpen: number, inClose: number): void
   tempReal = sp.periodTotal;
   sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
   sp.cur_outReal = tempReal / sp.optInTimePeriod;
-  sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (inClose - inOpen);
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_derived[ringPosL_trailingIdx] = (inClose - inOpen);
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function qstickOpenImpl(

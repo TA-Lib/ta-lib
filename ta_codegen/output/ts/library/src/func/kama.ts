@@ -783,6 +783,7 @@ function kamaStepImpl(sp: KamaStream, inReal: number): void {
   let tempReal2 = 0;
   let periodROC = 0;
   let live = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_trailingIdx = 0;
   if (sp.optInTimePeriod === 1) {
     sp.cur_outReal = inReal;
@@ -831,11 +832,11 @@ function kamaStepImpl(sp: KamaStream, inReal: number): void {
   sp.cur_outReal = sp.prevKAMA;
   sp.lag1_inReal = inReal;
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function kamaOpenImpl(

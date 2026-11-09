@@ -1471,6 +1471,7 @@
       double DCPeriod = 0.0;
       double imagPart = 0.0;
       double realPart = 0.0;
+      int ringPosL_trailingWMAIdx = 0;
       int ringCapL_trailingWMAIdx = 0;
       adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
       todayValue = inReal;
@@ -1660,11 +1661,11 @@
          sp.smoothPrice_Idx = 0;
       }
       ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-      sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-      sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-      if( sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx ) {
-         sp.ringPos_trailingWMAIdx = 0;
-      }
+      ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+      sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx & (ringPosL_trailingWMAIdx - ringCapL_trailingWMAIdx >> 31);
+      sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
       sp.streamParity = 1 - sp.streamParity;
    }
    private RetCode htSineOpenImpl( HtSineStream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[], int outStride )

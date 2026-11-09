@@ -742,6 +742,10 @@ static void TA_CDL3WHITESOLDIERS_StepImpl( struct TA_CDL3WHITESOLDIERS_Stream *s
    double FarPeriodTotalTrailRange1;
    double NearPeriodTotalRange1;
    double NearPeriodTotalTrailRange1;
+   int ringPosL_BodyShortTrailingIdx;
+   int ringPosL_FarTrailingIdx;
+   int ringPosL_NearTrailingIdx;
+   int ringPosL_ShadowVeryShortTrailingIdx;
 
    if( sp->ringCap_BodyShortTrailingIdx == 0 )
    {
@@ -813,28 +817,36 @@ static void TA_CDL3WHITESOLDIERS_StepImpl( struct TA_CDL3WHITESOLDIERS_Stream *s
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx + 1;
-   if( sp->ringPos_BodyShortTrailingIdx >= sp->ringCap_BodyShortTrailingIdx )
+   ringPosL_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx;
+   sp->ring_BodyShortTrailingIdx_derived[ringPosL_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+   if( ringPosL_BodyShortTrailingIdx >= sp->ringCap_BodyShortTrailingIdx )
    {
-      sp->ringPos_BodyShortTrailingIdx = 0;
+      ringPosL_BodyShortTrailingIdx = 0;
    }
-   sp->ringPos_FarTrailingIdx = sp->ringPos_FarTrailingIdx + 1;
-   if( sp->ringPos_FarTrailingIdx >= sp->ringCap_FarTrailingIdx )
+   sp->ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
+   ringPosL_FarTrailingIdx = sp->ringPos_FarTrailingIdx;
+   ringPosL_FarTrailingIdx = ringPosL_FarTrailingIdx + 1;
+   if( ringPosL_FarTrailingIdx >= sp->ringCap_FarTrailingIdx )
    {
-      sp->ringPos_FarTrailingIdx = 0;
+      ringPosL_FarTrailingIdx = 0;
    }
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
+   sp->ringPos_FarTrailingIdx = ringPosL_FarTrailingIdx;
+   ringPosL_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+   if( ringPosL_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {
-      sp->ringPos_NearTrailingIdx = 0;
+      ringPosL_NearTrailingIdx = 0;
    }
-   sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
+   sp->ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+   ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+   if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
+      ringPosL_ShadowVeryShortTrailingIdx = 0;
    }
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDL3WHITESOLDIERS_OpenBody( struct TA_CDL3WHITESOLDIERS_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

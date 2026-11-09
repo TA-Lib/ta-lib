@@ -597,6 +597,8 @@ export class AoStream {
 function aoStepImpl(sp: AoStream, inHigh: number, inLow: number): void {
   let medianPrice = 0;
   let tempReal = 0;
+  let ringPosL_trailingFastIdx = 0;
+  let ringPosL_trailingSlowIdx = 0;
   let ringCapL_trailingFastIdx = 0;
   let ringCapL_trailingSlowIdx = 0;
   medianPrice = (inHigh + inLow) / 2.0;
@@ -616,17 +618,17 @@ function aoStepImpl(sp: AoStream, inHigh: number, inLow: number): void {
   sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
   sp.cur_outReal = tempReal;
   ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
-  sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
-  sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
-  if (sp.ringPos_trailingFastIdx >= ringCapL_trailingFastIdx) {
-    sp.ringPos_trailingFastIdx = 0;
-  }
+  ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
+  sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+  ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
+  ringPosL_trailingFastIdx = ringPosL_trailingFastIdx & (ringPosL_trailingFastIdx - ringCapL_trailingFastIdx >> 31);
+  sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
   ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
-  sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
-  sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
-  if (sp.ringPos_trailingSlowIdx >= ringCapL_trailingSlowIdx) {
-    sp.ringPos_trailingSlowIdx = 0;
-  }
+  ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+  sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+  ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
+  ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx & (ringPosL_trailingSlowIdx - ringCapL_trailingSlowIdx >> 31);
+  sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
 }
 
 function aoOpenImpl(

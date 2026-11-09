@@ -510,6 +510,8 @@ export class DpoStream {
 function dpoStepImpl(sp: DpoStream, inReal: number): void {
   let tempReal = 0;
   let dispVal = 0;
+  let ringPosL_dispIdx = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_dispIdx = 0;
   let ringCapL_trailingIdx = 0;
   sp.periodTotal += inReal;
@@ -524,17 +526,17 @@ function dpoStepImpl(sp: DpoStream, inReal: number): void {
   dispVal = sp.ring_dispIdx_inReal[sp.ringPos_dispIdx];
   sp.cur_outReal = dispVal - tempReal / sp.optInTimePeriod;
   ringCapL_dispIdx = sp.ringCap_dispIdx;
-  sp.ring_dispIdx_inReal[sp.ringPos_dispIdx] = inReal;
-  sp.ringPos_dispIdx = sp.ringPos_dispIdx + 1;
-  if (sp.ringPos_dispIdx >= ringCapL_dispIdx) {
-    sp.ringPos_dispIdx = 0;
-  }
+  ringPosL_dispIdx = sp.ringPos_dispIdx;
+  sp.ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
+  ringPosL_dispIdx = ringPosL_dispIdx + 1;
+  ringPosL_dispIdx = ringPosL_dispIdx & (ringPosL_dispIdx - ringCapL_dispIdx >> 31);
+  sp.ringPos_dispIdx = ringPosL_dispIdx;
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function dpoOpenImpl(

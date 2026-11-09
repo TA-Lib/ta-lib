@@ -245,6 +245,7 @@ static void TA_SUM_ReleaseImpl( struct TA_SUM_Stream *sp )
 static void TA_SUM_StepImpl( struct TA_SUM_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    sp->periodTotal += inReal;
@@ -253,12 +254,14 @@ static void TA_SUM_StepImpl( struct TA_SUM_Stream *sp, double inReal, double *ou
    *outReal= tempReal;
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_SUM_OpenBody( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

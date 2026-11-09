@@ -421,6 +421,7 @@ impl Core {
         let mut tempV: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut trailingVolume: f64 = 0.0_f64;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
@@ -460,12 +461,14 @@ impl Core {
         sp.zeroCount -= (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
         sp.cur_outReal = (*outReal);
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::vwma_open_internal`]

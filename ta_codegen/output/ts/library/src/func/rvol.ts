@@ -512,6 +512,7 @@ function rvolStepImpl(sp: RvolStream, inVolume: number): void {
   let todayVolume = 0;
   let trailingVolume = 0;
   let liveIn = 0;
+  let ringPosL_trailingIdx = 0;
   let ringCapL_trailingIdx = 0;
   /* Drop the trailing bar BEFORE adding today's. Up to the first dead
    * window, that order makes each baseline bit-identical to the moving
@@ -533,11 +534,11 @@ function rvolStepImpl(sp: RvolStream, inVolume: number): void {
     sp.periodTotal = 0.0;
   }
   ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-  sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
-  sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-  if (sp.ringPos_trailingIdx >= ringCapL_trailingIdx) {
-    sp.ringPos_trailingIdx = 0;
-  }
+  ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+  sp.ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+  ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+  ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+  sp.ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 function rvolOpenImpl(

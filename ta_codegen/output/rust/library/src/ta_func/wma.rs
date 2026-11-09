@@ -467,6 +467,7 @@ impl Core {
         let mut j: usize = 0_usize;
         let mut rw: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
+        let mut ringPosL_trailingIdx: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
@@ -550,11 +551,13 @@ impl Core {
         sp.periodSum -= sp.periodSub;
         sp.cur_outReal = (*outReal);
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-        sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-        sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-        if sp.ringPos_trailingIdx >= ringCapL_trailingIdx {
-            sp.ringPos_trailingIdx = 0;
+        ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+        ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+        if ringPosL_trailingIdx >= ringCapL_trailingIdx {
+            ringPosL_trailingIdx = 0;
         }
+        sp.ringPos_trailingIdx = ringPosL_trailingIdx;
         sp.winPos_j = sp.winPos_j + 1;
         if sp.winPos_j >= sp.winCap_j {
             sp.winPos_j = 0;

@@ -640,6 +640,7 @@ export class CdlhikkakemodStream {
 }
 
 function cdlhikkakemodStepImpl(sp: CdlhikkakemodStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
+  let ringPosL_NearTrailingIdx = 0;
   const Near_rangeType = sp.cs_Near_rangeType;
   const Near_avgPeriod = sp.cs_Near_avgPeriod;
   const Near_factor = sp.cs_Near_factor;
@@ -685,10 +686,10 @@ function cdlhikkakemodStepImpl(sp: CdlhikkakemodStream, inOpen: number, inHigh: 
   sp.lag1_inLow = inLow;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
-  if (sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx) {
-    sp.ringPos_NearTrailingIdx = 0;
-  }
+  ringPosL_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+  ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
+  sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
 }
 
 function cdlhikkakemodOpenImpl(

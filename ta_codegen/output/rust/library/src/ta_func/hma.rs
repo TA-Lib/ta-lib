@@ -690,6 +690,7 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
             let mut rw: f64 = 0.0_f64;
+            let mut ringPosL_trailingIdxFull: usize = 0_usize;
             let mut ringCapL_trailingIdxFull: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
             tempReal = inReal;
@@ -719,11 +720,13 @@ impl Core {
             (*outReal) = 2.0 * tempReal - fullOut;
             sp.cur_outReal = (*outReal);
             ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
-            sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
-            sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-            if sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull {
-                sp.ringPos_trailingIdxFull = 0;
+            ringPosL_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            sp.ring_trailingIdxFull_inReal[ringPosL_trailingIdxFull] = inReal;
+            ringPosL_trailingIdxFull = ringPosL_trailingIdxFull + 1;
+            if ringPosL_trailingIdxFull >= ringCapL_trailingIdxFull {
+                ringPosL_trailingIdxFull = 0;
             }
+            sp.ringPos_trailingIdxFull = ringPosL_trailingIdxFull;
             sp.winPos_jFull = sp.winPos_jFull + 1;
             if sp.winPos_jFull >= sp.winCap_jFull {
                 sp.winPos_jFull = 0;
@@ -739,6 +742,8 @@ impl Core {
             let mut ringWalk: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
             let mut rw: f64 = 0.0_f64;
+            let mut ringPosL_trailingIdxFull: usize = 0_usize;
+            let mut ringPosL_trailingIdxHalf: usize = 0_usize;
             let mut ringCapL_trailingIdxFull: usize = 0_usize;
             let mut ringCapL_trailingIdxHalf: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
@@ -834,17 +839,21 @@ impl Core {
             sp.periodSumSqrt -= sp.periodSubSqrt;
             sp.cur_outReal = (*outReal);
             ringCapL_trailingIdxFull = sp.ringCap_trailingIdxFull;
-            sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
-            sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
-            if sp.ringPos_trailingIdxFull >= ringCapL_trailingIdxFull {
-                sp.ringPos_trailingIdxFull = 0;
+            ringPosL_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            sp.ring_trailingIdxFull_inReal[ringPosL_trailingIdxFull] = inReal;
+            ringPosL_trailingIdxFull = ringPosL_trailingIdxFull + 1;
+            if ringPosL_trailingIdxFull >= ringCapL_trailingIdxFull {
+                ringPosL_trailingIdxFull = 0;
             }
+            sp.ringPos_trailingIdxFull = ringPosL_trailingIdxFull;
             ringCapL_trailingIdxHalf = sp.ringCap_trailingIdxHalf;
-            sp.ring_trailingIdxHalf_inReal[sp.ringPos_trailingIdxHalf] = inReal;
-            sp.ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf + 1;
-            if sp.ringPos_trailingIdxHalf >= ringCapL_trailingIdxHalf {
-                sp.ringPos_trailingIdxHalf = 0;
+            ringPosL_trailingIdxHalf = sp.ringPos_trailingIdxHalf;
+            sp.ring_trailingIdxHalf_inReal[ringPosL_trailingIdxHalf] = inReal;
+            ringPosL_trailingIdxHalf = ringPosL_trailingIdxHalf + 1;
+            if ringPosL_trailingIdxHalf >= ringCapL_trailingIdxHalf {
+                ringPosL_trailingIdxHalf = 0;
             }
+            sp.ringPos_trailingIdxHalf = ringPosL_trailingIdxHalf;
             sp.winPos_jFull = sp.winPos_jFull + 1;
             if sp.winPos_jFull >= sp.winCap_jFull {
                 sp.winPos_jFull = 0;

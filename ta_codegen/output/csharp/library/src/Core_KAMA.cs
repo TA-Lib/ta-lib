@@ -890,6 +890,7 @@ public partial class Core
       double tempReal2 = 0.0;
       double periodROC = 0.0;
       int live = 0;
+      int ringPosL_trailingIdx = 0;
       int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -936,11 +937,13 @@ public partial class Core
       sp.cur_outReal = sp.prevKAMA;
       sp.lag1_inReal = inReal;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx ) {
+         ringPosL_trailingIdx = 0;
       }
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 
    private RetCode KamaOpenImpl( KamaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )

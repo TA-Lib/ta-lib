@@ -501,9 +501,7 @@
       lagPosL0 = sp.lagPos0;
       sp.lagBuf0[lagPosL0] = lagIn0;
       lagPosL0 = lagPosL0 + 1;
-      if( lagPosL0 >= lagCapL0 ) {
-         lagPosL0 = 0;
-      }
+      lagPosL0 = lagPosL0 & (lagPosL0 - lagCapL0 >> 31);
       sp.lagPos0 = lagPosL0;
       sp.cur_outReal = cur_outReal;
    }

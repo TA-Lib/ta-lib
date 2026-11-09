@@ -1657,8 +1657,11 @@ fn ring_slot_stores(step: &str) -> Vec<(usize, String)> {
     let mut next_id = 0usize;
     for line in step.lines() {
         let l = line.trim();
+        // The push writes through the step local it loads the position into,
+        // before advancing it: the same slot as `[sp->ringPos_..]`.
+        let l = l.replace("[ringPosL_", "[sp->ringPos_");
         if l.starts_with("sp->ring_") && l.contains("[sp->ringPos_") && l.ends_with(';') {
-            out.push((*stack.last().expect("block stack"), l.to_string()));
+            out.push((*stack.last().expect("block stack"), l.clone()));
         }
         for ch in l.chars() {
             match ch {

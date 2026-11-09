@@ -679,6 +679,8 @@ export class Cdlrisefall3methodsStream {
 function cdlrisefall3methodsStepImpl(sp: Cdlrisefall3methodsStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
   let BodyPeriodTotalRange1 = 0;
   let BodyPeriodTotalTrailRange1 = 0;
+  let ringPosL_BodyLongTrailingIdx = 0;
+  let ringPosL_BodyShortTrailingIdx = 0;
   const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
   const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
   const BodyLong_factor = sp.cs_BodyLong_factor;
@@ -741,14 +743,14 @@ function cdlrisefall3methodsStepImpl(sp: Cdlrisefall3methodsStream, inOpen: numb
   sp.lag3_inClose = sp.lag2_inClose;
   sp.lag2_inClose = sp.lag1_inClose;
   sp.lag1_inClose = inClose;
-  sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-  if (sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx) {
-    sp.ringPos_BodyLongTrailingIdx = 0;
-  }
-  sp.ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx + 1;
-  if (sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx) {
-    sp.ringPos_BodyShortTrailingIdx = 0;
-  }
+  ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+  ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
+  sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+  ringPosL_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+  ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+  ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx & (ringPosL_BodyShortTrailingIdx - sp.ringCap_BodyShortTrailingIdx >> 31);
+  sp.ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
 }
 
 function cdlrisefall3methodsOpenImpl(

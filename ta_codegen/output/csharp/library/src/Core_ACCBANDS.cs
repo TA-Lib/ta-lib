@@ -771,6 +771,7 @@ public partial class Core
       double tempMiddle = 0.0;
       double tempLower = 0.0;
       double tempReal = 0.0;
+      int ringPosL_trailingIdx = 0;
       int ringCapL_trailingIdx = 0;
       /* Add the incoming bar to each running sum. */
       tempReal = inHigh + inLow;
@@ -803,13 +804,15 @@ public partial class Core
       sp.cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
       sp.cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-      sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
-      sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
-      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh;
+      sp.ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow;
+      sp.ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx ) {
+         ringPosL_trailingIdx = 0;
       }
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
 
    private RetCode AccbandsOpenImpl( AccbandsStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand, int outStride )

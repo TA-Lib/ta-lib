@@ -1138,6 +1138,7 @@ function htPhasorStepImpl(sp: HtPhasorStream, inReal: number): void {
   let Q2 = 0;
   let I2 = 0;
   let todayValue = 0;
+  let ringPosL_trailingWMAIdx = 0;
   let ringCapL_trailingWMAIdx = 0;
   {
     const _a: number = 0.075, _b: number = sp.period, _c: number = 0.54;
@@ -1404,11 +1405,11 @@ function htPhasorStepImpl(sp: HtPhasorStream, inReal: number): void {
   }
   /* Ooof... let's do the next price bar now! */
   ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
-  sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
-  sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
-  if (sp.ringPos_trailingWMAIdx >= ringCapL_trailingWMAIdx) {
-    sp.ringPos_trailingWMAIdx = 0;
-  }
+  ringPosL_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+  sp.ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+  ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx & (ringPosL_trailingWMAIdx - ringCapL_trailingWMAIdx >> 31);
+  sp.ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
   sp.streamParity = 1 - sp.streamParity;
 }
 

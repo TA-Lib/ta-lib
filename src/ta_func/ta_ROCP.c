@@ -244,6 +244,7 @@ static void TA_ROCP_ReleaseImpl( struct TA_ROCP_Stream *sp )
 static void TA_ROCP_StepImpl( struct TA_ROCP_Stream *sp, double inReal, double *outReal )
 {
    double tempReal;
+   int ringPosL_trailingIdx;
    int ringCapL_trailingIdx;
 
    tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
@@ -256,12 +257,14 @@ static void TA_ROCP_StepImpl( struct TA_ROCP_Stream *sp, double inReal, double *
    }
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
-   sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= ringCapL_trailingIdx )
+   ringPosL_trailingIdx = sp->ringPos_trailingIdx;
+   sp->ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+   if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
    {
-      sp->ringPos_trailingIdx = 0;
+      ringPosL_trailingIdx = 0;
    }
+   sp->ringPos_trailingIdx = ringPosL_trailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_ROCP_OpenBody( struct TA_ROCP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )

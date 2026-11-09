@@ -418,6 +418,9 @@ static void TA_CDLHOMINGPIGEON_ReleaseImpl( struct TA_CDLHOMINGPIGEON_Stream *sp
 /* Private function, not in public API. */
 static void TA_CDLHOMINGPIGEON_StepImpl( struct TA_CDLHOMINGPIGEON_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
+   int ringPosL_BodyLongTrailingIdx;
+   int ringPosL_BodyShortTrailingIdx;
+
    sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    if( sp->ringCap_BodyShortTrailingIdx == 0 )
    {
@@ -450,17 +453,21 @@ static void TA_CDLHOMINGPIGEON_StepImpl( struct TA_CDLHOMINGPIGEON_Stream *sp, d
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
+   ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+   if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
-      sp->ringPos_BodyLongTrailingIdx = 0;
+      ringPosL_BodyLongTrailingIdx = 0;
    }
-   sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
-   sp->ringPos_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx + 1;
-   if( sp->ringPos_BodyShortTrailingIdx >= sp->ringCap_BodyShortTrailingIdx )
+   sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   ringPosL_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx;
+   sp->ring_BodyShortTrailingIdx_derived[ringPosL_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+   ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+   if( ringPosL_BodyShortTrailingIdx >= sp->ringCap_BodyShortTrailingIdx )
    {
-      sp->ringPos_BodyShortTrailingIdx = 0;
+      ringPosL_BodyShortTrailingIdx = 0;
    }
+   sp->ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_CDLHOMINGPIGEON_OpenBody( struct TA_CDLHOMINGPIGEON_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )

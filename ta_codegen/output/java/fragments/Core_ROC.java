@@ -469,6 +469,7 @@
    private void rocStepImpl( RocStream sp, double inReal )
    {
       double tempReal = 0.0;
+      int ringPosL_trailingIdx = 0;
       int ringCapL_trailingIdx = 0;
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
       if( tempReal != 0.0 ) {
@@ -477,11 +478,11 @@
          sp.cur_outReal = 0.0;
       }
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-      if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-         sp.ringPos_trailingIdx = 0;
-      }
+      ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+      sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - ringCapL_trailingIdx >> 31);
+      sp.ringPos_trailingIdx = ringPosL_trailingIdx;
    }
    private RetCode rocOpenImpl( RocStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {

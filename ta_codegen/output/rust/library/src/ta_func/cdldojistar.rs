@@ -469,6 +469,8 @@ struct CdldojistarStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdldojistar_step_impl(sp: &mut CdldojistarStreamState, cs_body_doji: &CandleSetting, cs_body_long: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyDojiTrailingIdx: usize = 0_usize;
+        let mut ringPosL_BodyLongTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
@@ -567,6 +569,7 @@ impl Core {
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
         sp.lag1_inClose = inClose;
+        ringPosL_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
         let mut _candlerange_4: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -582,11 +585,13 @@ impl Core {
                 _candlerange_4 = 0.0;
             }
         }
-        sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = _candlerange_4;
-        sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
-        if sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
-            sp.ringPos_BodyDojiTrailingIdx = 0;
+        sp.ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = _candlerange_4;
+        ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+        if ringPosL_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
+            ringPosL_BodyDojiTrailingIdx = 0;
         }
+        sp.ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+        ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
         let mut _candlerange_5: f64;
         match BodyLong_rangeType {
             0 => {
@@ -602,11 +607,12 @@ impl Core {
                 _candlerange_5 = 0.0;
             }
         }
-        sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = _candlerange_5;
-        sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
-        if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-            sp.ringPos_BodyLongTrailingIdx = 0;
+        sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = _candlerange_5;
+        ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+        if ringPosL_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
+            ringPosL_BodyLongTrailingIdx = 0;
         }
+        sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdldojistar_open_internal`]

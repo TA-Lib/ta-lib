@@ -1861,15 +1861,22 @@ pub fn ring_cap_local(var: &str) -> String {
     format!("ringCapL_{var}")
 }
 
+/// The step local a ring's position advances in.
+#[must_use]
+pub fn ring_pos_local(var: &str) -> String {
+    format!("ringPosL_{var}")
+}
+
 /// `model.temps` for a commit frame, `tape` its tape if it has one. A taped
-/// ring never advances, so its capacity local would be declared and never used.
+/// ring never advances, so its position and capacity locals would be declared
+/// and never used.
 #[must_use]
 pub fn step_temps(model: &StreamModel, tape: Option<&TapeNames>) -> Vec<(String, VarType)> {
     let unused: BTreeSet<String> = model
         .rings()
         .iter()
         .filter(|r| tape.is_some_and(|t| r.arrays.contains(&t.input)))
-        .map(|r| ring_cap_local(&r.var))
+        .flat_map(|r| [ring_cap_local(&r.var), ring_pos_local(&r.var)])
         .collect();
     model
         .temps
@@ -2127,7 +2134,7 @@ pub fn analyze_region_scoped<'a>(
         ),
     };
 
-    let model = StreamModel {
+    let mut model = StreamModel {
         func,
         out_feedback,
         body,
@@ -2161,6 +2168,12 @@ pub fn analyze_region_scoped<'a>(
             model.extrema(),
         )
     );
+    let ring_pos: Vec<(String, VarType)> = model
+        .rings()
+        .iter()
+        .map(|r| (ring_pos_local(&r.var), VarType::Integer))
+        .collect();
+    model.temps.extend(ring_pos);
     Ok(model)
 }
 
@@ -3685,31 +3698,38 @@ fn wrap_sum(x: Expr, cap: Expr) -> Expr {
     )
 }
 
-/// `pos = pos + 1; if( pos >= cap ) pos = 0;`
-fn push_wrap_tail(out: &mut Vec<Statement>, pos: &str, cap: &str) {
+/// `pos = pos + 1;`, then `pos` wrapped at `cap` in the form `wrap` names.
+fn push_wrap_tail(out: &mut Vec<Statement>, pos: &str, cap: &str, wrap: RingWrap) {
+    let var = || Box::new(Expr::Var(pos.to_string()));
     out.push(Statement::Assign {
         target: Expr::Var(pos.to_string()),
-        value: Expr::BinOp(
-            Box::new(Expr::Var(pos.to_string())),
-            BinOp::Add,
-            Box::new(Expr::IntLiteral(1)),
-        ),
+        value: Expr::BinOp(var(), BinOp::Add, Box::new(Expr::IntLiteral(1))),
         compound: false,
     });
-    out.push(Statement::If {
-        condition: Expr::BinOp(
-            Box::new(Expr::Var(pos.to_string())),
-            BinOp::GreaterEq,
-            Box::new(Expr::Var(cap.to_string())),
-        ),
-        then_body: vec![Statement::Assign {
-            target: Expr::Var(pos.to_string()),
-            value: Expr::IntLiteral(0),
-            compound: false,
-        }],
-        else_body: vec![],
-        cond_comments: vec![],
-    });
+    match wrap {
+        RingWrap::CompareReset => out.push(Statement::If {
+            condition: Expr::BinOp(var(), BinOp::GreaterEq, Box::new(Expr::Var(cap.to_string()))),
+            then_body: vec![Statement::Assign {
+                target: Expr::Var(pos.to_string()),
+                value: Expr::IntLiteral(0),
+                compound: false,
+            }],
+            else_body: vec![],
+            cond_comments: vec![],
+        }),
+        RingWrap::SignMask => {
+            let below = Expr::BinOp(
+                Box::new(Expr::BinOp(var(), BinOp::Sub, Box::new(Expr::Var(cap.to_string())))),
+                BinOp::Shr,
+                Box::new(Expr::IntLiteral(31)),
+            );
+            out.push(Statement::Assign {
+                target: Expr::Var(pos.to_string()),
+                value: Expr::BinOp(var(), BinOp::BitwiseAnd, Box::new(below)),
+                compound: false,
+            });
+        }
+    }
 }
 
 /// Loads tap `j` of line `k` into its local, then selects the snapshot when the
@@ -3901,6 +3921,20 @@ pub fn lag_snapshot(k: usize, storage: &str) -> Statement {
     }
 }
 
+/// How a ring or delay-line position wraps at its capacity: each backend takes
+/// the form its compiler makes branch-free.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RingWrap {
+    /// `p = p + 1; if( p >= cap ) p = 0;`, which gcc, LLVM and RyuJIT turn
+    /// into a conditional move once `p` is a local.
+    CompareReset,
+    /// `p = p + 1; p = p & ((p - cap) >> 31);`, for a JIT that keeps the
+    /// compare a branch (C2 pays about 4 ns a bar for it on Zen). Exact for
+    /// any capacity from 0 to 2^31 - 1, and needs a signed 32-bit `p` and an
+    /// arithmetic `>>`.
+    SignMask,
+}
+
 /// The commit frame's write of line `k`'s snapshot and its position advance.
 /// The position wraps in a local and is stored once: a JIT keeps a compare
 /// that steers two stores to one field a branch.
@@ -3929,7 +3963,7 @@ pub fn lag_push(k: usize, names: &dyn NameMap) -> Vec<Statement> {
             compound: false,
         },
     ];
-    push_wrap_tail(&mut out, &local_pos, &local_cap);
+    push_wrap_tail(&mut out, &local_pos, &local_cap, names.ring_wrap());
     out.push(Statement::Assign {
         target: Expr::Var(pos),
         value: Expr::Var(local_pos),
@@ -7800,6 +7834,10 @@ pub trait NameMap {
     fn tape(&self) -> Option<TapeNames> {
         None
     }
+    /// The wrap every ring and delay-line push in this backend takes.
+    fn ring_wrap(&self) -> RingWrap {
+        RingWrap::CompareReset
+    }
 }
 
 /// The names of a tape frame's extra parameters. The caller owns one power-of-two
@@ -8141,9 +8179,9 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
         });
     }
     // Ring pushes: newest bar replaces the oldest slot, then the shared
-    // position advances with the conditional-reset idiom (house style; a
-    // modulo costs ~10 cycles on ARM). Order preserved vs the batch reads
-    // above: reads happened on the OLD slot contents.
+    // position advances and wraps without a modulo (~10 cycles on ARM). Order
+    // preserved vs the batch reads above: reads happened on the OLD slot
+    // contents.
     let taped = |arrays: &[String]| tape.as_ref().is_some_and(|t| arrays.contains(&t.input));
     for ring in model.rings() {
         if !taped(&ring.arrays) {
@@ -8887,11 +8925,9 @@ fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
 /// it there before the body reads, so a runtime lag of 0 resolves through the
 /// same formula), and `pos` moves nowhere between that write and this one —
 /// only the advance below touches it, and each ring owns its position. Emitting
-/// it again would be a byte-identical dead store, 196 of them per bar across
-/// the 29 functions with an offset ring. (A whole-body text match reads 199
-/// across 31: HMA and TRIMA are dual mode, and their repeated stores sit in
-/// mutually-exclusive arms of the period branch — one per path, not two per
-/// bar.)
+/// it again would be a byte-identical dead store.
+///
+/// The position wraps in a local and is stored once, as in [`lag_push`].
 fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn NameMap) {
     // The dead-store elision above is orthogonal to what gets stored: a derived
     // ring holds f(bar) rather than a raw column, so the value still comes from
@@ -8906,12 +8942,19 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
             compound: false,
         });
     }
+    let pos = names.ring_pos(&ring.var);
+    let local_pos = ring_pos_local(&ring.var);
+    out.push(Statement::Assign {
+        target: Expr::Var(local_pos.clone()),
+        value: Expr::Var(pos.clone()),
+        compound: false,
+    });
     if ring.back == 0 {
         for arr in &ring.arrays {
             out.push(Statement::Assign {
                 target: Expr::ArrayAccess(
                     names.ring_buf(&ring.var, arr),
-                    Box::new(Expr::Var(names.ring_pos(&ring.var))),
+                    Box::new(Expr::Var(local_pos.clone())),
                 ),
                 value: match &ring.derived {
                     Some(dr) => derived_bar_value(dr, names),
@@ -8926,7 +8969,12 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
     } else {
         names.ring_cap(&ring.var)
     };
-    push_wrap_tail(out, &names.ring_pos(&ring.var), &cap);
+    push_wrap_tail(out, &local_pos, &cap, names.ring_wrap());
+    out.push(Statement::Assign {
+        target: Expr::Var(pos),
+        value: Expr::Var(local_pos),
+        compound: false,
+    });
 }
 
 fn rewrite_expr_for_transition(

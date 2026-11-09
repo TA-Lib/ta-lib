@@ -921,6 +921,8 @@ public partial class Core
       double base2 = 0.0;
       double roc1 = 0.0;
       double roc2 = 0.0;
+      int ringPosL_roc1Idx = 0;
+      int ringPosL_roc2Idx = 0;
       int ringCapL_roc1Idx = 0;
       int ringCapL_roc2Idx = 0;
       base1 = sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx];
@@ -980,17 +982,21 @@ public partial class Core
       }
       sp.periodSum -= sp.periodSub;
       ringCapL_roc1Idx = sp.ringCap_roc1Idx;
-      sp.ring_roc1Idx_inReal[sp.ringPos_roc1Idx] = inReal;
-      sp.ringPos_roc1Idx = sp.ringPos_roc1Idx + 1;
-      if( sp.ringPos_roc1Idx >= ringCapL_roc1Idx ) {
-         sp.ringPos_roc1Idx = 0;
+      ringPosL_roc1Idx = sp.ringPos_roc1Idx;
+      sp.ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
+      ringPosL_roc1Idx = ringPosL_roc1Idx + 1;
+      if( ringPosL_roc1Idx >= ringCapL_roc1Idx ) {
+         ringPosL_roc1Idx = 0;
       }
+      sp.ringPos_roc1Idx = ringPosL_roc1Idx;
       ringCapL_roc2Idx = sp.ringCap_roc2Idx;
-      sp.ring_roc2Idx_inReal[sp.ringPos_roc2Idx] = inReal;
-      sp.ringPos_roc2Idx = sp.ringPos_roc2Idx + 1;
-      if( sp.ringPos_roc2Idx >= ringCapL_roc2Idx ) {
-         sp.ringPos_roc2Idx = 0;
+      ringPosL_roc2Idx = sp.ringPos_roc2Idx;
+      sp.ring_roc2Idx_inReal[ringPosL_roc2Idx] = inReal;
+      ringPosL_roc2Idx = ringPosL_roc2Idx + 1;
+      if( ringPosL_roc2Idx >= ringCapL_roc2Idx ) {
+         ringPosL_roc2Idx = 0;
       }
+      sp.ringPos_roc2Idx = ringPosL_roc2Idx;
    }
 
    private RetCode CoppockOpenImpl( CoppockStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )

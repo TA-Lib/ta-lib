@@ -900,6 +900,8 @@ public partial class Core
    private void TrimaStepImpl( TrimaStream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
+         int ringPosL_middleIdx = 0;
+         int ringPosL_trailingIdx = 0;
          if( sp.ringCap_middleIdx == 0 ) {
             sp.ring_middleIdx_inReal[0] = inReal;
          }
@@ -921,17 +923,23 @@ public partial class Core
          /* Step (4) */
          sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          sp.cur_outReal = sp.numerator * sp.factor;
-         sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
-         sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
-         if( sp.ringPos_middleIdx >= sp.ringCap_middleIdx ) {
-            sp.ringPos_middleIdx = 0;
+         ringPosL_middleIdx = sp.ringPos_middleIdx;
+         sp.ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+         ringPosL_middleIdx = ringPosL_middleIdx + 1;
+         if( ringPosL_middleIdx >= sp.ringCap_middleIdx ) {
+            ringPosL_middleIdx = 0;
          }
-         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-         if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            sp.ringPos_trailingIdx = 0;
+         sp.ringPos_middleIdx = ringPosL_middleIdx;
+         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+         if( ringPosL_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPosL_trailingIdx = 0;
          }
+         sp.ringPos_trailingIdx = ringPosL_trailingIdx;
       } else {
+         int ringPosL_middleIdx = 0;
+         int ringPosL_trailingIdx = 0;
          int ringCapL_middleIdx = 0;
          int ringCapL_trailingIdx = 0;
          /* Step (1) */
@@ -950,17 +958,21 @@ public partial class Core
          sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          sp.cur_outReal = sp.numerator * sp.factor;
          ringCapL_middleIdx = sp.ringCap_middleIdx;
-         sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
-         sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
-         if( sp.ringPos_middleIdx >= ringCapL_middleIdx ) {
-            sp.ringPos_middleIdx = 0;
+         ringPosL_middleIdx = sp.ringPos_middleIdx;
+         sp.ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+         ringPosL_middleIdx = ringPosL_middleIdx + 1;
+         if( ringPosL_middleIdx >= ringCapL_middleIdx ) {
+            ringPosL_middleIdx = 0;
          }
+         sp.ringPos_middleIdx = ringPosL_middleIdx;
          ringCapL_trailingIdx = sp.ringCap_trailingIdx;
-         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
-         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
-         if( sp.ringPos_trailingIdx >= ringCapL_trailingIdx ) {
-            sp.ringPos_trailingIdx = 0;
+         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
+         sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+         if( ringPosL_trailingIdx >= ringCapL_trailingIdx ) {
+            ringPosL_trailingIdx = 0;
          }
+         sp.ringPos_trailingIdx = ringPosL_trailingIdx;
       }
    }
 

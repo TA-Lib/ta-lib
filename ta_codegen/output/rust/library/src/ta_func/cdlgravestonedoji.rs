@@ -469,6 +469,8 @@ struct CdlgravestonedojiStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cdlgravestonedoji_step_impl(sp: &mut CdlgravestonedojiStreamState, cs_body_doji: &CandleSetting, cs_shadow_very_short: &CandleSetting, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+        let mut ringPosL_BodyDojiTrailingIdx: usize = 0_usize;
+        let mut ringPosL_ShadowVeryShortTrailingIdx: usize = 0_usize;
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = cs_body_doji.range_type as i32;
         #[allow(non_snake_case)]
@@ -565,6 +567,7 @@ impl Core {
         }
         sp.ShadowVeryShortPeriodTotal += _candlerange_3 - sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx];
         sp.cur_outInteger = (*outInteger);
+        ringPosL_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
         let mut _candlerange_4: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -580,11 +583,13 @@ impl Core {
                 _candlerange_4 = 0.0;
             }
         }
-        sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = _candlerange_4;
-        sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
-        if sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
-            sp.ringPos_BodyDojiTrailingIdx = 0;
+        sp.ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = _candlerange_4;
+        ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+        if ringPosL_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
+            ringPosL_BodyDojiTrailingIdx = 0;
         }
+        sp.ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+        ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
         let mut _candlerange_5: f64;
         match ShadowVeryShort_rangeType {
             0 => {
@@ -600,11 +605,12 @@ impl Core {
                 _candlerange_5 = 0.0;
             }
         }
-        sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = _candlerange_5;
-        sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
-        if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
-            sp.ringPos_ShadowVeryShortTrailingIdx = 0;
+        sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = _candlerange_5;
+        ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+        if ringPosL_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
+            ringPosL_ShadowVeryShortTrailingIdx = 0;
         }
+        sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
     }
 
     /// The single whole-history transcription behind [`Core::cdlgravestonedoji_open_internal`]

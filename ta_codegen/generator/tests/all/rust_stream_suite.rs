@@ -108,7 +108,7 @@ fn test_rust_sma_ring_stream_section() {
     // `tempReal` is step-local scratch, not a handle field (#252).
     assert!(s.contains("(*outReal) = tempReal / (sp.optInTimePeriod as f64);"));
     assert!(!s.contains("tempReal: f64,"), "no scratch field on the state struct");
-    assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
+    assert!(s.contains("ringPosL_trailingIdx = sp.ringPos_trailingIdx;\n        sp.ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
     assert!(s.contains("pub(crate) fn sma_open_internal("));
     assert!(s.contains("self.sma_open_internal(inReal, 0, optInTimePeriod)"));
