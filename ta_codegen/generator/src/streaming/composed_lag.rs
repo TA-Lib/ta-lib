@@ -41,7 +41,7 @@ const END_WRITTEN: &str = "endIdx is rewritten";
 const NO_PRIOR: &str = "a partial map write has no prior definition";
 const START_PAIRED: &str = "pairs bars at a distance that depends on where the batch started";
 const BEGIN_SUB: &str = "subtracts a begin index with no guard proving it non-negative";
-const CARRIED_READ: &str = "an arm reads a series it never writes, not at the same bar";
+const CARRIED_READ: &str = "an arm reads a series it never writes at a lag";
 
 fn refusal(what: &str, buffer: &str, reason: &str) -> StreamError {
     StreamError::Unsupported(format!(
@@ -49,6 +49,18 @@ fn refusal(what: &str, buffer: &str, reason: &str) -> StreamError {
          must be a same-bar shift (an element-count difference, as APO's `fastNb - *outNBElement`) \
          or a lag fixed by the parameters"
     ))
+}
+
+/// How a map arm hands on a series it does not finish writing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Carry {
+    /// A loop of the arm reads the prior, and a loop of the arm writes it.
+    Partial,
+    /// No loop of the arm touches it: the prior itself, at delay 0.
+    Whole,
+    /// A loop of the arm reads the prior and none writes it. The arm's result
+    /// is that read's storage, so it holds only at no lag.
+    Read,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -904,8 +916,7 @@ impl Cx<'_, '_> {
 
         // Per arm, each key an earlier loop of the arm writes, with that loop.
         let mut owners: BTreeMap<Option<bool>, BTreeMap<String, usize>> = BTreeMap::new();
-        // (unit, key, name, whole arm): a whole-arm carry is the prior itself.
-        let mut priors: Vec<(usize, String, String, bool)> = Vec::new();
+        let mut priors: Vec<(usize, String, String, Carry)> = Vec::new();
         for (ui, u) in units.iter().enumerate() {
             let earlier = owners.get(&u.branch()).cloned().unwrap_or_default();
             let Statement::ForC { body, .. } = u.lp else { unreachable!("a map loop") };
@@ -917,20 +928,14 @@ impl Cx<'_, '_> {
                 if !writes_key && !scan.self_reads.contains(key) {
                     continue;
                 }
-                // An arm that never writes `key` hands its prior on at delay 0,
-                // and its reads go to that same storage: only a same-bar read agrees.
-                if !units.iter().any(|v| v.branch() == u.branch() && self.unit_writes(v, key)) {
-                    if !self.counts[self.cur[key]].same(&tvals[ui]) {
-                        return Err(refusal(what, name, CARRIED_READ));
-                    }
-                    continue;
-                }
+                let arm_writes = units.iter().any(|v| v.branch() == u.branch() && self.unit_writes(v, key));
                 match earlier.get(key) {
                     Some(&owner) if !tvals[owner].same(&tvals[ui]) => {
                         return Err(refusal(what, name, SELF_OFFSET));
                     }
                     None if scan.before.contains(key) || !must.contains(key) => {
-                        priors.push((ui, key.clone(), name.clone(), false));
+                        let carry = if arm_writes { Carry::Partial } else { Carry::Read };
+                        priors.push((ui, key.clone(), name.clone(), carry));
                     }
                     _ => {}
                 }
@@ -960,16 +965,16 @@ impl Cx<'_, '_> {
                     continue;
                 }
                 match units.iter().position(|u| u.branch() == *arm) {
-                    Some(ui) => priors.push((ui, key.clone(), name.clone(), true)),
+                    Some(ui) => priors.push((ui, key.clone(), name.clone(), Carry::Whole)),
                     None => return Err(refusal(what, name, NO_PRIOR)),
                 }
             }
         }
         priors.sort_by_key(|(ui, _, _, _)| *ui);
-        for (ui, key, name, whole) in &priors {
+        for (ui, key, name, carry) in &priors {
             let prior = self.read(name, what).map_err(|_| refusal(what, name, NO_PRIOR))?;
             debug_assert_eq!(self.defs[prior].buffer, *key);
-            let d = if *whole {
+            let d = if *carry == Carry::Whole {
                 Some(Val::konst(0))
             } else {
                 self.counts[prior].plus(&tvals[*ui], -1)
@@ -980,6 +985,9 @@ impl Cx<'_, '_> {
                 buffer: name.clone(),
             };
             self.edge(prior, consumer, d, what, name)?;
+            if *carry == Carry::Read && matches!(self.kinds.last(), Some(Kind::Tap { .. })) {
+                return Err(refusal(what, name, CARRIED_READ));
+            }
         }
         for u in &units {
             self.bounds.insert((si, u.arm), u.bound.clone());

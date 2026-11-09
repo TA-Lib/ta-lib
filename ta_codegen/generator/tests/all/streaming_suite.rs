@@ -3868,15 +3868,16 @@ fn a_whole_arm_carry_reads_its_prior_at_delay_zero() {
 }
 
 /// An arm that never writes a series hands it on unchanged, and its own reads of
-/// it go to that storage: a read at a lag would see the current bar.
+/// it go to that storage: a read at a lag would see the current bar. A read only
+/// presumed same-bar streams, with its check at Open.
 #[test]
 fn an_arm_reads_a_series_it_never_writes_only_at_the_same_bar() {
-    let tail = |bound: &str| {
+    let tail = |slow: &str, bound: &str| {
         format!(
             r"
    retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
       &fastBeg, &fastNb, tempBuffer );
-   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+   retCode = ma( startIdx, endIdx, inReal, {slow}, optInMAType,
       &backSlow, &nb, tempBuffer2 );
    if( optInMAType == 0 )
    {{
@@ -3894,8 +3895,37 @@ fn an_arm_reads_a_series_it_never_writes_only_at_the_same_bar() {
    *outNBElement = fastNb-1;"
         )
     };
-    assert_refused(&apo_with_tail(&tail("fastNb-1")), "never writes");
-    assert!(streaming::analyze_composed(&apo_with_tail(&tail("fastNb")), lookup()).is_ok());
+    assert_refused(&apo_with_tail(&tail("optInSlowPeriod", "fastNb-1")), "never writes at a lag");
+    assert!(streaming::analyze_composed(&apo_with_tail(&tail("optInSlowPeriod", "fastNb")), lookup()).is_ok());
+    let twin = apo_with_tail(&tail("optInFastPeriod", "nb"));
+    let presumed = streaming::analyze_composed(&twin, lookup()).expect("a read presumed same-bar streams");
+    assert!(
+        presumed.edges.iter().any(|e| matches!(&e.consumer,
+            streaming::Consumer::MapPrior { arm: Some((false, _)), buffer, .. } if buffer == "tempBuffer")
+            && matches!(e.class, streaming::EdgeClass::ZeroPresumed { .. })),
+        "{:?}",
+        presumed.edges
+    );
+    let unwritten = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   if( optInMAType == 0 )
+   {
+      for( i=0; i < fastNb; i++ )
+         tempBuffer2[i] = tempBuffer[i] * 2.0;
+   }
+   else
+   {
+      for( i=0; i < fastNb; i++ )
+         tempBuffer[i] = tempBuffer2[i];
+   }
+   for( i=0; i < fastNb; i++ )
+      outReal[i] = tempBuffer[i];
+   *outBegIdx = fastBeg;
+   *outNBElement = fastNb;",
+    );
+    assert_refused(&unwritten, "no prior definition");
 }
 
 /// The copy decision follows storage by name, so an Align whose source is

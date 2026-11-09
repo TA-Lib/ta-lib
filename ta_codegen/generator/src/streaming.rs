@@ -10743,6 +10743,30 @@ impl PeekRewrite<'_> {
 mod tests {
 
 
+    #[test]
+    fn every_name_a_delay_line_renders_is_reserved() {
+        let (p, c) = lag_hoist_locals(0);
+        let names = [
+            lag_line_field(0, LineField::Buf),
+            lag_line_field(0, LineField::Pos),
+            lag_line_field(0, LineField::Cap),
+            lag_line_field(0, LineField::Back(0)),
+            lag_tap_local(0, 0),
+            lag_in_local(0),
+            p,
+            c,
+            lag_cap_local(0),
+            lag_pos_local(0),
+            lag_nb_local(0),
+            lag_depth_local(0, 0),
+            lag_seed_index(0),
+        ];
+        for n in &names {
+            assert!(is_lag_name(n), "{n} is rendered but not reserved");
+        }
+        assert!(!is_lag_name("lagged"));
+    }
+
     // ---- peek_transition -------------------------------------------------
 
     fn buf_store(buf: &str, idx: Expr, value: Expr) -> Statement {
