@@ -3827,6 +3827,82 @@ fn a_map_reads_back_what_it_wrote_on_one_path_through_a_must_alias_name() {
     assert!(lowered.contains("Var(\"cur_outReal\")") && !lowered.contains("\"res\""), "{lowered}");
 }
 
+/// An arm that never writes a series hands its prior on unchanged: the read is 0
+/// behind, whatever that arm's own loop bound.
+#[test]
+fn a_whole_arm_carry_reads_its_prior_at_delay_zero() {
+    use streaming::{Consumer, EdgeClass};
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      &backSlow, &nb, tempBuffer2 );
+   if( optInMAType == 0 )
+   {
+      for( i=0; i < fastNb; i++ )
+         tempBuffer[i] = tempBuffer[i] * 2.0;
+   }
+   else
+   {
+      for( i=0; i < fastNb-1; i++ )
+         tempBuffer2[i] = tempBuffer2[i] * 2.0;
+   }
+   for( i=0; i < fastNb-1; i++ )
+      outReal[i] = tempBuffer[i];
+   *outBegIdx = fastBeg+1;
+   *outNBElement = fastNb-1;",
+    );
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    for (then_arm, buffer) in [(false, "tempBuffer"), (true, "tempBuffer2")] {
+        let carry = cp
+            .edges
+            .iter()
+            .find(|e| {
+                matches!(&e.consumer, Consumer::MapPrior { arm: Some((a, _)), buffer: b, .. }
+                    if *a == then_arm && b == buffer)
+            })
+            .unwrap_or_else(|| panic!("no carry of {buffer}: {:?}", cp.edges));
+        assert!(matches!(carry.class, EdgeClass::Zero), "{buffer}'s carry: {:?}", carry.class);
+    }
+}
+
+/// A carried series' count is read where Open snapshots the arms' result, after
+/// the slow `ma` has rewritten the receiver the prior's count came from; the
+/// owning arm's bound has the same value and is still current there.
+#[test]
+fn a_carried_count_is_snapshotted_from_the_owning_arm() {
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx+2, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &nb, tempBuffer );
+   fastNb = nb;
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      &backSlow, &nb, tempBuffer2 );
+   if( optInMAType == 0 )
+   {
+      for( i=0; i < fastNb; i++ )
+         tempBuffer[i] = tempBuffer[i] * 2.0;
+   }
+   else
+   {
+      for( i=0; i < fastNb; i++ )
+         tempBuffer2[i] = tempBuffer2[i] * 2.0;
+   }
+   for( i=0; i < fastNb-1; i++ )
+      outReal[i] = tempBuffer[i];
+   *outBegIdx = fastBeg;
+   *outNBElement = fastNb-1;",
+    );
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    let def = cp
+        .defs
+        .iter()
+        .find(|d| d.buffer == "tempBuffer" && d.ordinal == 2)
+        .unwrap_or_else(|| panic!("no (tempBuffer,2): {:?}", cp.defs));
+    assert_eq!(def.count_open, Some(ir::Expr::Var("fastNb".into())), "{def:?}");
+}
+
 #[test]
 fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
     let f = apo_with_tail(

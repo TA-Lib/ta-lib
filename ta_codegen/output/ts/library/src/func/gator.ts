@@ -306,10 +306,11 @@ export function gatorImpl(
   tempBegIdx.value = _xr0.begIdx;
   tempNbElement.value = _xr0.count;
   /* Each leg is its own rma call starting at its read-back bar and seeded at
-   * its own lookback before that, so neither histogram moves when the line it
-   * does not read changes; the teeth is therefore computed once per
-   * histogram. A leg read back by `back` bars starts that many bars early, so
-   * element i of its buffer is the bar the output's element i pairs it with.
+   * its own lookback before that, so from a given first output bar neither
+   * histogram depends on the line it does not read; the teeth is therefore
+   * computed once per histogram. A leg read back by `back` bars starts that
+   * many bars early, so element i of its buffer is the bar the output's
+   * element i pairs it with.
    */
   const _xr1 = rmaPositional(localStart - backJaw, localEnd, tempMP, optInJawPeriod, tempA, core);
   tempBegIdx.value = _xr1.begIdx;
@@ -1091,10 +1092,11 @@ function gatorOpenImpl(
    */
   const sub0 = medpriceOpenAndFillInternal(core, inHigh, inLow, mpStartIdx, tempBegIdx, tempNbElement, tempMP);
   /* Each leg is its own rma call starting at its read-back bar and seeded at
-   * its own lookback before that, so neither histogram moves when the line it
-   * does not read changes; the teeth is therefore computed once per
-   * histogram. A leg read back by `back` bars starts that many bars early, so
-   * element i of its buffer is the bar the output's element i pairs it with.
+   * its own lookback before that, so from a given first output bar neither
+   * histogram depends on the line it does not read; the teeth is therefore
+   * computed once per histogram. A leg read back by `back` bars starts that
+   * many bars early, so element i of its buffer is the bar the output's
+   * element i pairs it with.
    */
   const sub1 = rmaOpenAndFillInternal(core, tempMP.slice(0, (localEnd) + 1), localStart - backJaw, optInJawPeriod, tempBegIdx, tempNbElement, tempA);
   lagNb0 = tempNbElement.value;

@@ -289,16 +289,18 @@ impl<'a> Ctx<'a> {
 
     /// Whether `<f>_lookback(args)` is at least 0 by the declarations alone:
     /// each argument is a parameter whose declared range (or enum) lies inside
-    /// the callee parameter's, or an integer literal inside it. A lookback
-    /// answers -1 only for an argument outside its range.
+    /// the callee parameter's, or an integer literal inside it. A lookback can
+    /// still answer -1 inside its ranges; the function rejects those arguments
+    /// before its body runs, so its own lookback keeps the axiom and another
+    /// function's lookback with a negative return loses it.
     fn lookback_axiom(&self, name: &str, args: &[Expr]) -> bool {
         let Some(callee) = name.strip_suffix("_lookback") else { return false };
         let params = if callee.eq_ignore_ascii_case(&self.func.name) {
             &self.func.optional_inputs
         } else {
             match self.callees.get(&callee.to_ascii_lowercase()) {
-                Some(def) => &def.params,
-                None => return false,
+                Some(def) if !answers_negative(&def.body) => &def.params,
+                _ => return false,
             }
         };
         params.len() == args.len()
@@ -1745,6 +1747,19 @@ fn written_names(stmts: &[Statement]) -> BTreeSet<String> {
         });
     }
     out
+}
+
+/// Whether a lookback body has a path that returns a negative value.
+fn answers_negative(body: &[Statement]) -> bool {
+    let mut neg = false;
+    for s in body {
+        walk_stmts(s, &mut |st| {
+            if let Statement::Return { value: Some(v) } = st {
+                neg |= matches!(v, Expr::IntLiteral(k) if *k < 0) || matches!(v, Expr::Neg(_));
+            }
+        });
+    }
+    neg
 }
 
 fn walk_stmts(s: &Statement, f: &mut dyn FnMut(&Statement)) {

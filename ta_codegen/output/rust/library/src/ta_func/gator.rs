@@ -350,10 +350,11 @@ impl Core {
         tempNbElement = _xr0.count;
         retCode = RetCode::Success;
         // Each leg is its own rma call starting at its read-back bar and seeded at
-        // its own lookback before that, so neither histogram moves when the line it
-        // does not read changes; the teeth is therefore computed once per
-        // histogram. A leg read back by `back` bars starts that many bars early, so
-        // element i of its buffer is the bar the output's element i pairs it with.
+        // its own lookback before that, so from a given first output bar neither
+        // histogram depends on the line it does not read; the teeth is therefore
+        // computed once per histogram. A leg read back by `back` bars starts that
+        // many bars early, so element i of its buffer is the bar the output's
+        // element i pairs it with.
         let _xr1 = match self.rma(localStart - backJaw, localEnd, &tempMP, optInJawPeriod, &mut tempA[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr1.beg_idx;
         tempNbElement = _xr1.count;
@@ -815,10 +816,11 @@ impl Core {
         let sub0 = self.medprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((mpStartIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempMP[..])?;
         retCode = RetCode::Success;
         // Each leg is its own rma call starting at its read-back bar and seeded at
-        // its own lookback before that, so neither histogram moves when the line it
-        // does not read changes; the teeth is therefore computed once per
-        // histogram. A leg read back by `back` bars starts that many bars early, so
-        // element i of its buffer is the bar the output's element i pairs it with.
+        // its own lookback before that, so from a given first output bar neither
+        // histogram depends on the line it does not read; the teeth is therefore
+        // computed once per histogram. A leg read back by `back` bars starts that
+        // many bars early, so element i of its buffer is the bar the output's
+        // element i pairs it with.
         // Sub-stream 1: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.rma_open_and_fill_internal(&tempMP[..((localEnd) as usize) + 1], ((localStart) as usize).saturating_sub((backJaw) as usize), optInJawPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempA[..])?;

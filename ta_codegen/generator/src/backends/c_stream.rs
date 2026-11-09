@@ -2306,7 +2306,7 @@ impl LagOpenCtx<'_> {
                 let _ = writeln!(o, "{pad}if( TA_UNLIKELY(!{buf}) )");
                 self.fail(o, &pad, replay_from, "", "TA_ALLOC_ERR");
                 let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
-                let src = self.batch(&Expr::Var(cp.defs[l.def].buffer.clone()));
+                let src = self.batch(&Expr::Var(cp.defs[l.def].name.clone()));
                 let _ = writeln!(o, "{pad}{buf}[0] = 0.0;");
                 let _ = writeln!(o, "{pad}memcpy( {buf}, {src} + ({nb} - {cap}), sizeof(double) * (size_t){cap} );");
                 let _ = writeln!(o, "{pad}{pos} = 0;");

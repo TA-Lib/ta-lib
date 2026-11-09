@@ -2932,15 +2932,22 @@ pub fn analyze_composed<'a>(
     cp.snapshots = cl.snapshots;
     cp.open_actions = cl.open_actions;
     reject_integer_series(&cp, &decls)?;
-    let tapped: BTreeSet<usize> = cp
+    // The copy decision tracks storage by name, so an Align that reads its
+    // definition through another name of the same series copies.
+    let forced: BTreeSet<usize> = cp
         .edges
         .iter()
         .filter_map(|e| match (&e.consumer, &e.class) {
             (Consumer::Align { step }, EdgeClass::Tap { .. }) => Some(*step),
+            (Consumer::Align { step }, _)
+                if matches!(&cp.steps[*step], UpdateStep::Align { src, .. } if *src != cp.defs[e.def].name) =>
+            {
+                Some(*step)
+            }
             _ => None,
         })
         .collect();
-    decide_align_copies(&mut cp.steps, &cp.subs, tail, &bar_inputs, cp.series.as_deref(), &tapped);
+    decide_align_copies(&mut cp.steps, &cp.subs, tail, &bar_inputs, cp.series.as_deref(), &forced);
     reject_reassigned_open_params(&cp)?;
     Ok(cp)
 }
@@ -3040,11 +3047,11 @@ fn open_action_exprs(cp: &ComposedPlan, action: &OpenAction, f: &mut dyn FnMut(&
     }
 }
 
-/// The `lag(Buf|Pos|Cap|Back|Tap|In|CapL|Nb|D|I|P|C)<digit>` names the delay lines
-/// render; a body identifier spelled that way would collide with one.
+/// The `lag(Buf|PosL|Pos|Cap|Back|Tap|In|CapL|Nb|D|I|P|C)<digit>` names the delay
+/// lines render; a body identifier spelled that way would collide with one.
 fn is_lag_name(name: &str) -> bool {
     let Some(rest) = name.strip_prefix("lag") else { return false };
-    ["Buf", "Pos", "CapL", "Cap", "Back", "Tap", "In", "Nb", "D", "I", "P", "C"].iter().any(|w| {
+    ["Buf", "PosL", "Pos", "CapL", "Cap", "Back", "Tap", "In", "Nb", "D", "I", "P", "C"].iter().any(|w| {
         rest.strip_prefix(w)
             .is_some_and(|r| r.chars().next().is_some_and(|c| c.is_ascii_digit()))
     })
@@ -3084,16 +3091,16 @@ fn array_write_targets(st: &Statement) -> BTreeSet<String> {
 
 /// An Align copies unless neither its source's storage nor its destination is
 /// written by a later step: an alias would otherwise carry the later write back.
-/// A tapped Align always copies its tap, which later decisions must see.
+/// A `forced` Align always copies, which later decisions must see.
 fn decide_align_copies(
     steps: &mut [UpdateStep],
     subs: &[SubCallStep],
     tail: &[Statement],
     bar_inputs: &[String],
     series: Option<&str>,
-    tapped: &BTreeSet<usize>,
+    forced: &BTreeSet<usize>,
 ) {
-    for &si in tapped {
+    for &si in forced {
         if let UpdateStep::Align { copy, .. } = &mut steps[si] {
             *copy = true;
         }
@@ -3151,7 +3158,7 @@ fn decide_align_copies(
                 }
                 advance(step, &mut later);
             }
-            let copy = tapped.contains(&si) || vars.contains(&src_var) || bufs.contains(&dst);
+            let copy = forced.contains(&si) || vars.contains(&src_var) || bufs.contains(&dst);
             if let UpdateStep::Align { copy: c, .. } = &mut steps[si] {
                 *c = copy;
             }
@@ -3459,7 +3466,8 @@ impl ComposedPlan<'_> {
     }
 
     /// The seed of line `k`'s capacity: the deepest captured tap, floored at 0
-    /// when a tap under an unselected arm keeps depth -1. Depth locals, deepest last.
+    /// when a tap under an unselected arm keeps depth -1. One depth local per
+    /// tap, in no depth order: the capacity is their max.
     #[must_use]
     pub fn lag_cap_terms(&self, k: usize) -> (bool, Vec<String>) {
         let line = &self.lines[k];
@@ -3929,9 +3937,8 @@ pub enum RingWrap {
     /// into a conditional move once `p` is a local.
     CompareReset,
     /// `p = p + 1; p = p & ((p - cap) >> 31);`, for a JIT that keeps the
-    /// compare a branch (C2 pays about 4 ns a bar for it on Zen). Exact for
-    /// any capacity from 0 to 2^31 - 1, and needs a signed 32-bit `p` and an
-    /// arithmetic `>>`.
+    /// compare a branch. Exact for any capacity from 0 to 2^31 - 1, and needs a
+    /// signed 32-bit `p` and an arithmetic `>>`.
     SignMask,
 }
 
@@ -8179,9 +8186,8 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
         });
     }
     // Ring pushes: newest bar replaces the oldest slot, then the shared
-    // position advances and wraps without a modulo (~10 cycles on ARM). Order
-    // preserved vs the batch reads above: reads happened on the OLD slot
-    // contents.
+    // position advances and wraps, never by a modulo. Order preserved vs the
+    // batch reads above: reads happened on the OLD slot contents.
     let taped = |arrays: &[String]| tape.as_ref().is_some_and(|t| arrays.contains(&t.input));
     for ring in model.rings() {
         if !taped(&ring.arrays) {

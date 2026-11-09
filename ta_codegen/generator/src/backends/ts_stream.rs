@@ -2917,7 +2917,7 @@ impl TsLagOpen<'_, '_> {
                     }
                 }
                 let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
-                let src = self.ctx.expr(&self.scratch(&Expr::Var(cp.defs[l.def].buffer.clone())));
+                let src = self.ctx.expr(&self.scratch(&Expr::Var(cp.defs[l.def].name.clone())));
                 let _ = writeln!(o, "{pad}{buf} = new Float64Array({cap} > 0 ? {cap} : 1);");
                 let _ = writeln!(o, "{pad}{buf}.set({src}.subarray({nb} - {cap}, {nb}), 0);");
                 let _ = writeln!(o, "{pad}{pos} = 0;");

@@ -903,7 +903,8 @@ impl Cx<'_, '_> {
 
         // Per arm, each key an earlier loop of the arm writes, with that loop.
         let mut owners: BTreeMap<Option<bool>, BTreeMap<String, usize>> = BTreeMap::new();
-        let mut priors: Vec<(usize, String, String)> = Vec::new();
+        // (unit, key, name, whole arm): a whole-arm carry is the prior itself.
+        let mut priors: Vec<(usize, String, String, bool)> = Vec::new();
         for (ui, u) in units.iter().enumerate() {
             let earlier = owners.get(&u.branch()).cloned().unwrap_or_default();
             let Statement::ForC { body, .. } = u.lp else { unreachable!("a map loop") };
@@ -920,7 +921,7 @@ impl Cx<'_, '_> {
                         return Err(refusal(what, name, SELF_OFFSET));
                     }
                     None if scan.before.contains(key) || !must.contains(key) => {
-                        priors.push((ui, key.clone(), name.clone()));
+                        priors.push((ui, key.clone(), name.clone(), false));
                     }
                     _ => {}
                 }
@@ -945,21 +946,25 @@ impl Cx<'_, '_> {
         for arm in &arms {
             for (key, name) in &written {
                 let owned = owners.get(arm).is_some_and(|o| o.contains_key(key));
-                let carried = priors.iter().any(|(ui, k, _)| k == key && units[*ui].branch() == *arm);
+                let carried = priors.iter().any(|(ui, k, _, _)| k == key && units[*ui].branch() == *arm);
                 if owned || carried {
                     continue;
                 }
                 match units.iter().position(|u| u.branch() == *arm) {
-                    Some(ui) => priors.push((ui, key.clone(), name.clone())),
+                    Some(ui) => priors.push((ui, key.clone(), name.clone(), true)),
                     None => return Err(refusal(what, name, NO_PRIOR)),
                 }
             }
         }
-        priors.sort_by_key(|(ui, _, _)| *ui);
-        for (ui, key, name) in &priors {
+        priors.sort_by_key(|(ui, _, _, _)| *ui);
+        for (ui, key, name, whole) in &priors {
             let prior = self.read(name, what).map_err(|_| refusal(what, name, NO_PRIOR))?;
             debug_assert_eq!(self.defs[prior].buffer, *key);
-            let d = self.counts[prior].plus(&tvals[*ui], -1);
+            let d = if *whole {
+                Some(Val::konst(0))
+            } else {
+                self.counts[prior].plus(&tvals[*ui], -1)
+            };
             let consumer = Consumer::MapPrior {
                 step: si,
                 arm: units[*ui].arm,
@@ -976,34 +981,54 @@ impl Cx<'_, '_> {
             _ => None,
         };
         for (key, name) in &written {
-            let mut counts: Vec<Val> = Vec::new();
-            let mut opens: Vec<Option<Expr>> = Vec::new();
-            for arm in &arms {
-                if let Some(&ui) = owners.get(arm).and_then(|o| o.get(key)) {
-                    counts.push(tvals[ui].clone());
-                    opens.push(Some(units[ui].bound.clone()));
-                } else {
-                    let prior = self.cur[key];
-                    counts.push(self.counts[prior].clone());
-                    opens.push(self.defs[prior].count_open.clone());
-                }
-            }
-            let count = if counts.iter().all(|c| c.same(&counts[0])) {
-                counts[0].clone()
-            } else {
-                self.walk.top()
-            };
-            let open = match (&opens[..], cond) {
-                ([one], _) => one.clone(),
-                ([Some(a), Some(b)], _) if exprs_equal(a, b) => Some(a.clone()),
-                ([Some(a), Some(b)], Some(c)) => {
-                    Some(Expr::Ternary(Box::new(c.clone()), Box::new(a.clone()), Box::new(b.clone())))
-                }
-                _ => None,
-            };
+            let (count, open) = self.arms_result(key, &arms, &owners, &units, &tvals, cond);
             self.define(name, DefSite::Map { step: si }, count, open);
         }
         Ok(())
+    }
+
+    /// `key`'s count after a variant map, from each arm's owning loop bound or
+    /// carried prior, and the expression Open snapshots it from.
+    fn arms_result(
+        &mut self,
+        key: &str,
+        arms: &[Option<bool>],
+        owners: &BTreeMap<Option<bool>, BTreeMap<String, usize>>,
+        units: &[Unit],
+        tvals: &[Val],
+        cond: Option<&Expr>,
+    ) -> (Val, Option<Expr>) {
+        let mut counts: Vec<Val> = Vec::new();
+        let mut opens: Vec<Option<Expr>> = Vec::new();
+        let mut owned_bound = None;
+        for arm in arms {
+            if let Some(&ui) = owners.get(arm).and_then(|o| o.get(key)) {
+                counts.push(tvals[ui].clone());
+                opens.push(Some(units[ui].bound.clone()));
+                owned_bound.get_or_insert_with(|| units[ui].bound.clone());
+            } else {
+                // The prior's count expression would be read here, after the
+                // prior, and a later call may have rewritten its receiver.
+                counts.push(self.counts[self.cur[key]].clone());
+                opens.push(None);
+            }
+        }
+        let same = counts.iter().all(|c| c.same(&counts[0]));
+        let count = if same { counts[0].clone() } else { self.walk.top() };
+        if let (true, Some(bound)) = (same, owned_bound) {
+            for o in &mut opens {
+                *o = Some(bound.clone());
+            }
+        }
+        let open = match (&opens[..], cond) {
+            ([one], _) => one.clone(),
+            ([Some(a), Some(b)], _) if exprs_equal(a, b) => Some(a.clone()),
+            ([Some(a), Some(b)], Some(c)) => {
+                Some(Expr::Ternary(Box::new(c.clone()), Box::new(a.clone()), Box::new(b.clone())))
+            }
+            _ => None,
+        };
+        (count, open)
     }
 
     /// Scans a map body along its paths; returns the keys written at its end.

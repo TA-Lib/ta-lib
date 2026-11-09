@@ -62,7 +62,7 @@ LOW   = [ 9.0, 11.4, 15.0, 4.9,  90.0, 48.0, 29.0, 7.5, 58.0, 39.5, 24.0, 69.0, 
 CLOSE = [11.5, 11.55, 22.0, 5.05, 95.0, 51.0, 29.2, 8.8, 63.0, 40.2, 26.5, 71.5, 15.8, 33.5, 92.0]
 
 # IN_REAL with its first ten bars negated: SYNTH28's midpoint goes negative in the
-# output range, the only way its second `outSide` arm (tempD read at depth 0) fires.
+# output range, the only way its second `outSide` arm (tempD read lag bars back) fires.
 IN_REAL_NEG_HEAD = [-x for x in IN_REAL[:10]] + IN_REAL[10:]
 
 PERIOD = 4   # optInTimePeriod for the fixtures that take one

@@ -4681,7 +4681,7 @@ impl JavaLagOpen<'_> {
                     }
                 }
                 let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
-                let src = self.batch(&Expr::Var(cp.defs[l.def].buffer.clone()));
+                let src = self.batch(&Expr::Var(cp.defs[l.def].name.clone()));
                 let _ = writeln!(o, "{pad}{buf} = new double[Math.max({cap}, 1)];");
                 let _ = writeln!(o, "{pad}System.arraycopy({src}, {nb} - {cap}, {buf}, 0, {cap});");
                 let _ = writeln!(o, "{pad}{pos} = 0;");

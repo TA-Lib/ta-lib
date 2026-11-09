@@ -577,17 +577,15 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
     assert!(pushes >= 5, "no delay line was pushed in any backend: the gate checks nothing");
 }
 
-/// A ring position advances in a step local, wrapped in the form its backend's
-/// compiler keeps branch-free: the compare-reset gcc, LLVM and RyuJIT turn into
-/// a conditional move, or in Java and TypeScript, whose JITs keep that compare a
-/// branch, a sign mask. Advanced in place on the handle, the compare stays a
-/// branch in every backend. Both regressions leave every value unchanged.
+/// Ring positions advance in a step local and wrap in their backend's `RingWrap`
+/// form; a regression changes no value, so nothing else sees it.
 #[test]
 fn every_ring_position_advances_in_a_local() {
-    let mut advanced = 0usize;
+    const LANGS: [&str; 5] = ["c", "rust", "java", "csharp", "ts"];
+    let mut advanced = [0usize; LANGS.len()];
     for name in streaming_funcs() {
         let (func, enums) = load(&name);
-        for lang in ["c", "rust", "java", "csharp", "ts"] {
+        for (li, lang) in LANGS.into_iter().enumerate() {
             let text = render_stream(&func, &enums, lang);
             let lines: Vec<&str> = text.lines().map(str::trim).collect();
             for (i, l) in lines.iter().enumerate() {
@@ -614,9 +612,11 @@ fn every_ring_position_advances_in_a_local() {
                 };
                 let fname = &func.name;
                 assert!(wrapped, "{fname} {lang}: `{l}` is not followed by its wrap: `{next}`");
-                advanced += 1;
+                advanced[li] += 1;
             }
         }
     }
-    assert!(advanced > 0, "no ring position advanced in any backend: the gate checks nothing");
+    for (lang, n) in LANGS.iter().zip(advanced) {
+        assert!(n > 0, "no ring position advanced in {lang}: the gate checks nothing there");
+    }
 }

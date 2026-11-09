@@ -1703,9 +1703,9 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     // anything at all -- the assertion failed with a count of 0, not of 2. A
     // rename must not be able to turn this into a test of nothing, so the store
     // count is read off whatever the generator emits.
-    let stores: Vec<&str> = step
+    let stores: Vec<String> = step
         .lines()
-        .map(str::trim)
+        .map(|l| l.trim().replace("[ringPosL_", "[sp->ringPos_"))
         .filter(|l| l.contains("[sp->ringPos_EqualTrailingIdx] ="))
         .collect();
     assert!(
@@ -1714,7 +1714,7 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     );
     let mut seen = std::collections::BTreeSet::new();
     for s in &stores {
-        let ring = s.split('[').next().unwrap_or(s);
+        let ring = s.split('[').next().unwrap_or(s.as_str());
         assert!(
             seen.insert(ring),
             "stored twice per bar, with ringPos unmoved between: {s}"

@@ -321,10 +321,11 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
       return retCode;
    }
    /* Each leg is its own rma call starting at its read-back bar and seeded at
-    * its own lookback before that, so neither histogram moves when the line it
-    * does not read changes; the teeth is therefore computed once per
-    * histogram. A leg read back by `back` bars starts that many bars early, so
-    * element i of its buffer is the bar the output's element i pairs it with.
+    * its own lookback before that, so from a given first output bar neither
+    * histogram depends on the line it does not read; the teeth is therefore
+    * computed once per histogram. A leg read back by `back` bars starts that
+    * many bars early, so element i of its buffer is the bar the output's
+    * element i pairs it with.
     */
    retCode = TA_RMA(localStart - backJaw,localEnd,tempMP,optInJawPeriod,&tempBegIdx,&tempNbElement,tempA);
    if( retCode != TA_SUCCESS )
@@ -910,10 +911,11 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return retCode;
       }
       /* Each leg is its own rma call starting at its read-back bar and seeded at
-       * its own lookback before that, so neither histogram moves when the line it
-       * does not read changes; the teeth is therefore computed once per
-       * histogram. A leg read back by `back` bars starts that many bars early, so
-       * element i of its buffer is the bar the output's element i pairs it with.
+       * its own lookback before that, so from a given first output bar neither
+       * histogram depends on the line it does not read; the teeth is therefore
+       * computed once per histogram. A leg read back by `back` bars starts that
+       * many bars early, so element i of its buffer is the bar the output's
+       * element i pairs it with.
        */
       /* Sub-stream 1: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */

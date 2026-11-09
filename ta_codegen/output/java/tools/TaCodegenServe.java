@@ -109149,10 +109149,11 @@ class Core {
           tempNbElement.value = _xr0.count();
           retCode = RetCode.SUCCESS;
           /* Each leg is its own rma call starting at its read-back bar and seeded at
-           * its own lookback before that, so neither histogram moves when the line it
-           * does not read changes; the teeth is therefore computed once per
-           * histogram. A leg read back by `back` bars starts that many bars early, so
-           * element i of its buffer is the bar the output's element i pairs it with.
+           * its own lookback before that, so from a given first output bar neither
+           * histogram depends on the line it does not read; the teeth is therefore
+           * computed once per histogram. A leg read back by `back` bars starts that
+           * many bars early, so element i of its buffer is the bar the output's
+           * element i pairs it with.
            */
           OutRange _xr1 = rma(localStart - backJaw, localEnd, tempMP, optInJawPeriod, tempA);
           tempBegIdx.value = _xr1.begIdx();
@@ -109968,10 +109969,11 @@ class Core {
           MedpriceStream sub0 = medpriceOpenAndFillInternal(inHigh, inLow, mpStartIdx, tempBegIdx, tempNbElement, tempMP);
           retCode = RetCode.SUCCESS;
           /* Each leg is its own rma call starting at its read-back bar and seeded at
-           * its own lookback before that, so neither histogram moves when the line it
-           * does not read changes; the teeth is therefore computed once per
-           * histogram. A leg read back by `back` bars starts that many bars early, so
-           * element i of its buffer is the bar the output's element i pairs it with.
+           * its own lookback before that, so from a given first output bar neither
+           * histogram depends on the line it does not read; the teeth is therefore
+           * computed once per histogram. A leg read back by `back` bars starts that
+           * many bars early, so element i of its buffer is the bar the output's
+           * element i pairs it with.
            */
           /* Sub-stream 1: rma over `tempMP`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
@@ -240206,7 +240208,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "654d21837b228701";
+    static final String SPLICED_GENCODE_DIGEST = "e41908af30394fd9";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

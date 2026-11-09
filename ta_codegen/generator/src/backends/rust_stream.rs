@@ -5550,7 +5550,7 @@ impl RustLagOpen<'_> {
                     }
                 }
                 let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
-                let src = self.batch(&Expr::Var(cp.defs[l.def].buffer.clone()));
+                let src = self.batch(&Expr::Var(cp.defs[l.def].name.clone()));
                 let i = streaming::lag_seed_index(*line);
                 let _ = writeln!(o, "{pad}{buf} = vec![0.0_f64; {cap}.max(1)];");
                 let _ = writeln!(o, "{pad}{{");
