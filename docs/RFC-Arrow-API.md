@@ -2,7 +2,7 @@
 
 Status: draft, for discussion.
 
-Last Update: 2026-11-08
+Last Update: 2026-11-09
 
 ## Summary
 
@@ -51,15 +51,14 @@ gives every wrapper the same result, tested once.
 
 ## Semantics
 
-- **Input control.** On a null input row, `skip-on-null` (the default) skips
-  the row and keeps the state; `reset-on-null` restarts the calculation after
+- **Skip on null.** A null input row is skipped, and the state carries across
   it.
-- **Output control.** On a null input row, `fill-previous` (the default) repeats
-  the previous output; `keep-null` makes the output null. A filled output copies
-  the previous output, validity included; once the partition has an output, a
-  pattern-recognition output is filled with a valid 0 instead. With no previous
-  output in the partition, the row is null. The lookback (warm-up) period always
-  outputs null.
+- **Output control.** On a null input row, `keep-null` (the default) makes the
+  output null; `fill-previous` repeats the previous output. A filled output
+  copies the previous output, validity included; once the partition has an
+  output, a pattern-recognition output is filled with a valid 0 instead. With no
+  previous output in the partition, the row is null. The lookback (warm-up)
+  period always outputs null.
 - **Partitions.** Nothing carries from one partition to the next.
 - **Non-finite is null.** A NaN or infinite input makes its row null, so no
   calculation uses it, and a non-finite result makes its row null. Arrow
@@ -72,15 +71,14 @@ gives every wrapper the same result, tested once.
   is also a valid integer (a candlestick with no pattern), only the bitmap tells
   them apart.
 
-Under `reset-on-null`, the output resumes after the lookback, as pandas and
-Polars rolling windows do.
-
-![reset-on-null with keep-null: the output resumes after the lookback](RFC-Arrow-API-reset.svg)
+To restart the calculation after a null instead, as pandas and Polars rolling
+windows do, start a new partition at the first valid row after the null (after
+the last null of a run).
 
 ### Chaining
 
 An output's validity serves as the next call's input validity, so calls chain
-directly. Whatever the control options, the result is deterministic: a NaN no
+directly. Whatever the output option, the result is deterministic: a NaN no
 longer causes undefined behavior.
 
 ## Segmented batch
@@ -96,7 +94,7 @@ typedef struct TA_Column {
 } TA_Column;
 
 typedef struct TA_Partitions {
-   unsigned int    flags;         /* TA_PARTITIONS_RESET_ON_NULL, _KEEP_NULL */
+   unsigned int    flags;         /* TA_PARTITIONS_FILL_PREVIOUS */
    int64_t         len;           /* rows in every input and output */
    const int64_t  *offsets;       /* nPartitions+1 entries, or NULL */
    int64_t         nPartitions;   /* ignored when offsets is NULL */
@@ -121,8 +119,7 @@ TA_RetCode TA_SMA_Segmented(const TA_Partitions *partitions,
 - **Outputs** are buffers of `len` rows that the caller allocates, plus one
   validity bitmap for the call, row `r` at bit `r`. With a NULL bitmap, only the
   NaN (or 0) values mark null rows.
-- **Flags.** `TA_PARTITIONS_RESET_ON_NULL` selects `reset-on-null`, and
-  `TA_PARTITIONS_KEEP_NULL` selects `keep-null`.
+- **Flags.** `TA_PARTITIONS_FILL_PREVIOUS` selects `fill-previous`.
 - With no offsets, no validity, one flat chunk per input and finite inputs, the
   result matches today's batch result in input alignment within
   [rH1](https://ta-lib.org/spec/streaming/#rh1)'s exceptions, with a non-finite
@@ -145,10 +142,9 @@ fill the view without copying.
 ### Chunks
 
 A pyarrow `ChunkedArray`, a pandas column in Arrow mode, or a Parquet file with
-several row groups is one column split across buffers. Concatenating would
-copy it, and restarting at each chunk would change values at boundaries the
-storage chose. So the calculation runs on across chunk boundaries, under either
-input control:
+several row groups is one column split across buffers. Concatenating would copy
+it, and restarting at each chunk would change values at boundaries the storage
+chose. So the calculation runs on across chunk boundaries:
 
 - The result equals the same input in one chunk, within
   [rH1](https://ta-lib.org/spec/streaming/#rh1)'s exceptions.
@@ -174,8 +170,8 @@ atr = ta.ATR(ibm["high"], ibm["low"], ibm["close"], timeperiod=14)
 closes = bars.group_by("symbol", maintain_order=True).agg("close")["close"]
 sma = ta.SMA(closes, timeperiod=20)
 
-# The control options.
-sma = ta.SMA(closes, timeperiod=20, reset_on_null=True, keep_null=True)
+# The output option.
+sma = ta.SMA(closes, timeperiod=20, fill_previous=True)
 ```
 
 C, for a float64 column that arrived in two chunks:
@@ -219,16 +215,15 @@ nothing.
 
 ## Gates
 
-- **Equivalence, every function:** under `reset-on-null`, the output equals
-  plain batch calls run per segment; under `skip-on-null`, one plain batch call
-  over each partition's valid rows packed together, with each result put back
-  on its row. Null rows are filled as the output control says, and a null
-  output holds NaN (or 0) with a cleared bit. Compared within
+- **Equivalence, every function:** the output equals one plain batch call over
+  each partition's valid rows packed together, with each result put back on its
+  row. Null rows are filled as the output control says, and a null output holds
+  NaN (or 0) with a cleared bit. Compared within
   [rH1](https://ta-lib.org/spec/streaming/#rh1)'s exceptions, as streaming's
   gates compare.
 - **Output control:** `fill-previous`, `keep-null` and a pattern's zero, on null
-  rows before and after the first output, under each input control, and a
-  partition whose first `lookback + 1` valid rows have nulls between them.
+  rows before and after the first output, and a partition whose first `lookback
+  + 1` valid rows have nulls between them.
 - **Today's batch:** with no offsets, no validity, one flat chunk per input and
   finite inputs, the output equals today's batch output in input alignment
   within rH1's exceptions, with a non-finite result null.
@@ -242,7 +237,7 @@ nothing.
   (`LN` of a negative) nulls its row.
 - **Malformed input** (bad offsets, chunks not adding up to `len`, an
   unsupported type) answers `TA_BAD_PARAM`.
-- **Chunked equals unchunked,** every function, both input controls, compared as
+- **Chunked equals unchunked,** every function, compared as
   streaming's gates compare: a boundary inside the warm-up, on a null and right
   after one, inside a partition; inputs chunked at different rows, or with
   different validities, bit offsets and chunk boundaries in one call.
