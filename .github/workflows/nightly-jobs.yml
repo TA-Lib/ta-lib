@@ -832,7 +832,8 @@ jobs:
           cd bin/ts_windows/check
           npm install --no-audit --no-fund --ignore-scripts "../$tgz"
           ../../../ta_codegen/output/ts/node_modules/.bin/tsc -p .
-          specs=$(node -p "Object.keys(require('./node_modules/ta-lib/package.json').exports).map((s) => s === '.' ? 'ta-lib' : 'ta-lib' + s.slice(1)).join(' ')")
+          # The code subpaths only: "./package.json" is JSON, which a bare import() refuses.
+          specs=$(node -p "Object.entries(require('./node_modules/ta-lib/package.json').exports).filter(([, c]) => typeof c === 'object').map(([s]) => s === '.' ? 'ta-lib' : 'ta-lib' + s.slice(1)).join(' ')")
           # shellcheck disable=SC2086
           imp=$(node import.mjs $specs | tail -n 1 | tr -d '\r')
           # shellcheck disable=SC2086

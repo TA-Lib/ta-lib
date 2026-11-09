@@ -28,6 +28,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.request
 
 # An oracle's values must differ from the tree's only through its code (#150).
@@ -262,11 +263,16 @@ def _shipped(root, v, commit):
 def _download(v, asset, sha):
     url = RELEASE_URL.format(tag=_tag(v), asset=asset)
     print(f"  downloading {url}")
-    try:
-        with urllib.request.urlopen(url, timeout=120) as r:
-            data = r.read()
-    except OSError as e:
-        raise RefError(f"download of {url} failed: {e}")
+    for attempt in range(1, 4):
+        try:
+            with urllib.request.urlopen(url, timeout=120) as r:
+                data = r.read()
+            break
+        except OSError as e:
+            if attempt == 3:
+                raise RefError(f"download of {url} failed after {attempt} tries: {e}")
+            print(f"  attempt {attempt} failed ({e}); retrying")
+            time.sleep(10 * attempt)
     if _sha256(data) != sha:
         raise RefError(f"{asset}: sha256 {_sha256(data)} is not the {sha} its release recorded")
     return data
