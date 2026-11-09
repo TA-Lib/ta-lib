@@ -189,6 +189,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Forecast Oscillator (FOSC)](https://ta-lib.org/functions/fosc.md): Forecast Oscillator: the percentage by which the close deviates from the Time Series Forecast that was made one bar earlier for the current bar.
 - [Williams Fractal (FRACTAL)](https://ta-lib.org/functions/fractal.md): Williams Fractal: a causal swing-pivot detector.
 - [Fractal Adaptive Moving Average (FRAMA)](https://ta-lib.org/functions/frama.md): Fractal Adaptive Moving Average (John Ehlers): an EMA whose smoothing factor adapts each bar to the fractal dimension of the window, estimated from the…
+- [Gator Oscillator (GATOR)](https://ta-lib.org/functions/gator.md): Bill Williams' Gator Oscillator: how far apart the three Alligator lines are, as two histograms.
 - [Heikin-Ashi Candles (HA)](https://ta-lib.org/functions/ha.md): Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with a smoothed synthetic candle.
 - [Hull Moving Average (HMA)](https://ta-lib.org/functions/hma.md): Hull Moving Average, published by Alan Hull in 2005: a moving average built to track price with far less lag than an SMA, WMA or EMA of the same length…
 - [Hilbert Transform - Dominant Cycle Period (HT_DCPERIOD)](https://ta-lib.org/functions/ht_dcperiod.md): Hilbert Transform estimate of the dominant cycle period (in bars) of the price series. Outputs the smoothed instantaneous cycle period.
