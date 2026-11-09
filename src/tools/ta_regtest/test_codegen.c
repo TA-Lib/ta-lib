@@ -2578,6 +2578,8 @@ typedef struct {
     int               streamValueFunctions; /* funcs whose Value accessor was probed (#287) */
     long long         streamValueLegs;      /* Value probes run */
     long long         streamCloneLegs;      /* fork legs run */
+    int               streamNonGe1Functions; /* funcs whose stream row has nonGe1Tap */
+    long long         streamRangeMinLegs;   /* value legs compared on a range-minimum vector */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
     long long         streamVmath;         /* pairs the server held by fuzz_vmath_near */
     int               vmathFunctions;      /* passed functions codegen_call_needs_vmath_tol names */
@@ -3568,6 +3570,8 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
     codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
+static const TA_StreamEntry *xlang_stream_entry(const char *name);
+
 /* Param vectors: defaults, integer params at their true minimum (period==1
  * territory, issues #93/#94), and min+1. Real params stay at their defaults. Then one extra
  * vector per non-default enum (MAType) list value, everything else at
@@ -3575,11 +3579,13 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
  * so every arm gets its own bit-exact legs; arms without a sub-stream are
  * verified as documented Open rejects server-side ("unsupportedArm").
  * vecIsEnum marks the sweep vectors so the variant loop can add K legs (the
- * selected arm may be unstable — EMA/KAMA/T3). */
+ * selected arm may be unstable — EMA/KAMA/T3). Last, for a function with a
+ * tap that may be 0 bars deep, the range-minimum vectors (from *firstRangeMin). */
 static int stream_build_vectors(const TA_FuncInfo *fi,
                                 double vec[STREAM_MAX_VEC][STREAM_MAX_OPT],
                                 int vecIsEnum[STREAM_MAX_VEC],
                                 int vecIsMin[STREAM_MAX_VEC],
+                                int *firstRangeMin,
                                 int *overflow)
 {
     unsigned int i, e;
@@ -3888,6 +3894,49 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
         vecIsEnum[nvec] = 1;
         nvec++;
     }
+    /* Each integer parameter alone at its range minimum, for a stream with a
+     * delay-line tap that may be 0 bars deep. The vectors above move every
+     * parameter together, so they never order two shifts the other way round
+     * and never put one such tap at 0 beside a deeper one. vecIsMin gives each
+     * one every data shape: the rotation alone can hand it CONSTANT, where a
+     * misplaced tap reads the same value. They come last, so every vector
+     * from *firstRangeMin on is one of them. */
+    *firstRangeMin = nvec;
+    {
+        const TA_StreamEntry *se = xlang_stream_entry(fi->name);
+        if( se && se->nonGe1Tap )
+        {
+            for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+            {
+                const TA_OptInputParameterInfo *oi;
+                double cand[STREAM_MAX_OPT];
+                unsigned int j;
+                int dup = 0;
+                TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+                if( oi->type != TA_OptInput_IntegerRange || !oi->dataSet ) continue;
+                for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                {
+                    const TA_OptInputParameterInfo *oj;
+                    TA_GetOptInputParameterInfo(fi->handle, j, &oj);
+                    cand[j] = oj->defaultValue;
+                }
+                cand[i] = (double)(int)((const TA_IntegerRange *)oi->dataSet)->min;
+                for( v = 0; v < nvec && !dup; v++ )
+                {
+                    dup = 1;
+                    for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                        if( vec[v][j] != cand[j] ) dup = 0;
+                }
+                if( dup ) continue;
+                if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; continue; }
+                for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                    vec[nvec][j] = cand[j];
+                vecIsEnum[nvec] = 0;
+                vecIsMin[nvec] = 1;
+                nvec++;
+            }
+        }
+    }
     return nvec;
 }
 
@@ -3898,6 +3947,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int vecIsEnum[STREAM_MAX_VEC];
     int vecIsMin[STREAM_MAX_VEC];
     int nvec, v, variant, legs = 0, rejArms = 0, vecOverflow = 0;
+    int firstRangeMin;     /* vectors from here on are the range-minimum ones */
+    int rangeMinLegs = 0;  /* value legs compared on one of them */
     int fillChecked = 0;   /* set once any leg reports OpenAndFill was verified */
     int stateChecked = 0;  /* set once any leg reports the state-equivalence compare */
     int stateLegs = 0;     /* how many legs actually compared handle state */
@@ -3924,7 +3975,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * their stream values depend on EMA's ambient K). */
     isUnstable = (funcInfo->flags & TA_FUNC_FLG_UNST_PER) != 0 ||
                  get_unst_id(funcInfo->name) != TA_TEST_UNST_NONE;
-    nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, vecIsMin, &vecOverflow);
+    nvec = stream_build_vectors(funcInfo, vec, vecIsEnum, vecIsMin, &firstRangeMin, &vecOverflow);
 
     /* Silent truncation would quietly stop testing params beyond the cap. */
     if( funcInfo->nbOptInput > STREAM_MAX_OPT )
@@ -3937,7 +3988,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     }
     if( vecOverflow > 0 )
     {
-        printf("STREAM VECTOR OVERFLOW [TA_%s]: %d enum value(s) dropped by "
+        printf("STREAM VECTOR OVERFLOW [TA_%s]: %d parameter vector(s) dropped by "
                "STREAM_MAX_VEC — arms would go unverified\n",
                funcInfo->name, vecOverflow);
         ctx->failed++;
@@ -4250,6 +4301,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 int l = stream_flag(ctx->responseBuf, "\"legs\":");
                 if( l > 0 ) legs += l;
+                if( l > 0 && v >= firstRangeMin ) rangeMinLegs += l;
                 if( stream_flag(ctx->responseBuf, "\"unsupportedArm\":") == 1 )
                     rejArms++;
                 /* Cross-tier +0.0/-0.0 pairs the server chose not to fail on
@@ -4277,6 +4329,20 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         ctx->failed++;
         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
         return;
+    }
+    /* The run-wide range-min floor lets one function's dead range-min loop
+     * hide behind another's legs. */
+    {
+        const TA_StreamEntry *se = xlang_stream_entry(funcInfo->name);
+        if( se && se->nonGe1Tap && nvec > firstRangeMin && rangeMinLegs <= 0 )
+        {
+            printf("STREAM RANGE-MIN VACUOUS [TA_%s]: %d range-minimum "
+                   "vector(s) built, 0 value legs compared on them\n",
+                   funcInfo->name, nvec - firstRangeMin);
+            ctx->failed++;
+            ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+            return;
+        }
     }
     /* The C server alone compares its own kernel batch with its own libm
      * step. Two-sided, so a listed function the server does not relax and a
@@ -4307,6 +4373,11 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamVmath += vmath;
     ctx->streamFunctions++;
     ctx->streamLegs += legs;
+    {
+        const TA_StreamEntry *se = xlang_stream_entry(funcInfo->name);
+        if( se && se->nonGe1Tap ) ctx->streamNonGe1Functions++;
+    }
+    ctx->streamRangeMinLegs += rangeMinLegs;
     ctx->streamRejectArms += rejArms;
     ctx->streamBenign += benign;
     /* Per-function, per-language, for the Java/C# equality check at the end of
@@ -5280,6 +5351,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamCloneLegs     = 0;
             ctx.streamValueFunctions = 0;
             ctx.streamValueLegs     = 0;
+            ctx.streamNonGe1Functions = 0;
+            ctx.streamRangeMinLegs  = 0;
             ctx.streamBenign        = 0;
             ctx.streamVmath         = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
@@ -5380,6 +5453,17 @@ static ErrorNumber test_codegen_for_language(
                 printf("STREAM VALUE VACUOUS: only %d of %d streaming functions probed "
                        "their Value accessor\n",
                        ctx.streamValueFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* The range-minimum vectors' own floor: the vectors they are
+             * appended to meet every count above whether or not one ran. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamNonGe1Functions > 0 &&
+                ctx.streamRangeMinLegs == 0 )
+            {
+                printf("STREAM RANGE-MIN VACUOUS: %d streaming function(s) have a "
+                       "delay-line tap that may be 0 bars deep, and no value leg "
+                       "compared on a range-minimum vector\n",
+                       ctx.streamNonGe1Functions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* Ride-along floors. Two numerators, one per leg: a single

@@ -287,7 +287,7 @@ fn test_frames_index_outputs_by_declaration_position() {
 
     // The stream table reuses that same vector rather than emitting a second one.
     func.streaming = true;
-    let streamed = backends::stream_frame::render(std::slice::from_ref(&func));
+    let streamed = backends::stream_frame::render(std::slice::from_ref(&func), make_registry());
     assert!(
         streamed.contains("TA_VOutIsInt_MINMAXINDEX"),
         "the stream row must point at ta_variant_frame.h's vector"
@@ -296,6 +296,17 @@ fn test_frames_index_outputs_by_declaration_position() {
         streamed.contains(&format!("outReal[1] /* {b} */")),
         "the stream thunks must use the same declaration-position subscript"
     );
+}
+
+/// The flag picks the functions ta_regtest adds range-minimum vectors for and
+/// floors, so a 0 in every row disarms both with nothing failing. A GATOR tap is 0 bars
+/// deep at some shifts; ADXR's one tap is at least 1 deep at every period.
+#[test]
+fn stream_rows_flag_only_a_tap_that_may_be_zero_deep() {
+    let funcs: Vec<ir::FuncDef> = ["gator", "adxr"].iter().map(|n| load_indicator(n).0).collect();
+    let streamed = backends::stream_frame::render(&funcs, make_registry());
+    assert!(streamed.contains("TA_VOutIsInt_GATOR, 1 },"), "GATOR's row must carry nonGe1Tap 1");
+    assert!(streamed.contains("TA_VOutIsInt_ADXR, 0 },"), "ADXR's row must carry nonGe1Tap 0");
 }
 
 /// A cross-typed output pair is compared wherever it can actually alias, and

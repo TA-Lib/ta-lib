@@ -28,7 +28,8 @@ use std::path::Path;
 
 use super::variant_frame::flat_inputs;
 use super::write_if_changed;
-use crate::ir::{FuncDef, ParamType};
+use crate::ir::{FuncDef, Lang, ParamType};
+use crate::streaming::{CalleeLookup, StreamPlan};
 
 const LICENSE: &str = "\
 /* TA-LIB Copyright (c) 1999-2026, Mario Fortier
@@ -191,8 +192,17 @@ fn emit_thunks(o: &mut String, func: &FuncDef) {
     );
 }
 
+/// Whether `func`'s C stream has a delay-line tap that may be 0 bars deep.
+fn has_non_ge1_tap(func: &FuncDef, lookup: &dyn CalleeLookup) -> bool {
+    let resolved = func.resolved_for(Lang::C);
+    match crate::streaming::validate_streamable(&resolved, lookup) {
+        Ok(StreamPlan::Composed(cp)) => cp.lines.iter().flat_map(|l| &l.taps).any(|t| !t.ge1),
+        _ => false,
+    }
+}
+
 /// Build the whole `ta_stream_frame.h` for the streaming subset of `funcs`.
-pub fn render(funcs: &[FuncDef]) -> String {
+pub fn render(funcs: &[FuncDef], lookup: &dyn CalleeLookup) -> String {
     let streaming: Vec<&FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
 
     let mut o = String::new();
@@ -246,6 +256,7 @@ pub fn render(funcs: &[FuncDef]) -> String {
          \x20  const TA_VOptSpec   *optInput;      /* from ta_variant_frame.h; NULL when nbOptInput == 0 */\n\
          \x20  int                  nbOutput;\n\
          \x20  const int           *outIsInt;      /* from ta_variant_frame.h; per output, 1 = TA_Integer */\n\
+         \x20  int                  nonGe1Tap;     /* 1 = a composed delay line has a tap that may be 0 bars deep */\n\
          } TA_StreamEntry;\n\n",
     );
 
@@ -266,8 +277,9 @@ pub fn render(funcs: &[FuncDef]) -> String {
         let _ = writeln!(
             o,
             "   {{ \"{n}\", TA_{n}_SFrameOpen, TA_{n}_SFrameFill, TA_{n}_SFrameClose,\n\
-             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n} }},",
-            func.outputs.len()
+             \x20    {nb_in}, TA_VIn_{n}, {nb_opt}, {opt_ptr}, {}, TA_VOutIsInt_{n}, {} }},",
+            func.outputs.len(),
+            u8::from(has_non_ge1_tap(func, lookup))
         );
     }
     o.push_str("};\n\n");
@@ -280,8 +292,8 @@ pub fn render(funcs: &[FuncDef]) -> String {
 }
 
 /// Write `src/tools/ta_regtest/ta_stream_frame.h`.
-pub fn generate(funcs: &[FuncDef], root: &Path) {
+pub fn generate(funcs: &[FuncDef], root: &Path, lookup: &dyn CalleeLookup) {
     let path = root.join("src/tools/ta_regtest/ta_stream_frame.h");
     let streaming_count = funcs.iter().filter(|f| f.streaming).count();
-    write_if_changed(&path, &render(funcs), "ta_stream_frame.h", streaming_count);
+    write_if_changed(&path, &render(funcs, lookup), "ta_stream_frame.h", streaming_count);
 }

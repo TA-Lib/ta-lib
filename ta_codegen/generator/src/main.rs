@@ -734,7 +734,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // Generate the in-process streaming dispatcher (issue #256's L2/L3):
         // TA_<N>_Open / _OpenAndFill / _Close, native C types only, compiled
         // straight into ta_regtest — never a separate server process.
-        backends::stream_frame::generate(all_funcs, &root);
+        backends::stream_frame::generate(all_funcs, &root, &registry);
 
         backends::meta_frame::generate(all_funcs, &root);
 
