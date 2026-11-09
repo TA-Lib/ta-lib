@@ -1977,6 +1977,7 @@ impl Parser {
             }
             let at = self.pos;
             match self.peek().cloned() {
+                Some(Token::LParen) => self.skip_void_cast(),
                 Some(Token::Ident(ref s)) if Self::is_type_keyword(s) || s == "const" => {
                     if s == "const" {
                         self.advance();
@@ -2080,8 +2081,9 @@ impl Parser {
             Some(Token::Ident(ref s)) if s == "typedef" => self.parse_typedef_struct(),
             Some(Token::Ident(ref s)) if Self::is_macro_decl(s) => self.parse_macro_decl(),
             Some(Token::Star) => self.parse_pointer_deref_assign(),
-            // (void)identifier; — suppress-unused-variable cast, treat as no-op
-            Some(Token::LParen) => self.parse_void_cast_stmt(),
+            Some(Token::LParen) => {
+                self.fail_peek("a `(void)` cast must stand in a braced block, not as an unbraced body")
+            }
             // Anonymous block: { ... } — used for scoped variable declarations
             Some(Token::LBrace) => {
                 self.advance(); // consume {
@@ -3029,6 +3031,7 @@ impl Parser {
                                 self.consume_semicolon();
                                 break;
                             }
+                            Some(Token::LParen) => self.skip_void_cast(),
                             _ => body.push(self.parse_statement()),
                         }
                     }
@@ -3046,6 +3049,7 @@ impl Parser {
                                 self.consume_semicolon();
                                 break;
                             }
+                            Some(Token::LParen) => self.skip_void_cast(),
                             _ => default_body.push(self.parse_statement()),
                         }
                     }
@@ -3114,10 +3118,9 @@ impl Parser {
             && name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
     }
 
-    /// Parse a statement starting with `(`, which in TA-Lib source is always
-    /// `(void)identifier;` — a C idiom to suppress unused-variable warnings.
-    /// Treated as a no-op (discarded block).
-    fn parse_void_cast_stmt(&mut self) -> Statement {
+    /// Consume a statement starting with `(`, which in TA-Lib source is always
+    /// `(void)identifier;`. It runs nothing, so it yields no statement.
+    fn skip_void_cast(&mut self) {
         self.advance(); // consume (
         // Expect a type keyword (void, int, double, etc.) or identifier
         let _type_name = match self.advance() {
@@ -3130,8 +3133,6 @@ impl Parser {
             self.advance();
         }
         self.consume_semicolon();
-        // Emit as an empty block (no-op)
-        Statement::Block { body: vec![] }
     }
 
     #[allow(clippy::too_many_lines)]
@@ -5654,15 +5655,34 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
     // ===== Void cast =====
 
     #[test]
-    fn test_void_cast_statement() {
-        // Line 1648-1661
-        let tokens = tokenize("(void)unused_var;");
-        let mut parser = Parser::new(tokens);
-        let stmt = parser.parse_statement();
-        match stmt {
-            Statement::Block { body } => assert!(body.is_empty()),
-            other => panic!("Expected empty Block for void cast, got {other:?}"),
-        }
+    fn a_void_cast_parses_to_no_statement() {
+        let parsed = parse_c_source_str(
+            "int foo_lookback( int optInMode )\n{\n   (void)optInMode;\n   return 0;\n}\n\
+             TA_RetCode foo( int startIdx, int endIdx, const double inReal[], int optInMode, \
+             int *outBegIdx, int *outNBElement, double outReal[] )\n{\n   (void)optInMode;\n   \
+             if( startIdx > 0 ) {\n      (void)endIdx;\n   }\n   return TA_SUCCESS;\n}\n",
+        );
+        let lookback = &parsed.lookback_body;
+        assert!(matches!(lookback.as_slice(), [Statement::Return { .. }]), "{lookback:?}");
+        let body = &parsed.functions[0].body;
+        assert!(
+            matches!(body.as_slice(), [Statement::If { then_body, .. }, Statement::Return { .. }] if then_body.is_empty()),
+            "{body:?}"
+        );
+        let Statement::Switch { cases, default: default_body, .. } =
+            &parse_scope("switch( a ) { case 0: (void)a; b = 1; break; default: (void)b; }")[0]
+        else {
+            panic!("expected a switch");
+        };
+        assert!(matches!(cases[0].1.as_slice(), [Statement::Assign { .. }]), "{cases:?}");
+        assert!(default_body.is_empty(), "{default_body:?}");
+        assert!(matches!(parse_scope("{ }").as_slice(), [Statement::Block { body }] if body.is_empty()));
+    }
+
+    #[test]
+    #[should_panic(expected = "a `(void)` cast must stand in a braced block")]
+    fn an_unbraced_void_cast_body_is_rejected() {
+        parse_scope("if( a ) (void)a;");
     }
 
     // ===== ALL_CAPS macro as standalone statement (no args) =====

@@ -162,6 +162,10 @@ impl Core {
         let mut r: f64 = 0.0_f64;
         let mut swing: f64 = 0.0_f64;
         let mut sum: f64 = 0.0_f64;
+        let inOpen = &inOpen[..=endIdx];
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // SI's per-bar statements, kept identical: the regression test holds this
         // function bit for bit to CUMSUM over SI. Bar startIdx is read before the
         // anchor store, which may overwrite it when outReal aliases an input.

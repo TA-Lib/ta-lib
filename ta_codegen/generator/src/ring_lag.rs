@@ -633,13 +633,12 @@ fn subst(e: &Expr, env: &BTreeMap<String, Expr>) -> Expr {
     })
 }
 
-/// A lookback body as one expression: straight-line local assignments,
-/// `(void)` casts and a `return`.
+/// A lookback body as one expression: straight-line local assignments and a
+/// `return`.
 fn lookback_body_expr(stmts: &[Statement], mut env: BTreeMap<String, Expr>) -> Option<Expr> {
     for s in stmts {
         match s {
             Statement::Comment(_) | Statement::VarDecl { init: None, .. } => {}
-            Statement::Block { body } if body.is_empty() => {}
             Statement::VarDecl { name, init: Some(e), .. } => {
                 let v = subst(e, &env);
                 env.insert(name.clone(), v);
