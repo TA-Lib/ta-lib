@@ -1,0 +1,247 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 684" width="760" height="684" font-family="Helvetica, Arial, sans-serif">
+<rect width="760" height="684" fill="#ffffff"/>
+<text x="380.0" y="34" font-size="19" font-weight="bold" fill="#1f2933" text-anchor="middle">Example: MIDPRICE(3), skip-on-null, fill-previous</text>
+<text x="380.0" y="56" font-size="13" fill="#5f6b76" text-anchor="middle">(Default Behavior)</text>
+<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#b4462f" stroke-width="1.2" opacity="0.4"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5f6b76"/></marker></defs>
+<rect x="76" y="150" width="466" height="168" fill="#dbe8f6"/>
+<text x="18" y="228.0" font-size="13" font-weight="bold" fill="#1f2933">partition</text>
+<text x="18" y="245.0" font-size="13" fill="#1f2933">IBM</text>
+<rect x="76" y="318" width="466" height="196" fill="#f6f1c7"/>
+<text x="18" y="410.0" font-size="13" font-weight="bold" fill="#1f2933">partition</text>
+<text x="18" y="427.0" font-size="13" fill="#1f2933">TSLA</text>
+<line x1="76" y1="318" x2="542" y2="318" stroke="#1f2933" stroke-width="2"/>
+<text x="243.0" y="92" font-size="13" fill="#5f6b76" text-anchor="middle">Multi-input: each column with a validity bitmap</text>
+<text x="412" y="92" font-size="13" fill="#5f6b76" text-anchor="start">Output: one buffer</text>
+<line x1="368" y1="123" x2="412" y2="123" stroke="#5f6b76" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="118" y="168.0" font-size="11" fill="#5f6b76" text-anchor="end">0</text>
+<text x="118" y="196.0" font-size="11" fill="#5f6b76" text-anchor="end">1</text>
+<text x="118" y="224.0" font-size="11" fill="#5f6b76" text-anchor="end">2</text>
+<text x="118" y="252.0" font-size="11" fill="#5f6b76" text-anchor="end">3</text>
+<text x="118" y="280.0" font-size="11" fill="#5f6b76" text-anchor="end">4</text>
+<text x="118" y="308.0" font-size="11" fill="#5f6b76" text-anchor="end">5</text>
+<text x="118" y="336.0" font-size="11" fill="#5f6b76" text-anchor="end">6</text>
+<text x="118" y="364.0" font-size="11" fill="#5f6b76" text-anchor="end">7</text>
+<text x="118" y="392.0" font-size="11" fill="#5f6b76" text-anchor="end">8</text>
+<text x="118" y="420.0" font-size="11" fill="#5f6b76" text-anchor="end">9</text>
+<text x="118" y="448.0" font-size="11" fill="#5f6b76" text-anchor="end">10</text>
+<text x="118" y="476.0" font-size="11" fill="#5f6b76" text-anchor="end">11</text>
+<text x="118" y="504.0" font-size="11" fill="#5f6b76" text-anchor="end">12</text>
+<text x="118" y="128" font-size="11" fill="#5f6b76" text-anchor="end">row</text>
+<rect x="100" y="235" width="258" height="26" fill="none" stroke="#b4462f" stroke-width="1.5" stroke-dasharray="4 3" rx="3"/>
+<rect x="100" y="319" width="258" height="26" fill="none" stroke="#b4462f" stroke-width="1.5" stroke-dasharray="4 3" rx="3"/>
+<rect x="100" y="403" width="258" height="26" fill="none" stroke="#b4462f" stroke-width="1.5" stroke-dasharray="4 3" rx="3"/>
+<rect x="100" y="459" width="258" height="26" fill="none" stroke="#b4462f" stroke-width="1.5" stroke-dasharray="4 3" rx="3"/>
+<text x="174.0" y="128" font-size="15" font-weight="bold" fill="#1f2933" text-anchor="middle">inHigh</text>
+<text x="225.0" y="142" font-size="9" fill="#5f6b76" text-anchor="middle">validity</text>
+<rect x="132" y="150" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="168.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.2</text>
+<rect x="216" y="150" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="168.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="178" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="196.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">102.0</text>
+<rect x="216" y="178" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="196.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="206" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="224.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.6</text>
+<rect x="216" y="206" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="224.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="234" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="252.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">102.4</text>
+<rect x="216" y="234" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="252.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="262" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="280.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">103.1</text>
+<rect x="216" y="262" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="280.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="290" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="308.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">103.8</text>
+<rect x="216" y="290" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="308.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="318" width="84" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="132" y="318" width="84" height="28" fill="url(#hatch)"/>
+<text x="174.0" y="336.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="216" y="318" width="18" height="28" fill="#eef1f4" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="336.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">X</text>
+<rect x="132" y="346" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="364.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">251.0</text>
+<rect x="216" y="346" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="364.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="374" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="392.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">254.3</text>
+<rect x="216" y="374" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="392.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="402" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="420.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">252.9</text>
+<rect x="216" y="402" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="420.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="430" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="448.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">255.6</text>
+<rect x="216" y="430" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="448.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="132" y="458" width="84" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="132" y="458" width="84" height="28" fill="url(#hatch)"/>
+<text x="174.0" y="476.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">X</text>
+<rect x="216" y="458" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="476.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="132" y="486" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="174.0" y="504.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">256.4</text>
+<rect x="216" y="486" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="225.0" y="504.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="133.5" y="151.5" width="99" height="109" fill="none" stroke="#24425f" stroke-width="2.5" rx="4"/>
+<text x="211" y="162" font-size="9" fill="#24425f" text-anchor="end">chunk 1</text>
+<rect x="133.5" y="263.5" width="99" height="249" fill="none" stroke="#24425f" stroke-width="2.5" rx="4"/>
+<text x="211" y="274" font-size="9" fill="#24425f" text-anchor="end">chunk 2</text>
+<text x="294.0" y="128" font-size="15" font-weight="bold" fill="#1f2933" text-anchor="middle">inLow</text>
+<text x="345.0" y="142" font-size="9" fill="#5f6b76" text-anchor="middle">validity</text>
+<rect x="252" y="150" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="168.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">99.8</text>
+<rect x="336" y="150" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="168.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="178" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="196.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">100.6</text>
+<rect x="336" y="178" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="196.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="206" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="224.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">100.1</text>
+<rect x="336" y="206" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="224.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="234" width="84" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="252" y="234" width="84" height="28" fill="url(#hatch)"/>
+<text x="294.0" y="252.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">X</text>
+<rect x="336" y="234" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="252.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="252" y="262" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="280.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.5</text>
+<rect x="336" y="262" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="280.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="290" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="308.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.0</text>
+<rect x="336" y="290" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="308.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="318" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="336.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">247.3</text>
+<rect x="336" y="318" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="336.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="346" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="364.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">246.2</text>
+<rect x="336" y="346" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="364.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="374" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="392.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">249.8</text>
+<rect x="336" y="374" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="392.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="402" width="84" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="252" y="402" width="84" height="28" fill="url(#hatch)"/>
+<text x="294.0" y="420.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="336" y="402" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="420.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="430" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="448.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">250.1</text>
+<rect x="336" y="430" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="448.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="458" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="476.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">252.7</text>
+<rect x="336" y="458" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="476.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="252" y="486" width="84" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="294.0" y="504.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">251.9</text>
+<rect x="336" y="486" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="345.0" y="504.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="253.5" y="151.5" width="99" height="221" fill="none" stroke="#24425f" stroke-width="2.5" rx="4"/>
+<text x="331" y="162" font-size="9" fill="#24425f" text-anchor="end">chunk 1</text>
+<rect x="253.5" y="375.5" width="99" height="137" fill="none" stroke="#24425f" stroke-width="2.5" rx="4"/>
+<text x="331" y="386" font-size="9" fill="#24425f" text-anchor="end">chunk 2</text>
+<text x="470.0" y="128" font-size="15" font-weight="bold" fill="#1f2933" text-anchor="middle">outReal</text>
+<text x="525.0" y="142" font-size="9" fill="#5f6b76" text-anchor="middle">validity</text>
+<rect x="424" y="150" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="150" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="168.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="150" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="168.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="178" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="178" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="196.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="178" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="196.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="206" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="224.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">100.90</text>
+<rect x="516" y="206" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="224.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="234" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="252.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">100.90</text>
+<rect x="516" y="234" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="252.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="262" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="280.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.60</text>
+<rect x="516" y="262" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="280.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="290" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="308.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">101.95</text>
+<rect x="516" y="290" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="308.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="318" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="318" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="336.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="318" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="336.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="346" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="346" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="364.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="346" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="364.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="374" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="374" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="392.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="374" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="392.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="402" width="92" height="28" fill="#fad7c3" stroke="#9aa5b1" stroke-width="0.8"/>
+<rect x="424" y="402" width="92" height="28" fill="url(#hatch)"/>
+<text x="470.0" y="420.0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">NaN</text>
+<rect x="516" y="402" width="18" height="28" fill="#f8e1dc" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="420.0" font-size="11" font-weight="bold" fill="#b4462f" text-anchor="middle">0</text>
+<rect x="424" y="430" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="448.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">250.90</text>
+<rect x="516" y="430" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="448.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="458" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="476.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">250.90</text>
+<rect x="516" y="458" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="476.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="424" y="486" width="92" height="28" fill="#ffffff" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="470.0" y="504.0" font-size="12" font-weight="normal" fill="#1f2933" text-anchor="middle">253.10</text>
+<rect x="516" y="486" width="18" height="28" fill="#e3f1e8" stroke="#9aa5b1" stroke-width="0.8"/>
+<text x="525.0" y="504.0" font-size="11" font-weight="bold" fill="#2f7d4f" text-anchor="middle">1</text>
+<rect x="425.5" y="151.5" width="107" height="361" fill="none" stroke="#24425f" stroke-width="2.5" rx="4"/>
+<text x="511" y="162" font-size="9" fill="#24425f" text-anchor="end">chunk 1</text>
+<path d="M368 154 h7 V230 h-7" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+<text x="380" y="196.0" font-size="11" font-weight="bold" fill="#2f7d4f">s1</text>
+<path d="M368 266 h7 V314 h-7" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+<text x="380" y="294.0" font-size="11" font-weight="bold" fill="#2f7d4f">s2</text>
+<path d="M368 350 h7 V398 h-7" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+<text x="380" y="378.0" font-size="11" font-weight="bold" fill="#2f7d4f">s3</text>
+<path d="M368 434 h7 V454 h-7" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+<text x="380" y="448.0" font-size="11" font-weight="bold" fill="#2f7d4f">s4</text>
+<path d="M368 490 h7 V510 h-7" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+<text x="380" y="504.0" font-size="11" font-weight="bold" fill="#2f7d4f">s5</text>
+<path d="M550 154 q5 0 5 5 V173.0 q0 5 5 5 q-5 0 -5 5 V197 q0 5 -5 5" fill="none" stroke="#7a4fa3" stroke-width="1.8"/>
+<text x="564" y="182.0" font-size="11" fill="#7a4fa3">warm-up (lookback 2)</text>
+<text x="564" y="252.0" font-size="11" fill="#b4462f">skip-on-null, fill-previous</text>
+<text x="564" y="280.0" font-size="11" fill="#5f6b76">uses rows 1, 2 and 4</text>
+<text x="564" y="336.0" font-size="11" fill="#b4462f">Leading NaN</text>
+<path d="M550 350 q5 0 5 5 V369.0 q0 5 5 5 q-5 0 -5 5 V393 q0 5 -5 5" fill="none" stroke="#7a4fa3" stroke-width="1.8"/>
+<text x="564" y="378.0" font-size="11" fill="#7a4fa3">warm-up (lookback 2)</text>
+<text x="564" y="420.0" font-size="11" fill="#b4462f">skip-on-null, fill-previous</text>
+<text x="564" y="448.0" font-size="11" fill="#5f6b76">uses rows 7, 8 and 10</text>
+<text x="564" y="476.0" font-size="11" fill="#b4462f">skip-on-null, fill-previous</text>
+<text x="564" y="504.0" font-size="11" fill="#5f6b76">uses rows 8, 10 and 12</text>
+<g transform="translate(18,548)"><rect x="0" y="-11" width="22" height="14" fill="none" stroke="#24425f" stroke-width="2.5" rx="3"/><text x="30" y="0" font-size="12" fill="#1f2933">Arrow chunk</text></g>
+<g transform="translate(144.6,548)"><rect x="0" y="-11" width="22" height="14" fill="#fad7c3" stroke="#9aa5b1"/><rect x="0" y="-11" width="22" height="14" fill="url(#hatch)"/><text x="30" y="0" font-size="12" fill="#1f2933">null</text></g>
+<g transform="translate(225.0,548)"><text x="11" y="0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">X</text><text x="30" y="0" font-size="12" fill="#1f2933">don't care</text></g>
+<g transform="translate(345.0,548)"><path d="M2 -11 h6 V3 h-6" fill="none" stroke="#2f7d4f" stroke-width="2"/><text x="30" y="0" font-size="12" fill="#1f2933">s1-s5: calculated segments</text></g>
+<text x="18" y="580" font-size="12" fill="#5f6b76">MIDPRICE(3): (highest inHigh + lowest inLow) / 2 over the last 3 valid rows.</text>
+<text x="18" y="598" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 3:</tspan> if any validity bit is 0, the row is null.</text>
+<text x="18" y="616" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 6:</tspan> if any value is NaN, the row is null.</text>
+<text x="18" y="634" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 9:</tspan> NaN with validity bit 1 is still null; fill-previous repeats a NaN here.</text>
+<text x="18" y="652" font-size="12" fill="#5f6b76">Chunks may cross partitions; segments may cross chunks.</text>
+<text x="18" y="670" font-size="12" fill="#5f6b76">Inputs chunked alike may share one validity bitmap.</text>
+</svg>
