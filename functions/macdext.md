@@ -10,6 +10,20 @@ description: >-
 
 MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign change (MACD crossing its signal line) flags momentum shifts.
 
+## Chart
+
+<ta-chart src="/functions/macdext.svg" ratio="720:416" label="MACDEXT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram.
+
+Metadata flags used: `outMACD: line, positive, negative` · `outMACDSignal: dash_line, positive, negative` · `outMACDHist: histogram, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/macdext.csv) · [Chart (SVG)](/functions/macdext.svg)
+
 ## Formula
 
 MACD = MA_fast(inReal) - MA_slow(inReal)
@@ -65,7 +79,106 @@ Hist = MACD - Signal
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double macd[252], macdSignal[252], macdHist[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_MACDEXT( 0, n - 1, series, 12, TA_MAType_SMA, 26, TA_MAType_SMA, 9, TA_MAType_SMA,
+            &outBegIdx, &outNBElement, macd, macdSignal, macdHist );
+printf( "%d values from bar %d; last macd = %f\n", outNBElement, outBegIdx, macd[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut macd = vec![0.0; 252];
+let mut macd_signal = vec![0.0; 252];
+let mut macd_hist = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.macdext(0, series.len() - 1, &series, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA,
+                         &mut macd, &mut macd_signal, &mut macd_hist)?;
+println!("{} values from bar {}; last macd = {}", range.count, range.beg_idx, macd[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] macd = new double[252];
+double[] macdSignal = new double[252];
+double[] macdHist = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.macdext(0, series.length - 1, series, 12, MAType.SMA, 26, MAType.SMA, 9, MAType.SMA,
+                          macd, macdSignal, macdHist);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last macd = " + macd[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var macd = new double[252];
+var macdSignal = new double[252];
+var macdHist = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Macdext(0, series.Length - 1, series, 12, MAType.SMA, 26, MAType.SMA, 9, MAType.SMA,
+                          macd, macdSignal, macdHist);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last macd = {macd[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, macdext } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outMacd,
+  outMacdSignal,
+  outMacdHist,
+} = macdext(series, {
+  fastPeriod: 12,
+  fastMaType: MAType.SMA,
+  slowPeriod: 26,
+  slowMaType: MAType.SMA,
+  signalPeriod: 9,
+  signalMaType: MAType.SMA,
+});
+console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.4.0.
 
 TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.c) · [`macdext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.yaml)
 
@@ -77,7 +190,9 @@ TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_MACDEXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDEXT.cs) |
 | TypeScript | [`macdext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdext.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACDEXT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

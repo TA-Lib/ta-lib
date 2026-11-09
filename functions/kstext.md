@@ -12,6 +12,20 @@ Know Sure Thing with selectable moving averages: Pring's weighted sum of four sm
 
 `KST` is Pring's definition, with simple averages throughout. Formulas published since then smooth the legs exponentially, and Pring allows a simple or an exponential signal line. The reading is the same as `KST`'s: above zero the combined momentum is positive, and the usual signals are the line crossing its signal line and the line changing direction.
 
+## Chart
+
+<ta-chart src="/functions/kstext.svg" ratio="720:416" label="KSTEXT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line.
+
+Metadata flags used: `outKST: line, positive, negative` · `outKSTSignal: dash_line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/kstext.csv) · [Chart (SVG)](/functions/kstext.svg)
+
 ## Formula
 
 ROC_k\[t] = (price\[t] / price\[t - X_k] - 1) × 100
@@ -82,7 +96,103 @@ MA_roc uses optInROCMAType, MA_signal uses optInSignalMAType
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double kst[252], kstSignal[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_KSTEXT( 0, n - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, TA_MAType_SMA, TA_MAType_SMA,
+           &outBegIdx, &outNBElement, kst, kstSignal );
+printf( "%d values from bar %d; last kst = %f\n", outNBElement, outBegIdx, kst[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut kst = vec![0.0; 252];
+let mut kst_signal = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.kstext(0, series.len() - 1, &series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType::SMA, MAType::SMA,
+                        &mut kst, &mut kst_signal)?;
+println!("{} values from bar {}; last kst = {}", range.count, range.beg_idx, kst[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] kst = new double[252];
+double[] kstSignal = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.kstext(0, series.length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
+                         kst, kstSignal);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last kst = " + kst[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var kst = new double[252];
+var kstSignal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Kstext(0, series.Length - 1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
+                         kst, kstSignal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last kst = {kst[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, kstext } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outKst, outKstSignal } = kstext(series, {
+  roc1Period: 10,
+  roc2Period: 15,
+  roc3Period: 20,
+  roc4Period: 30,
+  ma1Period: 10,
+  ma2Period: 10,
+  ma3Period: 10,
+  ma4Period: 15,
+  signalPeriod: 9,
+  rocMaType: MAType.SMA,
+  signalMaType: MAType.SMA,
+});
+console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`kstext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kstext/kstext.c) · [`kstext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kstext/kstext.yaml)
 
@@ -94,7 +204,9 @@ TA-Lib Definition: [`kstext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_KSTEXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KSTEXT.cs) |
 | TypeScript | [`kstext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kstext.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KSTEXT` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

@@ -1,15 +1,16 @@
 ---
 url: 'https://ta-lib.org/spec/settings-threads/index.md'
 description: >-
-  Settings in an immutable Core (Rust, Java, C#, TypeScript) that threads share
-  with no synchronization, C's initialization and process-wide settings and when
-  they may change, setting validation, and the caller's rules across threads.
+  Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across
+  threads with no synchronization in Rust, Java and C#, C's initialization and
+  process-wide settings and when they may change, setting validation, and the
+  caller's rules across threads.
 ---
 # Settings and Threads
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process and any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 

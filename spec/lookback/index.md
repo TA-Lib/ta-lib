@@ -23,11 +23,11 @@ The lookback call tells a program, before any series exists, whether a call acce
 
 ## Lookback calls {#calls}
 
-Every function has a lookback call. It takes exactly the batch call's optional parameters, in the same order, and no input series. A default sentinel selects the default, as in the batch call ([rP3](/spec/inputs-outputs/#rp3)). Its name and return type in each language, and the display-shift call's: [names](/spec/#names).
+Every function has a lookback call. It takes exactly the batch call's optional parameters, in the same order, and no input series. A default sentinel selects the default, as in the batch call ([rP3](/spec/inputs-outputs/#rp3)). TypeScript Caveat: [rJ4](/spec/#rj4). Its name and return type in each language, and the display-shift call's: [names](/spec/#names).
 
 | Rule | Statement |
 |---|---|
-| <a id="rl2"></a>**rL2** | The call fails ([per language](/spec/#failures)) only on rejected parameters ([rL3](/spec/lookback/#rl3)). |
+| <a id="rl2"></a>**rL2** | The call fails ([per language](/spec/#failures)) only on rejected parameters ([rL3](/spec/lookback/#rl3)). TypeScript Caveat: [rJ4](/spec/#rj4). |
 | <a id="rl3"></a>**rL3** | The call rejects exactly the parameters the batch call, `Open` or `OpenAndFill` would reject (batch [rB3](/spec/errors/#rb3), streams [rS3](/spec/streaming/#rs3)). |
 | <a id="rl4"></a>**rL4** | Rust, Java, C# and TypeScript reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback or display shift. |
 | <a id="rl5"></a>**rL5** | A lookback depends only on the optional parameters and on the [settings](/spec/settings-threads/) in effect at the call: the unstable periods ([rL6](/spec/lookback/#rl6)) and the candle averaging periods ([rL7](/spec/lookback/#rl7)). With every setting at its bound ([rT3](/spec/settings-threads/#rt3), [rT6](/spec/settings-threads/#rt6)) a lookback is negative only when the call fails. |
@@ -50,13 +50,13 @@ Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an i
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
+Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
 
 | Rule | Statement |
 |---|---|
 | <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. Every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on the shift. |
 | <a id="rl10"></a>**rL10** | A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` exactly when at least one of its outputs carries the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT`. An output without `TA_OUT_DISPLAY_SHIFT` has a shift of 0 for any parameters. |
-| <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL3](/spec/lookback/#rl3)) or the index names no output. |
+| <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL3](/spec/lookback/#rl3)) or the index names no output. TypeScript Caveat: [rJ4](/spec/#rj4). |
 | <a id="rl12"></a>**rL12** | No unstable period or candle setting ([rL5](/spec/lookback/#rl5)) changes a display shift. |
 
 ## Stability from metadata {#metadata}

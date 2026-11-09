@@ -10,6 +10,20 @@ description: >-
 
 Stochastic Momentum Index: where the close sits relative to the **midpoint** of the recent high/low range, double-smoothed. Lane's stochastic measures the close against the bottom of the range; Blau measures it against the middle, then smooths numerator and denominator separately with two exponential averages before dividing, which is what buys the low-lag, smooth-contoured curve. The result runs -100 to +100 rather than 0 to 100, so the zero line is the reference: positive means the close is above the midpoint of its range, negative below. Extreme readings mark overbought and oversold conditions, and crossings of the signal line are the usual trade trigger.
 
+## Chart
+
+<ta-chart src="/functions/smi.svg" ratio="720:416" label="SMI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line with dashed rules at -40 and 40 and outSMISignal as a dashed line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line with dashed rules at -40 and 40 and outSMISignal as a dashed line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outSMI: line, positive, negative, levels -40, 40` · `outSMISignal: dash_line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/smi.csv) · [Chart (SVG)](/functions/smi.svg)
+
 ## Formula
 
 HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
@@ -65,7 +79,102 @@ Signal = EMA(SMI, signalPeriod)
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double smi[252], smiSignal[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SMI( 0, n - 1, high, low, close, 13, 2, 25, 9, &outBegIdx, &outNBElement, smi, smiSignal );
+printf( "%d values from bar %d; last smi = %f\n", outNBElement, outBegIdx, smi[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut smi = vec![0.0; 252];
+let mut smi_signal = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.smi(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9,
+                     &mut smi, &mut smi_signal)?;
+println!("{} values from bar {}; last smi = {}", range.count, range.beg_idx, smi[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] smi = new double[252];
+double[] smiSignal = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.smi(0, high.length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last smi = " + smi[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var smi = new double[252];
+var smiSignal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Smi(0, high.Length - 1, high, low, close, 13, 2, 25, 9, smi, smiSignal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last smi = {smi[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { smi } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
+  timePeriod: 13,
+  fastPeriod: 2,
+  slowPeriod: 25,
+  signalPeriod: 9,
+});
+console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.c) · [`smi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.yaml)
 
@@ -77,7 +186,9 @@ TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_SMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMI.cs) |
 | TypeScript | [`smi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/smi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SMI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

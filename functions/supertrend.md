@@ -10,6 +10,20 @@ description: >-
 
 An ATR-scaled trailing band that follows price on one side at a time and flips to the other side when the close breaks through it. The trend rides the lower band while it is up and the upper band while it is down, so the line is usually below price in an uptrend and above it in a downtrend, and the flip is the signal. Attributed to Olivier Seban.
 
+## Chart
+
+<ta-chart src="/functions/supertrend.svg" ratio="720:416" label="SUPERTREND over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSupertrend as a solid line broken wherever outTrend changes, in the up colour where outTrend is positive and the down colour where it is negative; below it, a step pane of its own for the integer output outTrend."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles, with outSupertrend as a solid line broken wherever outTrend changes, in the up colour where outTrend is positive and the down colour where it is negative; below it, a step pane of its own for the integer output outTrend.
+
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outSupertrend: line, segmented` · `outTrend: integer`
+
+:::
+
+[Reference data (CSV)](/functions/supertrend.csv) · [Chart (SVG)](/functions/supertrend.svg)
+
 ## Formula
 
 Median = (High + Low) / 2
@@ -68,7 +82,101 @@ SuperTrend = Upper while the trend is down, until Close > Upper flips it up
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double supertrend[252];
+int trend[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SUPERTREND( 0, n - 1, high, low, close, 10, 3.0, &outBegIdx, &outNBElement, supertrend, trend );
+printf( "%d values from bar %d; last supertrend = %f\n", outNBElement, outBegIdx, supertrend[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut supertrend = vec![0.0; 252];
+let mut trend = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.supertrend(0, high.len() - 1, &high, &low, &close, 10, 3.0,
+                            &mut supertrend, &mut trend)?;
+println!("{} values from bar {}; last supertrend = {}", range.count, range.beg_idx, supertrend[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] supertrend = new double[252];
+int[] trend = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.supertrend(0, high.length - 1, high, low, close, 10, 3.0, supertrend, trend);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last supertrend = " + supertrend[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var supertrend = new double[252];
+var trend = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Supertrend(0, high.Length - 1, high, low, close, 10, 3.0, supertrend, trend);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last supertrend = {supertrend[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { supertrend } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSupertrend, outTrend } = supertrend({ high, low, close }, {
+  timePeriod: 10,
+  multiplier: 3,
+});
+console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.c) · [`supertrend.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.yaml)
 
@@ -80,7 +188,9 @@ TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C# | [`Core_SUPERTREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUPERTREND.cs) |
 | TypeScript | [`supertrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/supertrend.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SUPERTREND` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

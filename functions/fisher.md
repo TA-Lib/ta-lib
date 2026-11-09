@@ -10,7 +10,21 @@ description: >-
 
 Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's position in its rolling channel into a near-normal distribution. Extreme values become rare and turning points sharp, where a plain channel position spends much of its time pinned near the edges.
 
-The output is unbounded and centred on zero. A peak or trough marks a likely turn, and the Fisher line crossing its Trigger, the same line one bar later, is the author's entry signal.
+The output is centred on zero and stays within ±7.6: the smoothed position is limited to ±0.999 before the transform. A peak or trough marks a likely turn, and the Fisher line crossing its Trigger, the same line one bar later, is the author's entry signal.
+
+## Chart
+
+<ta-chart src="/functions/fisher.svg" ratio="720:416" label="FISHER over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line.
+
+Metadata flags used: `inPriceHL: high, low` · `outFisher: line, positive, negative` · `outTrigger: dash_line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/fisher.csv) · [Chart (SVG)](/functions/fisher.svg)
 
 ## Formula
 
@@ -65,7 +79,93 @@ Trigger = Fisher[prev]
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double fisher[252], trigger[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_FISHER( 0, n - 1, high, low, 10, &outBegIdx, &outNBElement, fisher, trigger );
+printf( "%d values from bar %d; last fisher = %f\n", outNBElement, outBegIdx, fisher[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut fisher = vec![0.0; 252];
+let mut trigger = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.fisher(0, high.len() - 1, &high, &low, 10, &mut fisher, &mut trigger)?;
+println!("{} values from bar {}; last fisher = {}", range.count, range.beg_idx, fisher[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] fisher = new double[252];
+double[] trigger = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.fisher(0, high.length - 1, high, low, 10, fisher, trigger);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last fisher = " + fisher[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var fisher = new double[252];
+var trigger = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Fisher(0, high.Length - 1, high, low, 10, fisher, trigger);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last fisher = {fisher[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { fisher } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
+  timePeriod: 10,
+});
+console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`fisher.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fisher/fisher.c) · [`fisher.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fisher/fisher.yaml)
 
@@ -77,7 +177,9 @@ TA-Lib Definition: [`fisher.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_FISHER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FISHER.cs) |
 | TypeScript | [`fisher.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fisher.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FISHER` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

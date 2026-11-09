@@ -14,6 +14,20 @@ Read it as an oscillator, not as price. It answers zero on a constant, zero on a
 
 What separates it from the high-pass rows is that it rejects the fast end too. A detrender keeps everything above its cutoff, including the bar-to-bar noise; this keeps only the band asked for.
 
+## Chart
+
+<ta-chart src="/functions/swak_bp.svg" ratio="720:416" label="SWAK_BP over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `outReal: line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/swak_bp.csv) · [Chart (SVG)](/functions/swak_bp.svg)
+
 ## Formula
 
 ```
@@ -75,7 +89,83 @@ The output may alias the input. This row reads `x[i-2]`, which an aliased write 
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SWAK_BP( 0, n - 1, series, 20, 0.1, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.swak_bp(0, series.len() - 1, &series, 20, 0.1, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.swakBp(0, series.length - 1, series, 20, 0.1, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.SwakBp(0, series.Length - 1, series, 20, 0.1, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { swakBp } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = swakBp(series, { timePeriod: 20, delta: 0.1 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`swak_bp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_bp/swak_bp.c) · [`swak_bp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/swak_bp/swak_bp.yaml)
 
@@ -87,7 +177,9 @@ TA-Lib Definition: [`swak_bp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_SWAK_BP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_BP.cs) |
 | TypeScript | [`swakBp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakBp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SWAK_BP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

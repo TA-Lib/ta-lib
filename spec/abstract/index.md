@@ -18,6 +18,7 @@ The Abstract API describes every function at run time and calls it by name ([rA6
 * <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A value outside the parameter's accepted values fails the call ([rA1](/spec/abstract/#ra1)) and the holder's lookback and display shift ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)); in C, `TA_GetLookback` and `TA_GetDisplayShift` still return `TA_SUCCESS`: test the value they write.
 * <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
+* <a id="unknown-attribute"></a>**Ignore an attribute key you do not know.** A release may add one ([rA8](/spec/abstract/#ra8)).
 * <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** Each must stay valid until the last call on the holder, and be as long as the batch call needs ([input length](/spec/inputs-outputs/#input-length), [output size](/spec/inputs-outputs/#output-size)).
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** A function handle and the descriptors it leads to are static: never free them.
 
@@ -32,6 +33,7 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 | enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` |
 | functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` |
 | function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| a function's [attributes](/spec/abstract/#attributes) | `TA_GetFuncAttributes` | `attributes` | `attributes()` | `Attributes` | `attributes` |
 | input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` |
 | make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` |
 | bind an input | `TA_SetInputParamRealPtr`, `TA_SetInputParamIntegerPtr`, `TA_SetInputParamPricePtr` | `set_input`, `set_int_input`, `set_price_input` | `setInput`, `setPriceInput` | `SetInput`, `SetPriceInput` | `setInput`, `setPriceInput` |
@@ -49,12 +51,12 @@ What a descriptor holds:
 
 | Descriptor | Holds |
 |---|---|
-| function | canonical name ([names](/spec/#names)), group, one-line hint, [flags](/spec/abstract/#flags) |
+| function | canonical name ([names](/spec/#names)), group, one-line hint, [flags](/spec/abstract/#flags), [attributes](/spec/abstract/#attributes) (not in C's `TA_FuncInfo`) |
 | input | name, kind, and for a price input the [series it consumes](/spec/abstract/#flags-price) |
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0 (TypeScript Caveat: [rJ6](/spec/#rj6)). A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
 
 ## Rules {#rules}
 
@@ -71,6 +73,8 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 <a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
+
+<a id="ra8"></a>**rA8** A function's [attributes](/spec/abstract/#attributes) are the same string in every language and in `ta_func_api.xml`. A release only adds keys, and a key's meaning never changes.
 
 ## Return codes {#codes}
 
@@ -98,6 +102,18 @@ Every key is answered in every language, and the answer can differ with the lang
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
 | `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C# and TypeScript. |
 | `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C# and TypeScript. |
+
+## Attributes {#attributes}
+
+Metadata that a flag bit cannot carry, as one JSON object per function: C's `TA_GetFuncAttributes`, the function descriptor's `attributes` in Rust, Java and TypeScript and `Attributes` in C#, and the function's `<Attributes>` element in `ta_func_api.xml`. A function with none has `{}`, and no element in the XML.
+
+A key of the function sits at the top level. A key of an input, an optional parameter or an output sits under `inputs`, `optInputs` or `outputs`, in an object named after the parameter. An empty object is left out. The string is canonical: no whitespace, keys in a fixed order, each number in plain decimal with no exponent and no `-0` (`30`, `26.5`, `1000000`), so two strings compare byte for byte. Parse it with any JSON parser and ignore a key you do not know ([rA8](/spec/abstract/#ra8)).
+
+| Key | Of | Value | Meaning |
+|---|---|---|---|
+| `levels` | output | numbers, strictly ascending | Reference levels, as the indicator's author published them or as common practice reads them, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
+
+RSI's: `{"outputs":{"outReal":{"levels":[30,70]}}}`.
 
 ## Flags {#flags}
 
@@ -146,6 +162,9 @@ What a function assumes of its input, and what can be said of the values it writ
 | `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is the pattern's call ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_WEAK` | Level 80 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_CONFIRM` | Level 200 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_BAR_INDEX` | The value is an absolute index into the input arrays. |
+
+On a real output, the sign flags say which signs can occur for some valid parameter values over well-formed bars (low <= open, close <= high, volume >= 0) and inputs the function documents as valid. Rounding in a running sum can leave a value a few units in the last place past zero, which the flags do not count.
 
 ### Display hint {#flags-display}
 
@@ -160,8 +179,9 @@ How a chart or a settings dialog should present a function, an output or an opti
 | `TA_OUT_LINE` | Draw as a connected line. |
 | `TA_OUT_DOT_LINE` | Draw as a dotted line. No function sets it. |
 | `TA_OUT_DASH_LINE` | Draw as a dashed line. |
-| `TA_OUT_DOT` | Draw as dots only. No function sets it. |
+| `TA_OUT_DOT` | Draw as dots only. |
 | `TA_OUT_HISTO` | Draw as a histogram. |
+| `TA_OUT_SEGMENTED` | A line whose segments restart wherever the function's integer output changes value: never connect across a change. |
 | `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
 | `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |
 | `TA_OPTIN_IS_PERCENT` | The parameter is a percentage. |

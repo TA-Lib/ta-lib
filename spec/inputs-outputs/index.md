@@ -2,9 +2,10 @@
 url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
   One batch calling pattern for every function in C, Rust, Java, C# and
-  TypeScript: the same argument order, a sentinel that selects any parameter's
-  default, outputs holding only defined values from index 0 and how to size
-  them, pattern outputs, computing in place, and what the caller must pass.
+  TypeScript (with its caveats): the same argument order, a sentinel that
+  selects any parameter's default, outputs holding only defined values from
+  index 0 and how to size them, pattern outputs, computing in place, and what
+  the caller must pass.
 ---
 # Batch Inputs and Outputs
 
@@ -17,7 +18,7 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 ## The caller must {#caller}
 
 * <a id="input-length"></a>**Pass full-length inputs.** Every input series a function declares holds at least `endIdx + 1` elements ([rB5](/spec/errors/#rb5)), even when the range produces no output ([rW2](/spec/inputs-outputs/#rw2)); a stream opener's inputs all have the history's length ([rS5](/spec/streaming/#rs5)).
-* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements ([rB4](/spec/errors/#rb4), [rB5](/spec/errors/#rb5)), where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size).
+* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements ([rB4](/spec/errors/#rb4), [rB5](/spec/errors/#rb5)), where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size). TypeScript Caveat: [rJ3](/spec/#rj3).
 * <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 * <a id="input-domain"></a>**Expect no promise beyond `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). This is the tested domain, not a limit: nothing checks it.
 * <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
@@ -25,9 +26,9 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 
 ## What a call takes
 
-<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
+<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. In TypeScript both are optional: `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
-<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
+<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an omitted or `undefined` parameter selects the default; otherwise an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
 An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`, in TypeScript the values of `MAType`.
 
@@ -35,11 +36,11 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, and a `Float32Array` input in TypeScript widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust has no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
 
-<a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them.
+<a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them. TypeScript Caveat: [rJ2](/spec/#rj2).
 
 ## What a successful call writes
 
-<a id="rw1"></a>**rW1** A successful call reports `begIdx` and `count` (C's `*outBegIdx` and `*outNBElement`). When `count` is above 0, `begIdx` is `max(startIdx, lookback)`, where `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings, and the range ends at `endIdx`: `count = endIdx - begIdx + 1`. Each output is written from index 0, not aligned to the input: `out[i]` is the value for input bar `begIdx + i`, for every `i` from 0 to `count - 1`.
+<a id="rw1"></a>**rW1** A successful call reports `begIdx` and `count` (C's `*outBegIdx` and `*outNBElement`). When `count` is above 0, `begIdx` is `max(startIdx, lookback)`, where `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings, and the range ends at `endIdx`: `count = endIdx - begIdx + 1`. Each output is written from index 0, not aligned to the input: `out[i]` is the value for input bar `begIdx + i`, for every `i` from 0 to `count - 1`. In TypeScript `count` is the length of each returned output.
 
 <a id="rw2"></a>**rW2** A valid range that ends before the lookback (`endIdx < lookback`) succeeds with `count` 0. Test `count`, not `begIdx`.
 

@@ -10,6 +10,20 @@ description: >-
 
 MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a slow EMA of the close over the Average True Range, times 100. Like MACD it comes with an EMA-smoothed signal line and their histogram. Dividing by the ATR expresses momentum in units of the instrument's own volatility, so one reading means the same thing across instruments, timeframes and volatility regimes, where the raw MACD spread does not. Spiroglou reads the line in ranges: beyond 150 or -150 is an overextended move, between -50 and 50 a ranging market, and the bands in between a trend.
 
+## Chart
+
+<ta-chart src="/functions/macdv.svg" ratio="720:416" label="MACDV over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line with dashed rules at -150, -50, 50 and 150, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line with dashed rules at -150, -50, 50 and 150, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outMACDV: line, positive, negative, levels -150, -50, 50, 150` · `outMACDVSignal: dash_line, positive, negative` · `outMACDVHist: histogram, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/macdv.csv) · [Chart (SVG)](/functions/macdv.svg)
+
 ## Formula
 
 MACDV = (EMA(Close, fastPeriod) - EMA(Close, slowPeriod)) / ATR(slowPeriod) \* 100
@@ -63,7 +77,112 @@ Hist = MACDV - Signal
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double macdv[252], macdvSignal[252], macdvHist[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_MACDV( 0, n - 1, high, low, close, 12, 26, 9,
+          &outBegIdx, &outNBElement, macdv, macdvSignal, macdvHist );
+printf( "%d values from bar %d; last macdv = %f\n", outNBElement, outBegIdx, macdv[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut macdv = vec![0.0; 252];
+let mut macdv_signal = vec![0.0; 252];
+let mut macdv_hist = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.macdv(0, high.len() - 1, &high, &low, &close, 12, 26, 9,
+                       &mut macdv, &mut macdv_signal, &mut macdv_hist)?;
+println!("{} values from bar {}; last macdv = {}", range.count, range.beg_idx, macdv[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] macdv = new double[252];
+double[] macdvSignal = new double[252];
+double[] macdvHist = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.macdv(0, high.length - 1, high, low, close, 12, 26, 9,
+                        macdv, macdvSignal, macdvHist);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last macdv = " + macdv[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var macdv = new double[252];
+var macdvSignal = new double[252];
+var macdvHist = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Macdv(0, high.Length - 1, high, low, close, 12, 26, 9,
+                        macdv, macdvSignal, macdvHist);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last macdv = {macdv[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { macdv } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outMacdv,
+  outMacdvSignal,
+  outMacdvHist,
+} = macdv({ high, low, close }, {
+  fastPeriod: 12,
+  slowPeriod: 26,
+  signalPeriod: 9,
+});
+console.log(outMacdv.length + ' values from bar ' + begIdx + '; last outMacdv = ' + outMacdv[outMacdv.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.4.
 
 TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdv/macdv.c) · [`macdv.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdv/macdv.yaml)
 
@@ -75,7 +194,9 @@ TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_MACDV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDV.cs) |
 | TypeScript | [`macdv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdv.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MACDV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

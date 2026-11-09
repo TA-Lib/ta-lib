@@ -10,6 +10,20 @@ description: >-
 
 Hilbert Transform SineWave: derives the dominant-cycle phase from price and emits its sine plus a 45-degree-lead sine. The two curves cross near cycle turning points. outSine and outLeadSine crossing marks cycle turning points.
 
+## Chart
+
+<ta-chart src="/functions/ht_sine.svg" ratio="720:416" label="HT_SINE over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outSine as a solid line and outLeadSine as a dashed line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outSine as a solid line and outLeadSine as a dashed line.
+
+Metadata flags used: `outSine: line, positive, negative` · `outLeadSine: dash_line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/ht_sine.csv) · [Chart (SVG)](/functions/ht_sine.svg)
+
 ## Inputs
 
 * `inReal` — Source price series
@@ -38,7 +52,86 @@ Hilbert Transform SineWave: derives the dominant-cycle phase from price and emit
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double sine[252], leadSine[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_HT_SINE( 0, n - 1, series, &outBegIdx, &outNBElement, sine, leadSine );
+printf( "%d values from bar %d; last sine = %f\n", outNBElement, outBegIdx, sine[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut sine = vec![0.0; 252];
+let mut lead_sine = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.ht_sine(0, series.len() - 1, &series, &mut sine, &mut lead_sine)?;
+println!("{} values from bar {}; last sine = {}", range.count, range.beg_idx, sine[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] sine = new double[252];
+double[] leadSine = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.htSine(0, series.length - 1, series, sine, leadSine);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last sine = " + sine[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var sine = new double[252];
+var leadSine = new double[252];
+
+var core = Core.Default;
+OutRange r = core.HtSine(0, series.Length - 1, series, sine, leadSine);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last sine = {sine[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { htSine } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSine, outLeadSine } = htSine(series);
+console.log(outSine.length + ' values from bar ' + begIdx + '; last outSine = ' + outSine[outSine.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.4.0.
 
 TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.c) · [`ht_sine.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.yaml)
 
@@ -50,7 +143,9 @@ TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_HT_SINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_SINE.cs) |
 | TypeScript | [`htSine.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htSine.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.HT_SINE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

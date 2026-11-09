@@ -10,6 +10,20 @@ description: >-
 
 Returns the absolute input indices of the lowest and highest values within each rolling window of optInTimePeriod bars. Index variant of MINMAX.
 
+## Chart
+
+<ta-chart src="/functions/minmaxindex.svg" ratio="720:438" label="MINMAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx.
+
+Metadata flags used: `outMinIdx: integer, bar_index` · `outMaxIdx: integer, bar_index`
+
+:::
+
+[Reference data (CSV)](/functions/minmaxindex.csv) · [Chart (SVG)](/functions/minmaxindex.svg)
+
 ## Formula
 
 outMinIdx\[i] = index of min(inReal\[i-optInTimePeriod+1 .. i])\
@@ -53,7 +67,88 @@ outMaxIdx\[i] = index of max(inReal\[i-optInTimePeriod+1 .. i])
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+int minIdx[252], maxIdx[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_MINMAXINDEX( 0, n - 1, series, 30, &outBegIdx, &outNBElement, minIdx, maxIdx );
+printf( "%d values from bar %d; last minIdx = %d\n", outNBElement, outBegIdx, minIdx[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut min_idx = vec![0i32; 252];
+let mut max_idx = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.minmaxindex(0, series.len() - 1, &series, 30, &mut min_idx, &mut max_idx)?;
+println!("{} values from bar {}; last min_idx = {}", range.count, range.beg_idx, min_idx[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+int[] minIdx = new int[252];
+int[] maxIdx = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.minmaxindex(0, series.length - 1, series, 30, minIdx, maxIdx);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last minIdx = " + minIdx[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var minIdx = new int[252];
+var maxIdx = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Minmaxindex(0, series.Length - 1, series, 30, minIdx, maxIdx);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last minIdx = {minIdx[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { minmaxindex } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outMinIdx, outMaxIdx } = minmaxindex(series, {
+  timePeriod: 30,
+});
+console.log(outMinIdx.length + ' values from bar ' + begIdx + '; last outMinIdx = ' + outMinIdx[outMinIdx.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.4.0.
 
 TA-Lib Definition: [`minmaxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmaxindex/minmaxindex.c) · [`minmaxindex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minmaxindex/minmaxindex.yaml)
 
@@ -65,7 +160,9 @@ TA-Lib Definition: [`minmaxindex.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | C# | [`Core_MINMAXINDEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINMAXINDEX.cs) |
 | TypeScript | [`minmaxindex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minmaxindex.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.MINMAXINDEX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

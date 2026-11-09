@@ -10,6 +10,20 @@ description: >-
 
 Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at the lower band and 1 at the upper band. Values below 0 or above 1 mean the input is outside the bands.
 
+## Chart
+
+<ta-chart src="/functions/percentb.svg" ratio="720:416" label="PERCENTB over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line with dashed rules at 0 and 1."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line with dashed rules at 0 and 1.
+
+Metadata flags used: `outReal: line, positive, negative, levels 0, 1`
+
+:::
+
+[Reference data (CSV)](/functions/percentb.csv) · [Chart (SVG)](/functions/percentb.svg)
+
 ## Formula
 
 $$
@@ -64,7 +78,90 @@ where $\mathrm{upper}_t$ and $\mathrm{lower}_t$ are the [`BBANDS`](/functions/bb
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double series[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_PERCENTB( 0, n - 1, series, 20, 2.0, 2.0, TA_MAType_SMA, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let series = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.percentb(0, series.len() - 1, &series, 20, 2.0, 2.0, MAType::SMA,
+                          &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] series = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.percentb(0, series.length - 1, series, 20, 2.0, 2.0, MAType.SMA, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var series = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Percentb(0, series.Length - 1, series, 20, 2.0, 2.0, MAType.SMA, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, percentb } from 'ta-lib';
+
+const series = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = percentb(series, {
+  timePeriod: 20,
+  nbDevUp: 2,
+  nbDevDn: 2,
+  maType: MAType.SMA,
+});
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`percentb.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentb/percentb.c) · [`percentb.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentb/percentb.yaml)
 
@@ -76,7 +173,9 @@ TA-Lib Definition: [`percentb.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_PERCENTB.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PERCENTB.cs) |
 | TypeScript | [`percentb.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/percentb.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.PERCENTB` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

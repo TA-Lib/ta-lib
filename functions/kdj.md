@@ -10,6 +10,20 @@ description: >-
 
 The stochastic oscillator as it is drawn on Chinese-market platforms: the Slow-%K and Slow-%D lines plus a third line J that amplifies the gap between them. K and D are read like any stochastic — above 80 overbought, below 20 oversold, a K/D crossing signalling a momentum shift — while J is a divergence gauge whose excursions outside the 0-100 band mark the strongest moves. Both smoothing stages default to Wilder's moving average, which is the smoother the original formula language specifies; selecting a simple moving average for both reproduces the classic Slow Stochastic with a J line attached.
 
+## Chart
+
+<ta-chart src="/functions/kdj.svg" ratio="720:416" label="KDJ over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line with dashed rules at 20 and 80, outD as a dashed line and outJ as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line with dashed rules at 20 and 80, outD as a dashed line and outJ as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outK: line, positive, negative, levels 20, 80` · `outD: dash_line, positive, negative` · `outJ: line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/kdj.csv) · [Chart (SVG)](/functions/kdj.svg)
+
 ## Formula
 
 RSV = 100\*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
@@ -67,7 +81,110 @@ J = 3*K - 2*D
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double k[252], d[252], j[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_KDJ( 0, n - 1, high, low, close, 9, 3, TA_MAType_RMA, 3, TA_MAType_RMA,
+        &outBegIdx, &outNBElement, k, d, j );
+printf( "%d values from bar %d; last k = %f\n", outNBElement, outBegIdx, k[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, MAType};
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut k = vec![0.0; 252];
+let mut d = vec![0.0; 252];
+let mut j = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.kdj(0, high.len() - 1, &high, &low, &close, 9, 3, MAType::RMA, 3, MAType::RMA,
+                     &mut k, &mut d, &mut j)?;
+println!("{} values from bar {}; last k = {}", range.count, range.beg_idx, k[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.MAType;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] k = new double[252];
+double[] d = new double[252];
+double[] j = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.kdj(0, high.length - 1, high, low, close, 9, 3, MAType.RMA, 3, MAType.RMA,
+                      k, d, j);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last k = " + k[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var k = new double[252];
+var d = new double[252];
+var j = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Kdj(0, high.Length - 1, high, low, close, 9, 3, MAType.RMA, 3, MAType.RMA,
+                      k, d, j);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last k = {k[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { MAType, kdj } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outK, outD, outJ } = kdj({ high, low, close }, {
+  fastKPeriod: 9,
+  slowKPeriod: 3,
+  slowKMaType: MAType.RMA,
+  slowDPeriod: 3,
+  slowDMaType: MAType.RMA,
+});
+console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.c) · [`kdj.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.yaml)
 
@@ -79,7 +196,9 @@ TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_KDJ.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KDJ.cs) |
 | TypeScript | [`kdj.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kdj.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.KDJ` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

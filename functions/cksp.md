@@ -8,6 +8,20 @@ description: Chande and Kroll's two-line volatility stop.
 
 Chande and Kroll's two-line volatility stop. The highest high is offset down, and the lowest low up, by a multiple of the Average True Range, and each line then takes the extreme of its own recent values, so it moves only when a new extreme enters the stop window or an old one leaves it. Price above both lines reads as an uptrend and price below both as a downtrend.
 
+## Chart
+
+<ta-chart src="/functions/cksp.svg" ratio="720:274" label="CKSP over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line.
+
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outHighStop: line` · `outLowStop: line`
+
+:::
+
+[Reference data (CSV)](/functions/cksp.csv) · [Chart (SVG)](/functions/cksp.svg)
+
 ## Formula
 
 FirstHighStop = MAX(High, TimePeriod) - Multiplier \* ATR(TimePeriod)
@@ -63,7 +77,101 @@ LowStop = MIN(FirstLowStop, StopPeriod)
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double highStop[252], lowStop[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_CKSP( 0, n - 1, high, low, close, 10, 1.0, 9, &outBegIdx, &outNBElement, highStop, lowStop );
+printf( "%d values from bar %d; last highStop = %f\n", outNBElement, outBegIdx, highStop[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut high_stop = vec![0.0; 252];
+let mut low_stop = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.cksp(0, high.len() - 1, &high, &low, &close, 10, 1.0, 9,
+                      &mut high_stop, &mut low_stop)?;
+println!("{} values from bar {}; last high_stop = {}", range.count, range.beg_idx, high_stop[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] highStop = new double[252];
+double[] lowStop = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.cksp(0, high.length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last highStop = " + highStop[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var highStop = new double[252];
+var lowStop = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Cksp(0, high.Length - 1, high, low, close, 10, 1.0, 9, highStop, lowStop);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last highStop = {highStop[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { cksp } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outHighStop, outLowStop } = cksp({ high, low, close }, {
+  timePeriod: 10,
+  multiplier: 1,
+  stopPeriod: 9,
+});
+console.log(outHighStop.length + ' values from bar ' + begIdx + '; last outHighStop = ' + outHighStop[outHighStop.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`cksp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cksp/cksp.c) · [`cksp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cksp/cksp.yaml)
 
@@ -75,7 +183,9 @@ TA-Lib Definition: [`cksp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_CKSP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CKSP.cs) |
 | TypeScript | [`cksp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cksp.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CKSP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

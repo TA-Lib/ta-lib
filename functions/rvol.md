@@ -12,6 +12,20 @@ Relative Volume: today's volume as a ratio to the average volume of the bars tha
 
 Read it as a confirmation filter rather than a direction signal: it says how much conviction is behind a price move, not which way. Breakouts on a high ratio are the ones that tend to follow through; the same breakout near 1 is the one to distrust.
 
+## Chart
+
+<ta-chart src="/functions/rvol.svg" ratio="720:484" label="RVOL over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane.
+
+Metadata flags used: `inPriceV: volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/rvol.csv) · [Chart (SVG)](/functions/rvol.svg)
+
 ## Formula
 
 RVOL_t = Volume_t / ( (1/N) \* sum\_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
@@ -54,7 +68,83 @@ RVOL_t = Volume_t / ( (1/N) \* sum\_{i=t-N}^{t-1} Volume_i ), N = optInTimePerio
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double volume[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_RVOL( 0, n - 1, volume, 20, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let volume = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.rvol(0, volume.len() - 1, &volume, 20, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] volume = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.rvol(0, volume.length - 1, volume, 20, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var volume = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Rvol(0, volume.Length - 1, volume, 20, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { rvol } from 'ta-lib';
+
+const volume = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`rvol.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvol/rvol.c) · [`rvol.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvol/rvol.yaml)
 
@@ -66,7 +156,9 @@ TA-Lib Definition: [`rvol.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C# | [`Core_RVOL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_RVOL.cs) |
 | TypeScript | [`rvol.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rvol.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.RVOL` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

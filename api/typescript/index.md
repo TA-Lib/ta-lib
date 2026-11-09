@@ -40,12 +40,12 @@ The TypeScript library is not on npm yet. Until it is, build it from source ([2.
 
 ## 1.0 Introduction {#intro}
 
-The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, writes into typed arrays you allocate, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
 * The [`Core`](#candle_settings) type and the `CoreBuilder` that configures it.
-* The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Pass a `Core` as the last argument of any call; without one, the call uses `Core.DEFAULT`.
+* The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
 * Every TA function, each processing a whole array of data at once.
 * An optional [Abstract API](#abstract) for calling those functions dynamically.
 
@@ -71,120 +71,119 @@ Then depend on the built directory from your project's `package.json`:
 }
 ```
 
-The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node.
+The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
-Every indicator is a function taking the same startIdx/endIdx/inputs/optional-parameters/outputs shape as the C function it mirrors.
+Every indicator is a function taking its input arrays, then one optional object of options, and returning its results.
 
 ### 3.1 Batch Processing {#direct_call}
 
-Every function follows the same simple pattern: it reads its inputs from arrays you pass in and writes its results into typed arrays you allocate.
-
-A function never writes more elements than you request, so the output array only needs to cover the `startIdx`-to-`endIdx` range.
+Every function follows the same simple pattern: it reads its inputs from arrays you pass in and returns its results in typed arrays, allocated for you unless you pass your own.
 
 As an example, let's walk through `SMA`, a function to calculate a moving average.
 
-<pre>function sma( <span class="ta-arg-range">startIdx: number,</span>
-              <span class="ta-arg-range">endIdx: number,</span>
-              <span class="ta-arg-in">inReal: ArrayLike&lt;number&gt;,</span>
-              <span class="ta-arg-opt">optInTimePeriod: number,</span>
-              <span class="ta-arg-out">outReal: Float64Array,</span>
-              core?: Core ): OutRange
+<pre>function sma( <span class="ta-arg-in">real: ArrayLike&lt;number&gt;,</span>
+              options?: {
+                <span class="ta-arg-opt">timePeriod?: number,</span>
+                <span class="ta-arg-range">startIdx?: number,</span>
+                <span class="ta-arg-range">endIdx?: number,</span>
+                core?: Core,
+                <span class="ta-arg-out">outReal?: Float64Array&lt;ArrayBuffer&gt;</span> } ): { begIdx: number, values: Float64Array&lt;ArrayBuffer&gt; }
 </pre>
 
 All TA functions use the same calling pattern, divided into four groups:
 
 <ul>
-<li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input arrays.</span></li>
-<li><span class="ta-arg-in">One or more input arrays are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. If you do not care about a particular optIn, just pass <code>Core.INTEGER_DEFAULT</code> or <code>Core.REAL_DEFAULT</code> (depending on the type). For a moving-average type, use <code>MAType.DEFAULT</code>.</span></li>
-<li><span class="ta-arg-out">One or more output arrays come next. In this example there is only one output (outReal). Where the values landed is the return value, not a parameter: on success you get an <code>OutRange</code>.</span></li>
+<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>. An object with more components than the function reads, a whole bar, passes.</span></li>
+<li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code> and in camelCase (<a href="/spec/#rj1">rJ1</a>): <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>, <code>fastDMaType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
+<li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
+<li><span class="ta-arg-out">Output buffers are optional, one key per output (outReal here): see <a href="#input_type">4.4</a>. Without them, each output is allocated.</span></li>
 </ul>
 
-The optional `core` comes last: the settings to compute with.
-
-This calling pattern takes some getting used to, but it lets your app spend time and memory only on the data it actually needs.
+The optional `core` key holds the settings to compute with.
 
 For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:
 
 <pre>import { sma } from 'ta-lib';
 
 const close = new Float64Array([ /* ...your closing prices... */ ]);
-const out = new Float64Array(close.length);
 
-const r = sma(
-    <span class="ta-arg-range">0</span>, <span class="ta-arg-range">close.length - 1</span>,
-    <span class="ta-arg-in">close</span>,
-    <span class="ta-arg-opt">30</span>,
-    <span class="ta-arg-out">out</span> );
+const { begIdx, values } = sma( <span class="ta-arg-in">close</span>, { <span class="ta-arg-opt">timePeriod: 30</span> } );
 
-// out[0 .. r.count - 1] holds the SMA; out[i] is input bar r.begIdx + i.
-for (let i = 0; i &lt; r.count; i++) {
-  console.log(`bar ${r.begIdx + i} = ${out[i]}`);
+// values[i] is the SMA at input bar begIdx + i.
+for (let i = 0; i &lt; values.length; i++) {
+  console.log(`bar ${begIdx + i} = ${values[i]}`);
 }
 </pre>
 
-After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.begIdx` will be 29 (zero-based) and `r.count` will be `close.length - 29`. In other words, only that many elements of `out` are written, corresponding to input elements 29 through the end.
+The result says what was produced. Even though the whole series was requested, a 30-day average is not defined until the 30th day. Consequently `begIdx` will be 29 (zero-based) and `values.length` will be `close.length - 29`: the values for input elements 29 through the end. Nothing is padded.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `r.count` is 0 (`r.isEmpty()`).
+If you do not provide enough data to calculate even one value, the call still succeeds: `begIdx` is 0 and `values` is empty.
 
-`OutRange` has two read-only fields, `begIdx` and `count` (C's `outBegIdx` and `outNBElement`), plus the conveniences `isEmpty()` and `OutRange.EMPTY`.
+A function with several outputs returns one array per output, each named after its C output in camelCase without C's type word (<code>outRealUpperBand</code> is <code>outUpperBand</code>), and all of the same length:
+
+```ts
+import { macd } from 'ta-lib';
+
+const { begIdx, outMacd, outMacdSignal, outMacdHist } = macd(close);
+```
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback (see the [three sizing methods](/api/#output_size)):
+A buffer you pass must hold the values the call writes, and at least one element: the input length always suffices, and the lookback gives the exact count (see the [three sizing methods](/api/#output_size)):
 
 ```ts
 import { smaLookback } from 'ta-lib';
 
-const lookback = smaLookback(30);   // 29 for a 30-period SMA
+const lookback = smaLookback({ timePeriod: 30 });   // 29 for a 30-period SMA
 ```
 
-Each TA function has a matching `<name>Lookback` function, taking the same optional parameters as the function itself. The lookback is how many inputs are consumed before the first output.
+Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
 
 ### 3.3 Display Shift {#display_shift}
 
-A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>DisplayShift` function gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>DisplayShift` function gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function. It takes the output's index, then the options object.
 
 ```ts
 import { dpoDisplayShift } from 'ta-lib';
 
-const shift = dpoDisplayShift(20, 0);   // period 20, first output: -11
+const shift = dpoDisplayShift(0, { timePeriod: 20 });   // first output, period 20: -11
 ```
 
-The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+Rejected parameters, or an index that names no output, give `Core.DISPLAY_SHIFT_INVALID`. The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
 
 ### 3.4 Errors {#retcode}
 
-Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it. Its `retCode` is C's number for the same code.
+Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it rather than on `instanceof`, which fails across two copies of the package. Its `retCode` is C's number for the same code.
 
 | Mistake | `code` |
 |---|---|
 | `startIdx` negative or above `Core.INDEX_MAX` | `'TA_OUT_OF_RANGE_START_INDEX'` |
 | `endIdx` negative, above `Core.INDEX_MAX`, or below `startIdx` | `'TA_OUT_OF_RANGE_END_INDEX'` |
-| Optional parameter outside its documented range | `'TA_BAD_PARAM'` |
+| Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
-| Two outputs sharing one array | `'TA_BAD_PARAM'` |
-| An array too short for the range requested, including an `endIdx` past the end of the input | `'TA_BAD_PARAM'` |
-| An absent or empty array | `'TA_BAD_PARAM'` |
-| An output that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
+| Options that are not a plain object, an array included | `'TA_BAD_PARAM'` |
+| Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
+| A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
+| An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |
+| An absent or empty input, an input that is not array-like, a price object that is not an object, or an empty buffer | `'TA_BAD_PARAM'` |
+| A buffer that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
 
 ```ts
-import { sma, TALibError } from 'ta-lib';
+import { sma, type TALibError } from 'ta-lib';
 
 try {
-  sma(0, close.length - 1, close, 0, out);
+  sma(close, { timePeriod: 0 });
 } catch (e) {
-  if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') {
-    // e.retCode is 2, as C's TA_BAD_PARAM
+  const err = e as TALibError;
+  if (err?.code === 'TA_BAD_PARAM') {
+    // err.retCode is 2, as C's TA_BAD_PARAM
   }
 }
 ```
 
-A rejected call leaves every array untouched.
-
-You can pass the same `Float64Array` as an input and an output to compute in place. Avoid a partial overlap: its result is [unspecified](/spec/inputs-outputs/#no-overlap).
+A rejected call leaves every buffer untouched.
 
 A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
 
@@ -204,7 +203,7 @@ Every function documentation page carries a [numerical-stability property](/func
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
-The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults. The builder sets them, and the call takes the built `Core` as its last argument:
+The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults. The builder sets them, and the call takes the built `Core` as its `core` option:
 
 ```ts
 import { CandleSettingType, CoreBuilder, RangeType, cdldoji } from 'ta-lib';
@@ -213,8 +212,7 @@ const core = new CoreBuilder()
   .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.1)
   .build();
 
-const pattern = new Int32Array(close.length);
-cdldoji(0, close.length - 1, open, high, low, close, pattern, core);
+const { begIdx, values } = cdldoji({ open, high, low, close }, { core });   // values: Int32Array<ArrayBuffer>
 ```
 
 Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out of range, so `build()` cannot fail.
@@ -223,7 +221,16 @@ Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out
 
 An input is any `ArrayLike<number>`. A `Float64Array` is read in place; any other form, such as a `number[]` or a `Float32Array`, is first copied into a `Float64Array`, each element converted to a double. A `Float32Array` therefore gives the same output, bit for bit, as a `Float64Array` holding the same values.
 
-An output is a `Float64Array`, or an `Int32Array` for an integer output such as a candlestick pattern.
+An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To compute without allocating, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
+
+```ts
+const buf = new Float64Array(close.length);
+const { values } = sma(close, { timePeriod: 30, outReal: buf });   // values: a view of buf, no copy
+```
+
+A single output's key is `outReal` or `outInteger`; a multi-output function's keys are its result names (`outMacd`, `outMacdSignal`, `outMacdHist`). Each buffer is optional on its own: an omitted one is allocated. A buffer is written from index 0, sized as in [3.2](#output_size), and must not share memory with another buffer.
+
+You can pass the same `Float64Array` as an input and as an output buffer to compute in place. A buffer that overlaps a `Float64Array` input only partly is `'TA_BAD_PARAM'`; any other input is copied first.
 
 ### 4.5 Index Range {#index_range}
 
@@ -231,7 +238,7 @@ An output is a `Float64Array`, or an `Int32Array` for an integer output such as 
 
 ### 4.6 Changing Settings {#settings}
 
-**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
+**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
 
 ## 5.0 Documentation {#docs}
 

@@ -140,7 +140,7 @@ talib.set_unstable_period('ALL', talib.UNSTABLE_AUTO_PREC_4)
 
 :::
 
-In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object. In TypeScript, pass `core` as the last argument of each call.
+In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object. In TypeScript, pass it as the `core` option of each call.
 
 The number of bars comes from the parameters of each call: a 200-bar EMA drops more than a 30-bar one. Indicators built on another, such as MACD on EMA, follow along.
 

@@ -14,7 +14,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - **The same values in every language.** On one machine, the same call gives bit-identical results in C, Rust, Java, C# and TypeScript, except where it evaluates a transcendental function such as `exp` or `log`: there TA-Lib targets a difference below 1e-9 ([determinism](https://ta-lib.org/spec/versions/index.md#determinism)). Across machines, [compare with a tolerance](https://ta-lib.org/spec/versions/index.md#tolerance).
 - **A page per function.** `https://ta-lib.org/functions/<name>.md`, with the name in lowercase (e.g. [RSI](https://ta-lib.org/functions/rsi.md)), gives its inputs, outputs, parameters (type, default, accepted values), numerical stability and flags; the [function index](https://ta-lib.org/functions/index.md) groups them.
 - **Fast batch calls.** A batch call runs tight loops over the series: on modern AMD, Intel and Apple processors, most functions take under 10 nanoseconds per bar at their default parameters, in each of C, Rust, Java and C#, and the slowest, such as HT_SINE, a few hundred.
-- **Batch: defined values only.** A call computes the inclusive, zero-based `startIdx` to `endIdx` range and writes only the bars where the function is defined, from the start of the output buffer: `out[0]` is input bar `outBegIdx`, and `outNBElement` values follow in [C](https://ta-lib.org/api/index.md); Rust, Java, C# and TypeScript return the same pair as an `OutRange`. Too little data is a success with an empty range ([batch rules](https://ta-lib.org/spec/inputs-outputs/index.md)).
+- **Batch: defined values only.** A call computes the inclusive, zero-based `startIdx` to `endIdx` range and writes only the bars where the function is defined, from the start of the output buffer: `out[0]` is input bar `outBegIdx`, and `outNBElement` values follow in [C](https://ta-lib.org/api/index.md); Rust, Java and C# return the same pair as an `OutRange`, and TypeScript returns `begIdx` with the values. Too little data is a success with an empty range ([batch rules](https://ta-lib.org/spec/inputs-outputs/index.md)).
 - **Lookback before any data.** `TA_<NAME>_Lookback(params)`, and its equivalent in each port, is the number of bars a function consumes before its first output. It depends only on the parameters and the settings in effect, never on the data, so it [validates parameters](https://ta-lib.org/spec/lookback/index.md#rl3) and [sizes outputs](https://ta-lib.org/spec/inputs-outputs/index.md#rw1) before any series exists. Ask it; never derive it from a formula ([lookback](https://ta-lib.org/spec/lookback/index.md)). No value is ever moved to another bar: where a chart draws an output elsewhere, as with ICHIMOKU's cloud, `TA_<NAME>_DisplayShift(params, outputIdx)` gives the offset.
 - **Every function streams.** Open on history, update once per closed bar without recomputing the history, and peek at the forming bar without changing state. A stream gives the batch call's values over the same bars, bit for bit outside [stated exceptions](https://ta-lib.org/spec/streaming/index.md), so a live feed reproduces a backtest. A rejected bar changes nothing, and a handle clones to fork. Each language's page: [C](https://ta-lib.org/api/stream/index.md), [Rust](https://ta-lib.org/api/rust/stream/index.md), [Java](https://ta-lib.org/api/java/stream/index.md), [C#](https://ta-lib.org/api/csharp/stream/index.md), [TypeScript](https://ta-lib.org/api/typescript/stream/index.md).
 - **Warm-up, discarded on request.** A recursive function such as EMA, RSI or ADX seeds its state from its first bars, so its early values depend on where the series starts; that is inherent to the algorithm. By default every computable value is returned. One [Auto-Stabilization](https://ta-lib.org/api/unstable-period/index.md) setting makes each such function discard the leading bars needed to reach a target number of significant digits, sized from the call's parameters ([counts and known exceptions](https://ta-lib.org/spec/auto-stabilization/index.md)); the lookback includes them.
@@ -467,7 +467,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Call | Returns |
 |------|---------|
-| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_START_INDEX` when `historyLen` is 0</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
+| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1`, 0 included — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_INDEX_MAX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` from `Update` (never `Peek`) once the range has reached bar `TA_INDEX_MAX`, the last index the batch API addresses</li><li>`TA_ALLOC_ERR`: a memory allocation failure</li></ul>Apart from `TA_ALLOC_ERR`, after which nothing is defined, a rejection changes nothing at all: no state, no output and no range. The next call sees exactly what the last accepted bar left. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_<NAME>_Value` | `TA_BAD_PARAM` on a NULL stream or a NULL out-pointer for any output. |
@@ -1044,7 +1044,7 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]`. The `f
 
 **`Core` is immutable**, so one instance is safe to share across any number of threads with no synchronization.
 
-Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
+Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
 
 ## 5.0 Documentation {#docs}
 
@@ -1542,16 +1542,15 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Condition | Exception |
 |---|---|
-| An empty history (zero bars, or a null array) | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeStartIndex` |
 | A history longer than `Core.IndexMax + 1` bars | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeEndIndex` |
 | An optional parameter outside its documented range, a non-finite real parameter included | `ArgumentException` |
-| An input series whose length differs from the history's | `ArgumentException` naming it |
+| An input series after the first that is empty (a null array included) beside a non-empty history, or whose length differs from the history's | `ArgumentException` naming it |
 | (`OpenAndFill`) an output shorter than the values the fill writes, or the same buffer as an input or another output | `ArgumentException` |
-| Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
+| Fewer than `lookback + 1` history bars, zero bars or a null array included; checked after every row above | `InsufficientHistoryException` |
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
-`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. An empty history is not that case: zero bars is an index fault, so a loop that retries on `InsufficientHistoryException` until enough bars arrive must not start before the first bar. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
+`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
 Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 
@@ -1624,12 +1623,12 @@ The TypeScript library is not on npm yet. Until it is, build it from source ([2.
 
 ## 1.0 Introduction {#intro}
 
-The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, writes into typed arrays you allocate, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
 * The [`Core`](#candle_settings) type and the `CoreBuilder` that configures it.
-* The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Pass a `Core` as the last argument of any call; without one, the call uses `Core.DEFAULT`.
+* The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Pass a `Core` as the `core` option of any call; without one, the call uses `Core.DEFAULT`.
 * Every TA function, each processing a whole array of data at once.
 * An optional [Abstract API](#abstract) for calling those functions dynamically.
 
@@ -1655,120 +1654,119 @@ Then depend on the built directory from your project's `package.json`:
 }
 ```
 
-The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node.
+The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
-Every indicator is a function taking the same startIdx/endIdx/inputs/optional-parameters/outputs shape as the C function it mirrors.
+Every indicator is a function taking its input arrays, then one optional object of options, and returning its results.
 
 ### 3.1 Batch Processing {#direct_call}
 
-Every function follows the same simple pattern: it reads its inputs from arrays you pass in and writes its results into typed arrays you allocate.
-
-A function never writes more elements than you request, so the output array only needs to cover the `startIdx`-to-`endIdx` range.
+Every function follows the same simple pattern: it reads its inputs from arrays you pass in and returns its results in typed arrays, allocated for you unless you pass your own.
 
 As an example, let's walk through `SMA`, a function to calculate a moving average.
 
-<pre>function sma( <span class="ta-arg-range">startIdx: number,</span>
-              <span class="ta-arg-range">endIdx: number,</span>
-              <span class="ta-arg-in">inReal: ArrayLike&lt;number&gt;,</span>
-              <span class="ta-arg-opt">optInTimePeriod: number,</span>
-              <span class="ta-arg-out">outReal: Float64Array,</span>
-              core?: Core ): OutRange
+<pre>function sma( <span class="ta-arg-in">real: ArrayLike&lt;number&gt;,</span>
+              options?: {
+                <span class="ta-arg-opt">timePeriod?: number,</span>
+                <span class="ta-arg-range">startIdx?: number,</span>
+                <span class="ta-arg-range">endIdx?: number,</span>
+                core?: Core,
+                <span class="ta-arg-out">outReal?: Float64Array&lt;ArrayBuffer&gt;</span> } ): { begIdx: number, values: Float64Array&lt;ArrayBuffer&gt; }
 </pre>
 
 All TA functions use the same calling pattern, divided into four groups:
 
 <ul>
-<li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input arrays.</span></li>
-<li><span class="ta-arg-in">One or more input arrays are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. If you do not care about a particular optIn, just pass <code>Core.INTEGER_DEFAULT</code> or <code>Core.REAL_DEFAULT</code> (depending on the type). For a moving-average type, use <code>MAType.DEFAULT</code>.</span></li>
-<li><span class="ta-arg-out">One or more output arrays come next. In this example there is only one output (outReal). Where the values landed is the return value, not a parameter: on success you get an <code>OutRange</code>.</span></li>
+<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>. An object with more components than the function reads, a whole bar, passes.</span></li>
+<li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code> and in camelCase (<a href="/spec/#rj1">rJ1</a>): <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>, <code>fastDMaType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
+<li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
+<li><span class="ta-arg-out">Output buffers are optional, one key per output (outReal here): see <a href="#input_type">4.4</a>. Without them, each output is allocated.</span></li>
 </ul>
 
-The optional `core` comes last: the settings to compute with.
-
-This calling pattern takes some getting used to, but it lets your app spend time and memory only on the data it actually needs.
+The optional `core` key holds the settings to compute with.
 
 For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:
 
 <pre>import { sma } from 'ta-lib';
 
 const close = new Float64Array([ /* ...your closing prices... */ ]);
-const out = new Float64Array(close.length);
 
-const r = sma(
-    <span class="ta-arg-range">0</span>, <span class="ta-arg-range">close.length - 1</span>,
-    <span class="ta-arg-in">close</span>,
-    <span class="ta-arg-opt">30</span>,
-    <span class="ta-arg-out">out</span> );
+const { begIdx, values } = sma( <span class="ta-arg-in">close</span>, { <span class="ta-arg-opt">timePeriod: 30</span> } );
 
-// out[0 .. r.count - 1] holds the SMA; out[i] is input bar r.begIdx + i.
-for (let i = 0; i &lt; r.count; i++) {
-  console.log(`bar ${r.begIdx + i} = ${out[i]}`);
+// values[i] is the SMA at input bar begIdx + i.
+for (let i = 0; i &lt; values.length; i++) {
+  console.log(`bar ${begIdx + i} = ${values[i]}`);
 }
 </pre>
 
-After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.begIdx` will be 29 (zero-based) and `r.count` will be `close.length - 29`. In other words, only that many elements of `out` are written, corresponding to input elements 29 through the end.
+The result says what was produced. Even though the whole series was requested, a 30-day average is not defined until the 30th day. Consequently `begIdx` will be 29 (zero-based) and `values.length` will be `close.length - 29`: the values for input elements 29 through the end. Nothing is padded.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `r.count` is 0 (`r.isEmpty()`).
+If you do not provide enough data to calculate even one value, the call still succeeds: `begIdx` is 0 and `values` is empty.
 
-`OutRange` has two read-only fields, `begIdx` and `count` (C's `outBegIdx` and `outNBElement`), plus the conveniences `isEmpty()` and `OutRange.EMPTY`.
+A function with several outputs returns one array per output, each named after its C output in camelCase without C's type word (<code>outRealUpperBand</code> is <code>outUpperBand</code>), and all of the same length:
+
+```ts
+import { macd } from 'ta-lib';
+
+const { begIdx, outMacd, outMacdSignal, outMacdHist } = macd(close);
+```
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback (see the [three sizing methods](/api/#output_size)):
+A buffer you pass must hold the values the call writes, and at least one element: the input length always suffices, and the lookback gives the exact count (see the [three sizing methods](/api/#output_size)):
 
 ```ts
 import { smaLookback } from 'ta-lib';
 
-const lookback = smaLookback(30);   // 29 for a 30-period SMA
+const lookback = smaLookback({ timePeriod: 30 });   // 29 for a 30-period SMA
 ```
 
-Each TA function has a matching `<name>Lookback` function, taking the same optional parameters as the function itself. The lookback is how many inputs are consumed before the first output.
+Each TA function has a matching `<name>Lookback` function. It takes the function's own options object and ignores the keys it has no use for, so one object serves both calls. The lookback is how many inputs are consumed before the first output. Parameters the function rejects give `Core.LOOKBACK_INVALID` (-1).
 
 ### 3.3 Display Shift {#display_shift}
 
-A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>DisplayShift` function gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function.
+A few indicators are conventionally drawn at another bar than the one that computes them. The values are never moved: the matching `<name>DisplayShift` function gives the number of bars to shift one output when charting it, positive ahead and negative behind. It is 0 for almost every function. It takes the output's index, then the options object.
 
 ```ts
 import { dpoDisplayShift } from 'ta-lib';
 
-const shift = dpoDisplayShift(20, 0);   // period 20, first output: -11
+const shift = dpoDisplayShift(0, { timePeriod: 20 });   // first output, period 20: -11
 ```
 
-The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+Rejected parameters, or an index that names no output, give `Core.DISPLAY_SHIFT_INVALID`. The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
 
 ### 3.4 Errors {#retcode}
 
-Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it. Its `retCode` is C's number for the same code.
+Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it rather than on `instanceof`, which fails across two copies of the package. Its `retCode` is C's number for the same code.
 
 | Mistake | `code` |
 |---|---|
 | `startIdx` negative or above `Core.INDEX_MAX` | `'TA_OUT_OF_RANGE_START_INDEX'` |
 | `endIdx` negative, above `Core.INDEX_MAX`, or below `startIdx` | `'TA_OUT_OF_RANGE_END_INDEX'` |
-| Optional parameter outside its documented range | `'TA_BAD_PARAM'` |
+| Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
-| Two outputs sharing one array | `'TA_BAD_PARAM'` |
-| An array too short for the range requested, including an `endIdx` past the end of the input | `'TA_BAD_PARAM'` |
-| An absent or empty array | `'TA_BAD_PARAM'` |
-| An output that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
+| Options that are not a plain object, an array included | `'TA_BAD_PARAM'` |
+| Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
+| A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
+| An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |
+| An absent or empty input, an input that is not array-like, a price object that is not an object, or an empty buffer | `'TA_BAD_PARAM'` |
+| A buffer that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
 
 ```ts
-import { sma, TALibError } from 'ta-lib';
+import { sma, type TALibError } from 'ta-lib';
 
 try {
-  sma(0, close.length - 1, close, 0, out);
+  sma(close, { timePeriod: 0 });
 } catch (e) {
-  if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') {
-    // e.retCode is 2, as C's TA_BAD_PARAM
+  const err = e as TALibError;
+  if (err?.code === 'TA_BAD_PARAM') {
+    // err.retCode is 2, as C's TA_BAD_PARAM
   }
 }
 ```
 
-A rejected call leaves every array untouched.
-
-You can pass the same `Float64Array` as an input and an output to compute in place. Avoid a partial overlap: its result is [unspecified](/spec/inputs-outputs/#no-overlap).
+A rejected call leaves every buffer untouched.
 
 A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
 
@@ -1788,7 +1786,7 @@ Every function documentation page carries a [numerical-stability property](/func
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
-The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults. The builder sets them, and the call takes the built `Core` as its last argument:
+The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults. The builder sets them, and the call takes the built `Core` as its `core` option:
 
 ```ts
 import { CandleSettingType, CoreBuilder, RangeType, cdldoji } from 'ta-lib';
@@ -1797,8 +1795,7 @@ const core = new CoreBuilder()
   .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.1)
   .build();
 
-const pattern = new Int32Array(close.length);
-cdldoji(0, close.length - 1, open, high, low, close, pattern, core);
+const { begIdx, values } = cdldoji({ open, high, low, close }, { core });   // values: Int32Array<ArrayBuffer>
 ```
 
 Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out of range, so `build()` cannot fail.
@@ -1807,7 +1804,16 @@ Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out
 
 An input is any `ArrayLike<number>`. A `Float64Array` is read in place; any other form, such as a `number[]` or a `Float32Array`, is first copied into a `Float64Array`, each element converted to a double. A `Float32Array` therefore gives the same output, bit for bit, as a `Float64Array` holding the same values.
 
-An output is a `Float64Array`, or an `Int32Array` for an integer output such as a candlestick pattern.
+An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To compute without allocating, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
+
+```ts
+const buf = new Float64Array(close.length);
+const { values } = sma(close, { timePeriod: 30, outReal: buf });   // values: a view of buf, no copy
+```
+
+A single output's key is `outReal` or `outInteger`; a multi-output function's keys are its result names (`outMacd`, `outMacdSignal`, `outMacdHist`). Each buffer is optional on its own: an omitted one is allocated. A buffer is written from index 0, sized as in [3.2](#output_size), and must not share memory with another buffer.
+
+You can pass the same `Float64Array` as an input and as an output buffer to compute in place. A buffer that overlaps a `Float64Array` input only partly is `'TA_BAD_PARAM'`; any other input is copied first.
 
 ### 4.5 Index Range {#index_range}
 
@@ -1815,7 +1821,7 @@ An output is a `Float64Array`, or an `Int32Array` for an integer output such as 
 
 ### 4.6 Changing Settings {#settings}
 
-**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
+**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
 
 ## 5.0 Documentation {#docs}
 
@@ -1844,13 +1850,13 @@ Each streamable function adds two opening functions and a stream class, e.g. `Sm
 
 | Call | When | Does |
 |------|------|------|
-| `<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
+| `<name>Open(history, options)` | once | validate params, consume warm-up history, return a **stream** |
 | `stream.update(bar)` | once per **closed** bar | commit one bar and answer the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-A single-output function answers with a `number`. A multi-output one writes into a sink you pass and own: see [Multi-input / multi-output](#multi-input-multi-output).
+A single-output function answers with a `number`, a multi-output one with an object holding its outputs: see [Multi-input / multi-output](#multi-input-multi-output).
 
-One more call, `<name>OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
+One more call, `<name>OpenAndFill`, also returns array output: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
@@ -1861,9 +1867,9 @@ There is no `close`: an unreferenced stream is simply garbage-collected.
 ```ts
 import { smaOpen } from 'ta-lib';
 
-// Seed with warm-up history (>= smaLookback(period) + 1 bars).
+// Seed with warm-up history (>= smaLookback(options) + 1 bars).
 const history = new Float64Array([ /* ...your closing prices... */ ]);
-const s = smaOpen(history, 30);           // value() starts at the last history bar
+const s = smaOpen(history, { timePeriod: 30 });   // value() starts at the last history bar
 
 // Each time a bar closes:
 const v = s.update(newClose);             // throws on a non-finite bar, or past INDEX_MAX
@@ -1876,52 +1882,50 @@ const provisional = s.peek(formingClose); // state left unchanged
 
 ## Rules
 
-* **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `TALibError` with `code` `'TA_INSUFFICIENT_HISTORY'` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
+* **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(options) + 1`: with fewer bars there is no defined value yet. Too little history, an empty one included, throws `TALibError` with `code` `'TA_INSUFFICIENT_HISTORY'` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
 * **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 * **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
-* **Parameters are fixed at `open`.** Changing a parameter means a new stream. The [unstable period](/api/typescript/#numerical_stability) and [candle settings](/api/typescript/#candle_settings) come from the `Core` passed as the opener's last argument, or `Core.DEFAULT`. Since `Core` is immutable they cannot change underneath a live stream: to stream with different settings, build a new `Core` and open with that.
+* **Parameters are fixed at `open`.** Changing a parameter means a new stream. The [unstable period](/api/typescript/#numerical_stability) and [candle settings](/api/typescript/#candle_settings) come from the `Core` passed as the opener's `core` option, or `Core.DEFAULT`. Since `Core` is immutable they cannot change underneath a live stream: to stream with different settings, build a new `Core` and open with that.
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch function. A multi-output function writes its outputs into a `<Name>Out`, a plain mutable object with one field per output, in batch output order, that **you** allocate and pass in. Candlestick patterns return a `number`:
+Inputs mirror the batch function: the same positional arrays and price objects at `open`, then one number per input component at `update` and `peek`, named as the opener's positional inputs are, a price input by its components (`update(high, low, close)`). A multi-output function returns its outputs in a `<Name>Out`, a plain mutable object with one field per output, named as the batch result's. Candlestick patterns return a `number`:
 
 ```ts
 import { cdldojiOpen, macdOpen, MacdOut } from 'ta-lib';
 
 // MACD: one input, three outputs
-const m = macdOpen(history, 12, 26, 9);
+const m = macdOpen(history, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+const { outMacd, outMacdSignal, outMacdHist } = m.update(newClose);   // a new MacdOut
+
 const out = new MacdOut();               // allocate once, reuse every bar
-m.update(newClose, out);
-// out.macd, out.macdSignal, out.macdHist
+m.update(newClose, out);                 // fills and returns out
 
 // A candlestick pattern returns a number
-const c = cdldojiOpen(open, high, low, close);
+const c = cdldojiOpen({ open, high, low, close });
 const pattern = c.update(o, h, l, cl);
 ```
 
-Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields rather than allocating a new one. The price is that **its contents are only valid until the next call that writes it**. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
+Without a sink, `update`, `peek` and `value` each return a new object. Passing one sink makes them allocation-free: they overwrite its fields and return it. The price is that **its contents are only valid until the next call that writes it**, so a `peek` into the sink `update` filled overwrites it. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full array instead, the same shape the [batch function](/api/typescript/) would produce, while still opening the stream:
+`open` returns the stream alone. One more call also returns the batch result over the history, the same shape the [batch function](/api/typescript/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
-| `<name>OpenAndFill(..)` | once, instead of `open` | like `open`, but also fills the output for **every** history bar |
+| `<name>OpenAndFill(history, options)` | once, instead of `open` | like `open`, but also returns the output for **every** history bar |
 
 ```ts
 import { smaOpenAndFill } from 'ta-lib';
 
-const warmup = new Float64Array(history.length);
+const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 30 });
 
-const s = smaOpenAndFill(history, 30, warmup);
-const r = s.outRange();                   // the bars it has an output for
-
-// warmup[0 .. r.count - 1] is the SMA over all of history; then stream on:
-const v = s.update(newClose);
+// values[i] is the SMA at history bar begIdx + i; then stream on:
+const v = stream.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch function](/api/typescript/)'s. The range written is reported on the returned stream as `outRange()`: see [Utility Calls](#utility-calls) below. The output arrays must not share memory with the input or with each other.
+It takes the [batch function](/api/typescript/#input_type)'s options, output buffers included, and ignores `startIdx` and `endIdx`; the result is the batch result plus `stream`. Its range is the stream's `outRange()`: see [Utility Calls](#utility-calls) below. An output buffer must not share memory with the input or with another buffer.
 
 ## Utility Calls
 
@@ -1929,11 +1933,11 @@ The optional parameters and output arrays are exactly the [batch function](/api/
 |------|------|------|
 | `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.outRange()` | any time | the bars the stream has an output for: the batch range over the same bars |
+| `stream.outRange()` | any time | the bars the stream has an output for, as an `OutRange` (`begIdx`, `count`, `isEmpty()`): the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```ts
-const s = smaOpen(history, 30);
+const s = smaOpen(history, { timePeriod: 30 });
 
 const v = s.value();                // the value at the last bar s counted
 const fork = s.clone();             // independent from here on
@@ -1947,10 +1951,10 @@ Every rejection is a `TALibError`; branch on its `code`.
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `'TA_INSUFFICIENT_HISTORY'`: catch it to accumulate more bars and retry. Out-of-range parameters throw `'TA_BAD_PARAM'`. |
-| `update` / `peek` | <ul><li>`'TA_BAD_PARAM'` on invalid input such as NaN or ±Inf</li><li>`'TA_OUT_OF_RANGE_END_INDEX'` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
+| `<name>Open` / `<name>OpenAndFill` | Too little history, an empty one included, throws `'TA_INSUFFICIENT_HISTORY'`: catch it to accumulate more bars and retry. Out-of-range parameters throw `'TA_BAD_PARAM'`. |
+| `update` / `peek` | <ul><li>`'TA_BAD_PARAM'` on invalid input such as NaN or ±Inf, or a multi-output sink that is given but is not an object, `null` included</li><li>`'TA_OUT_OF_RANGE_END_INDEX'` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `advance` | `'TA_OUT_OF_RANGE_END_INDEX'` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
-| `value` / `clone` / `outRange` | Never throw, except `value(out)` on a multi-output stream: it throws `'TA_BAD_PARAM'` when `out` is absent or not an object, as `update` and `peek` do. |
+| `value` / `clone` / `outRange` | Never throw, except `value(out)` on a multi-output stream: it rejects the same sink as `update` and `peek` do. |
 
 ## Discovering streamable functions
 
@@ -1981,7 +1985,7 @@ If you only need a handful of specific functions, calling them directly is simpl
 
 ## Describe a function
 
-Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags. Every flag is listed in the specification: [Abstract API and Metadata](/spec/abstract/#flags).
+Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags, plus a JSON string of attributes no flag can carry, such as RSI's 30/70 reference levels. The specification lists every [flag](/spec/abstract/#flags) and [attribute](/spec/abstract/#attributes).
 
 ::: code-tabs#lang
 
@@ -1993,10 +1997,12 @@ Look a function up by name, or enumerate them all. Each one reports its group, i
 const TA_FuncHandle *handle;
 const TA_FuncInfo *info;
 const TA_OptInputParameterInfo *opt;
+const char *json;
 
 TA_GetFuncHandle( "SMA", &handle );
 TA_GetFuncInfo( handle, &info );          /* name, group, hint, flags, nbInput, nbOptInput, nbOutput */
 TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet (range), defaultValue */
+TA_GetFuncAttributes( handle, &json );            /* "{}"; RSI: {"outputs":{"outReal":{"levels":[30,70]}}} */
 
 /* Every function: TA_ForEachFunc( callback, opaqueData ); */
 ```
@@ -2007,7 +2013,7 @@ TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet 
 use ta_lib::abstract_api::{for_each_func, get_func_handle};
 
 let id = get_func_handle("SMA").expect("unknown function");
-let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs
+let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs, attributes
 
 for_each_func(|f| println!("{} ({:?})", f.name, f.group));
 ```
@@ -2018,7 +2024,7 @@ for_each_func(|f| println!("{} ({:?})", f.name, f.group));
 import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
 
-FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs()
+FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs(), attributes()
 
 Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
 ```
@@ -2029,7 +2035,7 @@ Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() +
 using TALib;
 using TALib.Metadata;
 
-FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs
+FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs, Attributes
 
 foreach (var fi in Core.Functions)
 {
@@ -2042,7 +2048,7 @@ foreach (var fi in Core.Functions)
 ```ts
 import { Functions } from 'ta-lib/metadata';
 
-const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs
+const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 
 for (const fi of Functions.all()) {
   console.log(`${fi.name} (${fi.group})`);
@@ -2113,14 +2119,14 @@ OutRange r = Core.Functions["SMA"].CreateCall()
 ```ts
 const r = Functions.byName('SMA')!.newCall()
   .setInput(0, close)
-  .setOptInput(0, 30)
+  .setOptInput('timePeriod', 30)   // a parameter by its options key, or by position: 0
   .setOutput(0, out)
-  .call(0, close.length - 1);
+  .call();                         // the whole series, as the typed call's defaults
 ```
 
 :::
 
-The call behaves like the typed one: same values, same range, same rejections. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
+The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and an optional parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
 
 ## Lookback and display shift
 
@@ -2328,7 +2334,7 @@ talib.set_unstable_period('ALL', talib.UNSTABLE_AUTO_PREC_4)
 
 :::
 
-In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object. In TypeScript, pass `core` as the last argument of each call.
+In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object. In TypeScript, pass it as the `core` option of each call.
 
 The number of bars comes from the parameters of each call: a 200-bar EMA drops more than a 30-bar one. Indicators built on another, such as MACD on EMA, follow along.
 
@@ -2762,7 +2768,7 @@ Written as a reference for AI agents integrating TA-Lib. For a lighter introduct
 
 An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and, as the [release rules](/spec/versions/#releases) define, across releases.
 
-The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C# and TypeScript code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5)).
+The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java, C# and TypeScript code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5); TypeScript Caveat: [rJ2](/spec/#rj2)).
 
 ## Scope {#scope}
 
@@ -2781,10 +2787,12 @@ In the order a caller meets them:
 | [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
 | [Auto-Stabilization](/spec/auto-stabilization/) | the bars an Auto level adds for each id, what a level targets, the known exceptions | `rZ` Auto-Stabilization |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
-| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, the catalog of metadata flags | `rA` Abstract API |
+| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, attributes, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
 | [Errors](/spec/errors/) | return codes, batch conditions | `rE` errors, `rB` batch conditions |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and equivalent calls; releases | `rD` determinism, `rV` versions |
+
+TypeScript departs from a few rules, and each of those says so with a link to its [TypeScript Caveat](/spec/#typescript) below, family `rJ`.
 
 Each page has two kinds of statement:
 
@@ -2804,19 +2812,19 @@ A function's canonical name is its name on [/functions/](/functions/). Every spe
 | UpperCamel | lower case, upper-case the first letter of each `_`-separated part, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`). TypeScript Caveat: [rJ1](/spec/#rj1).
 
-In Rust, Java and C#, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as an optional last argument:
+In Rust, Java and C#, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as the optional `core` key of its options:
 
 | Surface | C | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
-| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` |
+| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` |
 | lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` |
 | display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` |
-| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`, `smaOpenAndFill` |
+| open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` |
 | handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
 | handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
-| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | caller-owned `MacdOut` sink |
+| one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` | returned `MacdOut`: the sink passed, or a new one |
 
 | Type | C | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
@@ -2844,6 +2852,7 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold
 | `UNSTABLE_AUTO_PREC_4`, `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 4`, `INDEX_MAX + 8`: the Auto levels ([rT3](/spec/settings-threads/#rt3), [rZ1](/spec/auto-stabilization/#rz1)) |
 | `REAL_DEFAULT`, `INTEGER_DEFAULT` | -4e37, `INT_MIN`: the default sentinels ([rP3](/spec/inputs-outputs/#rp3)) |
 | `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |
+| `LOOKBACK_INVALID`, `DISPLAY_SHIFT_INVALID` | -1, `INT_MIN`: a failed lookback and display shift ([failures](/spec/#failures)); TypeScript only |
 
 ### Metadata flags {#flag-names}
 
@@ -2862,17 +2871,17 @@ Members are upper case in Rust, Java and TypeScript and UpperCamel in C#, and ca
 
 | Success | C, returning `TA_SUCCESS` | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
-| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `OutRange` |
+| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` | `{ begIdx, values }`, or one array per output |
 | open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle | handle |
-| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | handle; range from `outRange()` |
-| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or written into the sink |
+| open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` | `{ stream, begIdx, values }`; range also from `outRange()` |
+| update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value | value, or the outputs in the sink passed or a new one |
 
 | Failure | C | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
 | reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) |
 | C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` |
-| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `-1` |
-| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `-2147483648` |
+| lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) |
+| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) |
 
 One row per [code a function call can report](/spec/errors/#return-codes). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works. TypeScript throws `TALibError : Error` for every code, its `code` being the code's C name.
 
@@ -2892,15 +2901,29 @@ Failed settings:
 | setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code | throws `TALibError` `'TA_BAD_PARAM'` |
 | getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter | as the setter |
 
+## TypeScript Caveats {#typescript}
+
+Where the TypeScript API departs from a rule. Each amended rule links here.
+
+| Rule | Statement |
+|---|---|
+| <a id="rj1"></a>**rJ1** | Amends [names](/spec/#names). An option key is C's parameter name without `optIn`, split into words at `_` and where C's case changes, an acronym being one word and an `MA` that ends one before `Type` a word of its own, then joined with the first word lower case and each later one capitalized: `timePeriod`, `maType`, `fastDMaType`, `rocMaType`. An output keeps `out`, drops C's type word and is joined the same way: `outMACDSignal` is `outMacdSignal`, `outRealUpperBand` is `outUpperBand`. A function with one output returns it as `values`, its buffer key being `outReal` or `outInteger`. Inputs are positional, and a positional input's parameter name drops `in` (`real`, `real0`, `periods`; a price input is `prices`) in the batch call and the openers; a stream's `update` and `peek` take one number per component, named by the price object's keys (`update(high, low, close)`); the components of a price input are one object keyed `open`, `high`, `low`, `close`, `volume`, `openInterest`. |
+| <a id="rj2"></a>**rJ2** | Amends [rP5](/spec/inputs-outputs/#rp5). A batch call takes its inputs in the order of the Inputs list, then one optional object holding the optional parameters, `startIdx`, `endIdx` ([rP1](/spec/inputs-outputs/#rp1)), `core` and output buffers. The call returns `begIdx` and every output, each exactly as long as the count; an output passed as a buffer is returned as a view of it. |
+| <a id="rj3"></a>**rJ3** | Amends [rB4](/spec/errors/#rb4) and [size every output](/spec/inputs-outputs/#output-size). An output buffer omitted or `undefined` is allocated, not rejected; `null` or an empty array is still absent, and a buffer passed is sized as in any other language. |
+| <a id="rj4"></a>**rJ4** | Amends [lookback calls](/spec/lookback/#calls), [rL2](/spec/lookback/#rl2) and [rL11](/spec/lookback/#rl11). The lookback and display-shift calls take the batch call's options object; keys they do not use are ignored. Options that are not a plain object, or a `core` that is not a `Core`, throw `TALibError` `'TA_BAD_PARAM'`; a rejected parameter still returns the call's invalid constant. |
+| <a id="rj5"></a>**rJ5** | Amends [display shift](/spec/lookback/#display-shift). The display-shift call takes the output index first, then the options object. |
+| <a id="rj6"></a>**rJ6** | Amends [slots](/spec/abstract/#provides). A metadata row carries each input's and parameter's typed-call key and each output's result key ([rJ1](/spec/#rj1); `values` for a single output) beside C's name, and `setOptInput` takes a parameter's key as well as its position. |
+
 ---
 
 ---
 url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
   One batch calling pattern for every function in C, Rust, Java, C# and
-  TypeScript: the same argument order, a sentinel that selects any parameter's
-  default, outputs holding only defined values from index 0 and how to size
-  them, pattern outputs, computing in place, and what the caller must pass.
+  TypeScript (with its caveats): the same argument order, a sentinel that
+  selects any parameter's default, outputs holding only defined values from
+  index 0 and how to size them, pattern outputs, computing in place, and what
+  the caller must pass.
 ---
 # Batch Inputs and Outputs
 
@@ -2913,7 +2936,7 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 ## The caller must {#caller}
 
 * <a id="input-length"></a>**Pass full-length inputs.** Every input series a function declares holds at least `endIdx + 1` elements ([rB5](/spec/errors/#rb5)), even when the range produces no output ([rW2](/spec/inputs-outputs/#rw2)); a stream opener's inputs all have the history's length ([rS5](/spec/streaming/#rs5)).
-* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements ([rB4](/spec/errors/#rb4), [rB5](/spec/errors/#rb5)), where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size).
+* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements ([rB4](/spec/errors/#rb4), [rB5](/spec/errors/#rb5)), where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size). TypeScript Caveat: [rJ3](/spec/#rj3).
 * <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 * <a id="input-domain"></a>**Expect no promise beyond `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). This is the tested domain, not a limit: nothing checks it.
 * <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
@@ -2921,9 +2944,9 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 
 ## What a call takes
 
-<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
+<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. In TypeScript both are optional: `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
-<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
+<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an omitted or `undefined` parameter selects the default; otherwise an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
 An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`, in TypeScript the values of `MAType`.
 
@@ -2931,11 +2954,11 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, and a `Float32Array` input in TypeScript widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust has no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
 
-<a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them.
+<a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them. TypeScript Caveat: [rJ2](/spec/#rj2).
 
 ## What a successful call writes
 
-<a id="rw1"></a>**rW1** A successful call reports `begIdx` and `count` (C's `*outBegIdx` and `*outNBElement`). When `count` is above 0, `begIdx` is `max(startIdx, lookback)`, where `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings, and the range ends at `endIdx`: `count = endIdx - begIdx + 1`. Each output is written from index 0, not aligned to the input: `out[i]` is the value for input bar `begIdx + i`, for every `i` from 0 to `count - 1`.
+<a id="rw1"></a>**rW1** A successful call reports `begIdx` and `count` (C's `*outBegIdx` and `*outNBElement`). When `count` is above 0, `begIdx` is `max(startIdx, lookback)`, where `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings, and the range ends at `endIdx`: `count = endIdx - begIdx + 1`. Each output is written from index 0, not aligned to the input: `out[i]` is the value for input bar `begIdx + i`, for every `i` from 0 to `count - 1`. In TypeScript `count` is the length of each returned output.
 
 <a id="rw2"></a>**rW2** A valid range that ends before the lookback (`endIdx < lookback`) succeeds with `count` 0. Test `count`, not `begIdx`.
 
@@ -3004,11 +3027,11 @@ The lookback call tells a program, before any series exists, whether a call acce
 
 ## Lookback calls {#calls}
 
-Every function has a lookback call. It takes exactly the batch call's optional parameters, in the same order, and no input series. A default sentinel selects the default, as in the batch call ([rP3](/spec/inputs-outputs/#rp3)). Its name and return type in each language, and the display-shift call's: [names](/spec/#names).
+Every function has a lookback call. It takes exactly the batch call's optional parameters, in the same order, and no input series. A default sentinel selects the default, as in the batch call ([rP3](/spec/inputs-outputs/#rp3)). TypeScript Caveat: [rJ4](/spec/#rj4). Its name and return type in each language, and the display-shift call's: [names](/spec/#names).
 
 | Rule | Statement |
 |---|---|
-| <a id="rl2"></a>**rL2** | The call fails ([per language](/spec/#failures)) only on rejected parameters ([rL3](/spec/lookback/#rl3)). |
+| <a id="rl2"></a>**rL2** | The call fails ([per language](/spec/#failures)) only on rejected parameters ([rL3](/spec/lookback/#rl3)). TypeScript Caveat: [rJ4](/spec/#rj4). |
 | <a id="rl3"></a>**rL3** | The call rejects exactly the parameters the batch call, `Open` or `OpenAndFill` would reject (batch [rB3](/spec/errors/#rb3), streams [rS3](/spec/streaming/#rs3)). |
 | <a id="rl4"></a>**rL4** | Rust, Java, C# and TypeScript reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback or display shift. |
 | <a id="rl5"></a>**rL5** | A lookback depends only on the optional parameters and on the [settings](/spec/settings-threads/) in effect at the call: the unstable periods ([rL6](/spec/lookback/#rl6)) and the candle averaging periods ([rL7](/spec/lookback/#rl7)). With every setting at its bound ([rT3](/spec/settings-threads/#rt3), [rT6](/spec/settings-threads/#rt6)) a lookback is negative only when the call fails. |
@@ -3031,13 +3054,13 @@ Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an i
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
+Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. TypeScript Caveat: [rJ5](/spec/#rj5). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
 
 | Rule | Statement |
 |---|---|
 | <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. Every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on the shift. |
 | <a id="rl10"></a>**rL10** | A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` exactly when at least one of its outputs carries the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT`. An output without `TA_OUT_DISPLAY_SHIFT` has a shift of 0 for any parameters. |
-| <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL3](/spec/lookback/#rl3)) or the index names no output. |
+| <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL3](/spec/lookback/#rl3)) or the index names no output. TypeScript Caveat: [rJ4](/spec/#rj4). |
 | <a id="rl12"></a>**rL12** | No unstable period or candle setting ([rL5](/spec/lookback/#rl5)) changes a display shift. |
 
 ## Stability from metadata {#metadata}
@@ -3176,13 +3199,12 @@ For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `
 
 | Rule | Condition | Code | Not checked in |
 |---|---|---|---|
-| <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
 | <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) or [rB9](/spec/errors/#rb9) | `TA_BAD_PARAM` | |
-| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is rS1 | `TA_BAD_PARAM` | |
+| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is [rS7](/spec/streaming/#rs7) | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([rB5](/spec/errors/#rb5)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other | `TA_BAD_PARAM` | Rust: cannot alias |
-| <a id="rs7"></a>**rS7** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
+| <a id="rs7"></a>**rS7** | The history holds fewer than [lookback](/spec/lookback/#rl1) `+ 1` bars, an empty history included | `TA_INSUFFICIENT_HISTORY` | |
 
 <a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes ([rW1](/spec/inputs-outputs/#rw1)), compared as in [rH1](/spec/streaming/#rh1), and reports the same range. The handle it returns then updates as the one `Open` returns on the same history.
 
@@ -3193,7 +3215,7 @@ A bar is counted when it enters the range, by an accepted `Update` or by `Advanc
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
 | <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java or TypeScript multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java and TypeScript also value | Rust, C#: value returned |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `OutRange`'s `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 
@@ -3242,6 +3264,7 @@ The Abstract API describes every function at run time and calls it by name ([rA6
 * <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A value outside the parameter's accepted values fails the call ([rA1](/spec/abstract/#ra1)) and the holder's lookback and display shift ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)); in C, `TA_GetLookback` and `TA_GetDisplayShift` still return `TA_SUCCESS`: test the value they write.
 * <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
+* <a id="unknown-attribute"></a>**Ignore an attribute key you do not know.** A release may add one ([rA8](/spec/abstract/#ra8)).
 * <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** Each must stay valid until the last call on the holder, and be as long as the batch call needs ([input length](/spec/inputs-outputs/#input-length), [output size](/spec/inputs-outputs/#output-size)).
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** A function handle and the descriptors it leads to are static: never free them.
 
@@ -3256,6 +3279,7 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 | enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` |
 | functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` |
 | function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| a function's [attributes](/spec/abstract/#attributes) | `TA_GetFuncAttributes` | `attributes` | `attributes()` | `Attributes` | `attributes` |
 | input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` |
 | make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` |
 | bind an input | `TA_SetInputParamRealPtr`, `TA_SetInputParamIntegerPtr`, `TA_SetInputParamPricePtr` | `set_input`, `set_int_input`, `set_price_input` | `setInput`, `setPriceInput` | `SetInput`, `SetPriceInput` | `setInput`, `setPriceInput` |
@@ -3273,12 +3297,12 @@ What a descriptor holds:
 
 | Descriptor | Holds |
 |---|---|
-| function | canonical name ([names](/spec/#names)), group, one-line hint, [flags](/spec/abstract/#flags) |
+| function | canonical name ([names](/spec/#names)), group, one-line hint, [flags](/spec/abstract/#flags), [attributes](/spec/abstract/#attributes) (not in C's `TA_FuncInfo`) |
 | input | name, kind, and for a price input the [series it consumes](/spec/abstract/#flags-price) |
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0 (TypeScript Caveat: [rJ6](/spec/#rj6)). A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
 
 ## Rules {#rules}
 
@@ -3295,6 +3319,8 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 <a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
+
+<a id="ra8"></a>**rA8** A function's [attributes](/spec/abstract/#attributes) are the same string in every language and in `ta_func_api.xml`. A release only adds keys, and a key's meaning never changes.
 
 ## Return codes {#codes}
 
@@ -3322,6 +3348,18 @@ Every key is answered in every language, and the answer can differ with the lang
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
 | `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C# and TypeScript. |
 | `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C# and TypeScript. |
+
+## Attributes {#attributes}
+
+Metadata that a flag bit cannot carry, as one JSON object per function: C's `TA_GetFuncAttributes`, the function descriptor's `attributes` in Rust, Java and TypeScript and `Attributes` in C#, and the function's `<Attributes>` element in `ta_func_api.xml`. A function with none has `{}`, and no element in the XML.
+
+A key of the function sits at the top level. A key of an input, an optional parameter or an output sits under `inputs`, `optInputs` or `outputs`, in an object named after the parameter. An empty object is left out. The string is canonical: no whitespace, keys in a fixed order, each number in plain decimal with no exponent and no `-0` (`30`, `26.5`, `1000000`), so two strings compare byte for byte. Parse it with any JSON parser and ignore a key you do not know ([rA8](/spec/abstract/#ra8)).
+
+| Key | Of | Value | Meaning |
+|---|---|---|---|
+| `levels` | output | numbers, strictly ascending | Reference levels, as the indicator's author published them or as common practice reads them, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
+
+RSI's: `{"outputs":{"outReal":{"levels":[30,70]}}}`.
 
 ## Flags {#flags}
 
@@ -3370,6 +3408,9 @@ What a function assumes of its input, and what can be said of the values it writ
 | `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is the pattern's call ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_WEAK` | Level 80 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_CONFIRM` | Level 200 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_BAR_INDEX` | The value is an absolute index into the input arrays. |
+
+On a real output, the sign flags say which signs can occur for some valid parameter values over well-formed bars (low <= open, close <= high, volume >= 0) and inputs the function documents as valid. Rounding in a running sum can leave a value a few units in the last place past zero, which the flags do not count.
 
 ### Display hint {#flags-display}
 
@@ -3384,8 +3425,9 @@ How a chart or a settings dialog should present a function, an output or an opti
 | `TA_OUT_LINE` | Draw as a connected line. |
 | `TA_OUT_DOT_LINE` | Draw as a dotted line. No function sets it. |
 | `TA_OUT_DASH_LINE` | Draw as a dashed line. |
-| `TA_OUT_DOT` | Draw as dots only. No function sets it. |
+| `TA_OUT_DOT` | Draw as dots only. |
 | `TA_OUT_HISTO` | Draw as a histogram. |
+| `TA_OUT_SEGMENTED` | A line whose segments restart wherever the function's integer output changes value: never connect across a change. |
 | `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
 | `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |
 | `TA_OPTIN_IS_PERCENT` | The parameter is a percentage. |
@@ -3398,15 +3440,16 @@ How a chart or a settings dialog should present a function, an output or an opti
 ---
 url: 'https://ta-lib.org/spec/settings-threads/index.md'
 description: >-
-  Settings in an immutable Core (Rust, Java, C#, TypeScript) that threads share
-  with no synchronization, C's initialization and process-wide settings and when
-  they may change, setting validation, and the caller's rules across threads.
+  Settings in an immutable Core (Rust, Java, C#, TypeScript), shared across
+  threads with no synchronization in Rust, Java and C#, C's initialization and
+  process-wide settings and when they may change, setting validation, and the
+  caller's rules across threads.
 ---
 # Settings and Threads
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process and any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process, and in Rust, Java and C# any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -3478,7 +3521,7 @@ The codes a batch, lookback or stream call can return:
 | 0 | `TA_SUCCESS` | Every call that succeeds. |
 | 2 | `TA_BAD_PARAM` | Most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; a failed lookback, display shift or settings call, in a language where it reports a code ([failures](/spec/#failures)). |
 | 3 | `TA_ALLOC_ERR` | [rB7](/spec/errors/#rb7). |
-| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1), [rS1](/spec/streaming/#rs1). |
+| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1). |
 | 13 | `TA_OUT_OF_RANGE_END_INDEX` | [rB2](/spec/errors/#rb2), [rS2](/spec/streaming/#rs2), [rU4](/spec/streaming/#ru4). |
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS7](/spec/streaming/#rs7)). |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB8](/spec/errors/#rb8). |
@@ -3500,14 +3543,14 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 | <a id="rb1"></a>**rB1** | `startIdx` is below 0 or above [`TA_INDEX_MAX`](/spec/#names). | `TA_OUT_OF_RANGE_START_INDEX` | Rust, below 0 (`usize`) |
 | <a id="rb2"></a>**rB2** | `endIdx` is below 0, above `TA_INDEX_MAX`, or below `startIdx`. | `TA_OUT_OF_RANGE_END_INDEX` | Rust, below 0 |
 | <a id="rb3"></a>**rB3** | [rP2](/spec/inputs-outputs/#rp2) rejects an optional parameter value or a combination of values. | `TA_BAD_PARAM` | none |
-| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. | `TA_BAD_PARAM` | none |
+| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. TypeScript Caveat: [rJ3](/spec/#rj3). | `TA_BAD_PARAM` | none |
 | <a id="rb5"></a>**rB5** | A buffer is too short: an input does not reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)), or an output cannot hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
 | <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
-| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null`, `undefined` or a boolean). | `TA_BAD_PARAM` | C, Rust, Java, C# |
+| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C# |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript. An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
 **rB7.** Rust, Java, C# and TypeScript allocate through their runtime.
 
@@ -3601,6 +3644,10 @@ description: >-
 # Functions
 
 All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript source.
+
+## Reference data
+
+Each page charts the function at default parameters over one fixed price series (IBM, daily, 1999, the series `ta_regtest` ships), or over a synthetic input the page names for the Math Transform and Math Operators functions, and links a CSV of the inputs and every output, computed by the C library. Running TA-Lib over the CSV's own input columns from its first row reproduces the output columns. [Compare with a tolerance](/spec/versions/#tolerance) rather than bit for bit.
 
 ## Cycle Indicators
 
@@ -3716,6 +3763,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 ## Overlap Studies
 
 * [ACCBANDS](/functions/accbands.md) — Acceleration Bands
+* [ALLIGATOR](/functions/alligator.md) — Williams Alligator
 * [ALMA](/functions/alma.md) — Arnaud Legoux Moving Average
 * [BBANDS](/functions/bbands.md) — Bollinger Bands
 * [CE](/functions/ce.md) — Chandelier Exit
@@ -3836,7 +3884,9 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MEDIAN](/functions/median.md) — Rolling Median
 * [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
 * [PERCENTRANK](/functions/percentrank.md) — Percent Rank
+* [SHARPE](/functions/sharpe.md) — Rolling Sharpe Ratio
 * [SKEW](/functions/skew.md) — Rolling Skewness
+* [SORTINO](/functions/sortino.md) — Rolling Sortino Ratio
 * [STDDEV](/functions/stddev.md) — Standard Deviation
 * [TSF](/functions/tsf.md) — Time Series Forecast
 * [VAR](/functions/var.md) — Variance
@@ -4003,12 +4053,11 @@ double p = s.Peek(formingClose);     // bar still forming; state unchanged
 ```ts
 import { sma, smaOpen } from 'ta-lib';
 
-// Batch: out[0] is the value at bar r.begIdx.
-const out = new Float64Array(close.length);
-const r = sma(0, close.length - 1, close, 30, out);
+// Batch: values[0] is the value at bar begIdx.
+const { begIdx, values } = sma(close, { timePeriod: 30 });
 
 // Streaming: open on history, then one call per bar.
-const s = smaOpen(close, 30);
+const s = smaOpen(close, { timePeriod: 30 });
 const v = s.update(newClose);        // a bar closed
 const p = s.peek(formingClose);      // bar still forming; state unchanged
 ```
@@ -4053,7 +4102,7 @@ The people behind some of TA-Lib's major features.
 | Contributor | Contribution |
 | --- | --- |
 | **Angelo Ciceri** | Candlestick pattern recognition — the complete family of `CDL*` functions. |
-| **Chad Furman** — [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which now automates maintenance of every backend (C, Rust, Java, .NET, docs, streaming API) from a single source of truth. |
+| **Chad Furman** — [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which automates maintenance of every backend (C, Rust, Java, .NET, TypeScript, docs, streaming API) from a single source of truth. |
 | **Barry Tsung** | Early Java `Core`: candle-settings initialization and unstable-period APIs. |
 | **Richard Gomes** | Java abstract/reflection layer — the `meta` package: annotation-based RTTI and late-bound (dynamic) TA-function invocation. |
 | **Christopher Supnig** — [supnig.com](https://www.supnig.com) | Author of an early JavaScript/TypeScript variant of TA-Lib. |
@@ -4198,11 +4247,12 @@ scripts/build.py servers    # build the generator + the per-language test server
 
 1. **Agree on the spec first.** Claim a card on the [board](https://github.com/orgs/TA-Lib/projects/1), or open an issue if there is none. Settle the name, group, inputs, parameters with defaults, flags (does it stream?), and the formula with a citable reference before writing code. This is the human-approved part.
 2. **Write the three input files** in `ta_codegen/input/<name>/`. Start by copying a similar shipped function; `ta_codegen/input/cmf/` is a small, recent example. Input files carry no license header — the generator injects the BSD-3-Clause notice into every generated file — but the `.c` opens with a contributor and change-history block: add your initials there, and a one-line MMDDYY entry describing your change. The file-format references are in the repository: [`docs/ta_codegen_input_yaml.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_yaml.md), [`ta_codegen_input_code.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_code.md) and [`ta_codegen_input_doc.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_doc.md). When in doubt, read your checkout's copy; it tracks the generator you are running.
-3. **Generate** all backends: `scripts/build.py generate`, then `scripts/build.py servers` to rebuild the language servers from the regenerated sources.
+3. **Generate** all backends: `scripts/build.py generate`, then `scripts/build.py refdata` (writes the function page's reference CSV and, from it, the chart), then `scripts/build.py servers` to rebuild the language servers from the regenerated sources.
 4. **Verify**: run `scripts/regtest.py`, the full pipeline. Its `ta_regtest --codegen` step diffs every language server against the C library, a brand-new function like any other: that proves the languages agree, and the next step proves the values. `--no-perftest` skips the benchmarks a correctness change does not need.
 5. **Prove the values.** A new function needs a regression test with golden values from an independent source: a published reference implementation or worked examples from the literature. Document the source, its version and the tolerance at the test call site; against a double-precision oracle ~1e-12 relative is typical, and anything looser needs a written justification. See `src/tools/ta_regtest/ta_test_func/test_composite1.c` for a composite and `test_marketfi.c` for a standalone file, and register the test in four places: a prototype in `ta_test_func.h`, a `DO_TEST` entry in `ta_regtest.c` whose tag names every function the group covers, and the file added to both `CMakeLists.txt` and `src/tools/ta_regtest/Makefile.am` (`scripts/build.py check-source-lists` verifies the two agree and that the group has its `DO_TEST` entry). While iterating, `cd bin && ./ta_regtest --codegen --function=<NAME>` re-runs just your group; each call it routes through `server_verify` is also cross-checked bitwise against every language server.
-6. **Check the diff.** After regenerating, `git diff` should touch only files belonging to your function. Unrelated churn in other generated files means something is wrong.
-7. **Open a pull request** against the `dev` branch, citing the spec issue and the verification source.
+6. **Record the new API.** Run `scripts/sync.py` and commit what it changes: `ABI.manifest` gains your function's C symbols and `include/ta_common.h` a new sources digest. The pull-request gate rejects a stale manifest (`python3 scripts/abi.py check`); `regen-check` does not run that check.
+7. **Check the diff.** After regenerating, `git diff` should touch only files belonging to your function. Unrelated churn in other generated files means something is wrong.
+8. **Open a pull request** against the `dev` branch, citing the spec issue and the verification source.
 
 Stuck at any step? Ask on [Discord](https://discord.com/invite/Erb6SwsVbH) or comment on your spec issue.
 
@@ -4220,7 +4270,7 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 **Invariants.** Violating any of these fails review:
 
 * No logic in YAML, ever. No metadata in the `.c` file.
-* Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and the per-function sources under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate. Not all of `output/` is generated — the hand-written scaffolding, the build files (`pom.xml`, `TALib.csproj`) and the Java and C# test suites live there too, and `generate` preserves them; treat those as harness, per the rule above. **A banner is proof that a file is generated; its absence is not proof of the opposite.** Around thirty committed files are emitted without one — `src/ta_abstract/ta_abstract.c` among them, written by `backends/ta_abstract_c.rs`. Before editing anything under `src/` or `output/`, grep the generator for the file name; `generate` reverts an edit it owns without a word.
+* Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and the per-function sources under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate. Not all of `output/` is generated — the hand-written scaffolding, the build files (`pom.xml`, `TALib.csproj`, the TypeScript tooling `package.json`), the TypeScript runtime (`library/src/runtime/`) and the Java, C# and TypeScript test suites (TypeScript's outside `library/test/gen/`) live there too, and `generate` preserves them; treat those as harness, per the rule above. **A banner is proof that a file is generated; its absence is not proof of the opposite.** Around thirty committed files are emitted without one — `src/ta_abstract/ta_abstract.c` among them, written by `backends/ta_abstract_c.rs`. Before editing anything under `src/` or `output/`, grep the generator for the file name; `generate` reverts an edit it owns without a word.
 * `<name>.md` documents the original algebra of the indicator, never implementation artifacts: no zero-guards, epsilon comparisons or `period == 1` special cases in the formula. State the value returned where the algebra is undefined only when a reader would otherwise wonder, as RVI's `or 50 when Up + Down = 0` does; a guard that merely avoids a divide by zero is noise.
 * In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
 * Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.

@@ -29,7 +29,7 @@ The codes a batch, lookback or stream call can return:
 | 0 | `TA_SUCCESS` | Every call that succeeds. |
 | 2 | `TA_BAD_PARAM` | Most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; a failed lookback, display shift or settings call, in a language where it reports a code ([failures](/spec/#failures)). |
 | 3 | `TA_ALLOC_ERR` | [rB7](/spec/errors/#rb7). |
-| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1), [rS1](/spec/streaming/#rs1). |
+| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1). |
 | 13 | `TA_OUT_OF_RANGE_END_INDEX` | [rB2](/spec/errors/#rb2), [rS2](/spec/streaming/#rs2), [rU4](/spec/streaming/#ru4). |
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS7](/spec/streaming/#rs7)). |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB8](/spec/errors/#rb8). |
@@ -51,14 +51,14 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 | <a id="rb1"></a>**rB1** | `startIdx` is below 0 or above [`TA_INDEX_MAX`](/spec/#names). | `TA_OUT_OF_RANGE_START_INDEX` | Rust, below 0 (`usize`) |
 | <a id="rb2"></a>**rB2** | `endIdx` is below 0, above `TA_INDEX_MAX`, or below `startIdx`. | `TA_OUT_OF_RANGE_END_INDEX` | Rust, below 0 |
 | <a id="rb3"></a>**rB3** | [rP2](/spec/inputs-outputs/#rp2) rejects an optional parameter value or a combination of values. | `TA_BAD_PARAM` | none |
-| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. | `TA_BAD_PARAM` | none |
+| <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. TypeScript Caveat: [rJ3](/spec/#rj3). | `TA_BAD_PARAM` | none |
 | <a id="rb5"></a>**rB5** | A buffer is too short: an input does not reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)), or an output cannot hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
 | <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
-| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null`, `undefined` or a boolean). | `TA_BAD_PARAM` | C, Rust, Java, C# |
+| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null` or a boolean); `undefined` selects the default ([rP1](/spec/inputs-outputs/#rp1), [rP2](/spec/inputs-outputs/#rp2)). | `TA_BAD_PARAM` | C, Rust, Java, C# |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript. An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript (TypeScript Caveat: [rJ3](/spec/#rj3)). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
 **rB7.** Rust, Java, C# and TypeScript allocate through their runtime.
 

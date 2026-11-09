@@ -10,6 +10,20 @@ description: >-
 
 Wilder's Swing Index: one number rating each bar against the bar before it, from both bars' open and close and the current bar's high and low, signed by the direction of the swing. A strong close above the prior close on a wide range reads high and positive, a strong down swing reads high and negative. It is scaled against the limit move, the largest one-bar move the market allows, and stays between -100 and +100 while every move is within that limit. J. Welles Wilder Jr. introduced it in 1978 and trades its running total, ASI.
 
+## Chart
+
+<ta-chart src="/functions/si.svg" ratio="720:416" label="SI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/si.csv) · [Chart (SVG)](/functions/si.svg)
+
 ## Formula
 
 $$
@@ -67,7 +81,98 @@ where $a = |H_t - C_{t-1}|$, $b = |L_t - C_{t-1}|$, $d = |H_t - L_t|$, $q = \tfr
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double open[252]; /* your data, oldest first */
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_SI( 0, n - 1, open, high, low, close, 3.0, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let open = vec![0.0; 252]; // your data, oldest first
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.si(0, open.len() - 1, &open, &high, &low, &close, 3.0, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] open = new double[252]; // your data, oldest first
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.si(0, open.length - 1, open, high, low, close, 3.0, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var open = new double[252]; // your data, oldest first
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Si(0, open.Length - 1, open, high, low, close, 3.0, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { si } from 'ta-lib';
+
+const open = new Float64Array(252); // your data, oldest first
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = si({ open, high, low, close }, { limitMove: 3 });
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/si/si.c) · [`si.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/si/si.yaml)
 
@@ -79,7 +184,9 @@ TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_SI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SI.cs) |
 | TypeScript | [`si.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/si.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.SI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## See Also
 

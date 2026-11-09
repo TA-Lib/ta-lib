@@ -10,6 +10,20 @@ description: >-
 
 Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs and lows alone. Goichi Hosoda's reading is that a market's balance is visible without any smoothing — each line is the midpoint of a window, the mean of its highest high and its lowest low, so it marks the level at which that stretch of trading was evenly divided. The conversion line turns fastest, the base line is the reference, and the two leading spans are drawn ahead of price, where the band between them is read as support or resistance before it is reached.
 
+## Chart
+
+<ta-chart src="/functions/ichimoku.svg" ratio="720:274" label="ICHIMOKU over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward.
+
+Metadata flags used: `overlap` · `inPriceHL: high, low` · `outTenkanSen: line` · `outKijunSen: line` · `outSenkouSpanA: line, display_shift (+26)` · `outSenkouSpanB: line, display_shift (+26)`
+
+:::
+
+[Reference data (CSV)](/functions/ichimoku.csv) · [Chart (SVG)](/functions/ichimoku.svg)
+
 ## Formula
 
 MID(n) = ( highest high over n bars + lowest low over n bars ) / 2
@@ -69,7 +83,111 @@ Senkou Span B = MID(senkouBPeriod)
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double tenkanSen[252], kijunSen[252], senkouSpanA[252], senkouSpanB[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_ICHIMOKU( 0, n - 1, high, low, 9, 26, 52,
+             &outBegIdx, &outNBElement, tenkanSen, kijunSen, senkouSpanA, senkouSpanB );
+printf( "%d values from bar %d; last tenkanSen = %f\n", outNBElement, outBegIdx, tenkanSen[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut tenkan_sen = vec![0.0; 252];
+let mut kijun_sen = vec![0.0; 252];
+let mut senkou_span_a = vec![0.0; 252];
+let mut senkou_span_b = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.ichimoku(0, high.len() - 1, &high, &low, 9, 26, 52,
+                          &mut tenkan_sen, &mut kijun_sen, &mut senkou_span_a, &mut senkou_span_b)?;
+println!("{} values from bar {}; last tenkan_sen = {}", range.count, range.beg_idx, tenkan_sen[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] tenkanSen = new double[252];
+double[] kijunSen = new double[252];
+double[] senkouSpanA = new double[252];
+double[] senkouSpanB = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.ichimoku(0, high.length - 1, high, low, 9, 26, 52,
+                           tenkanSen, kijunSen, senkouSpanA, senkouSpanB);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last tenkanSen = " + tenkanSen[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var tenkanSen = new double[252];
+var kijunSen = new double[252];
+var senkouSpanA = new double[252];
+var senkouSpanB = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Ichimoku(0, high.Length - 1, high, low, 9, 26, 52,
+                           tenkanSen, kijunSen, senkouSpanA, senkouSpanB);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last tenkanSen = {tenkanSen[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { ichimoku } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const {
+  begIdx,
+  outTenkanSen,
+  outKijunSen,
+  outSenkouSpanA,
+  outSenkouSpanB,
+} = ichimoku({ high, low }, {
+  tenkanPeriod: 9,
+  kijunPeriod: 26,
+  senkouBPeriod: 52,
+});
+console.log(outTenkanSen.length + ' values from bar ' + begIdx + '; last outTenkanSen = ' + outTenkanSen[outTenkanSen.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ichimoku/ichimoku.c) · [`ichimoku.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ichimoku/ichimoku.yaml)
 
@@ -81,7 +199,9 @@ TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C# | [`Core_ICHIMOKU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ICHIMOKU.cs) |
 | TypeScript | [`ichimoku.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ichimoku.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ICHIMOKU` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

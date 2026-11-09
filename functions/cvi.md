@@ -12,6 +12,20 @@ Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily tradin
 
 Read it as a rate of expansion. Positive means the smoothed range is wider than it was; negative means it has contracted. Chaikin's own interpretation is contrarian on the fast side: a range that widens sharply over a short span is typical of the panic near a market bottom, while a range that narrows steadily over a long span is typical of a market topping out. It measures range, not direction, so it says nothing about which way price is heading.
 
+## Chart
+
+<ta-chart src="/functions/cvi.svg" ratio="720:416" label="CVI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceHL: high, low` · `outReal: line, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/cvi.csv) · [Chart (SVG)](/functions/cvi.svg)
+
 ## Formula
 
 HL = high - low
@@ -65,7 +79,91 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePer
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_CVI( 0, n - 1, high, low, 10, 10, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.cvi(0, high.len() - 1, &high, &low, 10, 10, &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.cvi(0, high.length - 1, high, low, 10, 10, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Cvi(0, high.Length - 1, high, low, 10, 10, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { cvi } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = cvi({ high, low }, {
+  timePeriod: 10,
+  rocPeriod: 10,
+});
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.c) · [`cvi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.yaml)
 
@@ -77,7 +175,9 @@ TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C# | [`Core_CVI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CVI.cs) |
 | TypeScript | [`cvi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cvi.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.CVI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

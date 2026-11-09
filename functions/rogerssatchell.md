@@ -14,6 +14,20 @@ What separates it from the other range estimators is that it is unbiased **whate
 
 Read the output as a fraction in log-return units, not price units and not percent. At an `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
 
+## Chart
+
+<ta-chart src="/functions/rogerssatchell.svg" ratio="720:416" label="ROGERSSATCHELL over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
+
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/rogerssatchell.csv) · [Chart (SVG)](/functions/rogerssatchell.svg)
+
 ## Formula
 
 ```
@@ -80,7 +94,102 @@ Every term reads only its own bar, so the lookback is `n - 1`: the first output 
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double open[252]; /* your data, oldest first */
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+double close[252]; /* your data, oldest first */
+double out[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_ROGERSSATCHELL( 0, n - 1, open, high, low, close, 10, 252.0, &outBegIdx, &outNBElement, out );
+printf( "%d values from bar %d; last out = %f\n", outNBElement, outBegIdx, out[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let open = vec![0.0; 252]; // your data, oldest first
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let close = vec![0.0; 252]; // your data, oldest first
+let mut out = vec![0.0; 252];
+
+let core = Core::new();
+let range = core.rogerssatchell(0, open.len() - 1, &open, &high, &low, &close, 10, 252.0,
+                                &mut out)?;
+println!("{} values from bar {}; last out = {}", range.count, range.beg_idx, out[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] open = new double[252]; // your data, oldest first
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+double[] close = new double[252]; // your data, oldest first
+double[] out = new double[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.rogerssatchell(0, open.length - 1, open, high, low, close, 10, 252.0, out);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last out = " + out[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var open = new double[252]; // your data, oldest first
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var close = new double[252]; // your data, oldest first
+var outReal = new double[252];
+
+var core = Core.Default;
+OutRange r = core.Rogerssatchell(0, open.Length - 1, open, high, low, close, 10, 252.0, outReal);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last outReal = {outReal[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { rogerssatchell } from 'ta-lib';
+
+const open = new Float64Array(252); // your data, oldest first
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+const close = new Float64Array(252); // your data, oldest first
+
+const { begIdx, values } = rogerssatchell({ open, high, low, close }, {
+  timePeriod: 10,
+  annualization: 252,
+});
+console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.3 (ta-lib-python 0.8.3).
 
 TA-Lib Definition: [`rogerssatchell.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rogerssatchell/rogerssatchell.c) · [`rogerssatchell.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rogerssatchell/rogerssatchell.yaml)
 
@@ -92,7 +201,9 @@ TA-Lib Definition: [`rogerssatchell.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | C# | [`Core_ROGERSSATCHELL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROGERSSATCHELL.cs) |
 | TypeScript | [`rogerssatchell.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rogerssatchell.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.ROGERSSATCHELL` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volatility_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 

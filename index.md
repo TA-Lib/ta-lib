@@ -127,12 +127,11 @@ double p = s.Peek(formingClose);     // bar still forming; state unchanged
 ```ts
 import { sma, smaOpen } from 'ta-lib';
 
-// Batch: out[0] is the value at bar r.begIdx.
-const out = new Float64Array(close.length);
-const r = sma(0, close.length - 1, close, 30, out);
+// Batch: values[0] is the value at bar begIdx.
+const { begIdx, values } = sma(close, { timePeriod: 30 });
 
 // Streaming: open on history, then one call per bar.
-const s = smaOpen(close, 30);
+const s = smaOpen(close, { timePeriod: 30 });
 const v = s.update(newClose);        // a bar closed
 const p = s.peek(formingClose);      // bar still forming; state unchanged
 ```

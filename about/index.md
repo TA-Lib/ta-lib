@@ -28,7 +28,7 @@ The people behind some of TA-Lib's major features.
 | Contributor | Contribution |
 | --- | --- |
 | **Angelo Ciceri** | Candlestick pattern recognition — the complete family of `CDL*` functions. |
-| **Chad Furman** — [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which now automates maintenance of every backend (C, Rust, Java, .NET, docs, streaming API) from a single source of truth. |
+| **Chad Furman** — [@chadfurman](https://github.com/chadfurman) | Native Rust port and co-designer of `ta_codegen`, which automates maintenance of every backend (C, Rust, Java, .NET, TypeScript, docs, streaming API) from a single source of truth. |
 | **Barry Tsung** | Early Java `Core`: candle-settings initialization and unstable-period APIs. |
 | **Richard Gomes** | Java abstract/reflection layer — the `meta` package: annotation-based RTTI and late-bound (dynamic) TA-function invocation. |
 | **Christopher Supnig** — [supnig.com](https://www.supnig.com) | Author of an early JavaScript/TypeScript variant of TA-Lib. |

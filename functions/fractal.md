@@ -12,6 +12,20 @@ The right arm cannot be known until it has closed, so the value is written on th
 
 The two outputs are independent flags rather than one signed value, because an outside bar can be a swing high and a swing low at once.
 
+## Chart
+
+<ta-chart src="/functions/fractal.svg" ratio="720:274" label="FRACTAL over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back."></ta-chart>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+
+Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back.
+
+Metadata flags used: `inPriceHL: high, low` · `outSwingHigh: pattern_bool, display_shift (-2), zero, positive` · `outSwingLow: pattern_bool, display_shift (-2), zero, positive`
+
+:::
+
+[Reference data (CSV)](/functions/fractal.csv) · [Chart (SVG)](/functions/fractal.svg)
+
 ## Formula
 
 With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
@@ -79,7 +93,95 @@ The function's flags declare which values it can return: [rW7](/spec/inputs-outp
 
 </div>
 
+## Example
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+#include <stdio.h>
+#include <ta_libc.h>
+
+int n = 252;
+double high[252]; /* your data, oldest first */
+double low[252]; /* your data, oldest first */
+int swingHigh[252], swingLow[252];
+int outBegIdx, outNBElement;
+
+TA_Initialize();
+TA_FRACTAL( 0, n - 1, high, low, 2, 2, &outBegIdx, &outNBElement, swingHigh, swingLow );
+printf( "%d values from bar %d; last swingHigh = %d\n", outNBElement, outBegIdx, swingHigh[outNBElement - 1] );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let high = vec![0.0; 252]; // your data, oldest first
+let low = vec![0.0; 252]; // your data, oldest first
+let mut swing_high = vec![0i32; 252];
+let mut swing_low = vec![0i32; 252];
+
+let core = Core::new();
+let range = core.fractal(0, high.len() - 1, &high, &low, 2, 2,
+                         &mut swing_high, &mut swing_low)?;
+println!("{} values from bar {}; last swing_high = {}", range.count, range.beg_idx, swing_high[range.count - 1]);
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+double[] high = new double[252]; // your data, oldest first
+double[] low = new double[252]; // your data, oldest first
+int[] swingHigh = new int[252];
+int[] swingLow = new int[252];
+
+Core core = Core.DEFAULT;
+OutRange r = core.fractal(0, high.length - 1, high, low, 2, 2, swingHigh, swingLow);
+System.out.println(r.count() + " values from bar " + r.begIdx() + "; last swingHigh = " + swingHigh[r.count() - 1]);
+```
+
+@tab C#
+
+```csharp
+using System;
+using TALib;
+
+var high = new double[252]; // your data, oldest first
+var low = new double[252]; // your data, oldest first
+var swingHigh = new int[252];
+var swingLow = new int[252];
+
+var core = Core.Default;
+OutRange r = core.Fractal(0, high.Length - 1, high, low, 2, 2, swingHigh, swingLow);
+Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last swingHigh = {swingHigh[r.Count - 1]}");
+```
+
+@tab TypeScript
+
+```ts
+import { fractal } from 'ta-lib';
+
+const high = new Float64Array(252); // your data, oldest first
+const low = new Float64Array(252); // your data, oldest first
+
+const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
+  leftBars: 2,
+  rightBars: 2,
+});
+console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
+```
+
+:::
+
 ## Implementation
+
+Added in 0.8.1 (ta-lib-python 0.8.1).
 
 TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.c) · [`fractal.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.yaml)
 
@@ -91,7 +193,9 @@ TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_FRACTAL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FRACTAL.cs) |
 | TypeScript | [`fractal.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fractal.ts) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+Python: `talib.FRACTAL` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+
+TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 
 ## Aliases
 
