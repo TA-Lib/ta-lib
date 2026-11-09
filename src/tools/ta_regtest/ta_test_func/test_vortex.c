@@ -92,6 +92,7 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
+#include "fuzz_data.h"
 
 #define VORTEX_CAP 300
 
@@ -198,6 +199,40 @@ static ErrorNumber vortex_build_reference( const TA_History *history,
          refMinus[*refNb] = sM[off] / sTR[off];
       }
       (*refNb)++;
+   }
+   return TA_TEST_PASS;
+}
+
+
+/* Over the domain-edge shape (bars near +/-3e37 beside ordinary ones), the
+ * running sums cancel once a huge bar retires, so both outputs answer negative
+ * on well-formed bars: the sign their metadata declares, which the ride must
+ * see somewhere. */
+static ErrorNumber test_vortex_cancel( void )
+{
+   enum { N = 240 };
+   static TA_Real o[N], h[N], l[N], c[N], v[N], oi[N], outP[N], outM[N];
+   TA_Integer beg, nb;
+   int seed, i, negP = 0, negM = 0;
+
+   for( seed = 0; seed < 64; seed++ )
+   {
+      fuzz_gen( FUZZ_DOMAIN_MAX, seed, N, o, h, l, c, v, oi );
+      if( TA_VORTEX( 0, N - 1, h, l, c, 2, &beg, &nb, outP, outM ) != TA_SUCCESS )
+      {
+         printf( "VORTEX Fail: the domain-edge call failed (seed %d)\n", seed );
+         return TA_VORTEX_CANCEL;
+      }
+      for( i = 0; i < nb; i++ )
+      {
+         negP += outP[i] < 0.0;
+         negM += outM[i] < 0.0;
+      }
+   }
+   if( !negP || !negM )
+   {
+      printf( "VORTEX Fail: the domain-edge shape left %d negative +VI and %d negative -VI\n", negP, negM );
+      return TA_VORTEX_CANCEL;
    }
    return TA_TEST_PASS;
 }
@@ -601,5 +636,5 @@ ErrorNumber test_func_vortex( TA_History *history )
       }
    }
 
-   return TA_TEST_PASS;
+   return test_vortex_cancel();
 }

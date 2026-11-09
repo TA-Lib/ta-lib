@@ -239634,7 +239634,7 @@ public class TaCodegenServe {
         ABSTRACT.put("ULTOSC", new AbsFunc("ULTOSC", "Momentum Indicators", "Ultimate Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod1",0,"First Period","Number of bars for 1st period.",7.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod2",0,"Second Period","Number of bars fro 2nd period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInTimePeriod3",0,"Third Period","Number of bars for 3rd period",28.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
-            new AbsOut[]{ new AbsOut(0,"outReal",1281) }));
+            new AbsOut[]{ new AbsOut(0,"outReal",1793) }));
         ABSTRACT.put("VAR", new AbsFunc("VAR", "Statistic Functions", "Variance", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
@@ -239650,7 +239650,7 @@ public class TaCodegenServe {
         ABSTRACT.put("VORTEX", new AbsFunc("VORTEX", "Momentum Indicators", "Vortex Indicator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the rolling sums",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
-            new AbsOut[]{ new AbsOut(0,"outPlusVI",1281), new AbsOut(0,"outMinusVI",1281) }));
+            new AbsOut[]{ new AbsOut(0,"outPlusVI",1793), new AbsOut(0,"outMinusVI",1793) }));
         ABSTRACT.put("VWAP", new AbsFunc("VWAP", "Volume Indicators", "Volume Weighted Average Price", 587202560,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
             new AbsOpt[]{  },

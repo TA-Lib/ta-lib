@@ -762,6 +762,47 @@ static ErrorNumber test_wad_published_vectors( void )
 }
 
 /**** Global functions definitions.   ****/
+
+/* A 2e17 bar among ordinary ones leaves the running sums below zero once it
+ * retires, so ULTOSC answers negative on well-formed bars: the sign its
+ * metadata declares, which the ride must see somewhere. */
+static void cancel_bars( double spike, double closeFrac, TA_Real h[], TA_Real l[], TA_Real c[], int n )
+{
+   int i;
+   for( i = 0; i < n; i++ )
+   {
+      double b = 100.0 + (i % 5) * 1.37 + (i % 3) * 0.61;
+      h[i] = b + 1.1;
+      l[i] = b - 0.9;
+      c[i] = b + 0.3;
+   }
+   h[5] = spike;
+   l[5] = -spike;
+   c[5] = spike * closeFrac;
+}
+
+static ErrorNumber test_ultosc_cancel( void )
+{
+   TA_Real h[24], l[24], c[24], out[24];
+   TA_Integer beg, nb;
+   int i, neg = 0;
+
+   cancel_bars( 2e17, -0.25, h, l, c, 24 );
+   if( TA_ULTOSC( 0, 23, h, l, c, 2, 3, 4, &beg, &nb, out ) != TA_SUCCESS )
+   {
+      printf( "ULTOSC Fail: the spike call failed\n" );
+      return TA_ULTOSC_CANCEL;
+   }
+   for( i = 0; i < nb; i++ )
+      neg += out[i] < 0.0;
+   if( !neg )
+   {
+      printf( "ULTOSC Fail: no output went negative after the 2e17 spike\n" );
+      return TA_ULTOSC_CANCEL;
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_per_hlc( TA_History *history )
 {
    unsigned int i;
@@ -775,6 +816,13 @@ ErrorNumber test_func_per_hlc( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed CCI uniform-input test (Code=%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = test_ultosc_cancel();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed ULTOSC spike test (Code=%d)\n", retValue );
       return retValue;
    }
 

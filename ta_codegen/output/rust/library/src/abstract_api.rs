@@ -3353,7 +3353,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod1", display_name: "First Period", hint: "Number of bars for 1st period.", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 7, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTimePeriod2", display_name: "Second Period", hint: "Number of bars fro 2nd period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTimePeriod3", display_name: "Third Period", hint: "Number of bars for 3rd period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 28, suggested: (1, 200, 1) } }, ],
-        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000501) }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000701) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -3397,7 +3397,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the rolling sums", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
-        outputs: &[OutputInfo { param_name: "outPlusVI", kind: OutputType::Real, flags: OutputFlags(0x00000501) }, OutputInfo { param_name: "outMinusVI", kind: OutputType::Real, flags: OutputFlags(0x00000501) }, ],
+        outputs: &[OutputInfo { param_name: "outPlusVI", kind: OutputType::Real, flags: OutputFlags(0x00000701) }, OutputInfo { param_name: "outMinusVI", kind: OutputType::Real, flags: OutputFlags(0x00000701) }, ],
         unst_id: None,
     },
     FuncInfo {

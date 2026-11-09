@@ -197,10 +197,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_VORTEX_TimePeriod =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VORTEX_outPlusVI =
-                               { TA_Output_Real, "outPlusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Real, "outPlusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_VORTEX_outMinusVI =
-                               { TA_Output_Real, "outMinusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Real, "outMinusVI", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_VORTEX_Inputs[]    =
 {
