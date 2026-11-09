@@ -629,8 +629,8 @@ typedef enum
   /* ADR's running sum no longer leaves the drift the metadata ride's slack is held to. */
   TA_ADR_DRIFT                 = 1732,
 
-  /* A spike no longer drives VORTEX's / ULTOSC's running sums below zero, so the
-   * negative sign their metadata declares goes unseen by the ride. */
+  /* After a spike, VORTEX's / ULTOSC's running sums went below zero or did not
+   * come back to the window's fresh sums. */
   TA_VORTEX_CANCEL             = 1733,
   TA_ULTOSC_CANCEL             = 1734,
 

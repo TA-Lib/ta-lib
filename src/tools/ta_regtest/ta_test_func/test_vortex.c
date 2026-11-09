@@ -204,35 +204,79 @@ static ErrorNumber vortex_build_reference( const TA_History *history,
 }
 
 
-/* Over the domain-edge shape (bars near +/-3e37 beside ordinary ones), the
- * running sums cancel once a huge bar retires, so both outputs answer negative
- * on well-formed bars: the sign their metadata declares, which the ride must
- * see somewhere. */
+/* Over the domain-edge shape (bars near +/-3e37 beside ordinary ones), a huge
+ * bar retiring leaves cancellation residue in the running sums, and a sum that
+ * comes out negative must be rebuilt from the window: no output may be
+ * negative, every output must match fresh window sums, and the stream must
+ * agree with the batch bit for bit (#588). */
 static ErrorNumber test_vortex_cancel( void )
 {
-   enum { N = 240 };
+   enum { N = 240, PERIOD = 2 };
    static TA_Real o[N], h[N], l[N], c[N], v[N], oi[N], outP[N], outM[N];
+   TA_VORTEX_Stream *stream;
+   TA_Real sP, sM;
    TA_Integer beg, nb;
-   int seed, i, negP = 0, negM = 0;
+   TA_RetCode rc;
+   int seed, i, j;
 
    for( seed = 0; seed < 64; seed++ )
    {
       fuzz_gen( FUZZ_DOMAIN_MAX, seed, N, o, h, l, c, v, oi );
-      if( TA_VORTEX( 0, N - 1, h, l, c, 2, &beg, &nb, outP, outM ) != TA_SUCCESS )
+      if( TA_VORTEX( 0, N - 1, h, l, c, PERIOD, &beg, &nb, outP, outM ) != TA_SUCCESS )
       {
          printf( "VORTEX Fail: the domain-edge call failed (seed %d)\n", seed );
          return TA_VORTEX_CANCEL;
       }
       for( i = 0; i < nb; i++ )
       {
-         negP += outP[i] < 0.0;
-         negM += outM[i] < 0.0;
+         int bar = (int)beg + i;
+         double nTR = 0.0, nP = 0.0, nM = 0.0, wantP, wantM, tol;
+         for( j = bar - PERIOD + 1; j <= bar; j++ )
+         {
+            double tr = h[j] - l[j];
+            double t2 = fabs( c[j-1] - h[j] );
+            double t3 = fabs( c[j-1] - l[j] );
+            if( t2 > tr ) tr = t2;
+            if( t3 > tr ) tr = t3;
+            nTR += tr;
+            nP  += fabs( h[j] - l[j-1] );
+            nM  += fabs( l[j] - h[j-1] );
+         }
+         wantP = ( nTR > 0.0 ) ? nP / nTR : 0.0;
+         wantM = ( nTR > 0.0 ) ? nM / nTR : 0.0;
+         tol = 1e-9 * ( wantP > wantM ? ( wantP > 1.0 ? wantP : 1.0 )
+                                      : ( wantM > 1.0 ? wantM : 1.0 ) );
+         if( outP[i] < 0.0 || outM[i] < 0.0
+             || fabs( outP[i] - wantP ) > tol || fabs( outM[i] - wantM ) > tol )
+         {
+            printf( "VORTEX Fail: domain-edge seed %d bar %d: (%.17g,%.17g), "
+                    "fresh sums give (%.17g,%.17g)\n",
+                    seed, bar, outP[i], outM[i], wantP, wantM );
+            return TA_VORTEX_CANCEL;
+         }
       }
-   }
-   if( !negP || !negM )
-   {
-      printf( "VORTEX Fail: the domain-edge shape left %d negative +VI and %d negative -VI\n", negP, negM );
-      return TA_VORTEX_CANCEL;
+
+      rc = TA_VORTEX_Open( &stream, h, l, c, PERIOD + 1, PERIOD, &sP, &sM );
+      for( i = PERIOD + 1; rc == TA_SUCCESS && i < N; i++ )
+      {
+         rc = TA_VORTEX_Update( stream, h[i], l[i], c[i], &sP, &sM );
+         if( rc == TA_SUCCESS &&
+             ( memcmp( &sP, &outP[i-PERIOD], sizeof(TA_Real) ) != 0 ||
+               memcmp( &sM, &outM[i-PERIOD], sizeof(TA_Real) ) != 0 ) )
+         {
+            printf( "VORTEX Fail: domain-edge seed %d bar %d: stream (%.17g,%.17g), "
+                    "batch (%.17g,%.17g)\n",
+                    seed, i, sP, sM, outP[i-PERIOD], outM[i-PERIOD] );
+            TA_VORTEX_Close( stream );
+            return TA_VORTEX_CANCEL;
+         }
+      }
+      if( rc != TA_SUCCESS )
+      {
+         printf( "VORTEX Fail: domain-edge stream retCode %d (seed %d)\n", (int)rc, seed );
+         return TA_VORTEX_CANCEL;
+      }
+      TA_VORTEX_Close( stream );
    }
    return TA_TEST_PASS;
 }
