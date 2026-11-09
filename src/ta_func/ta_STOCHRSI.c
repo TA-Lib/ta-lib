@@ -441,7 +441,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHRSI_OpenBody( struct TA_STOCHRSI_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RSI_OpenAndFillInternal( &sub0, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, optInTimePeriod, &outBegIdx1, &outNbElement1, tempRSIBuffer );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempRSIBuffer);
             TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
@@ -461,7 +461,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHRSI_OpenBody( struct TA_STOCHRSI_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_STOCHF_OpenAndFillInternal( &sub1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &outBegIdx2, &dummyNBElement, sc_outFastK, sc_outFastD );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempRSIBuffer);
             TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );

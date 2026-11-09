@@ -4943,6 +4943,7 @@ fn composed_step_ctx(
         ctx.index_vars.insert(format!("sp.{}", lag_line_field(k, LineField::Pos)));
         ctx.index_vars.insert(format!("sp.{}", lag_line_field(k, LineField::Cap)));
         ctx.index_vars.insert(streaming::lag_cap_local(k));
+        ctx.index_vars.insert(streaming::lag_pos_local(k));
         let (p, c) = streaming::lag_hoist_locals(k);
         ctx.index_vars.insert(p);
         ctx.index_vars.insert(c);

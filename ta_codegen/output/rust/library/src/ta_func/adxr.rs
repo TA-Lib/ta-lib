@@ -378,6 +378,7 @@ impl Core {
         let mut lagIn0: f64 = 0.0_f64;
         let mut lagTap0_0: f64 = 0.0_f64;
         let mut lagCapL0: usize = 0;
+        let mut lagPosL0: usize = 0;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_adx = sp.sub0.update(inHigh, inLow, inClose)?;
@@ -386,11 +387,13 @@ impl Core {
         lagTap0_0 = sp.lagBuf0[sp.lagPos0];
         cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
         lagCapL0 = sp.lagCap0;
-        sp.lagBuf0[sp.lagPos0] = lagIn0;
-        sp.lagPos0 = sp.lagPos0 + 1;
-        if sp.lagPos0 >= lagCapL0 {
-            sp.lagPos0 = 0;
+        lagPosL0 = sp.lagPos0;
+        sp.lagBuf0[lagPosL0] = lagIn0;
+        lagPosL0 = lagPosL0 + 1;
+        if lagPosL0 >= lagCapL0 {
+            lagPosL0 = 0;
         }
+        sp.lagPos0 = lagPosL0;
         (*outReal) = cur_outReal;
         Ok(())
     }

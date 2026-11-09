@@ -543,9 +543,9 @@ fn test_java_adxr_delay_line() {
     // The tap loads the oldest slot before the push overwrites it, and the
     // position wraps with a compare, not a `%`.
     let read = step.find("lagTap0_0 = sp.lagBuf0[sp.lagPos0];").expect("tap load");
-    let push = step.find("sp.lagBuf0[sp.lagPos0] = lagIn0;").expect("push");
+    let push = step.find("sp.lagBuf0[lagPosL0] = lagIn0;").expect("push");
     assert!(read < push, "the combine reads the oldest slot before the push:\n{step}");
-    assert!(step.contains("if( sp.lagPos0 >= lagCapL0 ) {"), "wrap by compare:\n{step}");
+    assert!(step.contains("if( lagPosL0 >= lagCapL0 ) {"), "wrap by compare:\n{step}");
     assert!(!step.contains('%'), "no modulo in the step:\n{step}");
 }
 

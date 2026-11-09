@@ -975,7 +975,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MIDPRICE_OpenAndFillInternal( &sub0, inHigh, inLow, (stageIdx), (endIdx) + 1, optInKCPeriod, &dummyBegIdx, &dummyNBElement, tempDev );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1004,7 +1004,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_SMA_OpenAndFillInternal( &sub1, inClose, (stageIdx), (endIdx) + 1, optInKCPeriod, &tempBegIdx, &kcmNb, tempKCM );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1033,7 +1033,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
-      if( stageLen < 1 )
+      if( TA_UNLIKELY(stageLen < 1) )
       {
          free(tempDev);
          free(tempWork);
@@ -1043,7 +1043,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb0 - stageLen - dummyBegIdx != 0 )
+      if( TA_UNLIKELY(lagNb0 - stageLen - dummyBegIdx != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1053,7 +1053,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INTERNAL_ERROR(544);
       }
-      if( lagNb2 - stageLen != 0 )
+      if( TA_UNLIKELY(lagNb2 - stageLen != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1063,7 +1063,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INTERNAL_ERROR(545);
       }
-      if( lagNb1 - stageLen != 0 )
+      if( TA_UNLIKELY(lagNb1 - stageLen != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1085,7 +1085,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_TRANGE_OpenAndFillInternal( &sub2, inHigh, inLow, inClose, (stageIdx), (endIdx) + 1, &tempBegIdx, &tempNbElement, tempWork );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1114,7 +1114,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_SMA_OpenInternal( &sub3, tempWork, (0), (stageLen - 1) + 1, optInKCPeriod, &subOpenDummy );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1125,7 +1125,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
             return subRc;
          }
       }
-      if( lagNb3 - 1 - (stageLen - 1) != 0 )
+      if( TA_UNLIKELY(lagNb3 - 1 - (stageLen - 1) != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1152,7 +1152,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_SMA_OpenAndFillInternal( &sub4, inClose, (startIdx), (endIdx) + 1, optInBBPeriod, &tempBegIdx, &tempNbElement, tempMid );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1181,7 +1181,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_STDDEV_OpenAndFillInternal( &sub5, inClose, (startIdx), (endIdx) + 1, optInBBPeriod, 1.0, &tempBegIdx, &sdNb, tempSD );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1222,7 +1222,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_LINEARREG_OpenAndFillInternal( &sub6, tempDev, (0), (stageLen - 1) + 1, optInKCPeriod, &tempBegIdx, &tempNbElement, sc_outMomentum );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempDev);
             free(tempWork);
@@ -1254,7 +1254,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * upper one contracts into a fused multiply-add and the lower one cannot,
        * and a band within one ulp of an edge then changes level.
        */
-      if( n < 1 )
+      if( TA_UNLIKELY(n < 1) )
       {
          free(tempDev);
          free(tempWork);
@@ -1264,7 +1264,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb5 - n != 0 )
+      if( TA_UNLIKELY(lagNb5 - n != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1274,7 +1274,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INTERNAL_ERROR(548);
       }
-      if( lagNb4 - n != 0 )
+      if( TA_UNLIKELY(lagNb4 - n != 0) )
       {
          free(tempDev);
          free(tempWork);
@@ -1284,7 +1284,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return TA_INTERNAL_ERROR(549);
       }
-      if( lagNb2 - n - kcmShift != 0 )
+      if( TA_UNLIKELY(lagNb2 - n - kcmShift != 0) )
       {
          free(tempDev);
          free(tempWork);

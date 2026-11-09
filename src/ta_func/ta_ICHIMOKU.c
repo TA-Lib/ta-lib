@@ -515,7 +515,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MIDPRICE_OpenAndFillInternal( &sub0, inHigh, inLow, (startIdx), (endIdx) + 1, optInTenkanPeriod, &tempBegIdx, &tempNbElement, tempT );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempT);
             free(tempK);
@@ -536,7 +536,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MIDPRICE_OpenAndFillInternal( &sub1, inHigh, inLow, (startIdx), (endIdx) + 1, optInKijunPeriod, &tempBegIdx, &tempNbElement, tempK );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempT);
             free(tempK);
@@ -557,7 +557,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MIDPRICE_OpenAndFillInternal( &sub2, inHigh, inLow, (startIdx), (endIdx) + 1, optInSenkouBPeriod, &tempBegIdx, &tempNbElement, sc_outSenkouSpanB );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempT);
             free(tempK);
@@ -581,7 +581,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MEDPRICE_OpenAndFillInternal( &sub3, tempT, tempK, (0), (n - 1) + 1, &tempBegIdx, &tempNbElement, sc_outSenkouSpanA );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempT);
             free(tempK);
@@ -589,14 +589,14 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
             return subRc;
          }
       }
-      if( lagNb0 - 1 - (n - 1) != 0 )
+      if( TA_UNLIKELY(lagNb0 - 1 - (n - 1) != 0) )
       {
          free(tempT);
          free(tempK);
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_INTERNAL_ERROR(526);
       }
-      if( lagNb1 - 1 - (n - 1) != 0 )
+      if( TA_UNLIKELY(lagNb1 - 1 - (n - 1) != 0) )
       {
          free(tempT);
          free(tempK);
@@ -611,21 +611,21 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return retCode;
       }
-      if( n < 1 )
+      if( TA_UNLIKELY(n < 1) )
       {
          free(tempT);
          free(tempK);
          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb0 - n != 0 )
+      if( TA_UNLIKELY(lagNb0 - n != 0) )
       {
          free(tempT);
          free(tempK);
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_INTERNAL_ERROR(528);
       }
-      if( lagNb1 - n != 0 )
+      if( TA_UNLIKELY(lagNb1 - n != 0) )
       {
          free(tempT);
          free(tempK);
@@ -644,7 +644,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
 
       /* Capture the live producer state + sub handles. */
       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB ); return TA_INSUFFICIENT_HISTORY; }
-      if( lagNb2 - dummyNBElement != 0 )
+      if( TA_UNLIKELY(lagNb2 - dummyNBElement != 0) )
       {
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_INTERNAL_ERROR(530);

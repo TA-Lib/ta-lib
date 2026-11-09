@@ -537,3 +537,82 @@ fn identity_fast_path_short_circuits_at_stride_zero() {
         "the identity fill arm indexes plainly:\n{core}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Composed tier: the guards Open adds and the sub-open checks are hinted
+// ---------------------------------------------------------------------------
+
+/// The plan says how many guards of each kind the body holds, so the hinted
+/// arms are counted against it by what each returns: a guard that lost its
+/// hint, or a transcribed arm that gained one, breaks the count.
+#[test]
+fn every_composed_open_guard_and_sub_open_check_is_predicted_unlikely() {
+    use ta_codegen_lib::streaming::{self, OpenAction, StreamPlan};
+    const KINDS: [&str; 5] = ["EmptyGuard", "Presume", "Capture", "Seed", "sub-open"];
+    fn tally<'a>(acts: impl IntoIterator<Item = &'a OpenAction>, n: &mut [usize; 5]) {
+        for a in acts {
+            match a {
+                OpenAction::EmptyGuard { .. } => n[0] += 1,
+                OpenAction::Presume { .. } => n[1] += 1,
+                OpenAction::Capture { .. } => n[2] += 1,
+                OpenAction::Seed { .. } => n[3] += 1,
+                OpenAction::Mirror { then_, else_, .. } => {
+                    tally(then_, n);
+                    tally(else_, n);
+                }
+                OpenAction::Snapshot { .. } => {}
+            }
+        }
+    }
+    let registry = common::make_registry();
+    let mut corpus = [0usize; 5];
+    for name in streaming_funcs() {
+        let (func, _) = load(&name);
+        let resolved = func.resolved_for(ir::Lang::C);
+        let Ok(StreamPlan::Composed(cp)) = streaming::validate_streamable(&resolved, registry) else {
+            continue;
+        };
+        let mut want = [0usize; 5];
+        tally(cp.open_actions.iter().map(|(_, a)| a), &mut want);
+        want[4] = cp.subs.len();
+        let src = stream_c(&name);
+        let core = [format!("TA_{}_OpenBody(", func.name), format!("TA_{}_OpenImpl(", func.name)]
+            .into_iter()
+            .find(|h| src.contains(h.as_str()))
+            .unwrap_or_else(|| panic!("{}: no composed Open core", func.name));
+        let body = strip_comments(&body_of(&src, &core));
+        let lines: Vec<&str> = body.lines().map(str::trim).collect();
+        // [TA_INSUFFICIENT_HISTORY, TA_INTERNAL_ERROR(..), TA_ALLOC_ERR, subRc]
+        let mut got = [0usize; 4];
+        for (i, l) in lines.iter().enumerate() {
+            if !l.starts_with("if( TA_UNLIKELY(") {
+                continue;
+            }
+            let ret = lines[i + 1..]
+                .iter()
+                .find(|x| x.starts_with("return "))
+                .unwrap_or_else(|| panic!("{}: a hinted arm with no return: `{l}`", func.name));
+            let slot = match *ret {
+                "return TA_INSUFFICIENT_HISTORY;" => 0,
+                r if r.starts_with("return TA_INTERNAL_ERROR(") && r.ends_with(");") => 1,
+                "return TA_ALLOC_ERR;" => 2,
+                "return subRc;" => 3,
+                other => panic!("{}: a hinted arm returns `{other}`, which Open never inserts", func.name),
+            };
+            got[slot] += 1;
+        }
+        assert_eq!(
+            got,
+            [want[0], want[1] + want[2], want[3], want[4]],
+            "{}: hinted arms by return [empty count, presumption or capture, seed, sub-open] \
+             against the plan's EmptyGuard/Presume/Capture/Seed actions and sub-calls:\n{body}",
+            func.name
+        );
+        for (c, w) in corpus.iter_mut().zip(want) {
+            *c += w;
+        }
+    }
+    for (kind, n) in KINDS.iter().zip(corpus) {
+        assert!(n > 0, "no composed Open inserts a {kind} arm: the sweep checks nothing for it");
+    }
+}

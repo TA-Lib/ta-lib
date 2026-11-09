@@ -721,7 +721,7 @@ static TA_OPEN_INLINE TA_RetCode TA_APO_OpenBody( struct TA_APO_Stream **stream,
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInFastPeriod, optInMAType, &fastBeg, &fastNb, tempBuffer );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer);
             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
@@ -740,7 +740,7 @@ static TA_OPEN_INLINE TA_RetCode TA_APO_OpenBody( struct TA_APO_Stream **stream,
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub1, inReal, (startIdx), (endIdx) + 1, optInSlowPeriod, optInMAType, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer);
             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );

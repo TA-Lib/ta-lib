@@ -7871,6 +7871,7 @@ public final class Core {
       double lagIn0 = 0.0;
       double lagTap0_0 = 0.0;
       int lagCapL0 = 0;
+      int lagPosL0 = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_adx = sp.sub0.update(inHigh, inLow, inClose);
       lagIn0 = cur_adx;
@@ -7878,11 +7879,13 @@ public final class Core {
       lagTap0_0 = sp.lagBuf0[sp.lagPos0];
       cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
       lagCapL0 = sp.lagCap0;
-      sp.lagBuf0[sp.lagPos0] = lagIn0;
-      sp.lagPos0 = sp.lagPos0 + 1;
-      if( sp.lagPos0 >= lagCapL0 ) {
-         sp.lagPos0 = 0;
+      lagPosL0 = sp.lagPos0;
+      sp.lagBuf0[lagPosL0] = lagIn0;
+      lagPosL0 = lagPosL0 + 1;
+      if( lagPosL0 >= lagCapL0 ) {
+         lagPosL0 = 0;
       }
+      sp.lagPos0 = lagPosL0;
       sp.cur_outReal = cur_outReal;
    }
    private RetCode adxrOpenImpl( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -110024,9 +110027,13 @@ public final class Core {
       double lagIn3 = 0.0;
       double lagTap3_0 = 0.0;
       int lagCapL0 = 0;
+      int lagPosL0 = 0;
       int lagCapL1 = 0;
+      int lagPosL1 = 0;
       int lagCapL2 = 0;
+      int lagPosL2 = 0;
       int lagCapL3 = 0;
+      int lagPosL3 = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempMP = sp.sub0.update(inHigh, inLow);
       cur_tempA = sp.sub1.update(cur_tempMP);
@@ -110050,29 +110057,37 @@ public final class Core {
       lagTap3_0 = (sp.lagCap3 == 0) ? lagIn3 : lagTap3_0;
       cur_outLower = (lagTap2_0 < lagTap3_0) ? lagTap2_0 - lagTap3_0 : lagTap3_0 - lagTap2_0;
       lagCapL0 = sp.lagCap0;
-      sp.lagBuf0[sp.lagPos0] = lagIn0;
-      sp.lagPos0 = sp.lagPos0 + 1;
-      if( sp.lagPos0 >= lagCapL0 ) {
-         sp.lagPos0 = 0;
+      lagPosL0 = sp.lagPos0;
+      sp.lagBuf0[lagPosL0] = lagIn0;
+      lagPosL0 = lagPosL0 + 1;
+      if( lagPosL0 >= lagCapL0 ) {
+         lagPosL0 = 0;
       }
+      sp.lagPos0 = lagPosL0;
       lagCapL1 = sp.lagCap1;
-      sp.lagBuf1[sp.lagPos1] = lagIn1;
-      sp.lagPos1 = sp.lagPos1 + 1;
-      if( sp.lagPos1 >= lagCapL1 ) {
-         sp.lagPos1 = 0;
+      lagPosL1 = sp.lagPos1;
+      sp.lagBuf1[lagPosL1] = lagIn1;
+      lagPosL1 = lagPosL1 + 1;
+      if( lagPosL1 >= lagCapL1 ) {
+         lagPosL1 = 0;
       }
+      sp.lagPos1 = lagPosL1;
       lagCapL2 = sp.lagCap2;
-      sp.lagBuf2[sp.lagPos2] = lagIn2;
-      sp.lagPos2 = sp.lagPos2 + 1;
-      if( sp.lagPos2 >= lagCapL2 ) {
-         sp.lagPos2 = 0;
+      lagPosL2 = sp.lagPos2;
+      sp.lagBuf2[lagPosL2] = lagIn2;
+      lagPosL2 = lagPosL2 + 1;
+      if( lagPosL2 >= lagCapL2 ) {
+         lagPosL2 = 0;
       }
+      sp.lagPos2 = lagPosL2;
       lagCapL3 = sp.lagCap3;
-      sp.lagBuf3[sp.lagPos3] = lagIn3;
-      sp.lagPos3 = sp.lagPos3 + 1;
-      if( sp.lagPos3 >= lagCapL3 ) {
-         sp.lagPos3 = 0;
+      lagPosL3 = sp.lagPos3;
+      sp.lagBuf3[lagPosL3] = lagIn3;
+      lagPosL3 = lagPosL3 + 1;
+      if( lagPosL3 >= lagCapL3 ) {
+         lagPosL3 = 0;
       }
+      sp.lagPos3 = lagPosL3;
       sp.cur_outUpper = cur_outUpper;
       sp.cur_outLower = cur_outLower;
    }

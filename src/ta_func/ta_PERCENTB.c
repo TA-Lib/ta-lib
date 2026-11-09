@@ -907,7 +907,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, optInMAType, &maBegIdx, &maNbElement, tempMA );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempX);
             free(tempMA);
@@ -929,7 +929,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_VAR_OpenAndFillInternal( &sub1, inReal, (maBegIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempX);
             free(tempMA);
@@ -950,14 +950,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
       offset = maNbElement - dummyNBElement;
       if( optInNbDevUp == optInNbDevDn )
       {
-         if( (int)dummyNBElement < 1 )
+         if( TA_UNLIKELY((int)dummyNBElement < 1) )
          {
             free(tempX);
             free(tempMA);
             *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
             return TA_INSUFFICIENT_HISTORY;
          }
-         if( lagNb0 - (int)dummyNBElement != 0 )
+         if( TA_UNLIKELY(lagNb0 - (int)dummyNBElement != 0) )
          {
             free(tempX);
             free(tempMA);
@@ -967,14 +967,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
       }
       else
       {
-         if( (int)dummyNBElement < 1 )
+         if( TA_UNLIKELY((int)dummyNBElement < 1) )
          {
             free(tempX);
             free(tempMA);
             *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
             return TA_INSUFFICIENT_HISTORY;
          }
-         if( lagNb0 - (int)dummyNBElement != 0 )
+         if( TA_UNLIKELY(lagNb0 - (int)dummyNBElement != 0) )
          {
             free(tempX);
             free(tempMA);

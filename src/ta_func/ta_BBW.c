@@ -809,7 +809,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBW_OpenImpl( struct TA_BBW_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, optInMAType, &maBegIdx, &maNbElement, tempBuffer );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer);
             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
@@ -832,7 +832,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBW_OpenImpl( struct TA_BBW_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_VAR_OpenAndFillInternal( &sub1, inReal, (maBegIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer);
             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );

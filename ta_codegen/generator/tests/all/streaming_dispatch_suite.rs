@@ -1903,7 +1903,7 @@ fn test_c_composed_open_frees_every_delay_line_on_oom_paths() {
         let frees_all = |text: &str| (0..cp.lines.len()).all(|k| text.contains(&format!("TA_Free( lagBuf{k} );")));
         for k in 0..cp.lines.len() {
             let at = open
-                .find(&format!("if( !lagBuf{k} )"))
+                .find(&format!("if( TA_UNLIKELY(!lagBuf{k}) )"))
                 .unwrap_or_else(|| panic!("{name}: line {k} allocation has no failure check"));
             let block = &open[at..at + open[at..].find("return TA_ALLOC_ERR;").expect("failure return")];
             assert!(frees_all(block), "{name}: line {k}'s allocation failure leaks a line:\n{block}");

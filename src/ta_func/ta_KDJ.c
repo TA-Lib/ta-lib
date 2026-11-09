@@ -359,7 +359,7 @@ static TA_OPEN_INLINE TA_RetCode TA_KDJ_OpenBody( struct TA_KDJ_Stream **stream,
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_STOCH_OpenAndFillInternal( &sub0, inHigh, inLow, inClose, (startIdx), (endIdx) + 1, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &dummyBegIdx, &dummyNBElement, sc_outK, sc_outD );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ );
             return subRc;

@@ -522,3 +522,52 @@ fn every_delay_line_allocation_holds_at_least_one_slot() {
         }
     }
 }
+
+/// Any other store of the field is Open's capture of its own local.
+#[test]
+fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
+    let registry = common::make_registry();
+    let mut pushes = 0usize;
+    for name in streaming_funcs() {
+        let (func, enums) = load(&name);
+        let resolved = func.resolved_for(ir::Lang::C);
+        let Ok(ta_codegen_lib::streaming::StreamPlan::Composed(cp)) =
+            ta_codegen_lib::streaming::validate_streamable(&resolved, registry)
+        else {
+            continue;
+        };
+        for lang in ["c", "rust", "java", "csharp", "ts"] {
+            let text = render_stream(&func, &enums, lang);
+            let lines: Vec<&str> = text.lines().map(str::trim).collect();
+            for k in 0..cp.lines.len() {
+                let (local, wrap) = (format!("lagPosL{k}"), format!("lagPosL{k} = 0;"));
+                let mut from_local = Vec::new();
+                for (i, l) in lines.iter().enumerate() {
+                    let Some(rhs) = ["sp.", "sp->"]
+                        .iter()
+                        .find_map(|p| l.strip_prefix(&format!("{p}lagPos{k} = ")))
+                    else {
+                        continue;
+                    };
+                    match rhs.strip_suffix(';') {
+                        Some(r) if r == local => from_local.push(i),
+                        Some(r) if r == format!("lagPos{k}") => {}
+                        _ => panic!(
+                            "{} {lang}: line {k}'s position is stored from something else: `{l}`",
+                            func.name
+                        ),
+                    }
+                }
+                let wraps: Vec<usize> = (0..lines.len()).filter(|&i| lines[i] == wrap).collect();
+                assert!(
+                    from_local.len() == 1 && wraps.len() == 1 && wraps[0] < from_local[0],
+                    "{} {lang}: line {k}'s push must store its position once, from `{local}`, after \
+                     `{wrap}` (stores at {from_local:?}, wraps at {wraps:?})",
+                    func.name
+                );
+                pushes += 1;
+            }
+        }
+    }
+    assert!(pushes >= 5, "no delay line was pushed in any backend: the gate checks nothing");
+}

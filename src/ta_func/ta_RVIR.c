@@ -390,7 +390,7 @@ static TA_OPEN_INLINE TA_RetCode TA_RVIR_OpenBody( struct TA_RVIR_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RVI_OpenAndFillInternal( &sub0, inHigh, (startIdx), (endIdx) + 1, optInTimePeriod, optInStdDevPeriod, &tempBegIdx, &tempNbElement, tempHigh );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempHigh);
             TA_RVI_Close( sub0 ); TA_RVI_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
@@ -408,7 +408,7 @@ static TA_OPEN_INLINE TA_RetCode TA_RVIR_OpenBody( struct TA_RVIR_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RVI_OpenAndFillInternal( &sub1, inLow, (startIdx), (endIdx) + 1, optInTimePeriod, optInStdDevPeriod, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempHigh);
             TA_RVI_Close( sub0 ); TA_RVI_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );

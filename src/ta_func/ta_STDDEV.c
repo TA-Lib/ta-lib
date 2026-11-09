@@ -308,7 +308,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STDDEV_OpenBody( struct TA_STDDEV_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_VAR_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
             return subRc;

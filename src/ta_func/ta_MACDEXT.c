@@ -660,7 +660,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (tempInteger), (endIdx) + 1, optInSlowPeriod, optInSlowMAType, &outBegIdx1, &outNbElement1, slowMABuffer );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(fastMABuffer);
             free(slowMABuffer);
@@ -683,7 +683,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub1, inReal, (tempInteger), (endIdx) + 1, optInFastPeriod, optInFastMAType, &outBegIdx2, &outNbElement2, fastMABuffer );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(fastMABuffer);
             free(slowMABuffer);
@@ -712,14 +712,14 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
       }
       /* Calculate (fast MA) - (slow MA). */
       lagNb1 = outNbElement1;
-      if( outNbElement1 < 1 )
+      if( TA_UNLIKELY(outNbElement1 < 1) )
       {
          free(fastMABuffer);
          free(slowMABuffer);
          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb0 - outNbElement1 != 0 )
+      if( TA_UNLIKELY(lagNb0 - outNbElement1 != 0) )
       {
          free(fastMABuffer);
          free(slowMABuffer);
@@ -735,14 +735,14 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
        * reused as scratch, so source and destination overlap (issue #94).
        */
       lagNb2 = endIdx - startIdx + 1;
-      if( endIdx - startIdx + 1 < 1 )
+      if( TA_UNLIKELY(endIdx - startIdx + 1 < 1) )
       {
          free(fastMABuffer);
          free(slowMABuffer);
          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0 )
+      if( TA_UNLIKELY(lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0) )
       {
          free(fastMABuffer);
          free(slowMABuffer);
@@ -755,7 +755,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub2, fastMABuffer, (0), (outNbElement1 - 1) + 1, optInSignalPeriod, optInSignalMAType, &outBegIdx2, &outNbElement2, sc_outMACDSignal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(fastMABuffer);
             free(slowMABuffer);
@@ -774,12 +774,12 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
          return retCode;
       }
       /* Calculate the histogram. */
-      if( outNbElement2 < 1 )
+      if( TA_UNLIKELY(outNbElement2 < 1) )
       {
          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb2 - outNbElement2 != 0 )
+      if( TA_UNLIKELY(lagNb2 - outNbElement2 != 0) )
       {
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INTERNAL_ERROR(540);
@@ -794,7 +794,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
 
       /* Capture the live producer state + sub handles. */
       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_INSUFFICIENT_HISTORY; }
-      if( lagNb2 - dummyNBElement != 0 )
+      if( TA_UNLIKELY(lagNb2 - dummyNBElement != 0) )
       {
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INTERNAL_ERROR(541);

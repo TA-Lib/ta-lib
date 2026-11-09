@@ -954,7 +954,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, optInMAType, &dummyBegIdx, &dummyNBElement, tempBuffer1 );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer1);
             free(tempBuffer2);
@@ -979,7 +979,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_STDDEV_OpenAndFillInternal( &sub1, inReal, ((int)dummyBegIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, tempBuffer2 );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempBuffer1);
             free(tempBuffer2);
@@ -1012,14 +1012,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
       {
          shiftIdx = 0;
       }
-      if( dummyNBElement < 1 )
+      if( TA_UNLIKELY(dummyNBElement < 1) )
       {
          free(tempBuffer1);
          free(tempBuffer2);
          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( lagNb0 - shiftIdx - dummyNBElement != 0 )
+      if( TA_UNLIKELY(lagNb0 - shiftIdx - dummyNBElement != 0) )
       {
          free(tempBuffer1);
          free(tempBuffer2);

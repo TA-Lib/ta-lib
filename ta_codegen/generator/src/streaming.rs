@@ -3281,6 +3281,12 @@ pub fn lag_cap_local(k: usize) -> String {
     format!("lagCapL{k}")
 }
 
+/// Step local the push advances line `k`'s position in.
+#[must_use]
+pub fn lag_pos_local(k: usize) -> String {
+    format!("lagPosL{k}")
+}
+
 /// Open local holding the count of `snapshots[s]`.
 #[must_use]
 pub fn lag_nb_local(s: usize) -> String {
@@ -3896,10 +3902,13 @@ pub fn lag_snapshot(k: usize, storage: &str) -> Statement {
 }
 
 /// The commit frame's write of line `k`'s snapshot and its position advance.
+/// The position wraps in a local and is stored once: a JIT keeps a compare
+/// that steers two stores to one field a branch.
 #[must_use]
 pub fn lag_push(k: usize, names: &dyn NameMap) -> Vec<Statement> {
     let pos = names.state(&lag_line_field(k, LineField::Pos));
     let local_cap = lag_cap_local(k);
+    let local_pos = lag_pos_local(k);
     let mut out = vec![
         Statement::Assign {
             target: Expr::Var(local_cap.clone()),
@@ -3907,15 +3916,25 @@ pub fn lag_push(k: usize, names: &dyn NameMap) -> Vec<Statement> {
             compound: false,
         },
         Statement::Assign {
+            target: Expr::Var(local_pos.clone()),
+            value: Expr::Var(pos.clone()),
+            compound: false,
+        },
+        Statement::Assign {
             target: Expr::ArrayAccess(
                 names.state(&lag_line_field(k, LineField::Buf)),
-                Box::new(Expr::Var(pos.clone())),
+                Box::new(Expr::Var(local_pos.clone())),
             ),
             value: Expr::Var(lag_in_local(k)),
             compound: false,
         },
     ];
-    push_wrap_tail(&mut out, &pos, &local_cap);
+    push_wrap_tail(&mut out, &local_pos, &local_cap);
+    out.push(Statement::Assign {
+        target: Expr::Var(pos),
+        value: Expr::Var(local_pos),
+        compound: false,
+    });
     out
 }
 
@@ -3937,6 +3956,7 @@ pub fn lag_step_locals(cp: &ComposedPlan, commit: bool) -> (Vec<String>, Vec<Str
         }
         if commit {
             ints.push(lag_cap_local(k));
+            ints.push(lag_pos_local(k));
         }
     }
     (reals, ints)

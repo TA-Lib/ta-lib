@@ -941,7 +941,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInSlowK_Period, optInSlowK_MAType, &subOpenDummy );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             if( bufferIsAllocated )
             {
@@ -971,7 +971,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub1, tempBuffer, (0), ((int)dummyNBElement - 1) + 1, optInSlowD_Period, optInSlowD_MAType, &dummyBegIdx, &dummyNBElement, sc_outSlowD );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             if( bufferIsAllocated )
             {

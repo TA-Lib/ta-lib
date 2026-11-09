@@ -276,6 +276,7 @@ static TA_RetCode TA_ADXR_StepImpl( struct TA_ADXR_Stream *sp, double inHigh, do
    double lagIn0 = 0.0;
    double lagTap0_0 = 0.0;
    int lagCapL0 = 0;
+   int lagPosL0 = 0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -288,12 +289,14 @@ static TA_RetCode TA_ADXR_StepImpl( struct TA_ADXR_Stream *sp, double inHigh, do
    lagTap0_0 = sp->lagBuf0[sp->lagPos0];
    cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
    lagCapL0 = sp->lagCap0;
-   sp->lagBuf0[sp->lagPos0] = lagIn0;
-   sp->lagPos0 = sp->lagPos0 + 1;
-   if( sp->lagPos0 >= lagCapL0 )
+   lagPosL0 = sp->lagPos0;
+   sp->lagBuf0[lagPosL0] = lagIn0;
+   lagPosL0 = lagPosL0 + 1;
+   if( lagPosL0 >= lagCapL0 )
    {
-      sp->lagPos0 = 0;
+      lagPosL0 = 0;
    }
+   sp->lagPos0 = lagPosL0;
    *outReal = cur_outReal;
    return TA_SUCCESS;
 }
@@ -379,7 +382,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_ADX_OpenAndFillInternal( &sub0, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, optInTimePeriod, &dummyBegIdx, &dummyNBElement, adx );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(adx);
             TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
@@ -399,14 +402,14 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
        */
       nbElement = dummyNBElement - (optInTimePeriod - 1);
-      if( nbElement < 1 )
+      if( TA_UNLIKELY(nbElement < 1) )
       {
          free(adx);
          *outBegIdx = 0; *outNBElement = 0; TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
          return TA_INSUFFICIENT_HISTORY;
       }
       lagD0_0 = lagNb0 - nbElement;
-      if( lagD0_0 < 1 || lagD0_0 > lagNb0 - 1 )
+      if( TA_UNLIKELY(lagD0_0 < 1 || lagD0_0 > lagNb0 - 1) )
       {
          free(adx);
          TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
@@ -414,7 +417,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
       }
       lagCap0 = lagD0_0;
       lagBuf0 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap0 > 0 ? lagCap0 : 1) );
-      if( !lagBuf0 )
+      if( TA_UNLIKELY(!lagBuf0) )
       {
          free(adx);
          TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );

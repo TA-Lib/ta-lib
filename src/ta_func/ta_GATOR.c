@@ -639,9 +639,13 @@ static TA_RetCode TA_GATOR_StepImpl( struct TA_GATOR_Stream *sp, double inHigh, 
    double lagIn3 = 0.0;
    double lagTap3_0 = 0.0;
    int lagCapL0 = 0;
+   int lagPosL0 = 0;
    int lagCapL1 = 0;
+   int lagPosL1 = 0;
    int lagCapL2 = 0;
+   int lagPosL2 = 0;
    int lagCapL3 = 0;
+   int lagPosL3 = 0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -682,33 +686,41 @@ static TA_RetCode TA_GATOR_StepImpl( struct TA_GATOR_Stream *sp, double inHigh, 
    lagTap3_0 = (sp->lagCap3 == 0) ? lagIn3 : lagTap3_0;
    cur_outLower = (lagTap2_0 < lagTap3_0) ? lagTap2_0 - lagTap3_0 : lagTap3_0 - lagTap2_0;
    lagCapL0 = sp->lagCap0;
-   sp->lagBuf0[sp->lagPos0] = lagIn0;
-   sp->lagPos0 = sp->lagPos0 + 1;
-   if( sp->lagPos0 >= lagCapL0 )
+   lagPosL0 = sp->lagPos0;
+   sp->lagBuf0[lagPosL0] = lagIn0;
+   lagPosL0 = lagPosL0 + 1;
+   if( lagPosL0 >= lagCapL0 )
    {
-      sp->lagPos0 = 0;
+      lagPosL0 = 0;
    }
+   sp->lagPos0 = lagPosL0;
    lagCapL1 = sp->lagCap1;
-   sp->lagBuf1[sp->lagPos1] = lagIn1;
-   sp->lagPos1 = sp->lagPos1 + 1;
-   if( sp->lagPos1 >= lagCapL1 )
+   lagPosL1 = sp->lagPos1;
+   sp->lagBuf1[lagPosL1] = lagIn1;
+   lagPosL1 = lagPosL1 + 1;
+   if( lagPosL1 >= lagCapL1 )
    {
-      sp->lagPos1 = 0;
+      lagPosL1 = 0;
    }
+   sp->lagPos1 = lagPosL1;
    lagCapL2 = sp->lagCap2;
-   sp->lagBuf2[sp->lagPos2] = lagIn2;
-   sp->lagPos2 = sp->lagPos2 + 1;
-   if( sp->lagPos2 >= lagCapL2 )
+   lagPosL2 = sp->lagPos2;
+   sp->lagBuf2[lagPosL2] = lagIn2;
+   lagPosL2 = lagPosL2 + 1;
+   if( lagPosL2 >= lagCapL2 )
    {
-      sp->lagPos2 = 0;
+      lagPosL2 = 0;
    }
+   sp->lagPos2 = lagPosL2;
    lagCapL3 = sp->lagCap3;
-   sp->lagBuf3[sp->lagPos3] = lagIn3;
-   sp->lagPos3 = sp->lagPos3 + 1;
-   if( sp->lagPos3 >= lagCapL3 )
+   lagPosL3 = sp->lagPos3;
+   sp->lagBuf3[lagPosL3] = lagIn3;
+   lagPosL3 = lagPosL3 + 1;
+   if( lagPosL3 >= lagCapL3 )
    {
-      sp->lagPos3 = 0;
+      lagPosL3 = 0;
    }
+   sp->lagPos3 = lagPosL3;
    *outUpper = cur_outUpper;
    *outLower = cur_outLower;
    return TA_SUCCESS;
@@ -877,7 +889,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MEDPRICE_OpenAndFillInternal( &sub0, inHigh, inLow, (mpStartIdx), (endIdx) + 1, &tempBegIdx, &tempNbElement, tempMP );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempMP);
             free(tempA);
@@ -907,7 +919,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RMA_OpenAndFillInternal( &sub1, tempMP, (localStart - backJaw), (localEnd) + 1, optInJawPeriod, &tempBegIdx, &tempNbElement, tempA );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempMP);
             free(tempA);
@@ -932,7 +944,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RMA_OpenAndFillInternal( &sub2, tempMP, (localStart - backTeethUpper), (localEnd) + 1, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempB );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempMP);
             free(tempA);
@@ -953,7 +965,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return retCode;
       }
       lagNb1 = tempNbElement;
-      if( nbElement < 1 )
+      if( TA_UNLIKELY(nbElement < 1) )
       {
          free(tempMP);
          free(tempA);
@@ -962,7 +974,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return TA_INSUFFICIENT_HISTORY;
       }
       lagD0_0 = lagNb0 - nbElement;
-      if( lagD0_0 < 0 || lagD0_0 > lagNb0 - 1 )
+      if( TA_UNLIKELY(lagD0_0 < 0 || lagD0_0 > lagNb0 - 1) )
       {
          free(tempMP);
          free(tempA);
@@ -971,7 +983,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return TA_INTERNAL_ERROR(522);
       }
       lagD1_0 = lagNb1 - nbElement;
-      if( lagD1_0 < 0 || lagD1_0 > lagNb1 - 1 )
+      if( TA_UNLIKELY(lagD1_0 < 0 || lagD1_0 > lagNb1 - 1) )
       {
          free(tempMP);
          free(tempA);
@@ -981,7 +993,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
       }
       lagCap0 = lagD0_0;
       lagBuf0 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap0 > 0 ? lagCap0 : 1) );
-      if( !lagBuf0 )
+      if( TA_UNLIKELY(!lagBuf0) )
       {
          free(tempMP);
          free(tempA);
@@ -994,7 +1006,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
       lagPos0 = 0;
       lagCap1 = lagD1_0;
       lagBuf1 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap1 > 0 ? lagCap1 : 1) );
-      if( !lagBuf1 )
+      if( TA_UNLIKELY(!lagBuf1) )
       {
          free(tempMP);
          free(tempA);
@@ -1013,7 +1025,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RMA_OpenAndFillInternal( &sub3, tempMP, (localStart - backTeethLower), (localEnd) + 1, optInTeethPeriod, &tempBegIdx, &tempNbElement, tempA );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempMP);
             free(tempA);
@@ -1038,7 +1050,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RMA_OpenAndFillInternal( &sub4, tempMP, (localStart - backLips), (localEnd) + 1, optInLipsPeriod, &tempBegIdx, &tempNbElement, tempB );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempMP);
             free(tempA);
@@ -1062,7 +1074,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
       /* A zero spread must come out +0.0. Keep the select: gcc folds the literal
        * 0.0 - fabs(x) into -fabs(x), which is -0.0 there.
        */
-      if( nbElement < 1 )
+      if( TA_UNLIKELY(nbElement < 1) )
       {
          free(tempMP);
          free(tempA);
@@ -1071,7 +1083,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return TA_INSUFFICIENT_HISTORY;
       }
       lagD2_0 = lagNb2 - nbElement;
-      if( lagD2_0 < 0 || lagD2_0 > lagNb2 - 1 )
+      if( TA_UNLIKELY(lagD2_0 < 0 || lagD2_0 > lagNb2 - 1) )
       {
          free(tempMP);
          free(tempA);
@@ -1080,7 +1092,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
          return TA_INTERNAL_ERROR(524);
       }
       lagD3_0 = lagNb3 - nbElement;
-      if( lagD3_0 < 0 || lagD3_0 > lagNb3 - 1 )
+      if( TA_UNLIKELY(lagD3_0 < 0 || lagD3_0 > lagNb3 - 1) )
       {
          free(tempMP);
          free(tempA);
@@ -1090,7 +1102,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
       }
       lagCap2 = lagD2_0;
       lagBuf2 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap2 > 0 ? lagCap2 : 1) );
-      if( !lagBuf2 )
+      if( TA_UNLIKELY(!lagBuf2) )
       {
          free(tempMP);
          free(tempA);
@@ -1103,7 +1115,7 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
       lagPos2 = 0;
       lagCap3 = lagD3_0;
       lagBuf3 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap3 > 0 ? lagCap3 : 1) );
-      if( !lagBuf3 )
+      if( TA_UNLIKELY(!lagBuf3) )
       {
          free(tempMP);
          free(tempA);

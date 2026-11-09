@@ -1884,7 +1884,7 @@ fn emit_composed_sub_open(
             "         subRc = {cpfx}_OpenInternal( &sub{si}, {src_ptrs}, ({s_arg}), ({e_arg}) + 1, {opt_str}{out_dummies} );"
         );
     }
-    let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
+    let _ = writeln!(o, "         if( TA_UNLIKELY(subRc != TA_SUCCESS) )");
     let _ = writeln!(o, "         {{");
     for sf in &cp.series_frees {
         if sf.tail_idx > sub.tail_idx {
@@ -2253,6 +2253,11 @@ impl LagOpenCtx<'_> {
         let _ = writeln!(o, "{pad}}}");
     }
 
+    /// The guards a delay line or a presumption adds, like the sub-open checks,
+    /// are predicted unlikely: gcc's static profile otherwise takes each one often
+    /// enough that a later map loop falls under its hot threshold and silently
+    /// stays scalar, the more so in the single-TU `-flto` server build, which
+    /// inlines the callees' checks.
     fn emit(&self, o: &mut String, action: &streaming::OpenAction, replay_from: Option<usize>, indent: usize) {
         use streaming::{lag_line_field, LineField, OpenAction};
         let cp = self.cp;
@@ -2263,14 +2268,14 @@ impl LagOpenCtx<'_> {
                 let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.batch(&cp.snapshot_count(*def)));
             }
             OpenAction::EmptyGuard { count } => {
-                let _ = writeln!(o, "{pad}if( {} < 1 )", self.batch(count));
+                let _ = writeln!(o, "{pad}if( TA_UNLIKELY({} < 1) )", self.batch(count));
                 self.fail(o, &pad, replay_from, "*outBegIdx = 0; *outNBElement = 0; ", "TA_INSUFFICIENT_HISTORY");
             }
             OpenAction::Presume { edge } => {
                 let streaming::EdgeClass::ZeroPresumed { key } = &cp.edges[*edge].class else {
                     panic!("{}: a presumption on an edge that is not ZeroPresumed", cp.func.name);
                 };
-                let _ = writeln!(o, "{pad}if( {} != 0 )", self.formula(*edge));
+                let _ = writeln!(o, "{pad}if( TA_UNLIKELY({} != 0) )", self.formula(*edge));
                 let rc = format!("TA_INTERNAL_ERROR({})", crate::internal_error_ids::site(key));
                 self.fail(o, &pad, replay_from, "", &rc);
             }
@@ -2279,7 +2284,7 @@ impl LagOpenCtx<'_> {
                 let d = streaming::lag_depth_local(*line, *tap);
                 let nb = streaming::lag_nb_local(cp.snapshot_of(cp.lines[*line].def).expect("snapshotted line"));
                 let _ = writeln!(o, "{pad}{d} = {};", self.formula(t.edge));
-                let _ = writeln!(o, "{pad}if( {d} < {} || {d} > {nb} - 1 )", t.capture_floor());
+                let _ = writeln!(o, "{pad}if( TA_UNLIKELY({d} < {} || {d} > {nb} - 1) )", t.capture_floor());
                 let rc = format!("TA_INTERNAL_ERROR({})", crate::internal_error_ids::site(&t.key));
                 self.fail(o, &pad, replay_from, "", &rc);
             }
@@ -2298,7 +2303,7 @@ impl LagOpenCtx<'_> {
                     }
                 }
                 let _ = writeln!(o, "{pad}{buf} = (double *)TA_Malloc( sizeof(double) * (size_t)({cap} > 0 ? {cap} : 1) );");
-                let _ = writeln!(o, "{pad}if( !{buf} )");
+                let _ = writeln!(o, "{pad}if( TA_UNLIKELY(!{buf}) )");
                 self.fail(o, &pad, replay_from, "", "TA_ALLOC_ERR");
                 let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
                 let src = self.batch(&Expr::Var(cp.defs[l.def].buffer.clone()));

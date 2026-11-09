@@ -566,7 +566,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RSI_OpenAndFillInternal( &sub0, tempStreak, (0), (outIdx - 1) + 1, optInStreakPeriod, &tempBegIdx, &streakNb, tempStreakRSI );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempStreak);
             free(tempRSI);
@@ -588,7 +588,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_RSI_OpenAndFillInternal( &sub1, inReal, (anchorIdx + TA_RSI_Lookback(optInTimePeriod)), (endIdx) + 1, optInTimePeriod, &tempBegIdx, &rsiNb, tempRSI );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempStreak);
             free(tempRSI);
@@ -611,7 +611,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_ROCP_OpenAndFillInternal( &sub2, inReal, (startIdx - optInRankPeriod), (endIdx) + 1, 1, &tempBegIdx, &rocNb, tempStreak );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempStreak);
             free(tempRSI);
@@ -633,7 +633,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_PERCENTRANK_OpenAndFillInternal( &sub3, tempStreak, (0), (rocNb - 1) + 1, optInRankPeriod, &dummyBegIdx, &dummyNBElement, sc_outReal );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             free(tempStreak);
             free(tempRSI);

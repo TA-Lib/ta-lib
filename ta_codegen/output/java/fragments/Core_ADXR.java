@@ -490,6 +490,7 @@
       double lagIn0 = 0.0;
       double lagTap0_0 = 0.0;
       int lagCapL0 = 0;
+      int lagPosL0 = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_adx = sp.sub0.update(inHigh, inLow, inClose);
       lagIn0 = cur_adx;
@@ -497,11 +498,13 @@
       lagTap0_0 = sp.lagBuf0[sp.lagPos0];
       cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
       lagCapL0 = sp.lagCap0;
-      sp.lagBuf0[sp.lagPos0] = lagIn0;
-      sp.lagPos0 = sp.lagPos0 + 1;
-      if( sp.lagPos0 >= lagCapL0 ) {
-         sp.lagPos0 = 0;
+      lagPosL0 = sp.lagPos0;
+      sp.lagBuf0[lagPosL0] = lagIn0;
+      lagPosL0 = lagPosL0 + 1;
+      if( lagPosL0 >= lagCapL0 ) {
+         lagPosL0 = 0;
       }
+      sp.lagPos0 = lagPosL0;
       sp.cur_outReal = cur_outReal;
    }
    private RetCode adxrOpenImpl( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )

@@ -866,7 +866,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
        * sub-call's own startIdx (the seeding point). */
       {
          subRc = TA_MA_OpenAndFillInternal( &sub0, tempBuffer, (0), (outIdx - 1) + 1, optInFastD_Period, optInFastD_MAType, &dummyBegIdx, &dummyNBElement, sc_outFastD );
-         if( subRc != TA_SUCCESS )
+         if( TA_UNLIKELY(subRc != TA_SUCCESS) )
          {
             if( bufferIsAllocated )
             {
