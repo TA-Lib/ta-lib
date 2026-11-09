@@ -134439,7 +134439,7 @@ class Core {
           }
           /* Every read of inReal is done: an output may alias it. */
           lagNb4 = endIdx - startIdx + 1;
-          if( endIdx - startIdx + 1 < 1 ) {
+          if( endIdx - startIdx < 0 ) {
              return RetCode.INSUFFICIENT_HISTORY;
           }
           if( lagNb3 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
@@ -146218,7 +146218,7 @@ class Core {
            * reused as scratch, so source and destination overlap (issue #94).
            */
           lagNb2 = endIdx - startIdx + 1;
-          if( endIdx - startIdx + 1 < 1 ) {
+          if( endIdx - startIdx < 0 ) {
              return RetCode.INSUFFICIENT_HISTORY;
           }
           if( lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
@@ -240208,7 +240208,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "d7ca5ea0385c09d5";
+    static final String SPLICED_GENCODE_DIGEST = "2a3e5b608070e589";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

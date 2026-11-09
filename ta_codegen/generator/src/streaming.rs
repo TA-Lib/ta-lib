@@ -164,7 +164,8 @@ pub enum OpenAt {
 #[derive(Debug, Clone)]
 pub enum OpenAction {
     Snapshot { def: usize },
-    EmptyGuard { count: Expr },
+    /// Fails when `count < floor`.
+    EmptyGuard { count: Expr, floor: i64 },
     Presume { edge: usize },
     Capture { line: usize, tap: usize },
     Seed { line: usize },
@@ -3034,7 +3035,7 @@ fn open_action_exprs(cp: &ComposedPlan, action: &OpenAction, f: &mut dyn FnMut(&
                 f(e);
             }
         }
-        OpenAction::EmptyGuard { count } => f(count),
+        OpenAction::EmptyGuard { count, .. } => f(count),
         OpenAction::Presume { edge } => formula(*edge, f),
         OpenAction::Capture { line, tap } => formula(cp.lines[*line].taps[*tap].edge, f),
         OpenAction::Seed { .. } => {}

@@ -973,7 +973,7 @@ impl Core {
         }
         // Every read of inReal is done: an output may alias it.
         lagNb4 = ((endIdx - startIdx + 1) as i64);
-        if ((endIdx - startIdx + 1) as i64) < 1 {
+        if ((endIdx - startIdx) as i64) < 0 {
             return Err(RetCode::InsufficientHistory);
         }
         if lagNb3 - (lookbackSignal as i64) - ((endIdx - startIdx + 1) as i64) != 0 {

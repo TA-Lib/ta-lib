@@ -735,7 +735,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
        * reused as scratch, so source and destination overlap (issue #94).
        */
       lagNb2 = endIdx - startIdx + 1;
-      if( TA_UNLIKELY(endIdx - startIdx + 1 < 1) )
+      if( TA_UNLIKELY(endIdx - startIdx < 0) )
       {
          free(fastMABuffer);
          free(slowMABuffer);

@@ -1071,7 +1071,7 @@ public partial class Core
        * reused as scratch, so source and destination overlap (issue #94).
        */
       lagNb2 = endIdx - startIdx + 1;
-      if( endIdx - startIdx + 1 < 1 ) {
+      if( endIdx - startIdx < 0 ) {
          return RetCode.InsufficientHistory;
       }
       if( lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {

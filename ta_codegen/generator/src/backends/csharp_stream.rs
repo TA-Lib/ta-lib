@@ -4932,8 +4932,8 @@ impl CsLagOpen<'_> {
                 let s = cp.snapshot_of(*def).expect("snapshotted definition");
                 let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.batch(&cp.snapshot_count(*def)));
             }
-            OpenAction::EmptyGuard { count } => {
-                fail(o, &format!("{} < 1", self.batch(count)), "InsufficientHistory");
+            OpenAction::EmptyGuard { count, floor } => {
+                fail(o, &format!("{} < {floor}", self.batch(count)), "InsufficientHistory");
             }
             OpenAction::Presume { edge } => {
                 fail(o, &format!("{} != 0", self.formula(*edge)), "InternalError");

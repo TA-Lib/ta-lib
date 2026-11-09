@@ -5440,6 +5440,29 @@ fn emit_composed_open(
     let _ = sn;
 }
 
+/// Whether the `(` opening `r` closes at its last character: `(a) - (b)` starts
+/// and ends with a paren but is not one group.
+fn encloses_whole(r: &str) -> bool {
+    let mut depth = 0usize;
+    for (i, c) in r.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => {
+                if depth == 0 {
+                    return false;
+                }
+                depth -= 1;
+                if depth == 0 {
+                    return i == r.len() - 1;
+                }
+            }
+            _ if depth == 0 => return false,
+            _ => {}
+        }
+    }
+    false
+}
+
 /// Open's delay-line locals as `(type, name, initial value)`. Depths and counts
 /// are `i64`, so no check subtracts in `usize`.
 fn rust_lag_open_locals(cp: &streaming::ComposedPlan) -> Vec<(&'static str, String, &'static str)> {
@@ -5486,7 +5509,7 @@ impl RustLagOpen<'_> {
     /// An integer operand as `i64`.
     fn wide(&self, e: &Expr) -> String {
         let r = self.batch(e);
-        if r.chars().all(|c| c.is_alphanumeric() || c == '_') || (r.starts_with('(') && r.ends_with(')')) {
+        if r.chars().all(|c| c.is_alphanumeric() || c == '_') || encloses_whole(&r) {
             format!("({r} as i64)")
         } else {
             format!("(({r}) as i64)")
@@ -5513,8 +5536,8 @@ impl RustLagOpen<'_> {
                 let s = cp.snapshot_of(*def).expect("snapshotted definition");
                 let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.wide(&cp.snapshot_count(*def)));
             }
-            OpenAction::EmptyGuard { count } => {
-                fail(o, &format!("{} < 1", self.wide(count)), "InsufficientHistory");
+            OpenAction::EmptyGuard { count, floor } => {
+                fail(o, &format!("{} < {floor}", self.wide(count)), "InsufficientHistory");
             }
             OpenAction::Presume { edge } => {
                 fail(o, &format!("{} != 0", self.formula(*edge)), "InternalError");

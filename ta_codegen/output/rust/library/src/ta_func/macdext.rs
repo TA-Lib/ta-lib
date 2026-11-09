@@ -691,7 +691,7 @@ impl Core {
         // memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
         // reused as scratch, so source and destination overlap (issue #94).
         lagNb2 = ((endIdx - startIdx + 1) as i64);
-        if ((endIdx - startIdx + 1) as i64) < 1 {
+        if ((endIdx - startIdx) as i64) < 0 {
             return Err(RetCode::InsufficientHistory);
         }
         if lagNb1 - (lookbackSignal as i64) - ((endIdx - startIdx + 1) as i64) != 0 {

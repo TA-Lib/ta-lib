@@ -1663,7 +1663,7 @@ fn adxr_derives_composed_plan_with_a_delay_line() {
         .map(|(at, a)| {
             let what = match a {
                 OpenAction::Snapshot { def } => format!("snapshot ({},{})", cp.defs[*def].buffer, cp.defs[*def].ordinal),
-                OpenAction::EmptyGuard { count } => format!("empty {count:?}"),
+                OpenAction::EmptyGuard { count, floor } => format!("empty {count:?} < {floor}"),
                 OpenAction::Capture { line, tap } => format!("capture {line}.{tap}"),
                 OpenAction::Seed { line } => format!("seed {line}"),
                 other => format!("{other:?}"),
@@ -1686,7 +1686,7 @@ fn adxr_derives_composed_plan_with_a_delay_line() {
         kinds,
         [
             "after 1: snapshot (adx,1)".to_string(),
-            format!("before {map_tail}: empty Var(\"nbElement\")"),
+            format!("before {map_tail}: empty Var(\"nbElement\") < 1"),
             format!("before {map_tail}: capture 0.0"),
             format!("before {map_tail}: seed 0"),
         ]

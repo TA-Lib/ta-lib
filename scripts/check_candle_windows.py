@@ -197,8 +197,9 @@ TOTAL_CAPTURE = re.compile(r"sp->(\w*PeriodTotal\d?)\s*=\s*\1\s*;")
 # average must still name its own setting through `_avgPeriod`, and is mapped
 # only when the block pins that setting to the literal. A literal the block
 # does not pin stays as it is, and fails every setting comparison below.
+_PIN_TERM = r"\w+_rangeType\s*==\s*TA_RangeType_\w+"
 _PIN_IF = re.compile(
-    r"\bif\(\s*((?:\w+_rangeType\s*==\s*TA_RangeType_\w+\s*(?:&&\s*)?)+)\)\s*\{")
+    rf"\bif\(\s*({_PIN_TERM}(?:\s*&&\s*{_PIN_TERM})*)\s*\)\s*\{{")
 _PIN = re.compile(r"(\w+)_rangeType\s*==\s*(TA_RangeType_\w+)")
 _LITERAL = re.compile(r"(TA_CANDLE(?:RANGE|AVERAGE)_OF\(\s*)(TA_RangeType_\w+)"
                       r"(\s*,\s*(?:(\w+?)_avgPeriod\b)?)")

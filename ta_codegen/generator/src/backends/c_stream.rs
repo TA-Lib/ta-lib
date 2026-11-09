@@ -2267,8 +2267,8 @@ impl LagOpenCtx<'_> {
                 let s = cp.snapshot_of(*def).expect("snapshotted definition");
                 let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.batch(&cp.snapshot_count(*def)));
             }
-            OpenAction::EmptyGuard { count } => {
-                let _ = writeln!(o, "{pad}if( TA_UNLIKELY({} < 1) )", self.batch(count));
+            OpenAction::EmptyGuard { count, floor } => {
+                let _ = writeln!(o, "{pad}if( TA_UNLIKELY({} < {floor}) )", self.batch(count));
                 self.fail(o, &pad, replay_from, "*outBegIdx = 0; *outNBElement = 0; ", "TA_INSUFFICIENT_HISTORY");
             }
             OpenAction::Presume { edge } => {

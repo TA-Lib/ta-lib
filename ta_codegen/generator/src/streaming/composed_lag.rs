@@ -1209,7 +1209,17 @@ impl Cx<'_, '_> {
             }
             _ => return None,
         };
-        done.insert(key).then_some(OpenAction::EmptyGuard { count })
+        let (count, floor) = match count {
+            Expr::BinOp(x, BinOp::Add, k)
+                if matches!(*k, Expr::IntLiteral(_))
+                    && matches!(*x, Expr::Var(_) | Expr::BinOp(_, BinOp::Add | BinOp::Sub | BinOp::Mul, _)) =>
+            {
+                let Expr::IntLiteral(k) = *k else { unreachable!() };
+                (*x, 1 - k)
+            }
+            c => (c, 1),
+        };
+        done.insert(key).then_some(OpenAction::EmptyGuard { count, floor })
     }
 
     /// Groups tap edges into one line per definition, in body order. A sub-call

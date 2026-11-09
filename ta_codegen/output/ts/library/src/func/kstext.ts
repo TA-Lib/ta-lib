@@ -1328,7 +1328,7 @@ function kstextOpenImpl(
   }
   /* Every read of inReal is done: an output may alias it. */
   lagNb4 = endIdx - startIdx + 1;
-  if (endIdx - startIdx + 1 < 1) {
+  if (endIdx - startIdx < 0) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (lagNb3 - lookbackSignal - (endIdx - startIdx + 1) !== 0) {

@@ -1125,7 +1125,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
       }
       /* Every read of inReal is done: an output may alias it. */
       lagNb4 = endIdx - startIdx + 1;
-      if( TA_UNLIKELY(endIdx - startIdx + 1 < 1) )
+      if( TA_UNLIKELY(endIdx - startIdx < 0) )
       {
          free(kstBuffer);
          free(tempBuffer);
