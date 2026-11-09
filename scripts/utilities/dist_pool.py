@@ -330,6 +330,18 @@ def resolve(sha256: str, asset_file_name: str,
     return a
 
 
+def _fetch_to(req: Request, path: str) -> str:
+    h = hashlib.sha256()
+    with urlopen(req) as resp, open(path, "wb") as f:
+        while True:
+            chunk = resp.read(_CHUNK)
+            if not chunk:
+                break
+            h.update(chunk)
+            f.write(chunk)
+    return h.hexdigest()
+
+
 def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
                         assets: dict[str, dict] | None = None,
                         retries: int = 3) -> str:
@@ -351,18 +363,16 @@ def download_and_verify(sha256: str, asset_file_name: str, dest_path: str,
     last: Exception | None = None
     for attempt in range(1, retries + 1):
         try:
-            h = hashlib.sha256()
             # Deliberately no auth header, and no custom headers that would survive the
             # redirect to the CDN.
-            req = Request(url, headers={"User-Agent": "ta-lib-dist-pool"})
-            with urlopen(req) as resp, open(tmp, "wb") as f:
-                while True:
-                    chunk = resp.read(_CHUNK)
-                    if not chunk:
-                        break
-                    h.update(chunk)
-                    f.write(chunk)
-            got = h.hexdigest()
+            try:
+                got = _fetch_to(Request(url, headers={"User-Agent": "ta-lib-dist-pool"}), tmp)
+            except OSError:
+                # The download URL can answer 5xx while the API asset endpoint, also
+                # anonymous here, serves the same bytes.
+                got = _fetch_to(Request(a["url"], headers={
+                    "User-Agent": "ta-lib-dist-pool",
+                    "Accept": "application/octet-stream"}), tmp)
             if got != sha256:
                 raise PoolError(
                     f"Hash mismatch for {asset_file_name}: pool content is {got}, "
