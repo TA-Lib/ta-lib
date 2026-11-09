@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	368633eea1550e42d61f0a238fecb4caa8cb265c
-#generated	2026-11-09T04:58:27Z
+#commit	a088d86030e7cd8ccfa1aebbae672a3281f53c18
+#generated	2026-11-09T13:31:01Z
 AC	batch	0	703438
 AC	open	0	624330
 AC	openfill	0	692624
@@ -69,8 +69,8 @@ AO	openfill	0	440414
 AO	peek	0	48141
 AO	update	0	93199
 APO	batch	0	220203
-APO	open	0	352448
-APO	openfill	0	351897
+APO	open	0	352445
+APO	openfill	0	351896
 APO	peek	0	148493
 APO	update	0	223248
 AROON	batch	0	648975
@@ -119,8 +119,8 @@ BBANDS	openfill	0	1127436
 BBANDS	peek	0	210957
 BBANDS	update	0	331168
 BBW	batch	0	706903
-BBW	open	0	931917
-BBW	openfill	0	931603
+BBW	open	0	931913
+BBW	openfill	0	931597
 BBW	peek	0	162832
 BBW	update	0	267695
 BETA	batch	0	1897213
@@ -613,6 +613,11 @@ FRAMA	open	0	1416378
 FRAMA	openfill	0	1479533
 FRAMA	peek	0	73085
 FRAMA	update	0	131256
+GATOR	batch	0	931425
+GATOR	open	0	944962
+GATOR	openfill	0	943769
+GATOR	peek	0	239541
+GATOR	update	0	339533
 HA	batch	0	500155
 HA	open	0	440175
 HA	openfill	0	500265
@@ -620,7 +625,7 @@ HA	peek	0	83981
 HA	update	0	104461
 HMA	batch	0	977328
 HMA	open	0	1018803
-HMA	openfill	0	1018651
+HMA	openfill	0	1018579
 HMA	peek	0	71696
 HMA	update	0	181322
 HT_DCPERIOD	batch	0	3981762
@@ -664,7 +669,7 @@ ICHIMOKU	openfill	0	12192605
 ICHIMOKU	peek	0	1239057
 ICHIMOKU	update	0	1067569
 IMI	batch	0	3246036
-IMI	open	0	3086886
+IMI	open	0	3086531
 IMI	openfill	0	3106519
 IMI	peek	0	374096
 IMI	update	0	341496
@@ -689,8 +694,8 @@ KST	openfill	0	2157243
 KST	peek	0	151567
 KST	update	0	245237
 KSTEXT	batch	0	2189064
-KSTEXT	open	0	2655302
-KSTEXT	openfill	0	2653817
+KSTEXT	open	0	2655159
+KSTEXT	openfill	0	2653800
 KSTEXT	peek	0	444431
 KSTEXT	update	0	799762
 KURTOSIS	batch	0	1083370
@@ -744,8 +749,8 @@ MACD	openfill	0	360034
 MACD	peek	0	57357
 MACD	update	0	75794
 MACDEXT	batch	0	841481
-MACDEXT	open	0	785615
-MACDEXT	openfill	0	783085
+MACDEXT	open	0	785515
+MACDEXT	openfill	0	782974
 MACDEXT	peek	0	213005
 MACDEXT	update	0	384013
 MACDFIX	batch	0	299836
@@ -899,8 +904,8 @@ PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
 PPO	batch	0	360017
-PPO	open	0	602422
-PPO	openfill	0	601760
+PPO	open	0	602307
+PPO	openfill	0	601659
 PPO	peek	0	157709
 PPO	update	0	239632
 PSO	batch	0	2459406
@@ -914,8 +919,8 @@ PVI	openfill	0	300141
 PVI	peek	0	39948
 PVI	update	0	54285
 PVO	batch	0	360017
-PVO	open	0	602422
-PVO	openfill	0	601928
+PVO	open	0	602307
+PVO	openfill	0	601808
 PVO	peek	0	157709
 PVO	update	0	239632
 PVT	batch	0	280074
@@ -955,7 +960,7 @@ ROCR100	peek	0	38928
 ROCR100	update	0	60430
 ROGERSSATCHELL	batch	0	3824753
 ROGERSSATCHELL	open	0	3864636
-ROGERSSATCHELL	openfill	0	3984762
+ROGERSSATCHELL	openfill	0	3984634
 ROGERSSATCHELL	peek	0	234785
 ROGERSSATCHELL	update	0	249501
 RSI	batch	0	519926
@@ -1024,7 +1029,7 @@ SMI	openfill	0	2746011
 SMI	peek	0	251917
 SMI	update	0	261632
 SORTINO	batch	0	1527349
-SORTINO	open	0	1445229
+SORTINO	open	0	1445163
 SORTINO	openfill	0	1562836
 SORTINO	peek	0	98256
 SORTINO	update	0	149728
@@ -1039,13 +1044,13 @@ SQZMOM	openfill	0	6126904
 SQZMOM	peek	0	672651
 SQZMOM	update	0	834075
 STC	batch	0	1717670
-STC	open	0	1723473
-STC	openfill	0	1801763
+STC	open	0	1723471
+STC	openfill	0	1801733
 STC	peek	0	95344
 STC	update	0	151152
 STDDEV	batch	0	763885
-STDDEV	open	0	766307
-STDDEV	openfill	0	765297
+STDDEV	open	0	766222
+STDDEV	openfill	0	765295
 STDDEV	peek	0	98317
 STDDEV	update	0	150489
 STOCH	batch	0	1929776
