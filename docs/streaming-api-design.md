@@ -371,13 +371,20 @@ One rule holds in every language, each enforcing it its own way:
    the composed batch computes. `open` opens each sub-stream on its source series
    at the sub-call's own start argument, passed VERBATIM — the callee clamps it
    up to its own lookback, so the composer never computes a callee's lookback —
-   immediately before the batch call that consumes it.
+   immediately before the batch call that consumes it. The analyzer may still
+   reason over a callee's lookback to classify a read; every value it relies on
+   is captured or checked at `open`.
 
-Two source-form constraints the analyzer enforces with guiding errors, because
-they are what make a combine map streamable: write a combine loop with a single
-cursor and a same-bar offset index rather than two cursors, and flatten a
-sub-call left inside an `if (rc == TA_SUCCESS) { … }` into a top-level
-`if (rc != TA_SUCCESS) return rc;`.
+Source-form constraints the analyzer enforces with guiding errors, because they
+are what make a combine map streamable:
+
+- A combine loop walks a single cursor and reads each series at that cursor
+  plus a loop-invariant offset, never through a second cursor.
+- A leg that must lag starts its sub-call earlier or ends it earlier.
+- An offset is a difference of element counts, never of begin indexes: a
+  sub-call that outputs nothing resets its begin to 0.
+- A sub-call left inside an `if (rc == TA_SUCCESS) { … }` is flattened into a
+  top-level `if (rc != TA_SUCCESS) return rc;`.
 
 ## Cost profile
 
