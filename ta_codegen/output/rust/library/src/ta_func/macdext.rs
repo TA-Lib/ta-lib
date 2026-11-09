@@ -600,6 +600,9 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outMACDHist: &mut [f64] =
             if outStride == 1 { &mut *outMACDHist } else { &mut owned_sc_outMACDHist };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
+        let mut lagNb2: i64 = 0;
         let mut slowMABuffer: Vec<f64> = Vec::new();
         let mut fastMABuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -665,11 +668,19 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..])?;
         retCode = RetCode::Success;
+        lagNb0 = (outNbElement2 as i64);
         // Parano tests. Will be removed eventually.
         if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
             return Err(RetCode::BadParam);
         }
         // Calculate (fast MA) - (slow MA).
+        lagNb1 = (outNbElement1 as i64);
+        if (outNbElement1 as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - (outNbElement1 as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < outNbElement1; i += 1 )
         i = 0;
         while i < outNbElement1 {
@@ -679,6 +690,13 @@ impl Core {
         // Copy the result into the output for the caller.
         // memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
         // reused as scratch, so source and destination overlap (issue #94).
+        lagNb2 = ((endIdx - startIdx + 1) as i64);
+        if ((endIdx - startIdx + 1) as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb1 - (lookbackSignal as i64) - ((endIdx - startIdx + 1) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         {
             let _n = ((endIdx - startIdx + 1) * 1) as usize;
             let _di = (0) as usize;
@@ -691,6 +709,12 @@ impl Core {
         let sub2 = self.ma_open_and_fill_internal(&fastMABuffer[..((outNbElement1 - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, &mut sc_outMACDSignal[..])?;
         retCode = RetCode::Success;
         // Calculate the histogram.
+        if (outNbElement2 as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb2 - (outNbElement2 as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < outNbElement2; i += 1 )
         i = 0;
         while i < outNbElement2 {
@@ -704,6 +728,9 @@ impl Core {
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb2 - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
         }
         let mut state = MacdextStreamState {
             cur_outMACD: 0.0_f64,

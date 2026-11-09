@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 518
+next: 551
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -26,6 +26,9 @@ sites:
   AC.ringcap.trailingSlowIdx: 183
   ACCBANDS.ringcap.trailingIdx: 185
   ADR.ringcap.trailingIdx: 407
+  ADXR.lagdepth.adx.1.t0: 518
+  ALLIGATOR.lagzero.outJaw.1.ret.outJaw: 519
+  ALLIGATOR.lagzero.outTeeth.1.ret.outTeeth: 520
   ALMA.cbsize.weights: 461
   ALMA.circbuf.weights: 459
   ALMA.wincap.j: 460
@@ -34,6 +37,7 @@ sites:
   AROON.extrema: 188
   AROONOSC.extrema: 189
   AVGDEV.wincap.i: 190
+  BBANDS.lagzero.tempBuffer1.1.copy0: 521
   BETA.extrema: 191
   CCI.cbsize.circBuffer: 193
   CCI.circbuf.circBuffer: 192
@@ -203,6 +207,10 @@ sites:
   FRACTAL.wincap.i: 427
   FRAMA.cbsize.slot: 439
   FRAMA.circbuf.slot: 438
+  GATOR.lagdepth.tempA.1.t0: 522
+  GATOR.lagdepth.tempA.2.t0: 524
+  GATOR.lagdepth.tempB.1.t0: 523
+  GATOR.lagdepth.tempB.2.t0: 525
   HMA.cbsize.dRing: 324
   HMA.circbuf.dRing: 319
   HMA.dualmode: 325
@@ -221,8 +229,15 @@ sites:
   HT_TRENDMODE.cbsize.smoothPrice: 336
   HT_TRENDMODE.ringcap.trailingWMAIdx: 334
   HT_TRENDMODE.wincap.j: 335
+  ICHIMOKU.lagzero.outSenkouSpanB.1.ret.outSenkouSpanB: 530
+  ICHIMOKU.lagzero.tempK.1.map0.r0: 529
+  ICHIMOKU.lagzero.tempK.1.sub3: 527
+  ICHIMOKU.lagzero.tempT.1.map0.r0: 528
+  ICHIMOKU.lagzero.tempT.1.sub3: 526
   IMI.wincap.i: 337
   KAMA.ringcap.trailingIdx: 338
+  KC.lagzero.tempATR.1.map0.r0: 532
+  KC.lagzero.tempTP.1.sub2: 531
   KST.cbsize.ring1: 451
   KST.cbsize.ring2: 452
   KST.cbsize.ring3: 453
@@ -237,6 +252,11 @@ sites:
   KST.ringcap.den2: 448
   KST.ringcap.den3: 449
   KST.ringcap.den4: 450
+  KSTEXT.lagzero.kstBuffer.5.copy0: 536
+  KSTEXT.lagzero.outKST.1.ret.outKST: 537
+  KSTEXT.lagzero.tempBuffer.2.map0.r0: 533
+  KSTEXT.lagzero.tempBuffer.4.map1.r0: 534
+  KSTEXT.lagzero.tempBuffer.6.map2.r0: 535
   KURTOSIS.extrema: 430
   LINEARREG.extrema: 339
   LINEARREG_ANGLE.extrema: 340
@@ -244,6 +264,10 @@ sites:
   LINEARREG_SLOPE.extrema: 342
   MA.dispatch.Peek: 344
   MA.dispatch.Update: 343
+  MACDEXT.lagzero.fastMABuffer.1.map0.r0: 538
+  MACDEXT.lagzero.fastMABuffer.2.copy0: 539
+  MACDEXT.lagzero.outMACD.1.map1.r0: 540
+  MACDEXT.lagzero.outMACD.1.ret.outMACD: 541
   MAMA.ringcap.trailingWMAIdx: 346
   MASSI.cbsize.ratioRing: 419
   MASSI.circbuf.ratioRing: 418
@@ -280,6 +304,8 @@ sites:
   MINUS_DI.dualmode: 373
   MINUS_DM.dualmode: 374
   MOM.ringcap.trailingIdx: 375
+  PERCENTB.lagzero.tempX.1.map0.r0: 542
+  PERCENTB.lagzero.tempX.1.map0.r1: 543
   PERCENTILE.cbsize.ring: 413
   PERCENTILE.cbsize.sorted: 414
   PERCENTILE.circbuf.ring: 411
@@ -306,6 +332,13 @@ sites:
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
   SORTINO.extrema: 517
+  SQZMOM.lagzero.inClose.1.map0.r0: 544
+  SQZMOM.lagzero.tempDev.1.map0.r0: 546
+  SQZMOM.lagzero.tempKCM.1.map0.r0: 545
+  SQZMOM.lagzero.tempKCM.1.map1.r0: 550
+  SQZMOM.lagzero.tempMid.1.map1.r0: 549
+  SQZMOM.lagzero.tempSD.1.map1.r0: 548
+  SQZMOM.lagzero.tempWork.1.sub3: 547
   STC.cbsize.lineRing: 468
   STC.cbsize.lineSufHi: 469
   STC.cbsize.lineSufLo: 470

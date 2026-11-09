@@ -2862,7 +2862,7 @@ fn emit_capture(
             f.push(format!("x_{arr}"));
         }
     }
-    // Composed tier: sub handles + lag-ring fields join the same literal.
+    // Composed tier: sub handles + delay-line fields join the same literal.
     f.extend_from_slice(extra_fields);
     o.push_str(&split.literal(func, "        ", "let state", &f));
 }
@@ -4825,9 +4825,8 @@ fn emit_period_bank(
 // Composed tier (STOCH class): producer transition + pipeline of owned public
 // sub-handles, mirroring c_stream.rs's emit_composed with the Rust
 // simplifications the design blesses: RAII replaces every cleanup ladder and
-// series-free replay, `free()` renders as a no-op so lag-ring seeding reads
-// the still-live intermediate Vec, and the peek frame drives each sub-stream's
-// own public `peek` rather than committing anything.
+// series-free replay, and the peek frame drives each sub-stream's own public
+// `peek` rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`RustStreamNames`] except the
@@ -4882,122 +4881,20 @@ impl streaming::NameMap for RustComposedNames {
     }
 }
 
-/// The `cur_<name>` scalars the composed step declares (mirror of
-/// `c_stream::composed_cur_scalars`): the producer series, each sub-call's
-/// destinations in tail order (dedup), and map-defined outputs.
-fn composed_cur_scalars(
-    cp: &streaming::ComposedPlan,
-    bar_inputs: &[String],
-    outputs: &[String],
-) -> Vec<String> {
-    let mut out: Vec<String> = Vec::new();
-    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    if let Some(series) = &cp.series {
-        seen.insert(series.clone());
-        out.push(series.clone());
+/// A composed frame's delay-line locals.
+fn emit_lag_step_decls(o: &mut String, pad: &str, cp: &streaming::ComposedPlan, commit: bool) {
+    let (reals, ints) = streaming::lag_step_locals(cp, commit);
+    for name in &reals {
+        let _ = writeln!(o, "{pad}let mut {name}: f64 = 0.0_f64;");
     }
-    for sub in &cp.subs {
-        for d in &sub.dsts {
-            if !bar_inputs.contains(d) && seen.insert(d.clone()) {
-                out.push(d.clone());
-            }
-        }
+    for name in &ints {
+        let _ = writeln!(o, "{pad}let mut {name}: usize = 0;");
     }
-    for step in &cp.steps {
-        if let streaming::UpdateStep::Map { tail_idx } = step {
-            for o in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
-                if !bar_inputs.contains(&o) && seen.insert(o.clone()) {
-                    out.push(o);
-                }
-            }
-        }
-    }
-    out
-}
-
-/// Drop the shells of the map's `for` loops, keeping inner `if` structure
-/// (the per-bar step evaluates each element body exactly once).
-fn drop_forc_shells(st: &Statement) -> Vec<Statement> {
-    match st {
-        Statement::ForC { body, .. } => body.iter().flat_map(drop_forc_shells).collect(),
-        Statement::If {
-            condition,
-            then_body,
-            else_body,
-            cond_comments,
-        } => vec![Statement::If {
-            condition: condition.clone(),
-            then_body: then_body.iter().flat_map(drop_forc_shells).collect(),
-            else_body: else_body.iter().flat_map(drop_forc_shells).collect(),
-            cond_comments: cond_comments.clone(),
-        }],
-        other => vec![other.clone()],
-    }
-}
-
-/// The map loop's single cursor (`for` init variable) — distinguishes a lag
-/// ring's current read (`series[cursor + lag]`) from its lagged read
-/// (`series[cursor]`).
-fn map_cursor(st: &Statement) -> Option<String> {
-    let Statement::ForC { init, .. } = st else {
-        return None;
-    };
-    let find = |s: &Statement| match s {
-        Statement::Assign {
-            target: Expr::Var(v),
-            ..
-        } => Some(v.clone()),
-        _ => None,
-    };
-    match init.as_ref() {
-        Statement::Block { body } => body.iter().find_map(find),
-        one => find(one),
-    }
-}
-
-/// Rust twin of `c_stream::transform_map_step`: series reads/writes become the
-/// per-bar `cur_*` scalars (a lag-ring series' `[cursor]` read becomes the
-/// ring's oldest slot), params read through `sp.`, `for` shells dropped.
-fn transform_map_step(
-    st: &Statement,
-    cur: &std::collections::BTreeMap<String, String>,
-    params: &std::collections::BTreeSet<String>,
-    sub_lag_rings: &[streaming::SubLagRing],
-) -> Vec<Statement> {
-    let cursor = map_cursor(st);
-    let lag_series: std::collections::BTreeSet<&str> =
-        sub_lag_rings.iter().map(|r| r.series.as_str()).collect();
-    let fe = |e: Expr| -> Expr {
-        match e {
-            Expr::ArrayAccess(name, idx) if lag_series.contains(name.as_str()) => {
-                let is_lag = matches!(
-                    (&cursor, idx.as_ref()),
-                    (Some(c), Expr::Var(v)) if c == v
-                );
-                if is_lag {
-                    // Oldest ring slot = the value `lag` bars behind.
-                    Expr::ArrayAccess(
-                        format!("sp.lagRing_{name}"),
-                        Box::new(Expr::Var(format!("sp.lagRingPos_{name}"))),
-                    )
-                } else {
-                    Expr::Var(cur.get(&name).cloned().unwrap_or_else(|| format!("cur_{name}")))
-                }
-            }
-            Expr::ArrayAccess(name, _) if cur.contains_key(&name) => {
-                Expr::Var(cur.get(&name).expect("checked").clone())
-            }
-            Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp.{v}")),
-            other => other,
-        }
-    };
-    let rewritten = streaming::rewrite_stmts(std::slice::from_ref(st), &fe, &|s| Some(s));
-    rewritten.iter().flat_map(drop_forc_shells).collect()
 }
 
 /// Step render context for the composed step: the producer's sp-aliased ctx
 /// (or the plan ctx when loopless) extended with the `cur_*` scalars, the
-/// bar-input scalars, map temps, and the lag-ring fields.
+/// bar-input scalars, map temps, and the delay-line fields.
 fn composed_step_ctx(
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
@@ -5038,19 +4935,28 @@ fn composed_step_ctx(
             _ => {}
         }
     }
-    for ring in &cp.sub_lag_rings {
-        let sn = &ring.series;
-        ctx.vec_vars.insert(format!("sp.lagRing_{sn}"));
-        ctx.real_array_vars.insert(format!("sp.lagRing_{sn}"));
-        ctx.index_vars.insert(format!("sp.lagRingPos_{sn}"));
-        ctx.index_vars.insert(format!("sp.lagRingCap_{sn}"));
+    for (k, line) in cp.lines.iter().enumerate() {
+        use streaming::{lag_line_field, LineField};
+        let buf = format!("sp.{}", lag_line_field(k, LineField::Buf));
+        ctx.vec_vars.insert(buf.clone());
+        ctx.real_array_vars.insert(buf);
+        ctx.index_vars.insert(format!("sp.{}", lag_line_field(k, LineField::Pos)));
+        ctx.index_vars.insert(format!("sp.{}", lag_line_field(k, LineField::Cap)));
+        ctx.index_vars.insert(streaming::lag_cap_local(k));
+        let (p, c) = streaming::lag_hoist_locals(k);
+        ctx.index_vars.insert(p);
+        ctx.index_vars.insert(c);
+        for j in 0..line.taps.len() {
+            ctx.index_vars.insert(format!("sp.{}", lag_line_field(k, LineField::Back(j))));
+        }
     }
+    ctx.real_vars.extend(streaming::lag_fma_reals(cp));
     ctx
 }
 
 /// The composed StepImpl: producer transition (writing `cur_<series>`),
 /// then the batch-tail pipeline through the owned sub handles, combine maps
-/// per bar, lag-ring pushes, and the output writes.
+/// per bar, delay-line pushes, and the output writes.
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_composed_step(
     o: &mut String,
@@ -5058,7 +4964,6 @@ fn emit_composed_step(
     cp: &streaming::ComposedPlan,
     typing: &Typing,
     split: &StateSplit,
-    inputs: &[String],
     outputs: &[String],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -5083,7 +4988,7 @@ fn emit_composed_step(
                 .chain(cp.map_state.iter().map(|st| &st.name)),
         );
     }
-    let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
+    let cur_scalars = cp.cur_scalars();
     let ctx = composed_step_ctx(func, cp, typing, &cur_scalars);
 
     if let Some(model) = &cp.producer {
@@ -5099,19 +5004,10 @@ fn emit_composed_step(
         o.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
     for name in &cur_scalars {
-        // Typed by what the scalar stands for, as in C: an output's own element
-        // type, `f64` for the sub-call intermediates. Unlike C this one cannot
-        // go wrong quietly -- `(*outX) = cur_outX` across f64/i32 is a type
-        // error -- but it is the same rule, so it reads the same way.
         let (ty, zero) = if out_is_int(func, name) { ("i32", "0_i32") } else { ("f64", "0.0_f64") };
         let _ = writeln!(o, "{pad}let mut cur_{name}: {ty} = {zero};");
     }
-
-    // The cur-map: bar inputs are the step's scalar parameters.
-    let mut cur: std::collections::BTreeMap<String, String> = inputs
-        .iter()
-        .map(|b| (b.clone(), b.clone()))
-        .collect();
+    emit_lag_step_decls(o, &pad, cp, !frame);
 
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let opt_real_params: Vec<String> = func
@@ -5153,26 +5049,29 @@ fn emit_composed_step(
             }
             o.push_str(&body);
         }
-        let series = cp.series.clone().expect("producer plan carries a series");
-        cur.insert(series.clone(), format!("cur_{series}"));
     }
 
     // Pipeline: the batch tail, one scalar per bar through the sub handles.
     let verb = if frame { "peek" } else { "update" };
     let _ = writeln!(o, "\n{pad}// Pipeline the new bar through the sub-streams (batch tail order).");
-    let params: std::collections::BTreeSet<String> =
-        func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let lag_names = RustComposedNames { series: cp.series.clone().unwrap_or_default() };
+    let render_all = |o: &mut String, stmts: &[Statement]| {
+        for st in &respell(func, stmts, &ctx, helpers) {
+            o.push_str(&render_statement(
+                st, indent, &ctx, &[], &var_inits, &output_names, &opt_real_params, enums,
+                registry, helpers, counter,
+            ));
+        }
+    };
+    render_all(o, &streaming::lag_snapshots(cp, None, !frame));
     // Loaded after the sub-calls, so nothing holds it across them.
     let mut state_loaded = false;
-    for step in &cp.steps {
+    for (si, step) in cp.steps.iter().enumerate() {
         match step {
             streaming::UpdateStep::Sub { sub_idx } => {
                 let sub = &cp.subs[*sub_idx];
-                let args: Vec<String> = sub
-                    .srcs
-                    .iter()
-                    .map(|src| cur.get(src).expect("analyzer ordered sub srcs").clone())
-                    .collect();
+                let (loads, args) = streaming::lower_sub_sources(cp, *sub_idx, &lag_names);
+                render_all(o, &loads);
                 let arg_str = args.join(", ");
                 if sub.dsts.len() == 1 {
                     let d = &sub.dsts[0];
@@ -5185,15 +5084,11 @@ fn emit_composed_step(
                     }
                     let _ = writeln!(o, "{pad}}}");
                 }
-                for d in &sub.dsts {
-                    cur.insert(d.clone(), format!("cur_{d}"));
-                }
             }
-            streaming::UpdateStep::Align { dst, src } => {
-                let alias = cur.get(src).expect("analyzer ordered align src").clone();
-                cur.insert(dst.clone(), alias);
+            streaming::UpdateStep::Align { .. } => {
+                render_all(o, &streaming::lower_align_step(cp, si, &lag_names));
             }
-            streaming::UpdateStep::Map { tail_idx } => {
+            streaming::UpdateStep::Map { .. } => {
                 if !std::mem::replace(&mut state_loaded, true) {
                     for st in &cp.map_state {
                         let (rty, _) = field_type_and_default(typing, &st.name, &st.ty, false);
@@ -5201,42 +5096,22 @@ fn emit_composed_step(
                         let _ = writeln!(o, "{pad}let {mutable}{0}: {rty} = sp.{0};", st.name);
                     }
                 }
-                for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
-                    cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
-                }
                 let _ = writeln!(o, "{pad}// Combine map (batch tail, per bar).");
-                let map = transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings);
-                for st in &respell(func, &map, &ctx, helpers) {
-                    o.push_str(&render_statement(
-                        st, indent, &ctx, &[], &var_inits, &output_names, &opt_real_params,
-                        enums, registry, helpers, counter,
-                    ));
-                }
+                render_all(o, &streaming::lower_map_step(cp, si, &lag_names));
             }
         }
+        render_all(o, &streaming::lag_snapshots(cp, Some(si), !frame));
     }
-    // Push the new sub-output value into each lag ring AFTER every read of the
-    // oldest slot in the combine above (mirrors C, incl. the modulo advance) —
-    // which is why a frame drops the push outright: nothing below loads it back.
     if !frame {
-        for ring in &cp.sub_lag_rings {
-            let sn = &ring.series;
-            let _ = writeln!(o, "{pad}sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
-            let _ = writeln!(
-                o,
-                "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
-            );
+        for k in 0..cp.lines.len() {
+            render_all(o, &streaming::lag_push(k, &lag_names));
         }
         for st in cp.map_state.iter().filter(|st| st.carried) {
             let _ = writeln!(o, "{pad}sp.{0} = {0};", st.name);
         }
     }
     for out in outputs {
-        let _ = writeln!(
-            o,
-            "{pad}(*{out}) = {};",
-            cur.get(out).expect("analyzer gated output")
-        );
+        let _ = writeln!(o, "{pad}(*{out}) = {};", cp.output_storage(out));
     }
     if frame {
         return Some(sink);
@@ -5374,10 +5249,15 @@ fn emit_composed_open(
         }
     }
 
+    for (ty, name, init) in rust_lag_open_locals(cp) {
+        let _ = writeln!(o, "        let mut {name}: {ty} = {init};");
+    }
+
     // Sub-open inserts, keyed to combined region++tail indices.
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs);
     let region_len = region_stmts.len();
-    let mut inserts: Vec<(usize, String)> = Vec::new();
+    let lag = RustLagOpen { cp, outputs, typing, opt_real_params: &opt_real_params, registry, helpers };
+    let mut inserts: Vec<(usize, u8, String)> = streaming::lag_inserts(cp, region_len, &|t, a| lag.emit(t, a, 8));
     // Combined-body indices whose statement a fused sub-open replaced.
     let mut replaced: HashSet<usize> = HashSet::new();
     for (si, sub) in cp.subs.iter().enumerate() {
@@ -5469,8 +5349,9 @@ fn emit_composed_open(
                 srcs.join(", ")
             );
         }
-        inserts.push((region_len + sub.tail_idx, t));
+        inserts.push((region_len + sub.tail_idx, 2, t));
     }
+    let inserts = streaming::order_lag_inserts(inserts);
 
     let combined: Vec<Statement> = region_stmts
         .into_iter()
@@ -5486,35 +5367,17 @@ fn emit_composed_open(
         o,
         "        if *outNBElement < 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
-    // Lag rings: seed from the tail of the still-live intermediate Vec (its
-    // batch `free()` renders as a no-op in Rust, so no withheld-free dance).
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        let lag = render_expr(&ring.lag, &typing.ctx, &opt_real_params, registry, helpers);
-        let _ = writeln!(o, "        let lagCap_{sr}: usize = ({lag}) as usize;");
-        let _ = writeln!(
-            o,
-            "        let mut lagRing_{sr}: Vec<f64> = vec![0.0_f64; lagCap_{sr}];"
-        );
-        let _ = writeln!(o, "        {{");
-        let _ = writeln!(o, "            let mut lagI: usize = 0;");
-        let _ = writeln!(o, "            while lagI < lagCap_{sr} {{");
-        let _ = writeln!(o, "                lagRing_{sr}[lagI] = {sr}[*outNBElement + lagI];");
-        let _ = writeln!(o, "                lagI += 1;");
-        let _ = writeln!(o, "            }}");
-        let _ = writeln!(o, "        }}");
+    for (at, action) in &cp.open_actions {
+        if *at == streaming::OpenAt::Epilogue {
+            lag.emit(o, action, 8);
+        }
     }
-    // Extra state-literal fields: sub handles + lag rings.
+    // Extra state-literal fields: sub handles + delay lines.
     let mut extra: Vec<String> = Vec::new();
     for (si, _) in cp.subs.iter().enumerate() {
         extra.push(format!("sub{si}"));
     }
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        extra.push(format!("lagRingPos_{sr}: 0_usize"));
-        extra.push(format!("lagRingCap_{sr}: lagCap_{sr}"));
-        extra.push(format!("lagRing_{sr}"));
-    }
+    extra.extend(streaming::lag_handle_fields(cp));
     extra.extend(cp.map_state.iter().map(|st| st.name.clone()));
     if let Some(model) = &cp.producer {
         emit_capture(
@@ -5573,6 +5436,143 @@ fn emit_composed_open(
     }
     let _ = writeln!(o, "    }}\n");
     let _ = sn;
+}
+
+/// Open's delay-line locals as `(type, name, initial value)`. Depths and counts
+/// are `i64`, so no check subtracts in `usize`.
+fn rust_lag_open_locals(cp: &streaming::ComposedPlan) -> Vec<(&'static str, String, &'static str)> {
+    let mut out = Vec::new();
+    for name in streaming::lag_handle_fields(cp) {
+        if name.starts_with("lagBuf") {
+            out.push(("Vec<f64>", name, "Vec::new()"));
+        } else {
+            out.push(("usize", name, "0"));
+        }
+    }
+    for (k, line) in cp.lines.iter().enumerate() {
+        for j in 0..line.taps.len() {
+            let init = if cp.tap_under_arm(k, j) { "-1" } else { "0" };
+            out.push(("i64", streaming::lag_depth_local(k, j), init));
+        }
+    }
+    for s in 0..cp.snapshots.len() {
+        out.push(("i64", streaming::lag_nb_local(s), "0"));
+    }
+    out
+}
+
+/// Renders the composed Open's delay-line actions in Rust.
+struct RustLagOpen<'a> {
+    cp: &'a streaming::ComposedPlan<'a>,
+    outputs: &'a [String],
+    typing: &'a Typing,
+    opt_real_params: &'a [String],
+    registry: &'a Registry,
+    helpers: &'a HelperRegistry,
+}
+
+impl RustLagOpen<'_> {
+    fn batch(&self, e: &Expr) -> String {
+        let outs = self.outputs;
+        let e = streaming::rewrite_expr(e, &|x| match x {
+            Expr::Var(v) if outs.contains(&v) => Expr::Var(format!("sc_{v}")),
+            other => other,
+        });
+        render_expr(&e, &self.typing.ctx, self.opt_real_params, self.registry, self.helpers)
+    }
+
+    /// An integer operand as `i64`.
+    fn wide(&self, e: &Expr) -> String {
+        let r = self.batch(e);
+        if r.chars().all(|c| c.is_alphanumeric() || c == '_') || (r.starts_with('(') && r.ends_with(')')) {
+            format!("({r} as i64)")
+        } else {
+            format!("(({r}) as i64)")
+        }
+    }
+
+    fn formula(&self, edge: usize) -> String {
+        streaming::render_lag_formula(&self.cp.edge_delay_formula(edge), &|t| match t {
+            streaming::LagTerm::Nb(s) => streaming::lag_nb_local(*s),
+            streaming::LagTerm::Const(k) => k.to_string(),
+            streaming::LagTerm::Batch(e) => self.wide(e),
+        })
+    }
+
+    fn emit(&self, o: &mut String, action: &streaming::OpenAction, indent: usize) {
+        use streaming::{lag_line_field, LineField, OpenAction};
+        let cp = self.cp;
+        let pad = " ".repeat(indent);
+        let fail = |o: &mut String, cond: &str, rc: &str| {
+            let _ = writeln!(o, "{pad}if {cond} {{\n{pad}    return Err(RetCode::{rc});\n{pad}}}");
+        };
+        match action {
+            OpenAction::Snapshot { def } => {
+                let s = cp.snapshot_of(*def).expect("snapshotted definition");
+                let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.wide(&cp.snapshot_count(*def)));
+            }
+            OpenAction::EmptyGuard { count } => {
+                fail(o, &format!("{} < 1", self.wide(count)), "InsufficientHistory");
+            }
+            OpenAction::Presume { edge } => {
+                fail(o, &format!("{} != 0", self.formula(*edge)), "InternalError");
+            }
+            OpenAction::Capture { line, tap } => {
+                let t = &cp.lines[*line].taps[*tap];
+                let d = streaming::lag_depth_local(*line, *tap);
+                let nb = streaming::lag_nb_local(cp.snapshot_of(cp.lines[*line].def).expect("snapshotted line"));
+                let _ = writeln!(o, "{pad}{d} = {};", self.formula(t.edge));
+                fail(o, &format!("{d} < {} || {d} > {nb} - 1", t.capture_floor()), "InternalError");
+            }
+            OpenAction::Seed { line } => {
+                let l = &cp.lines[*line];
+                let (buf, cap, pos) = (
+                    lag_line_field(*line, LineField::Buf),
+                    lag_line_field(*line, LineField::Cap),
+                    lag_line_field(*line, LineField::Pos),
+                );
+                let (floor, terms) = cp.lag_cap_terms(*line);
+                let mut deepest = if floor { "0_i64".to_string() } else { terms[0].clone() };
+                for t in terms.iter().skip(usize::from(!floor)) {
+                    deepest = format!("{deepest}.max({t})");
+                }
+                let _ = writeln!(o, "{pad}{cap} = {deepest} as usize;");
+                for (j, tap) in l.taps.iter().enumerate() {
+                    if tap.back == streaming::TapBack::Field {
+                        let d = streaming::lag_depth_local(*line, j);
+                        let _ = writeln!(
+                            o,
+                            "{pad}{} = if {d} < 0 {{ 0 }} else {{ {cap} - ({d} as usize) }};",
+                            lag_line_field(*line, LineField::Back(j))
+                        );
+                    }
+                }
+                let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
+                let src = self.batch(&Expr::Var(cp.defs[l.def].buffer.clone()));
+                let i = streaming::lag_seed_index(*line);
+                let _ = writeln!(o, "{pad}{buf} = vec![0.0_f64; {cap}.max(1)];");
+                let _ = writeln!(o, "{pad}{{");
+                let _ = writeln!(o, "{pad}    let mut {i}: usize = 0;");
+                let _ = writeln!(o, "{pad}    while {i} < {cap} {{");
+                let _ = writeln!(o, "{pad}        {buf}[{i}] = {src}[({nb} as usize) - {cap} + {i}];");
+                let _ = writeln!(o, "{pad}        {i} += 1;");
+                let _ = writeln!(o, "{pad}    }}");
+                let _ = writeln!(o, "{pad}}}");
+                let _ = writeln!(o, "{pad}{pos} = 0;");
+            }
+            OpenAction::Mirror { cond, then_, else_ } => {
+                let _ = writeln!(o, "{pad}if {} {{", self.batch(cond));
+                for a in then_ {
+                    self.emit(o, a, indent + 4);
+                }
+                let _ = writeln!(o, "{pad}}} else {{");
+                for a in else_ {
+                    self.emit(o, a, indent + 4);
+                }
+                let _ = writeln!(o, "{pad}}}");
+            }
+        }
+    }
 }
 
 /// [`emit_open_region`] without a `StreamModel` (the composed tier may be
@@ -5683,6 +5683,11 @@ fn emit_composed_region(
             enums, registry, helpers, counter,
         ));
     }
+    for (at, text) in inserts {
+        if *at == body.len() {
+            o.push_str(text);
+        }
+    }
 }
 
 /// The whole composed stream section.
@@ -5696,7 +5701,6 @@ fn emit_composed(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
 
     // Typing over the full transcription (region ++ tail), so inference sees
@@ -5756,11 +5760,9 @@ fn emit_composed(
             String::new(),
         ));
     }
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        fields.push((format!("lagRingPos_{sr}"), "usize".into(), String::new()));
-        fields.push((format!("lagRingCap_{sr}"), "usize".into(), String::new()));
-        fields.push((format!("lagRing_{sr}"), "Vec<f64>".into(), String::new()));
+    for name in streaming::lag_handle_fields(cp) {
+        let ty = if name.starts_with("lagBuf") { "Vec<f64>" } else { "usize" };
+        fields.push((name, ty.into(), String::new()));
     }
     for st in &cp.map_state {
         let (rty, _) = field_type_and_default(&typing, &st.name, &st.ty, false);
@@ -5779,7 +5781,7 @@ fn emit_composed(
     // --- impl Core ----------------------------------------------------------
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_composed_step(
-        o, func, cp, &typing, &split, &inputs, &outputs, enums, registry, helpers, counter, false,
+        o, func, cp, &typing, &split, &outputs, enums, registry, helpers, counter, false,
     );
     emit_composed_open(
         o, func, cp, &typing, &split, &outputs, enums, registry, helpers, counter,
@@ -5793,7 +5795,7 @@ fn emit_composed(
     let frame = {
         let mut sink = String::new();
         emit_composed_step(
-            &mut sink, func, cp, &typing, &split, &inputs, &outputs, enums, registry, helpers,
+            &mut sink, func, cp, &typing, &split, &outputs, enums, registry, helpers,
             counter, true,
         )
         .map(|body| {

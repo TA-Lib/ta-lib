@@ -1283,6 +1283,23 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000001 },
     ],
     '{}'),
+  FuncInfo.of('GATOR', 'Momentum Indicators', 'Gator Oscillator', 0x02000002,
+    [
+      { type: InputType.PRICE, paramName: 'inPriceHL', key: 'prices', flags: 0x00000006 },
+    ],
+    [
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInJawPeriod', key: 'jawPeriod', flags: 0x00000000, displayName: 'Jaw Period', hint: 'Time period for the jaw line', defaultValue: 13.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInJawShift', key: 'jawShift', flags: 0x00000000, displayName: 'Jaw Shift', hint: 'Bars ahead the jaw line is drawn', defaultValue: 8.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInTeethPeriod', key: 'teethPeriod', flags: 0x00000000, displayName: 'Teeth Period', hint: 'Time period for the teeth line', defaultValue: 8.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInTeethShift', key: 'teethShift', flags: 0x00000000, displayName: 'Teeth Shift', hint: 'Bars ahead the teeth line is drawn', defaultValue: 5.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInLipsPeriod', key: 'lipsPeriod', flags: 0x00000000, displayName: 'Lips Period', hint: 'Time period for the lips line', defaultValue: 5.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInLipsShift', key: 'lipsShift', flags: 0x00000000, displayName: 'Lips Shift', hint: 'Bars ahead the lips line is drawn', defaultValue: 3.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+    ],
+    [
+      { type: OutputType.REAL, paramName: 'outUpper', key: 'outUpper', flags: 0x00004510 },
+      { type: OutputType.REAL, paramName: 'outLower', key: 'outLower', flags: 0x00004610 },
+    ],
+    '{}'),
   FuncInfo.of('HA', 'Price Transform', 'Heikin-Ashi Candles', 0x0B000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceOHLC', key: 'prices', flags: 0x0000000F },

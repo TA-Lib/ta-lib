@@ -738,6 +738,7 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
+        let mut lagNb0: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -774,6 +775,7 @@ impl Core {
             outIdx += 1;
             today += 1;
         }
+        lagNb0 = (outIdx as i64);
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.ma_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, &mut maBegIdx, &mut maNbElement, &mut tempMA[..])?;
@@ -783,6 +785,21 @@ impl Core {
         let sub1 = self.var_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((maBegIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
         retCode = RetCode::Success;
         offset = maNbElement - (*outNBElement);
+        if optInNbDevUp == optInNbDevDn {
+            if (((*outNBElement) as usize) as i64) < 1 {
+                return Err(RetCode::InsufficientHistory);
+            }
+            if lagNb0 - (((*outNBElement) as usize) as i64) != 0 {
+                return Err(RetCode::InternalError);
+            }
+        } else {
+            if (((*outNBElement) as usize) as i64) < 1 {
+                return Err(RetCode::InsufficientHistory);
+            }
+            if lagNb0 - (((*outNBElement) as usize) as i64) != 0 {
+                return Err(RetCode::InternalError);
+            }
+        }
         if optInNbDevUp == optInNbDevDn {
             // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;

@@ -351,9 +351,9 @@
       private Core core;
       private int optInTimePeriod;
       private double cur_outReal;
-      private int lagRingPos_adx;
-      private int lagRingCap_adx;
-      private double[] lagRing_adx;
+      private int lagPos0;
+      private int lagCap0;
+      private double[] lagBuf0;
       private AdxStream sub0;
       private int outRangeBegIdx;
       private int outRangeCount;
@@ -398,9 +398,9 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
-         this.lagRingPos_adx = other.lagRingPos_adx;
-         this.lagRingCap_adx = other.lagRingCap_adx;
-         this.lagRing_adx = other.lagRing_adx.clone();
+         this.lagPos0 = other.lagPos0;
+         this.lagCap0 = other.lagCap0;
+         this.lagBuf0 = other.lagBuf0.clone();
          this.sub0 = new AdxStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -448,10 +448,12 @@
          AdxrStream sp = this;
          double cur_adx = 0.0;
          double cur_outReal = 0.0;
+         double lagTap0_0 = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
          /* Combine map (batch tail, per bar). */
-         cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+         lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+         cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
          return cur_outReal;
       }
 
@@ -485,12 +487,21 @@
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
+      double lagIn0 = 0.0;
+      double lagTap0_0 = 0.0;
+      int lagCapL0 = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_adx = sp.sub0.update(inHigh, inLow, inClose);
+      lagIn0 = cur_adx;
       /* Combine map (batch tail, per bar). */
-      cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-      sp.lagRing_adx[sp.lagRingPos_adx] = cur_adx;
-      sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
+      lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+      cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+      lagCapL0 = sp.lagCap0;
+      sp.lagBuf0[sp.lagPos0] = lagIn0;
+      sp.lagPos0 = sp.lagPos0 + 1;
+      if( sp.lagPos0 >= lagCapL0 ) {
+         sp.lagPos0 = 0;
+      }
       sp.cur_outReal = cur_outReal;
    }
    private RetCode adxrOpenImpl( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -522,6 +533,11 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      int lagPos0 = 0;
+      int lagCap0 = 0;
+      double[] lagBuf0 = null;
+      int lagD0_0 = 0;
+      int lagNb0 = 0;
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
        *
@@ -556,11 +572,23 @@
        * sub-call's own startIdx (the seeding point). */
       AdxStream sub0 = adxOpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, outBegIdx, outNBElement, adx);
       retCode = RetCode.SUCCESS;
+      lagNb0 = outNBElement.value;
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
        */
       nbElement = outNBElement.value - (optInTimePeriod - 1);
+      if( nbElement < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      lagD0_0 = lagNb0 - nbElement;
+      if( lagD0_0 < 1 || lagD0_0 > lagNb0 - 1 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      lagCap0 = lagD0_0;
+      lagBuf0 = new double[Math.max(lagCap0, 1)];
+      System.arraycopy(adx, lagNb0 - lagCap0, lagBuf0, 0, lagCap0);
+      lagPos0 = 0;
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
       }
@@ -570,16 +598,11 @@
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      int lagCap_adx = (int)(optInTimePeriod - 1);
-      double[] lagRing_adx = new double[lagCap_adx];
-      for( int lagI = 0; lagI < lagCap_adx; lagI++ ) {
-         lagRing_adx[lagI] = adx[outNBElement.value + lagI];
-      }
       sp.optInTimePeriod = optInTimePeriod;
       sp.sub0 = sub0;
-      sp.lagRingPos_adx = 0;
-      sp.lagRingCap_adx = lagCap_adx;
-      sp.lagRing_adx = lagRing_adx;
+      sp.lagPos0 = lagPos0;
+      sp.lagCap0 = lagCap0;
+      sp.lagBuf0 = lagBuf0;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.SUCCESS;
    }

@@ -1378,6 +1378,17 @@ unsigned int TA_FRAMA_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_FRAMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_GATOR_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_GATOR_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_GATOR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_HA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

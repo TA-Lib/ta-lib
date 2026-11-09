@@ -874,6 +874,8 @@
       double[] sc_outJaw = outStride == 1 ? outJaw : new double[historyLen];
       double[] sc_outTeeth = outStride == 1 ? outTeeth : new double[historyLen];
       double[] sc_outLips = outStride == 1 ? outLips : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
       lookbackTotal = alligatorLookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
       /* Return before touching anything, so that an input which stops short of
        * endIdx is never read past its end.
@@ -909,6 +911,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
+      lagNb0 = tempNbElement.value;
       /* Sub-stream 2: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RmaStream sub2 = rmaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempMP, 0, (endIdx - mpStartIdx) + 1), lookbackTotal, optInTeethPeriod, tempBegIdx, tempNbElement, sc_outTeeth);
@@ -918,6 +921,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
+      lagNb1 = tempNbElement.value;
       /* Sub-stream 3: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RmaStream sub3 = rmaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempMP, 0, (endIdx - mpStartIdx) + 1), lookbackTotal, optInLipsPeriod, tempBegIdx, tempNbElement, sc_outLips);
@@ -932,6 +936,12 @@
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb1 - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInJawPeriod = optInJawPeriod;
       sp.optInJawShift = optInJawShift;

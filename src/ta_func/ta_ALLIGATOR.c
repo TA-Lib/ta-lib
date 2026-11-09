@@ -465,6 +465,8 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
    TA_RMA_Stream *sub1;
    TA_RMA_Stream *sub2;
    TA_RMA_Stream *sub3;
+   int lagNb0;
+   int lagNb1;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -474,6 +476,8 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
    sub1 = NULL;
    sub2 = NULL;
    sub3 = NULL;
+   lagNb0 = 0;
+   lagNb1 = 0;
    if( outStride ) sc_outJaw = outJaw;
    else
    {
@@ -571,6 +575,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips );
          return retCode;
       }
+      lagNb0 = tempNbElement;
       /* Sub-stream 2: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -591,6 +596,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips );
          return retCode;
       }
+      lagNb1 = tempNbElement;
       /* Sub-stream 3: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -617,6 +623,16 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
 
       /* Capture the live producer state + sub handles. */
       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips ); return TA_INSUFFICIENT_HISTORY; }
+      if( lagNb0 - dummyNBElement != 0 )
+      {
+         TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips );
+         return TA_INTERNAL_ERROR(519);
+      }
+      if( lagNb1 - dummyNBElement != 0 )
+      {
+         TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips );
+         return TA_INTERNAL_ERROR(520);
+      }
       sp = (struct TA_ALLIGATOR_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); if( !outStride ) TA_Free( sc_outJaw ); if( !outStride ) TA_Free( sc_outTeeth ); if( !outStride ) TA_Free( sc_outLips ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

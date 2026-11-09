@@ -1036,6 +1036,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      int lagNb0 = 0;
       lookbackTotal = percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal ) {
@@ -1054,6 +1055,7 @@
          tempX[outIdx++] = inReal[today];
          today += 1;
       }
+      lagNb0 = outIdx;
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, maBegIdx, maNbElement, tempMA);
@@ -1063,6 +1065,21 @@
       VarStream sub1 = varOpenAndFillInternal(inReal, maBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       retCode = RetCode.SUCCESS;
       offset = maNbElement.value - outNBElement.value;
+      if( optInNbDevUp == optInNbDevDn ) {
+         if( (int)outNBElement.value < 1 ) {
+            return RetCode.INSUFFICIENT_HISTORY;
+         }
+         if( lagNb0 - (int)outNBElement.value != 0 ) {
+            return RetCode.INTERNAL_ERROR;
+         }
+      } else {
+         if( (int)outNBElement.value < 1 ) {
+            return RetCode.INSUFFICIENT_HISTORY;
+         }
+         if( lagNb0 - (int)outNBElement.value != 0 ) {
+            return RetCode.INTERNAL_ERROR;
+         }
+      }
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             middle = tempMA[i + offset];

@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3201
+function-count 3214
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1409,6 +1409,16 @@ function TA_RetCode TA_FRAMA_Value(const TA_FRAMA_Stream *, double *)
 function TA_RetCode TA_ForEachFunc(TA_CallForEachFunc, void *)
 function TA_RetCode TA_FuncTableAlloc(const char *, TA_StringTable **)
 function TA_RetCode TA_FuncTableFree(TA_StringTable *)
+function TA_RetCode TA_GATOR(int, int, const double *, const double *, int, int, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_GATOR_Advance(TA_GATOR_Stream *)
+function TA_RetCode TA_GATOR_Clone(const TA_GATOR_Stream *, TA_GATOR_Stream **)
+function TA_RetCode TA_GATOR_Close(TA_GATOR_Stream *)
+function TA_RetCode TA_GATOR_Open(TA_GATOR_Stream **, const double *, const double *, int, int, int, int, int, int, int, double *, double *)
+function TA_RetCode TA_GATOR_OpenAndFill(TA_GATOR_Stream **, const double *, const double *, int, int, int, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_GATOR_OutRange(const TA_GATOR_Stream *, int *, int *)
+function TA_RetCode TA_GATOR_Peek(const TA_GATOR_Stream *, double, double, double *, double *)
+function TA_RetCode TA_GATOR_Update(TA_GATOR_Stream *, double, double, double *, double *)
+function TA_RetCode TA_GATOR_Value(const TA_GATOR_Stream *, double *, double *)
 function TA_RetCode TA_GetDisplayShift(const TA_ParamHolder *, unsigned int, TA_Integer *)
 function TA_RetCode TA_GetFuncAttributes(const TA_FuncHandle *, const char **)
 function TA_RetCode TA_GetFuncHandle(const char *, const TA_FuncHandle **)
@@ -2525,6 +2535,7 @@ function TA_RetCode TA_S_FLOOR(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_FOSC(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_FRACTAL(int, int, const float *, const float *, int, int, int *, int *, int *, int *)
 function TA_RetCode TA_S_FRAMA(int, int, const float *, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_GATOR(int, int, const float *, const float *, int, int, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_HA(int, int, const float *, const float *, const float *, const float *, int *, int *, double *, double *, double *, double *)
 function TA_RetCode TA_S_HMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_HT_DCPERIOD(int, int, const float *, int *, int *, double *)
@@ -3149,6 +3160,8 @@ function int TA_FRACTAL_DisplayShift(int, int, int)
 function int TA_FRACTAL_Lookback(int, int)
 function int TA_FRAMA_DisplayShift(int, int)
 function int TA_FRAMA_Lookback(int)
+function int TA_GATOR_DisplayShift(int, int, int, int, int, int, int)
+function int TA_GATOR_Lookback(int, int, int, int, int, int)
 function int TA_HA_DisplayShift(int)
 function int TA_HA_Lookback(void)
 function int TA_HMA_DisplayShift(int, int)

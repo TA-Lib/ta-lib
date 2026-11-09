@@ -2097,6 +2097,22 @@ public static class ExamplesTest
         Check("FRAMA", AllFinite(outReal, r.Count));
     }
 
+    private static void Gator()
+    {
+        var high = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) high[i] = 101 + 10 * Math.Sin(0.1 * i);
+        var low = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) low[i] = 99 + 10 * Math.Sin(0.1 * i);
+        var upper = new double[252];
+        var lower = new double[252];
+
+        var core = Core.Default;
+        OutRange r = core.Gator(0, high.Length - 1, high, low, 13, 8, 8, 5, 5, 3, upper, lower);
+        if (!Check("GATOR", r.Count > 0)) return;
+        Console.WriteLine($"{r.Count} values from bar {r.BegIdx}; last upper = {upper[r.Count - 1]}");
+        Check("GATOR", AllFinite(upper, r.Count));
+    }
+
     private static void Ha()
     {
         var open = new double[252]; // your data, oldest first
@@ -4012,6 +4028,7 @@ public static class ExamplesTest
         Fosc();
         Fractal();
         Frama();
+        Gator();
         Ha();
         Hma();
         HtDcperiod();

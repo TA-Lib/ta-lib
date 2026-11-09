@@ -250,8 +250,8 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
         let shipped: std::collections::BTreeSet<&str> =
             with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
         let expected: std::collections::BTreeSet<&str> =
-            ["alligator", "bbands", "ichimoku", "kc", "kdj", "kstext", "macdext", "sqzmom",
-             "stoch", "stochf", "stochrsi"]
+            ["alligator", "bbands", "gator", "ichimoku", "kc", "kdj", "kstext", "macdext",
+             "sqzmom", "stoch", "stochf", "stochrsi"]
                 .into_iter()
                 .collect();
         assert_eq!(
@@ -437,4 +437,88 @@ fn no_managed_peek_writes_its_handle() {
         assert!(handle_reads > 0, "{lang}: no peek body reads its handle through `sp.`");
     }
     assert!(offenders.is_empty(), "a peek writes its handle:\n{}", offenders.join("\n"));
+}
+
+/// Every delay-line allocation, in Open and in C's Clone, holds `max(cap, 1)`
+/// slots: a depth-0 line has capacity 0, and its push and its load still touch
+/// slot 0. A managed clone copies the buffer it was given, which already holds
+/// that many.
+#[test]
+fn every_delay_line_allocation_holds_at_least_one_slot() {
+    let registry = common::make_registry();
+    let mut corpus_lines = 0usize;
+    let mut texts: HashMap<&str, String> = HashMap::new();
+    for name in streaming_funcs() {
+        let (func, enums) = load(&name);
+        let resolved = func.resolved_for(ir::Lang::C);
+        if let Ok(ta_codegen_lib::streaming::StreamPlan::Composed(cp)) =
+            ta_codegen_lib::streaming::validate_streamable(&resolved, registry)
+        {
+            corpus_lines += cp.lines.len();
+        }
+        for lang in ["c", "rust", "java", "csharp", "ts"] {
+            texts.entry(lang).or_default().push_str(&render_stream(&func, &enums, lang));
+        }
+    }
+    assert!(corpus_lines >= 1, "no function has a delay line: the gate checks nothing");
+    for (lang, text) in &texts {
+        let (mut max_form, mut kept) = (0usize, 0usize);
+        for line in text.lines() {
+            let mut rest = line;
+            while let Some(at) = rest.find("lagBuf") {
+                let tail = &rest[at + "lagBuf".len()..];
+                let k: String = tail.chars().take_while(char::is_ascii_digit).collect();
+                rest = &tail[k.len()..];
+                let preceded = line[..line.len() - tail.len() - "lagBuf".len()]
+                    .chars()
+                    .last()
+                    .is_some_and(|c| c.is_alphanumeric() || c == '_');
+                let Some(rhs) = rest.strip_prefix(" = ") else { continue };
+                if k.is_empty() || preceded {
+                    continue;
+                }
+                let allocates = ["TA_Malloc", "vec![", "new double[", "new Float64Array("]
+                    .iter()
+                    .any(|t| rhs.starts_with(t) || rhs.starts_with(&format!("(double *){t}")));
+                if !allocates {
+                    continue;
+                }
+                let max = match *lang {
+                    "c" => [
+                        format!("(double *)TA_Malloc( sizeof(double) * (size_t)(lagCap{k} > 0 ? lagCap{k} : 1) );"),
+                        "(double *)TA_Malloc( sizeof(double) * copyN );".to_string(),
+                    ],
+                    "rust" => [format!("vec![0.0_f64; lagCap{k}.max(1)];"), String::new()],
+                    "java" => [format!("new double[Math.max(lagCap{k}, 1)];"), String::new()],
+                    "csharp" => [
+                        format!("new double[Math.Max(lagCap{k}, 1)];"),
+                        format!("new double[other.lagBuf{k}.Length];"),
+                    ],
+                    _ => [format!("new Float64Array(lagCap{k} > 0 ? lagCap{k} : 1);"), String::new()],
+                };
+                if rhs == max[0] {
+                    max_form += 1;
+                } else if !max[1].is_empty() && rhs == max[1] {
+                    kept += 1;
+                } else {
+                    panic!("{lang}: a delay-line allocation does not hold max(cap, 1) slots: `{line}`");
+                }
+            }
+        }
+        assert_eq!(max_form, corpus_lines, "{lang}: one max(cap, 1) allocation per line in Open");
+        if *lang == "c" {
+            let full: usize = (0..corpus_lines)
+                .map(|k| {
+                    text.matches(&format!(
+                        "{{ size_t copyN = (size_t)(sp->lagCap{k} > 0 ? sp->lagCap{k} : 1);"
+                    ))
+                    .count()
+                })
+                .sum();
+            assert!(
+                full == corpus_lines && kept == corpus_lines,
+                "c: every line's Clone copies max(cap, 1) slots"
+            );
+        }
+    }
 }

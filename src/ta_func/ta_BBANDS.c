@@ -845,6 +845,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
    double *sc_outRealLowerBand;
    TA_MA_Stream *sub0;
    TA_STDDEV_Stream *sub1;
+   int lagNb0;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -879,6 +880,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
    subRc = TA_SUCCESS;
    sub0 = NULL;
    sub1 = NULL;
+   lagNb0 = 0;
    if( outStride ) sc_outRealUpperBand = outRealUpperBand;
    else
    {
@@ -969,6 +971,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
+      lagNb0 = dummyNBElement;
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)dummyBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
@@ -1008,6 +1011,20 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
       } else 
       {
          shiftIdx = 0;
+      }
+      if( dummyNBElement < 1 )
+      {
+         free(tempBuffer1);
+         free(tempBuffer2);
+         *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - shiftIdx - dummyNBElement != 0 )
+      {
+         free(tempBuffer1);
+         free(tempBuffer2);
+         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_INTERNAL_ERROR(521);
       }
       memmove(sc_outRealMiddleBand,&tempBuffer1[shiftIdx],dummyNBElement * sizeof(double));
       /* Now do a tight loop to calculate the upper/lower band at the same time. */

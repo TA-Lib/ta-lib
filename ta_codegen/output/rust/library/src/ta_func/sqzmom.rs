@@ -720,6 +720,12 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0_i32; historyLen] };
         let sc_outSqueeze: &mut [i32] =
             if outStride == 1 { &mut *outSqueeze } else { &mut owned_sc_outSqueeze };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
+        let mut lagNb2: i64 = 0;
+        let mut lagNb3: i64 = 0;
+        let mut lagNb4: i64 = 0;
+        let mut lagNb5: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut stageLookback: usize = 0_usize;
@@ -789,17 +795,32 @@ impl Core {
         tempSD = vec![0.0_f64; (n * 1) as usize];
         // The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
         // midprice is bit-identical to donchian's middle band.
+        lagNb0 = ((endIdx + 1) as i64);
         // Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, outBegIdx, outNBElement, &mut tempDev[..])?;
         retCode = RetCode::Success;
+        lagNb1 = ((*outNBElement) as i64);
         // Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut kcmNb, &mut tempKCM[..])?;
         retCode = RetCode::Success;
+        lagNb2 = (kcmNb as i64);
         // DEV, over the staged range. The close is read at the index midprice
         // reported for the range, which is what lets this loop stream: keep
         // outBegIdx as midprice's receiver, and reuse it for no call above here.
+        if (stageLen as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - (stageLen as i64) - ((*outBegIdx) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb2 - (stageLen as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb1 - (stageLen as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < stageLen; i += 1 )
         i = 0;
         while i < stageLen {
@@ -813,9 +834,13 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.trange_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
         retCode = RetCode::Success;
+        lagNb3 = (tempNbElement as i64);
         // Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub3, _) = self.sma_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod)?;
+        if lagNb3 - 1 - ((stageLen - 1) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         let _xr0 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
@@ -824,10 +849,12 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub4 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempMid[..])?;
         retCode = RetCode::Success;
+        lagNb4 = (tempNbElement as i64);
         // Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub5 = self.stddev_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, 1.0, &mut tempBegIdx, &mut sdNb, &mut tempSD[..])?;
         retCode = RetCode::Success;
+        lagNb5 = (sdNb as i64);
         // The centre is staged one regression window early; the shift puts it on
         // the bar the bands are on.
         kcmShift = kcmNb - sdNb;
@@ -849,6 +876,18 @@ impl Core {
         // middle band, as bbands does. Written as one expression per band, the
         // upper one contracts into a fused multiply-add and the lower one cannot,
         // and a band within one ulp of an edge then changes level.
+        if (n as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb5 - (n as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb4 - (n as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb2 - (n as i64) - (kcmShift as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < n; i += 1 )
         i = 0;
         while i < n {

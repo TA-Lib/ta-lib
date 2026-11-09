@@ -1033,6 +1033,12 @@ function sqzmomOpenImpl(
   }
   const sc_outMomentum = outStride === 1 ? outMomentum : new Float64Array(historyLen);
   const sc_outSqueeze = outStride === 1 ? outSqueeze : new Int32Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
+  let lagNb2 = 0;
+  let lagNb3 = 0;
+  let lagNb4 = 0;
+  let lagNb5 = 0;
   /* Each rolling statistic is a call to the shipped function, so it carries
    * that function's own arithmetic bit for bit:
    *
@@ -1083,12 +1089,27 @@ function sqzmomOpenImpl(
   /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
    * midprice is bit-identical to donchian's middle band.
    */
+  lagNb0 = endIdx + 1;
   const sub0 = midpriceOpenAndFillInternal(core, inHigh, inLow, stageIdx, optInKCPeriod, outBegIdx, outNBElement, tempDev);
+  lagNb1 = outNBElement.value;
   const sub1 = smaOpenAndFillInternal(core, inClose, stageIdx, optInKCPeriod, tempBegIdx, kcmNb, tempKCM);
+  lagNb2 = kcmNb.value;
   /* DEV, over the staged range. The close is read at the index midprice
    * reported for the range, which is what lets this loop stream: keep
    * outBegIdx as midprice's receiver, and reuse it for no call above here.
    */
+  if (stageLen < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - stageLen - outBegIdx.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb2 - stageLen !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb1 - stageLen !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < stageLen; i += 1) {
     tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempKCM[i]) / 2.0;
   }
@@ -1097,12 +1118,18 @@ function sqzmomOpenImpl(
    * compression chain alone puts lookbackTotal at k or more.
    */
   const sub2 = trangeOpenAndFillInternal(core, inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
+  lagNb3 = tempNbElement.value;
   const sub3 = smaOpenInternal(core, tempWork.slice(0, (stageLen - 1) + 1), 0, optInKCPeriod);
+  if (lagNb3 - 1 - (stageLen - 1) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   const _xr0 = smaPositional(0, stageLen - 1, tempWork, optInKCPeriod, tempWork, core);
   tempBegIdx.value = _xr0.begIdx;
   tempNbElement.value = _xr0.count;
   const sub4 = smaOpenAndFillInternal(core, inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
+  lagNb4 = tempNbElement.value;
   const sub5 = stddevOpenAndFillInternal(core, inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, sdNb, tempSD);
+  lagNb5 = sdNb.value;
   /* The centre is staged one regression window early; the shift puts it on
    * the bar the bands are on.
    */
@@ -1124,6 +1151,18 @@ function sqzmomOpenImpl(
    * upper one contracts into a fused multiply-add and the lower one cannot,
    * and a band within one ulp of an edge then changes level.
    */
+  if (n < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb5 - n !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb4 - n !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb2 - n - kcmShift !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < n; i += 1) {
     dev = tempSD[i] * optInNbDev;
     up = tempMid[i] + dev;

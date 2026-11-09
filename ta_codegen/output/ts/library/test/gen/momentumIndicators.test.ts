@@ -48,26 +48,26 @@ import {
   ctiOpen, ctiOpenAndFill, dosc, doscOpen, doscOpenAndFill, dpo, dpoOpen,
   dpoOpenAndFill, dx, dxOpen, dxOpenAndFill, er, erOpen, erOpenAndFill, eri,
   eriOpen, eriOpenAndFill, fisher, fisherOpen, fisherOpenAndFill, fosc,
-  foscOpen, foscOpenAndFill, fractal, fractalOpen, fractalOpenAndFill, ibs,
-  ibsOpen, ibsOpenAndFill, imi, imiOpen, imiOpenAndFill, kdj, kdjOpen,
-  kdjOpenAndFill, kst, kstOpen, kstOpenAndFill, kstext, kstextOpen,
-  kstextOpenAndFill, macd, macdOpen, macdOpenAndFill, macdext, macdextOpen,
-  macdextOpenAndFill, macdfix, macdfixOpen, macdfixOpenAndFill, macdv,
-  macdvOpen, macdvOpenAndFill, mfi, mfiOpen, mfiOpenAndFill, minusDi,
-  minusDiOpen, minusDiOpenAndFill, minusDm, minusDmOpen, minusDmOpenAndFill,
-  mom, momOpen, momOpenAndFill, plusDi, plusDiOpen, plusDiOpenAndFill, plusDm,
-  plusDmOpen, plusDmOpenAndFill, ppo, ppoOpen, ppoOpenAndFill, pso, psoOpen,
-  psoOpenAndFill, qstick, qstickOpen, qstickOpenAndFill, roc, rocOpen,
-  rocOpenAndFill, rocp, rocpOpen, rocpOpenAndFill, rocr, rocr100, rocr100Open,
-  rocr100OpenAndFill, rocrOpen, rocrOpenAndFill, rsi, rsiOpen, rsiOpenAndFill,
-  si, siOpen, siOpenAndFill, smi, smiOpen, smiOpenAndFill, sqzmom, sqzmomOpen,
-  sqzmomOpenAndFill, stc, stcOpen, stcOpenAndFill, stoch, stochOpen,
-  stochOpenAndFill, stochf, stochfOpen, stochfOpenAndFill, stochrsi,
-  stochrsiOpen, stochrsiOpenAndFill, trix, trixOpen, trixOpenAndFill, tsi,
-  tsiOpen, tsiOpenAndFill, ultosc, ultoscOpen, ultoscOpenAndFill, vhf, vhfOpen,
-  vhfOpenAndFill, vortex, vortexOpen, vortexOpenAndFill, wad, wadOpen,
-  wadOpenAndFill, wavetrend, wavetrendOpen, wavetrendOpenAndFill, willr,
-  willrOpen, willrOpenAndFill
+  foscOpen, foscOpenAndFill, fractal, fractalOpen, fractalOpenAndFill, gator,
+  gatorOpen, gatorOpenAndFill, ibs, ibsOpen, ibsOpenAndFill, imi, imiOpen,
+  imiOpenAndFill, kdj, kdjOpen, kdjOpenAndFill, kst, kstOpen, kstOpenAndFill,
+  kstext, kstextOpen, kstextOpenAndFill, macd, macdOpen, macdOpenAndFill,
+  macdext, macdextOpen, macdextOpenAndFill, macdfix, macdfixOpen,
+  macdfixOpenAndFill, macdv, macdvOpen, macdvOpenAndFill, mfi, mfiOpen,
+  mfiOpenAndFill, minusDi, minusDiOpen, minusDiOpenAndFill, minusDm,
+  minusDmOpen, minusDmOpenAndFill, mom, momOpen, momOpenAndFill, plusDi,
+  plusDiOpen, plusDiOpenAndFill, plusDm, plusDmOpen, plusDmOpenAndFill, ppo,
+  ppoOpen, ppoOpenAndFill, pso, psoOpen, psoOpenAndFill, qstick, qstickOpen,
+  qstickOpenAndFill, roc, rocOpen, rocOpenAndFill, rocp, rocpOpen,
+  rocpOpenAndFill, rocr, rocr100, rocr100Open, rocr100OpenAndFill, rocrOpen,
+  rocrOpenAndFill, rsi, rsiOpen, rsiOpenAndFill, si, siOpen, siOpenAndFill, smi,
+  smiOpen, smiOpenAndFill, sqzmom, sqzmomOpen, sqzmomOpenAndFill, stc, stcOpen,
+  stcOpenAndFill, stoch, stochOpen, stochOpenAndFill, stochf, stochfOpen,
+  stochfOpenAndFill, stochrsi, stochrsiOpen, stochrsiOpenAndFill, trix,
+  trixOpen, trixOpenAndFill, tsi, tsiOpen, tsiOpenAndFill, ultosc, ultoscOpen,
+  ultoscOpenAndFill, vhf, vhfOpen, vhfOpenAndFill, vortex, vortexOpen,
+  vortexOpenAndFill, wad, wadOpen, wadOpenAndFill, wavetrend, wavetrendOpen,
+  wavetrendOpenAndFill, willr, willrOpen, willrOpenAndFill
 } from 'ta-lib';
 
 test('AC: ac example', () => {
@@ -1454,6 +1454,84 @@ test('FRACTAL: fractalOpenAndFill example', () => {
   for (let k = 0; k < outSwingHigh.length; k++) {
     assert.ok(Object.is(outSwingHigh[k], batch.outSwingHigh[k]));
     assert.ok(Object.is(outSwingLow[k], batch.outSwingLow[k]));
+  }
+});
+
+test('GATOR: gator example', () => {
+  const high = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+  const low = new Float64Array(252); // your data, oldest first
+  for (let i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+
+  const { begIdx, outUpper, outLower } = gator({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  console.log(outUpper.length + ' values from bar ' + begIdx + '; last outUpper = ' + outUpper[outUpper.length - 1]);
+
+  const count = outUpper.length;
+  assert.ok(count > 0);
+  assert.equal(begIdx + count, high.length);
+  assert.equal(outLower.length, count);
+  assert.ok(outUpper.every(Number.isFinite));
+});
+
+test('GATOR: gatorOpen example', () => {
+  const high = Float64Array.from({ length: 252 }, (_, i) =>
+    101 + 10 * Math.sin(0.1 * i));
+  const low = Float64Array.from({ length: 252 }, (_, i) =>
+    99 + 10 * Math.sin(0.1 * i));
+  const stream = gatorOpen({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
+  const updated = stream.update(101.4, 99.1); // the bar closes
+
+  assert.ok(Object.is(peeked.outUpper, updated.outUpper));
+  assert.ok(Object.is(peeked.outLower, updated.outLower));
+  const range = stream.outRange();
+  assert.equal(range.begIdx + range.count, high.length + 1);
+});
+
+test('GATOR: gatorOpenAndFill example', () => {
+  const high = Float64Array.from({ length: 252 }, (_, i) =>
+    101 + 10 * Math.sin(0.1 * i));
+  const low = Float64Array.from({ length: 252 }, (_, i) =>
+    99 + 10 * Math.sin(0.1 * i));
+  const { stream, begIdx, outUpper, outLower } = gatorOpenAndFill({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  // outUpper[k] is the value at bar begIdx + k
+
+  const range = stream.outRange();
+  const batch = gator({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  assert.deepEqual([begIdx, outUpper.length], [range.begIdx, range.count]);
+  assert.deepEqual([begIdx, outUpper.length], [batch.begIdx, batch.outUpper.length]);
+  assert.ok(outUpper.length > 0);
+  for (let k = 0; k < outUpper.length; k++) {
+    assert.ok(Object.is(outUpper[k], batch.outUpper[k]));
+    assert.ok(Object.is(outLower[k], batch.outLower[k]));
   }
 });
 

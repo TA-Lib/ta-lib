@@ -817,6 +817,11 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outKSTSignal: &mut [f64] =
             if outStride == 1 { &mut *outKSTSignal } else { &mut owned_sc_outKSTSignal };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
+        let mut lagNb2: i64 = 0;
+        let mut lagNb3: i64 = 0;
+        let mut lagNb4: i64 = 0;
         let mut kstBuffer: Vec<f64> = Vec::new();
         let mut tempBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -904,6 +909,13 @@ impl Core {
         tempBegIdx = _xr1.beg_idx;
         legNb = _xr1.count;
         retCode = RetCode::Success;
+        lagNb0 = (legNb as i64);
+        if (kstNb as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - (kstNb as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
@@ -921,6 +933,13 @@ impl Core {
         tempBegIdx = _xr2.beg_idx;
         legNb = _xr2.count;
         retCode = RetCode::Success;
+        lagNb1 = (legNb as i64);
+        if (kstNb as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb1 - (kstNb as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
@@ -938,6 +957,14 @@ impl Core {
         tempBegIdx = _xr3.beg_idx;
         legNb = _xr3.count;
         retCode = RetCode::Success;
+        lagNb2 = (legNb as i64);
+        lagNb3 = (kstNb as i64);
+        if (kstNb as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb2 - (kstNb as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
@@ -945,6 +972,13 @@ impl Core {
             i += 1;
         }
         // Every read of inReal is done: an output may alias it.
+        lagNb4 = ((endIdx - startIdx + 1) as i64);
+        if ((endIdx - startIdx + 1) as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb3 - (lookbackSignal as i64) - ((endIdx - startIdx + 1) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         {
             let _n = ((endIdx - startIdx + 1) * 1) as usize;
             let _di = (0) as usize;
@@ -961,6 +995,9 @@ impl Core {
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb4 - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
         }
         let mut state = KstextStreamState {
             cur_outKST: 0.0_f64,

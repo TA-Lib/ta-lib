@@ -447,9 +447,9 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal double cur_outReal;
-      internal int lagRingPos_adx;
-      internal int lagRingCap_adx;
-      internal double[] lagRing_adx = [];
+      internal int lagPos0;
+      internal int lagCap0;
+      internal double[] lagBuf0 = [];
       internal AdxStream sub0 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -494,10 +494,10 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
-         this.lagRingPos_adx = other.lagRingPos_adx;
-         this.lagRingCap_adx = other.lagRingCap_adx;
-         this.lagRing_adx = new double[other.lagRing_adx.Length];
-         Array.Copy( other.lagRing_adx, this.lagRing_adx, other.lagRing_adx.Length );
+         this.lagPos0 = other.lagPos0;
+         this.lagCap0 = other.lagCap0;
+         this.lagBuf0 = new double[other.lagBuf0.Length];
+         Array.Copy( other.lagBuf0, this.lagBuf0, other.lagBuf0.Length );
          this.sub0 = new AdxStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -553,10 +553,12 @@ public partial class Core
          AdxrStream sp = this;
          double cur_adx = 0.0;
          double cur_outReal = 0.0;
+         double lagTap0_0 = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_adx = sp.sub0.Peek(inHigh, inLow, inClose);
          /* Combine map (batch tail, per bar). */
-         cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+         lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+         cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
          return cur_outReal;
       }
 
@@ -581,12 +583,21 @@ public partial class Core
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
+      double lagIn0 = 0.0;
+      double lagTap0_0 = 0.0;
+      int lagCapL0 = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_adx = sp.sub0.Update(inHigh, inLow, inClose);
+      lagIn0 = cur_adx;
       /* Combine map (batch tail, per bar). */
-      cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-      sp.lagRing_adx[sp.lagRingPos_adx] = cur_adx;
-      sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
+      lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+      cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+      lagCapL0 = sp.lagCap0;
+      sp.lagBuf0[sp.lagPos0] = lagIn0;
+      sp.lagPos0 = sp.lagPos0 + 1;
+      if( sp.lagPos0 >= lagCapL0 ) {
+         sp.lagPos0 = 0;
+      }
       sp.cur_outReal = cur_outReal;
    }
 
@@ -621,6 +632,11 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      int lagPos0 = 0;
+      int lagCap0 = 0;
+      double[] lagBuf0 = [];
+      int lagD0_0 = 0;
+      int lagNb0 = 0;
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
        *
@@ -655,11 +671,25 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       AdxStream sub0 = AdxOpenAndFillInternal(inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, out outBegIdx, out outNBElement, adx);
       retCode = RetCode.Success;
+      lagNb0 = outNBElement;
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
        */
       nbElement = outNBElement - (optInTimePeriod - 1);
+      if( nbElement < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      lagD0_0 = lagNb0 - nbElement;
+      if( lagD0_0 < 1 || lagD0_0 > lagNb0 - 1 ) {
+         return RetCode.InternalError;
+      }
+      lagCap0 = lagD0_0;
+      lagBuf0 = new double[Math.Max(lagCap0, 1)];
+      for( int lagI0 = 0; lagI0 < lagCap0; lagI0++ ) {
+         lagBuf0[lagI0] = adx[lagNb0 - lagCap0 + lagI0];
+      }
+      lagPos0 = 0;
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
       }
@@ -669,16 +699,11 @@ public partial class Core
       if( outNBElement < 1 ) {
          return RetCode.InsufficientHistory;
       }
-      int lagCap_adx = (int)(optInTimePeriod - 1);
-      double[] lagRing_adx = new double[lagCap_adx];
-      for( int lagI = 0; lagI < lagCap_adx; lagI++ ) {
-         lagRing_adx[lagI] = adx[outNBElement + lagI];
-      }
       sp.optInTimePeriod = optInTimePeriod;
       sp.sub0 = sub0;
-      sp.lagRingPos_adx = 0;
-      sp.lagRingCap_adx = lagCap_adx;
-      sp.lagRing_adx = lagRing_adx;
+      sp.lagPos0 = lagPos0;
+      sp.lagCap0 = lagCap0;
+      sp.lagBuf0 = lagBuf0;
       sp.cur_outReal = sc_outReal[outNBElement - 1];
       return RetCode.Success;
    }

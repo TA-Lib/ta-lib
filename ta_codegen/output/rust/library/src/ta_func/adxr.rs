@@ -360,9 +360,9 @@ pub struct AdxrStream {
 struct AdxrStreamState {
     optInTimePeriod: i32,
     sub0: AdxStream,
-    lagRingPos_adx: usize,
-    lagRingCap_adx: usize,
-    lagRing_adx: Vec<f64>,
+    lagPos0: usize,
+    lagCap0: usize,
+    lagBuf0: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -375,13 +375,22 @@ impl Core {
     fn adxr_step_impl(sp: &mut AdxrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cur_adx: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
+        let mut lagIn0: f64 = 0.0_f64;
+        let mut lagTap0_0: f64 = 0.0_f64;
+        let mut lagCapL0: usize = 0;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_adx = sp.sub0.update(inHigh, inLow, inClose)?;
+        lagIn0 = cur_adx;
         // Combine map (batch tail, per bar).
-        cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-        sp.lagRing_adx[sp.lagRingPos_adx] = cur_adx;
-        sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
+        lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+        cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+        lagCapL0 = sp.lagCap0;
+        sp.lagBuf0[sp.lagPos0] = lagIn0;
+        sp.lagPos0 = sp.lagPos0 + 1;
+        if sp.lagPos0 >= lagCapL0 {
+            sp.lagPos0 = 0;
+        }
         (*outReal) = cur_outReal;
         Ok(())
     }
@@ -416,6 +425,11 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outReal: &mut [f64] =
             if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
+        let mut lagPos0: usize = 0;
+        let mut lagCap0: usize = 0;
+        let mut lagBuf0: Vec<f64> = Vec::new();
+        let mut lagD0_0: i64 = 0;
+        let mut lagNb0: i64 = 0;
         let mut adx: Vec<f64> = Vec::new();
         let mut adxrLookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -452,10 +466,28 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.adx_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut adx[..])?;
         retCode = RetCode::Success;
+        lagNb0 = ((*outNBElement) as i64);
         // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
         nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
+        if (nbElement as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        lagD0_0 = lagNb0 - (nbElement as i64);
+        if lagD0_0 < 1 || lagD0_0 > lagNb0 - 1 {
+            return Err(RetCode::InternalError);
+        }
+        lagCap0 = lagD0_0 as usize;
+        lagBuf0 = vec![0.0_f64; lagCap0.max(1)];
+        {
+            let mut lagI0: usize = 0;
+            while lagI0 < lagCap0 {
+                lagBuf0[lagI0] = adx[(lagNb0 as usize) - lagCap0 + lagI0];
+                lagI0 += 1;
+            }
+        }
+        lagPos0 = 0;
         // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
         while outIdx < nbElement {
@@ -469,22 +501,13 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let lagCap_adx: usize = (optInTimePeriod - 1) as usize;
-        let mut lagRing_adx: Vec<f64> = vec![0.0_f64; lagCap_adx];
-        {
-            let mut lagI: usize = 0;
-            while lagI < lagCap_adx {
-                lagRing_adx[lagI] = adx[*outNBElement + lagI];
-                lagI += 1;
-            }
-        }
         let mut state = AdxrStreamState {
             cur_outReal: 0.0_f64,
             optInTimePeriod,
             sub0,
-            lagRingPos_adx: 0_usize,
-            lagRingCap_adx: lagCap_adx,
-            lagRing_adx,
+            lagPos0,
+            lagCap0,
+            lagBuf0,
         };
         state.cur_outReal = sc_outReal[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
@@ -665,11 +688,13 @@ impl AdxrStream {
             let outReal = &mut outReal;
             let mut cur_adx: f64 = 0.0_f64;
             let mut cur_outReal: f64 = 0.0_f64;
+            let mut lagTap0_0: f64 = 0.0_f64;
 
             // Pipeline the new bar through the sub-streams (batch tail order).
             cur_adx = sp.sub0.peek(inHigh, inLow, inClose)?;
             // Combine map (batch tail, per bar).
-            cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+            lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+            cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
             (*outReal) = cur_outReal;
         }
         Ok(outReal)

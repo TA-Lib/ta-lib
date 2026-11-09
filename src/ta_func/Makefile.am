@@ -124,6 +124,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_FOSC.c \
 	ta_FRACTAL.c \
 	ta_FRAMA.c \
+	ta_GATOR.c \
 	ta_HA.c \
 	ta_HMA.c \
 	ta_HT_DCPERIOD.c \

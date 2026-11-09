@@ -607,6 +607,8 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outLips: &mut [f64] =
             if outStride == 1 { &mut *outLips } else { &mut owned_sc_outLips };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut mpStartIdx: usize = 0_usize;
@@ -645,6 +647,7 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        lagNb0 = (tempNbElement as i64);
         // Sub-stream 2: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.rma_open_and_fill_internal(&tempMP[..((endIdx - mpStartIdx) as usize) + 1], ((lookbackTotal) as usize), optInTeethPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outTeeth[..])?;
@@ -654,6 +657,7 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        lagNb1 = (tempNbElement as i64);
         // Sub-stream 3: rma over `tempMP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub3 = self.rma_open_and_fill_internal(&tempMP[..((endIdx - mpStartIdx) as usize) + 1], ((lookbackTotal) as usize), optInLipsPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outLips[..])?;
@@ -669,6 +673,12 @@ impl Core {
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb1 - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
         }
         let mut state = AlligatorStreamState {
             cur_outJaw: 0.0_f64,

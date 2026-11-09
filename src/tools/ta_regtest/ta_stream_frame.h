@@ -5013,6 +5013,56 @@ static TA_RetCode TA_FRAMA_SFrameClose( void *stream )
    return TA_FRAMA_Close( (TA_FRAMA_Stream *)stream );
 }
 
+static TA_RetCode TA_GATOR_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_GATOR_Open(
+               (TA_GATOR_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outReal[0] /* outUpper */,
+               outReal[1] /* outLower */
+               );
+}
+static TA_RetCode TA_GATOR_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_GATOR_OpenAndFill(
+               (TA_GATOR_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outUpper */,
+               outReal[1] /* outLower */
+               );
+}
+static TA_RetCode TA_GATOR_SFrameClose( void *stream )
+{
+   return TA_GATOR_Close( (TA_GATOR_Stream *)stream );
+}
+
 static TA_RetCode TA_HA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -10072,6 +10122,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_FRACTAL, 2, TA_VOpt_FRACTAL, 2, TA_VOutIsInt_FRACTAL },
    { "FRAMA", TA_FRAMA_SFrameOpen, TA_FRAMA_SFrameFill, TA_FRAMA_SFrameClose,
      2, TA_VIn_FRAMA, 1, TA_VOpt_FRAMA, 1, TA_VOutIsInt_FRAMA },
+   { "GATOR", TA_GATOR_SFrameOpen, TA_GATOR_SFrameFill, TA_GATOR_SFrameClose,
+     2, TA_VIn_GATOR, 6, TA_VOpt_GATOR, 2, TA_VOutIsInt_GATOR },
    { "HA", TA_HA_SFrameOpen, TA_HA_SFrameFill, TA_HA_SFrameClose,
      4, TA_VIn_HA, 0, NULL, 4, TA_VOutIsInt_HA },
    { "HMA", TA_HMA_SFrameOpen, TA_HMA_SFrameFill, TA_HMA_SFrameClose,
@@ -10318,6 +10370,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 243
+#define TA_STREAM_TABLE_SIZE 244
 
 #endif /* TA_STREAM_FRAME_H */

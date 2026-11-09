@@ -1179,6 +1179,11 @@ function kstextOpenImpl(
   }
   const sc_outKST = outStride === 1 ? outKST : new Float64Array(historyLen);
   const sc_outKSTSignal = outStride === 1 ? outKSTSignal : new Float64Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
+  let lagNb2 = 0;
+  let lagNb3 = 0;
+  let lagNb4 = 0;
   /* With every type SMA this is bit-exact with kst(): each leg's average
    * starts on the first bar the signal consumes, and the line accumulates
    * its legs left to right. Changing either breaks the equality.
@@ -1238,6 +1243,13 @@ function kstextOpenImpl(
   const _xr7 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr7.begIdx;
   legNb.value = _xr7.count;
+  lagNb0 = legNb.value;
+  if (kstNb.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - kstNb.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < kstNb.value; i += 1) {
     {
       const _a: number = 2.0, _b: number = tempBuffer[i], _c: number = kstBuffer[i];
@@ -1260,6 +1272,13 @@ function kstextOpenImpl(
   const _xr9 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr9.begIdx;
   legNb.value = _xr9.count;
+  lagNb1 = legNb.value;
+  if (kstNb.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb1 - kstNb.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < kstNb.value; i += 1) {
     {
       const _a: number = 3.0, _b: number = tempBuffer[i], _c: number = kstBuffer[i];
@@ -1282,6 +1301,14 @@ function kstextOpenImpl(
   const _xr11 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr11.begIdx;
   legNb.value = _xr11.count;
+  lagNb2 = legNb.value;
+  lagNb3 = kstNb.value;
+  if (kstNb.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb2 - kstNb.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < kstNb.value; i += 1) {
     {
       const _a: number = 4.0, _b: number = tempBuffer[i], _c: number = kstBuffer[i];
@@ -1300,12 +1327,22 @@ function kstextOpenImpl(
     }
   }
   /* Every read of inReal is done: an output may alias it. */
+  lagNb4 = endIdx - startIdx + 1;
+  if (endIdx - startIdx + 1 < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb3 - lookbackSignal - (endIdx - startIdx + 1) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   sc_outKST.set(kstBuffer.subarray(lookbackSignal, lookbackSignal + (endIdx - startIdx + 1)), 0);
   const sub8 = maOpenAndFillInternal(core, kstBuffer.slice(0, (kstNb.value - 1) + 1), 0, optInSignalPeriod, (optInSignalMAType as MAType), tempBegIdx, sigNb, sc_outKSTSignal);
   outBegIdx.value = startIdx;
   outNBElement.value = sigNb.value;
   if (outNBElement.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb4 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
   }
   sp.optInROC1Period = optInROC1Period;
   sp.optInROC2Period = optInROC2Period;

@@ -724,6 +724,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
    TA_ROC_Stream *sub6;
    TA_MA_Stream *sub7;
    TA_MA_Stream *sub8;
+   int lagNb0;
+   int lagNb1;
+   int lagNb2;
+   int lagNb3;
+   int lagNb4;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -794,6 +799,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
    sub6 = NULL;
    sub7 = NULL;
    sub8 = NULL;
+   lagNb0 = 0;
+   lagNb1 = 0;
+   lagNb2 = 0;
+   lagNb3 = 0;
+   lagNb4 = 0;
    if( outStride ) sc_outKST = outKST;
    else
    {
@@ -975,6 +985,21 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
          return retCode;
       }
+      lagNb0 = legNb;
+      if( kstNb < 1 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - kstNb != 0 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INTERNAL_ERROR(533);
+      }
       for( i = 0; i < kstNb; i += 1 )
       {
          kstBuffer[i] = fma(2.0, tempBuffer[i], kstBuffer[i]);
@@ -1018,6 +1043,21 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
          free(tempBuffer);
          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
          return retCode;
+      }
+      lagNb1 = legNb;
+      if( kstNb < 1 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb1 - kstNb != 0 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INTERNAL_ERROR(534);
       }
       for( i = 0; i < kstNb; i += 1 )
       {
@@ -1063,11 +1103,42 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
          return retCode;
       }
+      lagNb2 = legNb;
+      lagNb3 = kstNb;
+      if( kstNb < 1 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb2 - kstNb != 0 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INTERNAL_ERROR(535);
+      }
       for( i = 0; i < kstNb; i += 1 )
       {
          kstBuffer[i] = fma(4.0, tempBuffer[i], kstBuffer[i]);
       }
       /* Every read of inReal is done: an output may alias it. */
+      lagNb4 = endIdx - startIdx + 1;
+      if( endIdx - startIdx + 1 < 1 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb3 - lookbackSignal - (endIdx - startIdx + 1) != 0 )
+      {
+         free(kstBuffer);
+         free(tempBuffer);
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INTERNAL_ERROR(536);
+      }
       memmove(sc_outKST,&kstBuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
       /* Sub-stream 8: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -1094,6 +1165,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
 
       /* Capture the live producer state + sub handles. */
       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal ); return TA_INSUFFICIENT_HISTORY; }
+      if( lagNb4 - dummyNBElement != 0 )
+      {
+         TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+         return TA_INTERNAL_ERROR(537);
+      }
       sp = (struct TA_KSTEXT_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

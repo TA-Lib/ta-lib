@@ -516,6 +516,8 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outRealLowerBand: &mut [f64] =
             if outStride == 1 { &mut *outRealLowerBand } else { &mut owned_sc_outRealLowerBand };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -552,23 +554,34 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.typprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((tpStartIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempTP[..])?;
         retCode = RetCode::Success;
+        lagNb0 = (tempNbElement as i64);
         // The ATR consumes the price inputs before the moving average below writes
         // the middle band, which may be aliased onto one of them.
         // Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.atr_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
         retCode = RetCode::Success;
+        lagNb1 = (tempNbElement as i64);
         // tempTP is bar-tpStartIdx relative, so entering the moving average at its
         // own lookback puts its first output on startIdx, where the ATR's already is.
         // Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - tpStartIdx) as usize) + 1], ((emaLookback) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut sc_outRealMiddleBand[..])?;
         retCode = RetCode::Success;
+        if lagNb0 - 1 - ((endIdx - tpStartIdx) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         if ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
         (*outBegIdx) = startIdx;
+        if (((*outNBElement) as usize) as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb1 - (((*outNBElement) as usize) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
         while i < ((((*outNBElement) as usize)) as usize) {

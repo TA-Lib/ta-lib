@@ -1026,6 +1026,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_kvo, "KVO" );
    DO_TEST( test_func_ichimoku, "ICHIMOKU" );
    DO_TEST( test_func_alligator, "ALLIGATOR" );
+   /* --function=GATOR also selects ALLIGATOR: the match is a substring. */
+   DO_TEST( test_func_gator, "GATOR" );
    DO_TEST( test_func_zigzag,   "ZIGZAG" );
    DO_TEST( test_func_wavetrend, "WAVETREND" );
    DO_TEST( test_func_dosc, "DOSC" );

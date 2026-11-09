@@ -825,6 +825,12 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
    TA_SMA_Stream *sub4;
    TA_STDDEV_Stream *sub5;
    TA_LINEARREG_Stream *sub6;
+   int lagNb0;
+   int lagNb1;
+   int lagNb2;
+   int lagNb3;
+   int lagNb4;
+   int lagNb5;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -838,6 +844,12 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
    sub4 = NULL;
    sub5 = NULL;
    sub6 = NULL;
+   lagNb0 = 0;
+   lagNb1 = 0;
+   lagNb2 = 0;
+   lagNb3 = 0;
+   lagNb4 = 0;
+   lagNb5 = 0;
    if( outStride ) sc_outMomentum = outMomentum;
    else
    {
@@ -958,6 +970,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
        * midprice is bit-identical to donchian's middle band.
        */
+      lagNb0 = endIdx + 1;
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -986,6 +999,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
+      lagNb1 = dummyNBElement;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -1014,10 +1028,51 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
+      lagNb2 = kcmNb;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
+      if( stageLen < 1 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - stageLen - dummyBegIdx != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(544);
+      }
+      if( lagNb2 - stageLen != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(545);
+      }
+      if( lagNb1 - stageLen != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(546);
+      }
       for( i = 0; i < stageLen; i += 1 )
       {
          tempDev[i] = inClose[dummyBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
@@ -1054,6 +1109,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
+      lagNb3 = tempNbElement;
       /* Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -1068,6 +1124,16 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
             return subRc;
          }
+      }
+      if( lagNb3 - 1 - (stageLen - 1) != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(547);
       }
       retCode = TA_SMA(0,stageLen - 1,tempWork,optInKCPeriod,&tempBegIdx,&tempNbElement,tempWork);
       if( retCode != TA_SUCCESS )
@@ -1110,6 +1176,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
+      lagNb4 = tempNbElement;
       /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -1138,6 +1205,7 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
+      lagNb5 = sdNb;
       /* The centre is staged one regression window early; the shift puts it on
        * the bar the bands are on.
        */
@@ -1186,6 +1254,46 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
        * upper one contracts into a fused multiply-add and the lower one cannot,
        * and a band within one ulp of an edge then changes level.
        */
+      if( n < 1 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb5 - n != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(548);
+      }
+      if( lagNb4 - n != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(549);
+      }
+      if( lagNb2 - n - kcmShift != 0 )
+      {
+         free(tempDev);
+         free(tempWork);
+         free(tempKCM);
+         free(tempMid);
+         free(tempSD);
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_INTERNAL_ERROR(550);
+      }
       for( i = 0; i < n; i += 1 )
       {
          dev = tempSD[i] * optInNbDev;

@@ -17,6 +17,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, FuncDef, ParamType, Statement, StreamTier, VarType};
 
+pub mod composed_lag;
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -63,19 +65,110 @@ pub struct LagSlot {
     pub depth: i64,
 }
 
-/// A composed combine that reads a sub-output series at two offsets: the
-/// current bar (`series[cursor + lag]`, the newest value) and a fixed
-/// parameter lag behind it (`series[cursor]`). ADXR is the case:
-/// `outReal[k] = (adx[k + (period-1)] + adx[k]) / 2` — the current ADX plus the
-/// ADX from `period-1` bars ago. The stream keeps a ring of the last `lag`
-/// sub-output values (cap captured at open from `lag`, a param expression), so
-/// each update is O(1): read the oldest slot, combine, push the new value.
+/// Where one whole-series write of a composed body happens.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DefSite {
+    Input,
+    Producer,
+    Sub { sub_idx: usize, out: usize },
+    Align { step: usize },
+    Map { step: usize },
+}
+
+/// One write of a whole series, keyed `(buffer, ordinal)`: `ordinal` counts the
+/// writes to `buffer` in body order from 1.
 #[derive(Debug, Clone)]
-pub struct SubLagRing {
-    /// The sub-output series read at a self-lag.
-    pub series: String,
-    /// The lag depth `= ring capacity`, a parameter expression (`period-1`).
-    pub lag: Expr,
+pub struct SeriesDef {
+    /// The must-alias class key.
+    pub buffer: String,
+    /// The name the write goes through.
+    pub name: String,
+    pub ordinal: u32,
+    pub site: DefSite,
+    /// The element count in Open's batch scope; `None` refuses any check that reads it.
+    pub count_open: Option<Expr>,
+}
+
+/// A read of one definition, at one element on its newest step.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Consumer {
+    SubSrc { sub_idx: usize, input: usize },
+    Align { step: usize },
+    /// `arm`: the variant-If branch (`true` = then) and the map's position in it.
+    MapRead { step: usize, arm: Option<(bool, usize)>, buffer: String, index: Expr },
+    MapPrior { step: usize, arm: Option<(bool, usize)>, buffer: String },
+    TailScalar { tail_idx: usize },
+    Return { output: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EdgeClass {
+    Zero,
+    /// Lowered as `Zero`; Open fails with `key`'s internal error unless the exact delay is 0.
+    ZeroPresumed { key: String },
+    Tap { line: usize, tap: usize },
+}
+
+#[derive(Debug, Clone)]
+pub struct Edge {
+    pub def: usize,
+    pub consumer: Consumer,
+    pub class: EdgeClass,
+}
+
+/// How a tap finds its slot from the line's write position.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TapBack {
+    /// The only tap of its line: `buf[pos]`.
+    Oldest,
+    /// `cap - depth`, the same constant for every handle.
+    Literal(i64),
+    /// `cap - depth` captured per handle in `lagBack<k>_<j>`.
+    Field,
+}
+
+#[derive(Debug, Clone)]
+pub struct LineTap {
+    pub edge: usize,
+    /// Depth proved >= 1 for every parameter set: no select on the snapshot.
+    pub ge1: bool,
+    pub back: TapBack,
+    /// Internal-error key of the depth check, without the function prefix.
+    pub key: String,
+}
+
+impl LineTap {
+    /// The least depth Open's Capture accepts: a `ge1` tap has no depth-0 select.
+    #[must_use]
+    pub fn capture_floor(&self) -> i32 {
+        i32::from(self.ge1)
+    }
+}
+
+/// The recent values of one definition, read at fixed per-handle depths.
+#[derive(Debug, Clone)]
+pub struct DelayLine {
+    pub def: usize,
+    pub taps: Vec<LineTap>,
+}
+
+/// Where Open runs an action, by tail statement index.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OpenAt {
+    BeforeStmt(usize),
+    AfterStmt(usize),
+    AfterSubOpen(usize),
+    Epilogue,
+}
+
+#[derive(Debug, Clone)]
+pub enum OpenAction {
+    Snapshot { def: usize },
+    EmptyGuard { count: Expr },
+    Presume { edge: usize },
+    Capture { line: usize, tap: usize },
+    Seed { line: usize },
+    Mirror { cond: Expr, then_: Vec<OpenAction>, else_: Vec<OpenAction> },
 }
 
 /// One trailing-window ring: a batch index variable that walks the inputs a
@@ -498,9 +591,9 @@ pub fn batch_call_out_args<'a>(
 pub enum UpdateStep {
     /// Feed the sources' current scalars through sub handle `sub_idx`.
     Sub { sub_idx: usize },
-    /// Tail-aligning copy (`memmove(dst, &src[k], nb)`): the current scalars
-    /// coincide, `dst`'s becomes `src`'s.
-    Align { dst: String, src: String },
+    /// Tail-aligning copy (`memmove(dst, &src[k], nb)`). Unless `copy`, `dst`'s
+    /// current scalar is `src`'s storage.
+    Align { dst: String, src: String, copy: bool },
     /// A per-bar combine map (a series-map loop, possibly under a
     /// param-selected variant If): the emitter transforms series reads and
     /// writes into current scalars, drops the loop shells and cursors, and
@@ -543,8 +636,8 @@ pub struct ComposedPlan<'a> {
     pub producer: Option<StreamModel<'a>>,
     /// The intermediate series the producer loop writes (when present).
     pub series: Option<String>,
-    /// Every intermediate series in creation order (the producer's, then
-    /// fresh sub-call destinations). Outputs are not listed.
+    /// Every non-output series the body defines, in creation order: the
+    /// producer's, then each fresh sub-call destination or map-written buffer.
     pub intermediates: Vec<String>,
     /// Sub-calls in tail order.
     pub subs: Vec<SubCallStep>,
@@ -574,9 +667,15 @@ pub struct ComposedPlan<'a> {
     /// holds each one, Open captures it after the batch tail, and a step loads
     /// it into a local; only a commit stores a `carried` one back.
     pub map_state: Vec<MapState>,
-    /// Sub-output self-lag rings a combine map reads (ADXR's ADX lag). Empty
-    /// for the same-bar-only combines (APO/PPO/STDDEV).
-    pub sub_lag_rings: Vec<SubLagRing>,
+    /// A must-alias name to its class key; a name absent is its own key.
+    pub alias_keys: BTreeMap<String, String>,
+    pub defs: Vec<SeriesDef>,
+    pub edges: Vec<Edge>,
+    pub lines: Vec<DelayLine>,
+    /// Snapshotted definitions in body order; position `s` is Open's `lagNb<s>`.
+    pub snapshots: Vec<usize>,
+    /// In emission order.
+    pub open_actions: Vec<(OpenAt, OpenAction)>,
 }
 
 impl ComposedPlan<'_> {
@@ -2501,24 +2600,14 @@ pub fn analyze_composed<'a>(
     let mut tail_scalars: BTreeSet<String> = BTreeSet::new();
     // Set after a map has run: Open would see the write and a step never would.
     let mut late_scalars: BTreeSet<String> = BTreeSet::new();
-    let mut sub_lag_rings: Vec<SubLagRing> = Vec::new();
     let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
     let mut decls: BTreeMap<String, VarType> = BTreeMap::new();
     collect_var_decls(body, &mut decls);
     // Tail scalars a variant selector reads: map state no map may move.
     let mut selector_state: BTreeSet<String> = BTreeSet::new();
-    let mut facts = SameBarFacts::default();
-    let aliased = pointer_copied(body);
-    let trusted = |s: &str| !aliased.contains(s);
-    if let (Some(ser), Some(model)) = (&series, &producer) {
-        if let [paced] = model.out_index_vars.iter().collect::<Vec<_>>()[..] {
-            if trusted(ser) {
-                if let Some(last) = producer_last_index(region, ser, paced) {
-                    facts.end_last.insert(ser.clone(), last);
-                }
-            }
-        }
-    }
+    // A failure return inserted before the tail allocates a series would free
+    // it unallocated.
+    let replayable = |ser: &str| !region_mallocs_series(tail, ser);
     for (i, st) in tail.iter().enumerate() {
         match st {
             Statement::Comment(_) => {}
@@ -2564,6 +2653,7 @@ pub fn analyze_composed<'a>(
                     if !srcs.contains(&dst)
                         && !outputs.contains(&dst)
                         && !defined.contains(&dst)
+                        && !intermediates.contains(&dst)
                     {
                         // A fresh intermediate series (STOCHRSI's RSI buffer).
                         intermediates.push(dst.clone());
@@ -2581,54 +2671,6 @@ pub fn analyze_composed<'a>(
                         return Err(StreamError::Unsupported(format!(
                             "composed sub-call `{callee}` has an impure optional argument"
                         )));
-                    }
-                }
-                // Record each destination's element-count receiver and its
-                // producing endIdx (all of a callee's outputs share the one
-                // `outNBElement`, the second of the two out-meta pointers).
-                let meta = &args[2 + sig.n_inputs + sig.n_opts..][..2];
-                let (beg_recv, nb_recv) = (recv_var(&meta[0]), recv_var(&meta[1]));
-                // Judged on the arguments as passed, before the call writes its receivers.
-                let ends_on_endidx = !srcs.is_empty()
-                    && srcs.iter().all(|src| {
-                        if direct_inputs.contains(src) {
-                            matches!(&args[1], Expr::Var(v) if v == "endIdx")
-                        } else {
-                            facts.end_last.get(src).is_some_and(|last| exprs_equal(last, &args[1]))
-                        }
-                    });
-                let (mut written, _) = fallthrough_writes(std::slice::from_ref(st));
-                let reads_bar_inputs = srcs.iter().all(|src| direct_inputs.contains(src));
-                let beg = beg_recv.clone().filter(|_| reads_bar_inputs);
-                let nb = match (beg_recv, nb_recv) {
-                    (Some(b), Some(n)) if b != n => {
-                        written.extend([b, n.clone()]);
-                        Some(n)
-                    }
-                    // A receiver we cannot name may have written anything.
-                    _ => {
-                        facts = SameBarFacts::default();
-                        None
-                    }
-                };
-                let e_arg_stale = written.iter().any(|w| reads_scalar(&args[1], w));
-                for w in &written {
-                    facts.forget_scalar(w);
-                }
-                for d in &dsts {
-                    facts.forget_series(d);
-                    let Some(nb) = nb.as_ref().filter(|_| trusted(d)) else {
-                        continue;
-                    };
-                    facts.nbelem.insert(d.clone(), nb.clone());
-                    if let Some(b) = &beg {
-                        facts.begs.insert(d.clone(), b.clone());
-                    }
-                    if !e_arg_stale {
-                        facts.endidx.insert(d.clone(), args[1].clone());
-                    }
-                    if ends_on_endidx {
-                        facts.end_last.insert(d.clone(), last_index_of(recv_read_expr(nb)));
                     }
                 }
                 steps.push(UpdateStep::Sub {
@@ -2676,35 +2718,23 @@ pub fn analyze_composed<'a>(
                         "composed memmove does not align a series into an output".into(),
                     ));
                 }
-                facts.forget_series(&dst);
                 defined.insert(dst.clone());
-                steps.push(UpdateStep::Align { dst, src });
+                steps.push(UpdateStep::Align { dst, src, copy: false });
             }
             // Per-bar combine map over materialized series (STDDEV's sqrt
             // variants), possibly wrapped in a param-selected If.
             Statement::ForC { .. } if is_map_prelude_loop(st, lookup) => {
-                facts.forget_writes(st);
                 collect_scalar_writes(st, &mut tail_scalars);
                 if steps.iter().any(|s| matches!(s, UpdateStep::Map { .. })) {
                     collect_scalar_writes(st, &mut late_scalars);
                 }
             }
             Statement::ForC { .. } => {
-                check_map_step(
-                    st,
-                    &defined,
-                    &outputs,
-                    &params,
-                    &direct_inputs,
-                    lookup,
-                    &mut map_temp_names,
-                    &facts,
-                    &mut sub_lag_rings,
-                )?;
-                facts.forget_writes(st);
+                check_map_step(st, &defined, &params, lookup, &mut map_temp_names)?;
                 for o in map_output_writes(st, &outputs) {
                     defined.insert(o);
                 }
+                push_map_series(st, &outputs, &mut intermediates);
                 steps.push(UpdateStep::Map { tail_idx: i });
             }
             Statement::If {
@@ -2724,23 +2754,13 @@ pub fn analyze_composed<'a>(
                 selector_state.extend(state);
                 for branch in [then_body, else_body] {
                     for bst in branch.iter().filter(|x| !matches!(x, Statement::Comment(_))) {
-                        check_map_step(
-                            bst,
-                            &defined,
-                            &outputs,
-                            &params,
-                            &direct_inputs,
-                            lookup,
-                            &mut map_temp_names,
-                            &facts,
-                            &mut sub_lag_rings,
-                        )?;
+                        check_map_step(bst, &defined, &params, lookup, &mut map_temp_names)?;
                     }
                 }
-                facts.forget_writes(st);
                 for o in map_output_writes(st, &outputs) {
                     defined.insert(o);
                 }
+                push_map_series(st, &outputs, &mut intermediates);
                 steps.push(UpdateStep::Map { tail_idx: i });
             }
             // Guards (retCode / nbElement checks with early returns) and the
@@ -2748,9 +2768,8 @@ pub fn analyze_composed<'a>(
             // from the per-bar pipeline. Strictly bounded shape.
             Statement::If { .. } => {
                 check_composed_guard(st, &defined, lookup)?;
-                facts.forget_writes(st);
                 for ser in intermediates.clone() {
-                    if !freed.contains(&ser) && guard_frees_series(st, &ser) {
+                    if !freed.contains(&ser) && guard_frees_series(st, &ser) && replayable(&ser) {
                         freed.insert(ser);
                         series_frees.push(SeriesFree {
                             tail_idx: i,
@@ -2763,24 +2782,15 @@ pub fn analyze_composed<'a>(
             Statement::Assign {
                 target: Expr::PointerDeref(p),
                 ..
-            } if p == "outBegIdx" || p == "outNBElement" => facts.forget_writes(st),
-            // Scalar tail locals (APO/PPO's alignment offset): Open-only. When
-            // one is an element-count difference (`off = fastNb - *outNBElement`),
-            // record its provenance so a later combine map can prove `series[
-            // cursor + off]` is same-bar.
+            } if p == "outBegIdx" || p == "outNBElement" => {}
+            // Scalar tail locals (APO/PPO's alignment offset): Open-only.
             Statement::Assign {
                 target: Expr::Var(v),
-                value,
                 ..
             } if !defined.contains(v) && !outputs.contains(v) => {
-                facts.forget_writes(st);
                 tail_scalars.insert(v.clone());
                 if steps.iter().any(|s| matches!(s, UpdateStep::Map { .. })) {
                     late_scalars.insert(v.clone());
-                }
-                let known: Vec<RecvVar> = facts.nbelem.values().cloned().collect();
-                if let Some(prov) = nb_difference(value, &known) {
-                    facts.diffs.insert(v.clone(), prov);
                 }
             }
             Statement::Expr(Expr::FuncCall(name, args)) if name == "free" => {
@@ -2789,7 +2799,7 @@ pub fn analyze_composed<'a>(
                 // guarded form (a sub-call can never legally read a series
                 // after batch freed it, so the replay is always pre-free).
                 if let Some(Expr::Var(v)) = args.first() {
-                    if intermediates.contains(v) && !freed.contains(v) {
+                    if intermediates.contains(v) && !freed.contains(v) && replayable(v) {
                         freed.insert(v.clone());
                         series_frees.push(SeriesFree {
                             tail_idx: i,
@@ -2881,7 +2891,8 @@ pub fn analyze_composed<'a>(
             map_temps.push((name.clone(), ty.clone()));
         }
     }
-    Ok(ComposedPlan {
+    reject_lag_namespace(body)?;
+    let mut cp = ComposedPlan {
         func,
         producer,
         series,
@@ -2893,16 +2904,1173 @@ pub fn analyze_composed<'a>(
         series_frees,
         map_temps,
         map_state,
-        sub_lag_rings,
+        alias_keys: BTreeMap::new(),
+        defs: Vec::new(),
+        edges: Vec::new(),
+        lines: Vec::new(),
+        snapshots: Vec::new(),
+        open_actions: Vec::new(),
+    };
+    let cl = composed_lag::classify_plan(&cp, lookup)?;
+    cp.alias_keys = cl.alias_keys;
+    cp.defs = cl.defs;
+    cp.edges = cl.edges;
+    cp.lines = cl.lines;
+    cp.snapshots = cl.snapshots;
+    cp.open_actions = cl.open_actions;
+    reject_integer_series(&cp, &decls)?;
+    let tapped: BTreeSet<usize> = cp
+        .edges
+        .iter()
+        .filter_map(|e| match (&e.consumer, &e.class) {
+            (Consumer::Align { step }, EdgeClass::Tap { .. }) => Some(*step),
+            _ => None,
+        })
+        .collect();
+    decide_align_copies(&mut cp.steps, &cp.subs, tail, &bar_inputs, cp.series.as_deref(), &tapped);
+    reject_reassigned_open_params(&cp)?;
+    Ok(cp)
+}
+
+/// Refuses an integer series a step would hold in a double: every definition
+/// that is neither an input nor an output, and every delay line. The step would
+/// then compute in double where batch computes in int (`n / 2`), and C builds it.
+fn reject_integer_series(cp: &ComposedPlan, decls: &BTreeMap<String, VarType>) -> Result<(), StreamError> {
+    let func = cp.func;
+    let is_output = |n: &str| func.outputs.iter().any(|o| o.name == n);
+    let is_int = |n: &str| {
+        func.outputs.iter().any(|o| o.name == n && o.param_type == ParamType::Integer)
+            || func.inputs.iter().any(|i| i.name == n && i.param_type == ParamType::Integer)
+            || matches!(decls.get(n), Some(VarType::IntPointer | VarType::IntArray(_)))
+    };
+    for d in &cp.defs {
+        if !matches!(d.site, DefSite::Input) && !is_output(&d.name) && is_int(&d.name) {
+            return Err(StreamError::Unsupported(format!(
+                "composed intermediate `{}` is an integer series: a step holds an intermediate in a \
+                 double, so it would compute in double where batch computes in int",
+                d.name
+            )));
+        }
+    }
+    for line in &cp.lines {
+        let name = &cp.defs[line.def].name;
+        if is_int(name) {
+            return Err(StreamError::Unsupported(format!(
+                "composed stream delays integer series `{name}`: a delay line holds doubles, so a \
+                 lagged read would compute in double where batch computes in int"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Refuses an Open check that reads a parameter the body has reassigned by the
+/// point the check runs.
+fn reject_reassigned_open_params(cp: &ComposedPlan) -> Result<(), StreamError> {
+    let params: BTreeSet<&str> = cp.func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
+    let writes = |stmts: &[Statement], out: &mut BTreeSet<String>| {
+        for_each_stmt(stmts, &mut |s| {
+            own_writes(s, &mut |t| {
+                if let Expr::Var(v) = t {
+                    out.insert(v.clone());
+                }
+            });
+        });
+    };
+    let mut region_written = BTreeSet::new();
+    writes(&cp.region, &mut region_written);
+    for (at, action) in &cp.open_actions {
+        let end = match at {
+            OpenAt::BeforeStmt(i) | OpenAt::AfterSubOpen(i) => *i,
+            OpenAt::AfterStmt(i) => i + 1,
+            OpenAt::Epilogue => cp.tail.len(),
+        };
+        let mut written = region_written.clone();
+        writes(&cp.tail[..end], &mut written);
+        let mut read = BTreeSet::new();
+        open_action_exprs(cp, action, &mut |e| expr_var_names(e, &mut read));
+        if let Some(p) = read.iter().find(|n| params.contains(n.as_str()) && written.contains(*n)) {
+            return Err(StreamError::Unsupported(format!(
+                "composed Open check reads parameter `{p}` after the body reassigns it; reassign a \
+                 local copy instead"
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// Every batch-scope expression Open renders for `action`.
+fn open_action_exprs(cp: &ComposedPlan, action: &OpenAction, f: &mut dyn FnMut(&Expr)) {
+    let formula = |edge: usize, f: &mut dyn FnMut(&Expr)| {
+        for (_, t) in cp.edge_delay_formula(edge).terms {
+            if let LagTerm::Batch(e) = t {
+                f(&e);
+            }
+        }
+    };
+    match action {
+        OpenAction::Snapshot { def } => {
+            if let Some(e) = &cp.defs[*def].count_open {
+                f(e);
+            }
+        }
+        OpenAction::EmptyGuard { count } => f(count),
+        OpenAction::Presume { edge } => formula(*edge, f),
+        OpenAction::Capture { line, tap } => formula(cp.lines[*line].taps[*tap].edge, f),
+        OpenAction::Seed { .. } => {}
+        OpenAction::Mirror { cond, then_, else_ } => {
+            f(cond);
+            for a in then_.iter().chain(else_) {
+                open_action_exprs(cp, a, f);
+            }
+        }
+    }
+}
+
+/// The `lag(Buf|Pos|Cap|Back|Tap|In|CapL|Nb|D|I|P|C)<digit>` names the delay lines
+/// render; a body identifier spelled that way would collide with one.
+fn is_lag_name(name: &str) -> bool {
+    let Some(rest) = name.strip_prefix("lag") else { return false };
+    ["Buf", "Pos", "CapL", "Cap", "Back", "Tap", "In", "Nb", "D", "I", "P", "C"].iter().any(|w| {
+        rest.strip_prefix(w)
+            .is_some_and(|r| r.chars().next().is_some_and(|c| c.is_ascii_digit()))
     })
 }
 
-/// Replay the emitter's cur-map over a composed plan: every sub source and
-/// align source must already be materialized when consumed, and every output
-/// must end up produced. This mirrors [`crate::backends::c_stream`]'s step
-/// emission exactly, so any plan it accepts here the emitter can render (and
-/// any plan it rejects would have panicked the emitter — the loud gate the
-/// loopless tier needs in place of a producer transition build).
+fn reject_lag_namespace(body: &[Statement]) -> Result<(), StreamError> {
+    let mut names = BTreeSet::new();
+    let mut decls = BTreeMap::new();
+    collect_var_decls(body, &mut decls);
+    names.extend(decls.into_keys());
+    for st in body {
+        stmt_var_names_deep(st, &mut names);
+        walk_stmt_exprs_deep(st, &mut |e| {
+            if let Expr::ArrayAccess(n, _) = e {
+                names.insert(n.clone());
+            }
+        });
+    }
+    match names.into_iter().find(|n| is_lag_name(n)) {
+        Some(n) => Err(StreamError::Unsupported(format!(
+            "composed body identifier `{n}` takes the delay-line namespace; rename it"
+        ))),
+        None => Ok(()),
+    }
+}
+
+/// Every series a statement writes at an element.
+fn array_write_targets(st: &Statement) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    walk_assign_targets(st, &mut |t| {
+        if let Expr::ArrayAccess(n, _) = t {
+            out.insert(n.clone());
+        }
+    });
+    out
+}
+
+/// An Align copies unless neither its source's storage nor its destination is
+/// written by a later step: an alias would otherwise carry the later write back.
+/// A tapped Align always copies its tap, which later decisions must see.
+fn decide_align_copies(
+    steps: &mut [UpdateStep],
+    subs: &[SubCallStep],
+    tail: &[Statement],
+    bar_inputs: &[String],
+    series: Option<&str>,
+    tapped: &BTreeSet<usize>,
+) {
+    for &si in tapped {
+        if let UpdateStep::Align { copy, .. } = &mut steps[si] {
+            *copy = true;
+        }
+    }
+    let mut storage: BTreeMap<String, String> =
+        bar_inputs.iter().map(|b| (b.clone(), b.clone())).collect();
+    if let Some(s) = series {
+        storage.insert(s.to_string(), format!("cur_{s}"));
+    }
+    let advance = |step: &UpdateStep, storage: &mut BTreeMap<String, String>| match step {
+        UpdateStep::Sub { sub_idx } => {
+            for d in &subs[*sub_idx].dsts {
+                storage.insert(d.clone(), format!("cur_{d}"));
+            }
+        }
+        UpdateStep::Align { dst, src, copy } => {
+            let v = if *copy {
+                format!("cur_{dst}")
+            } else {
+                storage.get(src).cloned().unwrap_or_else(|| format!("cur_{src}"))
+            };
+            storage.insert(dst.clone(), v);
+        }
+        UpdateStep::Map { tail_idx } => {
+            for s in array_write_targets(&tail[*tail_idx]) {
+                storage.entry(s.clone()).or_insert_with(|| format!("cur_{s}"));
+            }
+        }
+    };
+    for si in 0..steps.len() {
+        if let UpdateStep::Align { dst, src, .. } = &steps[si] {
+            let (dst, src) = (dst.clone(), src.clone());
+            let src_var = storage.get(&src).cloned().unwrap_or_else(|| format!("cur_{src}"));
+            let mut later = storage.clone();
+            advance(&steps[si], &mut later);
+            let (mut vars, mut bufs) = (BTreeSet::new(), BTreeSet::new());
+            for step in &steps[si + 1..] {
+                match step {
+                    UpdateStep::Sub { sub_idx } => {
+                        for d in &subs[*sub_idx].dsts {
+                            bufs.insert(d.clone());
+                            vars.insert(format!("cur_{d}"));
+                        }
+                    }
+                    UpdateStep::Align { dst: d2, .. } => {
+                        bufs.insert(d2.clone());
+                        vars.insert(format!("cur_{d2}"));
+                    }
+                    UpdateStep::Map { tail_idx } => {
+                        for s in array_write_targets(&tail[*tail_idx]) {
+                            vars.insert(later.get(&s).cloned().unwrap_or_else(|| format!("cur_{s}")));
+                            bufs.insert(s);
+                        }
+                    }
+                }
+                advance(step, &mut later);
+            }
+            let copy = tapped.contains(&si) || vars.contains(&src_var) || bufs.contains(&dst);
+            if let UpdateStep::Align { copy: c, .. } = &mut steps[si] {
+                *c = copy;
+            }
+        }
+        let step = steps[si].clone();
+        advance(&step, &mut storage);
+    }
+}
+
+/// A map loop's single cursor, its `for` init variable.
+#[must_use]
+pub fn map_loop_cursor(st: &Statement) -> Option<String> {
+    let Statement::ForC { init, .. } = st else {
+        return None;
+    };
+    let find = |s: &Statement| match s {
+        Statement::Assign {
+            target: Expr::Var(v),
+            ..
+        } => Some(v.clone()),
+        _ => None,
+    };
+    match init.as_ref() {
+        Statement::Block { body } => body.iter().find_map(find),
+        one => find(one),
+    }
+}
+
+/// `T` of a map loop `for( c = 0; c < T; ... )`.
+fn map_loop_bound(st: &Statement) -> Option<Expr> {
+    let Statement::ForC { condition, .. } = st else {
+        return None;
+    };
+    let cursor = map_loop_cursor(st)?;
+    match condition {
+        Expr::BinOp(l, BinOp::Less, r) if matches!(l.as_ref(), Expr::Var(v) if *v == cursor) => {
+            Some(r.as_ref().clone())
+        }
+        _ => None,
+    }
+}
+
+/// `off` of a read `name[cursor + off]` as the signed operands of the index's
+/// `+`/`-` chain, the cursor dropped; `None` unless the cursor is one `+`
+/// operand of that chain. The classifier refuses an index this cannot split,
+/// which keeps every map-read delay renderable at Open.
+fn cursor_index_offset(idx: &Expr, cursor: &str) -> Option<Vec<(i64, Expr)>> {
+    fn split(e: &Expr, cursor: &str, sign: i64, out: &mut Vec<(i64, Expr)>) -> bool {
+        match e {
+            Expr::Var(v) if v == cursor => sign == 1,
+            Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub), r) => {
+                let r_sign = if *op == BinOp::Add { sign } else { -sign };
+                match (expr_mentions(l, cursor), expr_mentions(r, cursor)) {
+                    (true, false) => {
+                        let ok = split(l, cursor, sign, out);
+                        out.push((r_sign, r.as_ref().clone()));
+                        ok
+                    }
+                    (false, true) => {
+                        out.push((sign, l.as_ref().clone()));
+                        split(r, cursor, r_sign, out)
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+    }
+    let mut out = Vec::new();
+    split(idx, cursor, 1, &mut out).then_some(out)
+}
+
+/// The returning guard right after tail statement `i`, if one follows it
+/// (comments skipped); else `i`.
+fn after_call_guard(tail: &[Statement], i: usize) -> usize {
+    let next = tail
+        .iter()
+        .enumerate()
+        .skip(i + 1)
+        .find(|(_, s)| !matches!(s, Statement::Comment(_)));
+    match next {
+        Some((j, Statement::If { then_body, .. })) if then_body.iter().any(has_return_stmt) => j,
+        _ => i,
+    }
+}
+
+fn has_return_stmt(s: &Statement) -> bool {
+    match s {
+        Statement::Return { .. } => true,
+        Statement::Block { body } => body.iter().any(has_return_stmt),
+        _ => false,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Composed delay lines: names and language-neutral builders
+// ---------------------------------------------------------------------------
+
+/// A delay line's handle fields.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LineField {
+    Buf,
+    Pos,
+    Cap,
+    Back(usize),
+}
+
+#[must_use]
+pub fn lag_line_field(k: usize, f: LineField) -> String {
+    match f {
+        LineField::Buf => format!("lagBuf{k}"),
+        LineField::Pos => format!("lagPos{k}"),
+        LineField::Cap => format!("lagCap{k}"),
+        LineField::Back(j) => format!("lagBack{k}_{j}"),
+    }
+}
+
+/// Step local holding tap `j` of line `k`.
+#[must_use]
+pub fn lag_tap_local(k: usize, j: usize) -> String {
+    format!("lagTap{k}_{j}")
+}
+
+/// Step local holding line `k`'s newest value until the push.
+#[must_use]
+pub fn lag_in_local(k: usize) -> String {
+    format!("lagIn{k}")
+}
+
+/// Step locals a step reads line `k`'s position and capacity into once when
+/// it loads two or more of its taps.
+#[must_use]
+pub fn lag_hoist_locals(k: usize) -> (String, String) {
+    (format!("lagP{k}"), format!("lagC{k}"))
+}
+
+/// Step local the push reads line `k`'s capacity into.
+#[must_use]
+pub fn lag_cap_local(k: usize) -> String {
+    format!("lagCapL{k}")
+}
+
+/// Open local holding the count of `snapshots[s]`.
+#[must_use]
+pub fn lag_nb_local(s: usize) -> String {
+    format!("lagNb{s}")
+}
+
+/// Open local holding tap `j`'s depth of line `k`.
+#[must_use]
+pub fn lag_depth_local(k: usize, j: usize) -> String {
+    format!("lagD{k}_{j}")
+}
+
+/// Open's seed-copy index for line `k`.
+#[must_use]
+pub fn lag_seed_index(k: usize) -> String {
+    format!("lagI{k}")
+}
+
+/// One operand of an Open-time delay formula.
+#[derive(Debug, Clone)]
+pub enum LagTerm {
+    /// `lagNb<s>`.
+    Nb(usize),
+    Const(i64),
+    /// An integer expression in Open's batch scope.
+    Batch(Expr),
+}
+
+/// `sum(sign * term)`, each sign +1 or -1; the first term is positive.
+#[derive(Debug, Clone)]
+pub struct LagFormula {
+    pub terms: Vec<(i64, LagTerm)>,
+}
+
+/// Renders a formula over the leaves a backend renders, parenthesizing a
+/// compound leaf.
+#[must_use]
+pub fn render_lag_formula(f: &LagFormula, leaf: &dyn Fn(&LagTerm) -> String) -> String {
+    let mut out = String::new();
+    for (i, (sign, t)) in f.terms.iter().enumerate() {
+        let text = leaf(t);
+        let text = if lag_text_is_atomic(&text) { text } else { format!("({text})") };
+        match (i, *sign < 0) {
+            (0, false) => out.push_str(&text),
+            (0, true) => {
+                out.push('-');
+                out.push_str(&text);
+            }
+            (_, false) => {
+                out.push_str(" + ");
+                out.push_str(&text);
+            }
+            (_, true) => {
+                out.push_str(" - ");
+                out.push_str(&text);
+            }
+        }
+    }
+    out
+}
+
+fn lag_text_is_atomic(s: &str) -> bool {
+    if s.starts_with('(') && s.ends_with(')') {
+        let mut depth = 0i32;
+        for (i, c) in s.char_indices() {
+            match c {
+                '(' => depth += 1,
+                ')' => {
+                    depth -= 1;
+                    if depth == 0 && i + 1 < s.len() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+        return true;
+    }
+    !s.chars().any(|c| " +-*/%?:<>=&|!".contains(c))
+}
+
+impl ComposedPlan<'_> {
+    /// The must-alias class key of `name`, the `buffer` of what a write through it defines.
+    #[must_use]
+    pub fn alias_key<'n>(&'n self, name: &'n str) -> &'n str {
+        self.alias_keys.get(name).map_or(name, String::as_str)
+    }
+
+    /// The edge `pick` selects; the classifier gave every consumer one.
+    fn edge_of(&self, pick: &dyn Fn(&Consumer) -> bool) -> &Edge {
+        self.edges
+            .iter()
+            .find(|e| pick(&e.consumer))
+            .unwrap_or_else(|| panic!("{}: a consumer has no edge", self.func.name))
+    }
+
+    /// The step variable holding the newest element of definition `def`.
+    #[must_use]
+    pub fn def_storage(&self, def: usize) -> String {
+        let d = &self.defs[def];
+        match &d.site {
+            DefSite::Input => d.name.clone(),
+            DefSite::Align { step } if matches!(self.steps[*step], UpdateStep::Align { copy: false, .. }) => {
+                self.def_storage(self.edge_of(&|c| matches!(c, Consumer::Align { step: s } if s == step)).def)
+            }
+            _ => format!("cur_{}", d.name),
+        }
+    }
+
+    /// The names of the `cur_<name>` locals a step declares: one per definition
+    /// stored in one, the producer series first, then sub-call and copied-Align
+    /// destinations, then map writes, each group in body order.
+    #[must_use]
+    pub fn cur_scalars(&self) -> Vec<String> {
+        let mut ranked: Vec<(u8, usize, &str)> = Vec::new();
+        for (i, d) in self.defs.iter().enumerate() {
+            let rank = match d.site {
+                DefSite::Input => continue,
+                DefSite::Producer => 0,
+                DefSite::Sub { .. } | DefSite::Align { .. } => 1,
+                DefSite::Map { .. } => 2,
+            };
+            if self.def_storage(i) == format!("cur_{}", d.name) {
+                ranked.push((rank, i, &d.name));
+            }
+        }
+        ranked.sort_unstable();
+        let mut seen = BTreeSet::new();
+        ranked.into_iter().filter(|(_, _, n)| seen.insert(*n)).map(|(_, _, n)| n.to_string()).collect()
+    }
+
+    /// The storage of what `output` holds when the body returns.
+    #[must_use]
+    pub fn output_storage(&self, output: &str) -> String {
+        self.def_storage(self.edge_of(&|c| matches!(c, Consumer::Return { output: o } if o == output)).def)
+    }
+
+    /// The snapshot position of definition `def`.
+    #[must_use]
+    pub fn snapshot_of(&self, def: usize) -> Option<usize> {
+        self.snapshots.iter().position(|d| *d == def)
+    }
+
+    /// Whether a peek frame needs line `k`'s snapshot: some tap may be at depth 0.
+    #[must_use]
+    pub fn line_needs_peek_snapshot(&self, k: usize) -> bool {
+        self.lines[k].taps.iter().any(|t| !t.ge1)
+    }
+
+    /// Whether tap `j` of line `k` is read only under one arm of a variant If.
+    #[must_use]
+    pub fn tap_under_arm(&self, k: usize, j: usize) -> bool {
+        matches!(
+            self.edges[self.lines[k].taps[j].edge].consumer,
+            Consumer::MapRead { arm: Some(_), .. } | Consumer::MapPrior { arm: Some(_), .. }
+        )
+    }
+
+    /// The seed of line `k`'s capacity: the deepest captured tap, floored at 0
+    /// when a tap under an unselected arm keeps depth -1. Depth locals, deepest last.
+    #[must_use]
+    pub fn lag_cap_terms(&self, k: usize) -> (bool, Vec<String>) {
+        let line = &self.lines[k];
+        let floor = (0..line.taps.len()).any(|j| self.tap_under_arm(k, j));
+        (floor, (0..line.taps.len()).map(|j| lag_depth_local(k, j)).collect())
+    }
+
+    /// Lines whose definition step `si` writes.
+    #[must_use]
+    pub fn lines_defined_by_step(&self, si: usize) -> Vec<usize> {
+        let step = &self.steps[si];
+        (0..self.lines.len())
+            .filter(|k| match (&self.defs[self.lines[*k].def].site, step) {
+                (DefSite::Sub { sub_idx, .. }, UpdateStep::Sub { sub_idx: s }) => sub_idx == s,
+                (DefSite::Align { step } | DefSite::Map { step }, _) => *step == si,
+                _ => false,
+            })
+            .collect()
+    }
+
+    /// Lines on a bar input or the producer series: snapshotted at the top of the pipeline.
+    #[must_use]
+    pub fn lines_defined_before_pipeline(&self) -> Vec<usize> {
+        (0..self.lines.len())
+            .filter(|k| {
+                matches!(self.defs[self.lines[*k].def].site, DefSite::Input | DefSite::Producer)
+            })
+            .collect()
+    }
+
+    /// `(line, tap)` of every Tap edge whose consumer `pick` selects.
+    fn taps_where(&self, pick: &dyn Fn(&Consumer) -> bool) -> Vec<(usize, usize)> {
+        self.edges
+            .iter()
+            .filter(|e| pick(&e.consumer))
+            .filter_map(|e| match e.class {
+                EdgeClass::Tap { line, tap } => Some((line, tap)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// `(input, line, tap)` for each tapped source of sub-call `sub_idx`.
+    #[must_use]
+    pub fn sub_src_taps(&self, sub_idx: usize) -> Vec<(usize, usize, usize)> {
+        self.edges
+            .iter()
+            .filter_map(|e| match (&e.consumer, &e.class) {
+                (Consumer::SubSrc { sub_idx: s, input }, EdgeClass::Tap { line, tap })
+                    if *s == sub_idx =>
+                {
+                    Some((*input, *line, *tap))
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// The tap an Align step reads, when its edge is a Tap.
+    #[must_use]
+    pub fn align_tap(&self, si: usize) -> Option<(usize, usize)> {
+        self.taps_where(&|c| matches!(c, Consumer::Align { step } if *step == si)).first().copied()
+    }
+
+    /// The batch-scope expression an Open snapshot of `def` reads.
+    #[must_use]
+    pub fn snapshot_count(&self, def: usize) -> Expr {
+        self.defs[def]
+            .count_open
+            .clone()
+            .unwrap_or_else(|| panic!("{}: snapshot of a definition with no count", self.func.name))
+    }
+
+    /// The exact delay of `edge`, over Open-scope operands.
+    #[must_use]
+    pub fn edge_delay_formula(&self, edge: usize) -> LagFormula {
+        let e = &self.edges[edge];
+        let nb = LagTerm::Nb(
+            self.snapshot_of(e.def)
+                .unwrap_or_else(|| panic!("{}: delay of an unsnapshotted definition", self.func.name)),
+        );
+        let mut terms = vec![(1, nb)];
+        let push_batch = |terms: &mut Vec<(i64, LagTerm)>, sign: i64, x: Expr| match x {
+            Expr::IntLiteral(0) => {}
+            Expr::IntLiteral(k) => terms.push((sign, LagTerm::Const(k))),
+            other => terms.push((sign, LagTerm::Batch(other))),
+        };
+        match &e.consumer {
+            Consumer::SubSrc { sub_idx, .. } => {
+                terms.push((-1, LagTerm::Const(1)));
+                push_batch(&mut terms, -1, self.subs[*sub_idx].e_arg.clone());
+            }
+            Consumer::Align { step } => {
+                let (k, n) = self.align_operands(*step);
+                push_batch(&mut terms, -1, k);
+                push_batch(&mut terms, -1, n);
+            }
+            Consumer::MapRead { step, arm, index, .. } => {
+                let st = self.map_loop(*step, *arm);
+                let cursor = map_loop_cursor(st).expect("map cursor");
+                let bound = map_loop_bound(st).expect("map bound");
+                push_batch(&mut terms, -1, bound);
+                let off = cursor_index_offset(index, &cursor).unwrap_or_else(|| {
+                    panic!("{}: map read index {index:?} is not cursor-affine", self.func.name)
+                });
+                for (sign, x) in off {
+                    push_batch(&mut terms, -sign, x);
+                }
+            }
+            Consumer::MapPrior { step, arm, .. } => {
+                let bound = map_loop_bound(self.map_loop(*step, *arm)).expect("map bound");
+                push_batch(&mut terms, -1, bound);
+            }
+            Consumer::Return { .. } => {
+                push_batch(&mut terms, -1, Expr::PointerDeref("outNBElement".into()));
+            }
+            Consumer::TailScalar { .. } => {
+                panic!("{}: a tail scalar read has no delay formula", self.func.name)
+            }
+        }
+        LagFormula { terms }
+    }
+
+    /// The map loop of step `si`, or of the variant-If arm `arm` holds.
+    fn map_loop(&self, si: usize, arm: Option<(bool, usize)>) -> &Statement {
+        let UpdateStep::Map { tail_idx } = &self.steps[si] else {
+            panic!("{}: step {si} is not a map", self.func.name);
+        };
+        let st = &self.tail[*tail_idx];
+        match (arm, st) {
+            (None, _) => st,
+            (Some((then, pos)), Statement::If { then_body, else_body, .. }) => {
+                &(if then { then_body } else { else_body })[pos]
+            }
+            (Some(_), _) => panic!("{}: an arm of a map that is not a variant If", self.func.name),
+        }
+    }
+
+    /// `(k, n)` of the memmove at Align step `si`.
+    fn align_operands(&self, si: usize) -> (Expr, Expr) {
+        let mut k_seen = 0;
+        let mut found = None;
+        for (i, s) in self.steps.iter().enumerate() {
+            if !matches!(s, UpdateStep::Align { .. }) {
+                continue;
+            }
+            if i == si {
+                found = Some(k_seen);
+                break;
+            }
+            k_seen += 1;
+        }
+        let nth = found.unwrap_or_else(|| panic!("{}: step {si} is not an align", self.func.name));
+        let st = self
+            .tail
+            .iter()
+            .filter(|s| matches!(s, Statement::Expr(Expr::FuncCall(n, a)) if n == "memmove" && a.len() == 3))
+            .nth(nth)
+            .expect("memmove of an align step");
+        let Statement::Expr(Expr::FuncCall(_, args)) = st else { unreachable!("filtered") };
+        let Expr::AddressOf(inner) = &args[1] else { panic!("memmove source shape") };
+        let Expr::ArrayAccess(_, k) = inner.as_ref() else { panic!("memmove source shape") };
+        let is_sizeof = |e: &Expr| matches!(e, Expr::FuncCall(f, _) if f == "sizeof");
+        let n = match &args[2] {
+            Expr::BinOp(l, BinOp::Mul, r) if is_sizeof(r) => l.as_ref().clone(),
+            Expr::BinOp(l, BinOp::Mul, r) if is_sizeof(l) => r.as_ref().clone(),
+            other => panic!("{}: memmove byte count {other:?}", self.func.name),
+        };
+        (k.as_ref().clone(), n)
+    }
+}
+
+/// The delay-line handle fields in declaration order; Open holds each in a
+/// same-named local until it moves it into the handle. The capacity precedes the
+/// buffer: the C state comparator reads a slot count only after comparing it.
+#[must_use]
+pub fn lag_handle_fields(cp: &ComposedPlan) -> Vec<String> {
+    let mut out = Vec::new();
+    for (k, line) in cp.lines.iter().enumerate() {
+        out.push(lag_line_field(k, LineField::Pos));
+        out.push(lag_line_field(k, LineField::Cap));
+        out.push(lag_line_field(k, LineField::Buf));
+        for (j, tap) in line.taps.iter().enumerate() {
+            if tap.back == TapBack::Field {
+                out.push(lag_line_field(k, LineField::Back(j)));
+            }
+        }
+    }
+    out
+}
+
+/// Every tail-placed Open action rendered by `emit`, as `(combined index, phase,
+/// text)`: the text runs before the statement at that index. Phases order the
+/// texts sharing an index: after the previous statement, before this one, its
+/// sub-open (phase 2, the caller's), after the sub-open.
+#[must_use]
+pub fn lag_inserts(
+    cp: &ComposedPlan,
+    region_len: usize,
+    emit: &dyn Fn(&mut String, &OpenAction),
+) -> Vec<(usize, u8, String)> {
+    let mut out = Vec::new();
+    for (at, action) in &cp.open_actions {
+        let (idx, phase) = match at {
+            OpenAt::AfterStmt(i) => (i + 1, 0),
+            OpenAt::BeforeStmt(i) => (*i, 1),
+            OpenAt::AfterSubOpen(i) => (*i, 3),
+            OpenAt::Epilogue => continue,
+        };
+        let mut t = String::new();
+        emit(&mut t, action);
+        out.push((region_len + idx, phase, t));
+    }
+    out
+}
+
+/// [`lag_inserts`] plus the sub-opens, in emission order.
+#[must_use]
+pub fn order_lag_inserts(mut v: Vec<(usize, u8, String)>) -> Vec<(usize, String)> {
+    v.sort_by_key(|(at, phase, _)| (*at, *phase));
+    v.into_iter().map(|(at, _, t)| (at, t)).collect()
+}
+
+/// `pos + add`, wrapped once into `[0, cap)`.
+#[must_use]
+pub fn wrap_index(pos: Expr, add: Expr, cap: Expr) -> Expr {
+    wrap_sum(Expr::BinOp(Box::new(pos), BinOp::Add, Box::new(add)), cap)
+}
+
+/// `x >= cap ? x - cap : x`, the exact modulo for `x` in `[0, 2*cap)`.
+fn wrap_sum(x: Expr, cap: Expr) -> Expr {
+    Expr::Ternary(
+        Box::new(Expr::BinOp(Box::new(x.clone()), BinOp::GreaterEq, Box::new(cap.clone()))),
+        Box::new(Expr::BinOp(Box::new(x.clone()), BinOp::Sub, Box::new(cap))),
+        Box::new(x),
+    )
+}
+
+/// `pos = pos + 1; if( pos >= cap ) pos = 0;`
+fn push_wrap_tail(out: &mut Vec<Statement>, pos: &str, cap: &str) {
+    out.push(Statement::Assign {
+        target: Expr::Var(pos.to_string()),
+        value: Expr::BinOp(
+            Box::new(Expr::Var(pos.to_string())),
+            BinOp::Add,
+            Box::new(Expr::IntLiteral(1)),
+        ),
+        compound: false,
+    });
+    out.push(Statement::If {
+        condition: Expr::BinOp(
+            Box::new(Expr::Var(pos.to_string())),
+            BinOp::GreaterEq,
+            Box::new(Expr::Var(cap.to_string())),
+        ),
+        then_body: vec![Statement::Assign {
+            target: Expr::Var(pos.to_string()),
+            value: Expr::IntLiteral(0),
+            compound: false,
+        }],
+        else_body: vec![],
+        cond_comments: vec![],
+    });
+}
+
+/// Loads tap `j` of line `k` into its local, then selects the snapshot when the
+/// tap may be at depth 0.
+#[must_use]
+pub fn lag_tap_load(cp: &ComposedPlan, k: usize, j: usize, names: &dyn NameMap) -> Vec<Statement> {
+    tap_load(cp, k, j, names, false)
+}
+
+type TapGroupKey = (u8, usize, Option<(bool, usize)>);
+
+/// The tap groups a frame loads together: one per sub-call, Align step, and
+/// map arm, each the distinct `(line, tap)` pairs in edge order.
+fn tap_groups(cp: &ComposedPlan) -> Vec<Vec<(usize, usize)>> {
+    let mut groups: BTreeMap<TapGroupKey, Vec<(usize, usize)>> = BTreeMap::new();
+    for e in &cp.edges {
+        let EdgeClass::Tap { line, tap } = e.class else { continue };
+        let key = match &e.consumer {
+            Consumer::SubSrc { sub_idx, .. } => (0, *sub_idx, None),
+            Consumer::Align { step } => (1, *step, None),
+            Consumer::MapRead { step, arm, .. } | Consumer::MapPrior { step, arm, .. } => {
+                (2, *step, *arm)
+            }
+            _ => continue,
+        };
+        let g = groups.entry(key).or_default();
+        if !g.contains(&(line, tap)) {
+            g.push((line, tap));
+        }
+    }
+    groups.into_values().collect()
+}
+
+/// Lines some group loads two or more taps of.
+#[must_use]
+pub fn hoisted_lines(cp: &ComposedPlan) -> BTreeSet<usize> {
+    let mut out = BTreeSet::new();
+    for g in tap_groups(cp) {
+        for (k, _) in &g {
+            if g.iter().filter(|(l, _)| l == k).count() >= 2 {
+                out.insert(*k);
+            }
+        }
+    }
+    out
+}
+
+/// Loads `taps` as one group: a line with two or more distinct taps in the
+/// group has its position and capacity read once, ahead of its first load.
+#[must_use]
+pub fn lag_tap_loads(cp: &ComposedPlan, taps: &[(usize, usize)], names: &dyn NameMap) -> Vec<Statement> {
+    let mut distinct: Vec<(usize, usize)> = Vec::new();
+    for t in taps {
+        if !distinct.contains(t) {
+            distinct.push(*t);
+        }
+    }
+    let mut hoisted = BTreeSet::new();
+    let mut out = Vec::new();
+    for (k, j) in taps {
+        let multi = distinct.iter().filter(|(l, _)| l == k).count() >= 2;
+        if multi && hoisted.insert(*k) {
+            let (p, c) = lag_hoist_locals(*k);
+            for (local, field) in [(p, LineField::Pos), (c, LineField::Cap)] {
+                out.push(Statement::Assign {
+                    target: Expr::Var(local),
+                    value: Expr::Var(names.state(&lag_line_field(*k, field))),
+                    compound: false,
+                });
+            }
+        }
+        out.extend(tap_load(cp, *k, *j, names, multi));
+    }
+    out
+}
+
+fn tap_load(cp: &ComposedPlan, k: usize, j: usize, names: &dyn NameMap, hoist: bool) -> Vec<Statement> {
+    let tap = &cp.lines[k].taps[j];
+    let buf = names.state(&lag_line_field(k, LineField::Buf));
+    let (pos, cap) = if hoist {
+        let (p, c) = lag_hoist_locals(k);
+        (Expr::Var(p), Expr::Var(c))
+    } else {
+        (
+            Expr::Var(names.state(&lag_line_field(k, LineField::Pos))),
+            Expr::Var(names.state(&lag_line_field(k, LineField::Cap))),
+        )
+    };
+    let back = match tap.back {
+        TapBack::Oldest => None,
+        TapBack::Literal(b) => Some(Expr::IntLiteral(b)),
+        TapBack::Field => Some(Expr::Var(names.state(&lag_line_field(k, LineField::Back(j))))),
+    };
+    let idx = match &back {
+        None => pos,
+        Some(b) => wrap_index(pos, b.clone(), cap.clone()),
+    };
+    let local = lag_tap_local(k, j);
+    let mut out = vec![Statement::Assign {
+        target: Expr::Var(local.clone()),
+        value: Expr::ArrayAccess(buf, Box::new(idx)),
+        compound: false,
+    }];
+    if !tap.ge1 {
+        let at_zero = match back {
+            None => Expr::BinOp(Box::new(cap), BinOp::Eq, Box::new(Expr::IntLiteral(0))),
+            Some(b) => Expr::BinOp(Box::new(b), BinOp::Eq, Box::new(cap)),
+        };
+        out.push(Statement::Assign {
+            target: Expr::Var(local.clone()),
+            value: Expr::Ternary(
+                Box::new(at_zero),
+                Box::new(Expr::Var(lag_in_local(k))),
+                Box::new(Expr::Var(local)),
+            ),
+            compound: false,
+        });
+    }
+    out
+}
+
+/// The snapshots a frame takes right after step `si` (`None`: at the top of the
+/// pipeline). A peek frame takes only those a select reads.
+#[must_use]
+pub fn lag_snapshots(cp: &ComposedPlan, si: Option<usize>, commit: bool) -> Vec<Statement> {
+    let lines = match si {
+        Some(si) => cp.lines_defined_by_step(si),
+        None => cp.lines_defined_before_pipeline(),
+    };
+    lines
+        .into_iter()
+        .filter(|k| commit || cp.line_needs_peek_snapshot(*k))
+        .map(|k| lag_snapshot(k, &cp.def_storage(cp.lines[k].def)))
+        .collect()
+}
+
+/// Sub-call `sub_idx`'s tap loads and its per-source arguments: a tapped
+/// source passes its tap local, any other its definition's storage.
+#[must_use]
+pub fn lower_sub_sources(cp: &ComposedPlan, sub_idx: usize, names: &dyn NameMap) -> (Vec<Statement>, Vec<String>) {
+    let taps = cp.sub_src_taps(sub_idx);
+    let group: Vec<(usize, usize)> = taps.iter().map(|(_, k, j)| (*k, *j)).collect();
+    let loads = lag_tap_loads(cp, &group, names);
+    let args = (0..cp.subs[sub_idx].srcs.len())
+        .map(|i| match taps.iter().find(|t| t.0 == i) {
+            Some((_, k, j)) => lag_tap_local(*k, *j),
+            None => cp.def_storage(
+                cp.edge_of(&|c| matches!(c, Consumer::SubSrc { sub_idx: s, input } if *s == sub_idx && *input == i))
+                    .def,
+            ),
+        })
+        .collect();
+    (loads, args)
+}
+
+/// An Align step in a frame: a Tap loads and copies its tap, a copying Align
+/// copies its source's storage into `cur_<dst>`, and an aliasing one emits
+/// nothing.
+#[must_use]
+pub fn lower_align_step(cp: &ComposedPlan, si: usize, names: &dyn NameMap) -> Vec<Statement> {
+    let UpdateStep::Align { dst, copy, .. } = &cp.steps[si] else {
+        panic!("{}: step {si} is not an align", cp.func.name);
+    };
+    let tap = cp.align_tap(si);
+    debug_assert!(*copy || tap.is_none(), "{}: a tapped align must copy", cp.func.name);
+    if !*copy {
+        return Vec::new();
+    }
+    let mut out: Vec<Statement> = tap.map(|(k, j)| lag_tap_load(cp, k, j, names)).unwrap_or_default();
+    let value = match tap {
+        Some((k, j)) => lag_tap_local(k, j),
+        None => cp.def_storage(cp.edge_of(&|c| matches!(c, Consumer::Align { step } if *step == si)).def),
+    };
+    out.push(Statement::Assign {
+        target: Expr::Var(format!("cur_{dst}")),
+        value: Expr::Var(value),
+        compound: false,
+    });
+    out
+}
+
+/// `lagIn<k> = <storage>;`
+#[must_use]
+pub fn lag_snapshot(k: usize, storage: &str) -> Statement {
+    Statement::Assign {
+        target: Expr::Var(lag_in_local(k)),
+        value: Expr::Var(storage.to_string()),
+        compound: false,
+    }
+}
+
+/// The commit frame's write of line `k`'s snapshot and its position advance.
+#[must_use]
+pub fn lag_push(k: usize, names: &dyn NameMap) -> Vec<Statement> {
+    let pos = names.state(&lag_line_field(k, LineField::Pos));
+    let local_cap = lag_cap_local(k);
+    let mut out = vec![
+        Statement::Assign {
+            target: Expr::Var(local_cap.clone()),
+            value: Expr::Var(names.state(&lag_line_field(k, LineField::Cap))),
+            compound: false,
+        },
+        Statement::Assign {
+            target: Expr::ArrayAccess(
+                names.state(&lag_line_field(k, LineField::Buf)),
+                Box::new(Expr::Var(pos.clone())),
+            ),
+            value: Expr::Var(lag_in_local(k)),
+            compound: false,
+        },
+    ];
+    push_wrap_tail(&mut out, &pos, &local_cap);
+    out
+}
+
+/// The step locals of one frame: `(reals, ints)`.
+#[must_use]
+pub fn lag_step_locals(cp: &ComposedPlan, commit: bool) -> (Vec<String>, Vec<String>) {
+    let (mut reals, mut ints) = (Vec::new(), Vec::new());
+    let hoisted = hoisted_lines(cp);
+    for (k, line) in cp.lines.iter().enumerate() {
+        if hoisted.contains(&k) {
+            let (p, c) = lag_hoist_locals(k);
+            ints.extend([p, c]);
+        }
+        if commit || cp.line_needs_peek_snapshot(k) {
+            reals.push(lag_in_local(k));
+        }
+        for j in 0..line.taps.len() {
+            reals.push(lag_tap_local(k, j));
+        }
+        if commit {
+            ints.push(lag_cap_local(k));
+        }
+    }
+    (reals, ints)
+}
+
+/// Every real step local a delay line adds: a stream FMA detector must class
+/// them as reals, or `a*tap + c` fuses in batch and not in the step.
+#[must_use]
+pub fn lag_fma_reals(cp: &ComposedPlan) -> Vec<String> {
+    let (reals, _) = lag_step_locals(cp, true);
+    reals
+}
+
+/// One combine map in its per-bar form: every series element read resolves
+/// through its edge (a Tap to its local, anything else to its definition's
+/// storage), every access through a name of a class the map writes to that
+/// write's storage, every parameter to its handle field; taps load at the top
+/// of the arm that reads them and the `for` shells drop.
+#[must_use]
+pub fn lower_map_step(cp: &ComposedPlan, si: usize, names: &dyn NameMap) -> Vec<Statement> {
+    let UpdateStep::Map { tail_idx } = &cp.steps[si] else {
+        panic!("{}: step {si} is not a map", cp.func.name);
+    };
+    let st = &cp.tail[*tail_idx];
+    let params: BTreeSet<String> = cp.func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let own = |name: &str| -> Option<String> {
+        let key = cp.alias_key(name);
+        (0..cp.defs.len())
+            .find(|&d| cp.defs[d].site == DefSite::Map { step: si } && cp.defs[d].buffer == key)
+            .map(|d| cp.def_storage(d))
+    };
+    let lower_loop = |lp: &Statement, arm: Option<(bool, usize)>| -> Vec<Statement> {
+        let reads: Vec<&Edge> = cp
+            .edges
+            .iter()
+            .filter(|e| matches!(&e.consumer, Consumer::MapRead { step, arm: a, .. } if *step == si && *a == arm))
+            .collect();
+        let resolve = |e: Expr| -> Expr {
+            let Expr::ArrayAccess(name, idx) = e else { return e };
+            let edge = reads.iter().find(|e| {
+                matches!(&e.consumer, Consumer::MapRead { buffer, index, .. }
+                    if *buffer == name && exprs_equal(index, &idx))
+            });
+            match edge {
+                Some(e) => match e.class {
+                    EdgeClass::Tap { line, tap } => Expr::Var(lag_tap_local(line, tap)),
+                    _ => Expr::Var(cp.def_storage(e.def)),
+                },
+                None => Expr::Var(own(&name).unwrap_or_else(|| {
+                    panic!("{}: map access `{name}[{idx:?}]` has no edge", cp.func.name)
+                })),
+            }
+        };
+        let resolved = rewrite_stmts(std::slice::from_ref(lp), &resolve, &|s| Some(s));
+        let param = |e: Expr| -> Expr {
+            match e {
+                Expr::Var(v) if params.contains(&v) => Expr::Var(names.state(&v)),
+                other => other,
+            }
+        };
+        let body = rewrite_stmts(&resolved, &param, &|s| Some(s));
+        let mut out: Vec<Statement> = Vec::new();
+        let arm_taps = cp.taps_where(&|c| {
+            matches!(
+                c,
+                Consumer::MapRead { step, arm: a, .. } | Consumer::MapPrior { step, arm: a, .. }
+                    if *step == si && *a == arm
+            )
+        });
+        out.extend(lag_tap_loads(cp, &arm_taps, names));
+        for e in cp.edges.iter().filter(|e| {
+            matches!(&e.consumer, Consumer::MapPrior { step, arm: a, .. } if *step == si && *a == arm)
+        }) {
+            let Consumer::MapPrior { buffer, .. } = &e.consumer else { unreachable!("filtered") };
+            let storage = own(buffer)
+                .unwrap_or_else(|| panic!("{}: map prior `{buffer}` names nothing the map writes", cp.func.name));
+            let prior = match e.class {
+                EdgeClass::Tap { line, tap } => lag_tap_local(line, tap),
+                _ => cp.def_storage(e.def),
+            };
+            if prior != storage {
+                out.push(Statement::Assign {
+                    target: Expr::Var(storage),
+                    value: Expr::Var(prior),
+                    compound: false,
+                });
+            }
+        }
+        out.extend(body.iter().flat_map(drop_map_shells));
+        out
+    };
+    match st {
+        Statement::If { condition, then_body, else_body, cond_comments } => {
+            let arm_body = |branch: &[Statement], then: bool| -> Vec<Statement> {
+                branch
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(p, s)| match s {
+                        Statement::ForC { .. } => lower_loop(s, Some((then, p))),
+                        other => vec![other.clone()],
+                    })
+                    .collect()
+            };
+            let cond = rewrite_expr(condition, &|e| match e {
+                Expr::Var(v) if params.contains(&v) => Expr::Var(names.state(&v)),
+                other => other,
+            });
+            vec![Statement::If {
+                condition: cond,
+                then_body: arm_body(then_body, true),
+                else_body: arm_body(else_body, false),
+                cond_comments: cond_comments.clone(),
+            }]
+        }
+        _ => lower_loop(st, None),
+    }
+}
+
+/// The body of a map loop without its `for` shells.
+fn drop_map_shells(st: &Statement) -> Vec<Statement> {
+    match st {
+        Statement::ForC { body, .. } => body.iter().flat_map(drop_map_shells).collect(),
+        Statement::If { condition, then_body, else_body, cond_comments } => vec![Statement::If {
+            condition: condition.clone(),
+            then_body: then_body.iter().flat_map(drop_map_shells).collect(),
+            else_body: else_body.iter().flat_map(drop_map_shells).collect(),
+            cond_comments: cond_comments.clone(),
+        }],
+        other => vec![other.clone()],
+    }
+}
+
+/// Every sub source and align source must already be materialized when
+/// consumed, and every output must end up produced.
 fn check_composed_emittable(plan: &ComposedPlan) -> Result<(), StreamError> {
     let bar_inputs = input_array_names(plan.func);
     let outputs: Vec<String> = plan.func.outputs.iter().map(|o| o.name.clone()).collect();
@@ -2926,7 +4094,7 @@ fn check_composed_emittable(plan: &ComposedPlan) -> Result<(), StreamError> {
                     cur.insert(d.clone());
                 }
             }
-            UpdateStep::Align { dst, src } => {
+            UpdateStep::Align { dst, src, .. } => {
                 if !cur.contains(src) {
                     return Err(StreamError::Unsupported(format!(
                         "composed align reads `{src}` before it is materialized"
@@ -3060,102 +4228,12 @@ fn recv_var(arg: &Expr) -> Option<RecvVar> {
     }
 }
 
-/// How a difference operand reads an out-meta receiver: `x` → `Local(x)`,
-/// `*p` → `Pointer(p)`. Any other expression is not a receiver read.
-fn recv_read(e: &Expr) -> Option<RecvVar> {
-    match e {
-        Expr::Var(v) => Some(RecvVar::Local(v.clone())),
-        Expr::PointerDeref(p) => Some(RecvVar::Pointer(p.clone())),
-        _ => None,
-    }
-}
-
 /// The expression that reads receiver `r` back: `x` for `&x`, `*p` for `p`.
 fn recv_read_expr(r: &RecvVar) -> Expr {
     match r {
         RecvVar::Local(v) => Expr::Var(v.clone()),
         RecvVar::Pointer(p) => Expr::PointerDeref(p.clone()),
     }
-}
-
-/// `count - 1`, spelled as a sub-call's endIdx argument spells it.
-fn last_index_of(count: Expr) -> Expr {
-    Expr::BinOp(Box::new(count), BinOp::Sub, Box::new(Expr::IntLiteral(1)))
-}
-
-/// Out-meta provenance behind the same-bar proof for a combine map's
-/// `series[cursor + off]` read. The proof compares expressions by spelling, so
-/// a tail write to anything a record reads must drop that record.
-#[derive(Default)]
-struct SameBarFacts {
-    /// Each series' element-count receiver.
-    nbelem: BTreeMap<String, RecvVar>,
-    /// Each series' begIdx receiver, recorded only when that begIdx is an
-    /// absolute bar: the sub-call read the caller's own bar inputs.
-    begs: BTreeMap<String, RecvVar>,
-    /// Each series' producing endIdx argument.
-    endidx: BTreeMap<String, Expr>,
-    /// Series whose last element is the `endIdx` bar, keyed to the expression
-    /// naming that last index.
-    end_last: BTreeMap<String, Expr>,
-    /// Scalar locals holding an element-count difference of two receivers.
-    diffs: BTreeMap<String, (RecvVar, RecvVar)>,
-}
-
-impl SameBarFacts {
-    fn forget_series(&mut self, s: &str) {
-        self.nbelem.remove(s);
-        self.begs.remove(s);
-        self.endidx.remove(s);
-        self.end_last.remove(s);
-    }
-
-    fn forget_scalar(&mut self, w: &RecvVar) {
-        self.nbelem.retain(|_, r| !clobbers(w, r));
-        self.begs.retain(|_, r| !clobbers(w, r));
-        self.diffs.retain(|k, (a, b)| {
-            !clobbers(w, a) && !clobbers(w, b) && !matches!(w, RecvVar::Local(v) if v == k)
-        });
-        self.endidx.retain(|_, e| !reads_scalar(e, w));
-        if matches!(w, RecvVar::Local(v) if v == "endIdx") {
-            // Every end_last record is relative to the bar `endIdx` names.
-            self.end_last.clear();
-        } else {
-            self.end_last.retain(|_, e| !reads_scalar(e, w));
-        }
-    }
-
-    fn forget_writes(&mut self, st: &Statement) {
-        let (scalars, series) = fallthrough_writes(std::slice::from_ref(st));
-        for w in &scalars {
-            self.forget_scalar(w);
-        }
-        for s in &series {
-            self.forget_series(s);
-        }
-    }
-}
-
-/// Writing `w` changes what `r` reads: the same receiver, or the pointer `*r`
-/// dereferences.
-fn clobbers(w: &RecvVar, r: &RecvVar) -> bool {
-    match (w, r) {
-        (RecvVar::Local(a), RecvVar::Local(b) | RecvVar::Pointer(b))
-        | (RecvVar::Pointer(a), RecvVar::Pointer(b)) => a == b,
-        (RecvVar::Pointer(_), RecvVar::Local(_)) => false,
-    }
-}
-
-fn reads_scalar(e: &Expr, w: &RecvVar) -> bool {
-    let mut hit = false;
-    walk_expr(e, &mut |x| {
-        hit |= match (x, w) {
-            (Expr::Var(v), RecvVar::Local(l)) => v == l,
-            (Expr::PointerDeref(p), RecvVar::Local(l) | RecvVar::Pointer(l)) => p == l,
-            _ => false,
-        };
-    });
-    hit
 }
 
 /// The lvalues statement `s` itself writes, nested bodies excluded: its
@@ -3202,81 +4280,10 @@ fn count_writes(stmts: &[Statement], pred: &dyn Fn(&Expr) -> bool) -> usize {
     n
 }
 
-/// Scalars and series `stmts` may write on a path that reaches the statement
-/// after them. A body ending in `return` contributes nothing.
-fn fallthrough_writes(stmts: &[Statement]) -> (Vec<RecvVar>, Vec<String>) {
-    fn walk(stmts: &[Statement], scalars: &mut Vec<RecvVar>, series: &mut Vec<String>) {
-        let last = stmts.iter().rev().find(|s| !matches!(s, Statement::Comment(_)));
-        if matches!(last, Some(Statement::Return { .. })) {
-            return;
-        }
-        for s in stmts {
-            own_writes(s, &mut |t| match t {
-                Expr::Var(v) => scalars.push(RecvVar::Local(v.clone())),
-                Expr::PointerDeref(p) => scalars.push(RecvVar::Pointer(p.clone())),
-                Expr::ArrayAccess(n, _) => series.push(n.clone()),
-                _ => {}
-            });
-            for body in nested_bodies(s).0 {
-                walk(body, scalars, series);
-            }
-        }
-    }
-    let (mut scalars, mut series) = (Vec::new(), Vec::new());
-    walk(stmts, &mut scalars, &mut series);
-    (scalars, series)
-}
-
-/// Names a pointer copy (`a = b`, `a = c ? b : d`, cast or not) may leave
-/// sharing storage. A write through one moves the other, which no by-name
-/// record sees.
-fn pointer_copied(body: &[Statement]) -> BTreeSet<String> {
-    let mut out = BTreeSet::new();
-    for_each_stmt(body, &mut |s| {
-        let (Statement::Assign {
-            target: Expr::Var(a),
-            value,
-            ..
-        }
-        | Statement::VarDecl {
-            name: a,
-            init: Some(value),
-            ..
-        }) = s
-        else {
-            return;
-        };
-        let mut v = value;
-        while let Expr::Cast(_, inner) = v {
-            v = inner;
-        }
-        if matches!(v, Expr::FuncCall(..)) {
-            return;
-        }
-        let mut srcs = BTreeSet::new();
-        walk_expr(v, &mut |x| match x {
-            Expr::Var(n) if n != "NULL" => {
-                srcs.insert(n.clone());
-            }
-            Expr::AddressOf(t) => {
-                if let Expr::ArrayAccess(n, _) = t.as_ref() {
-                    srcs.insert(n.clone());
-                }
-            }
-            _ => {}
-        });
-        if !srcs.is_empty() {
-            out.insert(a.clone());
-            out.extend(srcs);
-        }
-    });
-    out
-}
-
-/// `paced - 1` when `series` holds one element per bar ending on the `endIdx`
-/// bar. The stream analysis of the producer loop enforces none of what is
-/// checked below, so the same-bar proof cannot lean on it.
-fn producer_last_index(region: &[Statement], series: &str, paced: &str) -> Option<Expr> {
+/// The cursor and bound of the producer loop ending `region` when each pass
+/// writes `series[paced++]` exactly once and advances the cursor by one up to
+/// `cursor <= bound`. Says nothing about what the bound is.
+fn producer_shape<'r>(region: &'r [Statement], series: &str, paced: &str) -> Option<(&'r str, &'r Expr)> {
     let (lp, before) = region.split_last()?;
     let mut prologue = before.to_vec();
     let (condition, iter) = match lp {
@@ -3297,10 +4304,10 @@ fn producer_last_index(region: &[Statement], series: &str, paced: &str) -> Optio
         }
         _ => return None,
     };
-    let Expr::BinOp(l, BinOp::LessEq, r) = condition else {
+    let Expr::BinOp(l, BinOp::LessEq, end) = condition else {
         return None;
     };
-    let (Expr::Var(cursor), Expr::Var(end)) = (l.as_ref(), r.as_ref()) else {
+    let Expr::Var(cursor) = l.as_ref() else {
         return None;
     };
     let names = |n: &str| {
@@ -3337,8 +4344,7 @@ fn producer_last_index(region: &[Statement], series: &str, paced: &str) -> Optio
             || matches!(s, Statement::VarDecl { name, init: Some(Expr::IntLiteral(0)), .. }
                 if name == paced)
     });
-    let ok = end == "endIdx"
-        && cursor != paced
+    let ok = cursor != paced
         && advances == 1
         && count_writes(&iter, &names(cursor)) == 1
         && !jumps
@@ -3347,7 +4353,7 @@ fn producer_last_index(region: &[Statement], series: &str, paced: &str) -> Optio
         && count_writes(&iter, &names(paced)) == series_writes
         && zeroed
         && count_writes(&prologue, &names(paced)) == 1;
-    ok.then(|| last_index_of(Expr::Var(paced.to_string())))
+    ok.then_some((cursor.as_str(), end.as_ref()))
 }
 
 /// How many times every path through `stmts` writes `series`, each write being
@@ -3389,31 +4395,6 @@ fn writes_per_path(stmts: &[Statement], series: &str, paced: &str) -> Option<usi
     Some(n)
 }
 
-/// If `value` is `a - b` where both operands read *known* out-element-count
-/// receivers, return their provenance `(a, b)`. This is what proves an APO/PPO
-/// alignment offset (`fastNb - *outNBElement`) is an element-count difference.
-///
-/// The element-count form is used rather than the begIdx difference
-/// (`*outBegIdx - fastBeg`) because it is identical in value (for two sub-outputs
-/// ending on the same bar, `nb(a) - nb(b) == begIdx(b) - begIdx(a)`) yet cannot
-/// underflow: the wider window (the fast MA here) always has at least as many
-/// outputs, so the subtraction is non-negative. The begIdx form underflows as a
-/// Rust `usize` when the narrower output is empty (issue: Rust-debug-only
-/// underflow class). A genuine lag (ADXR's `period - 1`) is a param expression,
-/// not a receiver difference, so it returns None.
-fn nb_difference(value: &Expr, known: &[RecvVar]) -> Option<(RecvVar, RecvVar)> {
-    let Expr::BinOp(l, BinOp::Sub, r) = value else {
-        return None;
-    };
-    let a = recv_read(l)?;
-    let b = recv_read(r)?;
-    if known.contains(&a) && known.contains(&b) {
-        Some((a, b))
-    } else {
-        None
-    }
-}
-
 /// Structural equality, float literals by bits; a variant not listed below
 /// compares unequal.
 pub(crate) fn exprs_equal(a: &Expr, b: &Expr) -> bool {
@@ -3445,42 +4426,8 @@ pub(crate) fn exprs_equal(a: &Expr, b: &Expr) -> bool {
     }
 }
 
-/// The index shape of a combine-map array access.
-enum IndexForm {
-    /// `series[cursor]` — the current bar.
-    PlainCursor,
-    /// `series[cursor + off]` — a candidate same-bar shift; `off` must still be
-    /// proven a begIdx difference before it is accepted.
-    CursorPlus(String),
-    /// Anything else (a literal lag, a nested expression): never same-bar.
-    Other,
-}
-
-/// Classify a `series[idx]` access index against the loop's single cursor.
-/// Accepts `cursor + off` in either operand order; rejects `cursor - off`,
-/// `cursor + off + 1`, literal offsets, and anything more nested.
-fn offset_index_form(idx: &Expr, cursors: &BTreeSet<String>) -> IndexForm {
-    if let Expr::Var(v) = idx {
-        return if cursors.contains(v) {
-            IndexForm::PlainCursor
-        } else {
-            IndexForm::Other
-        };
-    }
-    if let Expr::BinOp(l, BinOp::Add, r) = idx {
-        for (a, b) in [(l.as_ref(), r.as_ref()), (r.as_ref(), l.as_ref())] {
-            if let (Expr::Var(c), Expr::Var(off)) = (a, b) {
-                if cursors.contains(c) && !cursors.contains(off) {
-                    return IndexForm::CursorPlus(off.clone());
-                }
-            }
-        }
-    }
-    IndexForm::Other
-}
-
 /// The output series a combine map writes (at any index): a map may DEFINE an
-/// output from sub-outputs (ADXR writes `outReal` from the ADX lag ring), so
+/// output from sub-outputs (ADXR writes `outReal` from adx), so
 /// those outputs become materialized once the map runs.
 pub fn map_output_writes(stmt: &Statement, outputs: &[String]) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
@@ -3494,31 +4441,19 @@ pub fn map_output_writes(stmt: &Statement, outputs: &[String]) -> Vec<String> {
     out
 }
 
-/// If `idx` is `cursor + <expr>` in either operand order, return the offset
-/// expression — unlike [`offset_index_form`] this accepts a compound offset
-/// (a parameter expression like `optInTimePeriod - 1`), used to recognize a
-/// sub-output self-lag read `series[cursor + (period-1)]`.
-fn cursor_plus_expr(idx: &Expr, cursors: &BTreeSet<String>) -> Option<Expr> {
-    let Expr::BinOp(l, BinOp::Add, r) = idx else {
-        return None;
-    };
-    match (l.as_ref(), r.as_ref()) {
-        (Expr::Var(c), other) | (other, Expr::Var(c)) if cursors.contains(c) => {
-            // Reject a plain cursor+cursor (both operands cursors).
-            if matches!(other, Expr::Var(v) if cursors.contains(v)) {
-                None
-            } else {
-                Some(other.clone())
+/// Appends each non-output series a map writes that `intermediates` lacks.
+fn push_map_series(stmt: &Statement, outputs: &[String], intermediates: &mut Vec<String>) {
+    walk_assign_targets(stmt, &mut |t| {
+        if let Expr::ArrayAccess(name, _) = t {
+            if !outputs.contains(name) && !intermediates.contains(name) {
+                intermediates.push(name.clone());
             }
         }
-        _ => None,
-    }
+    });
 }
 
 /// True when `e` reads only parameters, literals and arithmetic of them — no
-/// series, pointers, cursors or calls. A sub-output lag depth must be such a
-/// constant-per-stream parameter expression (`optInTimePeriod - 1`).
-/// A `<param> <= <literal>` (or `<`) threshold predicate — the shape of a batch
+/// series, pointers, cursors or calls.
 fn expr_is_param_pure(e: &Expr, params: &BTreeSet<String>) -> bool {
     let mut ok = true;
     walk_expr(e, &mut |x| match x {
@@ -3529,32 +4464,52 @@ fn expr_is_param_pure(e: &Expr, params: &BTreeSet<String>) -> bool {
     ok
 }
 
+/// [`walk_expr`] that does not descend into an array index.
+fn walk_expr_outside_indices(e: &Expr, f: &mut dyn FnMut(&Expr)) {
+    f(e);
+    match e {
+        Expr::ArrayAccess(..) | Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => {}
+        Expr::Cast(_, i)
+        | Expr::Not(i)
+        | Expr::Neg(i)
+        | Expr::BitwiseNot(i)
+        | Expr::AddressOf(i)
+        | Expr::PostIncrement(i)
+        | Expr::PostDecrement(i)
+        | Expr::PreIncrement(i)
+        | Expr::PreDecrement(i) => walk_expr_outside_indices(i, f),
+        Expr::BinOp(l, _, r) => {
+            walk_expr_outside_indices(l, f);
+            walk_expr_outside_indices(r, f);
+        }
+        Expr::FuncCall(_, args) => {
+            for a in args {
+                walk_expr_outside_indices(a, f);
+            }
+        }
+        Expr::Ternary(c, t, e2) => {
+            walk_expr_outside_indices(c, f);
+            walk_expr_outside_indices(t, f);
+            walk_expr_outside_indices(e2, f);
+        }
+    }
+}
+
 /// Deep variant of [`walk_stmt_exprs`]: `f` sees every sub-expression of every
-/// statement expression, not only the top-level target/value/condition nodes
-/// (the plain walker stops there, so a `tempBuffer[i+offset]` nested inside a
-/// `BinOp` would slip past an offset check — this recurses in).
+/// statement expression, not only the top-level target/value/condition nodes.
 fn walk_stmt_exprs_deep(s: &Statement, f: &mut dyn FnMut(&Expr)) {
     walk_stmt_exprs(s, &mut |top| walk_expr(top, f));
 }
 
-/// Validate one map loop: `for (i = 0; i < NB; i++) { <per-bar body> }` whose
-/// body reads/writes ONLY `series[cursor]`, params, and scalar temps — plus
-/// the one same-bar-shifted form `series[cursor + off]` where `off` is a
-/// proven begIdx difference (APO/PPO's `tempBuffer[i + offset]`). The emitter
-/// later drops the shell and turns EVERY series access into a current scalar
-/// (it is index-blind), so the soundness that the shifted read really is
-/// same-bar has to be proven HERE; everything checked makes that faithful.
-#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
+/// Validate one map loop's shape and collect the scalars it uses: a single
+/// cursor starting at 0, no indicator or stateful call. What each series read
+/// pairs is the delay classifier's to judge.
 fn check_map_step(
     st: &Statement,
     defined: &BTreeSet<String>,
-    outputs: &[String],
     params: &BTreeSet<String>,
-    bar_inputs: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
     temps: &mut BTreeSet<String>,
-    facts: &SameBarFacts,
-    sub_lag_rings: &mut Vec<SubLagRing>,
 ) -> Result<(), StreamError> {
     let Statement::ForC {
         init,
@@ -3607,178 +4562,28 @@ fn check_map_step(
             "composed map calls an indicator".into(),
         ));
     }
-
-    // The map's primary output = the one series it writes at the plain cursor
-    // (APO/PPO write `outReal[i]`). Produced before the map, it anchors the
-    // same-bar proof for any offset read: `series[cursor + off]` is same-bar iff
-    // `off` is the element-count
-    // difference `nb(series) - nb(primary_out)` AND the two series end on the
-    // same bar (then that difference equals `begIdx(primary_out) - begIdx(series)`
-    // in bars: the shift that aligns the two windows).
-    let mut written_series: BTreeSet<String> = BTreeSet::new();
-    for bst in body {
-        walk_assign_targets(bst, &mut |t| {
-            if let Expr::ArrayAccess(name, idx) = t {
-                if matches!(idx.as_ref(), Expr::Var(v) if cursors.contains(v)) {
-                    written_series.insert(name.clone());
-                }
-            }
-        });
-    }
-    let primary_out: Option<&String> = if written_series.len() == 1 {
-        written_series.iter().next()
-    } else {
-        None
-    };
-
-    // Detect sub-output self-lag rings (ADXR): a defined series read BOTH at the
-    // plain cursor (the lagged value) AND at `cursor + <param-pure expr>` (the
-    // current, newest value). The offset expression is the lag depth / ring cap.
-    let mut has_plain: BTreeSet<String> = BTreeSet::new();
-    let mut lag_rings: BTreeMap<String, Expr> = BTreeMap::new();
+    // A scalar read only inside an index is no step temp: lowering replaces
+    // the whole read.
+    let mut stateful = None;
     for bst in body {
         walk_stmt_exprs_deep(bst, &mut |e| {
-            if let Expr::ArrayAccess(name, idx) = e {
-                if defined.contains(name) {
-                    if matches!(offset_index_form(idx, &cursors), IndexForm::PlainCursor) {
-                        has_plain.insert(name.clone());
-                    } else if let Some(off) = cursor_plus_expr(idx, &cursors) {
-                        if expr_is_param_pure(&off, params) {
-                            lag_rings.insert(name.clone(), off);
-                        }
-                    }
+            if let Expr::FuncCall(name, _) = e {
+                if is_stateful_call(name) {
+                    stateful.get_or_insert_with(|| name.clone());
                 }
             }
         });
-    }
-    lag_rings.retain(|name, _| has_plain.contains(name));
-    for (series, lag) in &lag_rings {
-        sub_lag_rings.push(SubLagRing {
-            series: series.clone(),
-            lag: lag.clone(),
-        });
-    }
-
-    let mut recognized_off: BTreeSet<String> = BTreeSet::new();
-    let mut err: Option<StreamError> = None;
-    for bst in body {
-        walk_stmt_exprs_deep(bst, &mut |e| {
-            if err.is_some() {
-                return;
-            }
-            match e {
-                Expr::ArrayAccess(name, idx) => {
-                    if let Some(lag) = lag_rings.get(name) {
-                        // Lag-ring series: only the current read (cursor + lag)
-                        // or the lagged read (plain cursor) are allowed.
-                        let ok = matches!(
-                            offset_index_form(idx, &cursors),
-                            IndexForm::PlainCursor
-                        ) || cursor_plus_expr(idx, &cursors)
-                            .is_some_and(|off| exprs_equal(&off, lag));
-                        if !ok {
-                            err = Some(StreamError::Unsupported(format!(
-                                "composed map reads lag-ring series `{name}` at an offset other \
-                                 than the current bar or its fixed lag"
-                            )));
-                        }
-                    } else if bar_inputs.contains(name) {
-                        // The begIdx is an absolute bar, so `beg + cursor` is
-                        // the bar the map is producing: the update's input.
-                        let same_bar = primary_out
-                            .and_then(|po| facts.begs.get(po))
-                            .is_some_and(|beg| {
-                                cursor_plus_expr(idx, &cursors)
-                                    .is_some_and(|off| recv_read(&off).as_ref() == Some(beg))
-                            });
-                        if !same_bar {
-                            err = Some(StreamError::Unsupported(format!(
-                                "composed map reads bar input `{name}` other than at the begIdx \
-                                 of the series it writes plus the cursor"
-                            )));
-                        }
-                    } else {
-                        match offset_index_form(idx, &cursors) {
-                            IndexForm::PlainCursor => {
-                                if !defined.contains(name) && !outputs.contains(name) {
-                                    err = Some(StreamError::Unsupported(format!(
-                                        "composed map accesses `{name}` outside series[cursor] form"
-                                    )));
-                                }
-                            }
-                            IndexForm::CursorPlus(off) => {
-                                // Same-bar iff `off == nb(name) - nb(anchor)` and
-                                // the two series end on the same bar. A primary output
-                                // nothing before the map produced has no count: a series
-                                // read at the plain cursor anchors instead, never a lag
-                                // ring, whose plain read is an earlier bar.
-                                let anchors: Vec<&String> = match primary_out {
-                                    Some(po) if defined.contains(po) => vec![po],
-                                    Some(_) => has_plain
-                                        .iter()
-                                        .filter(|s| !lag_rings.contains_key(*s))
-                                        .collect(),
-                                    None => Vec::new(),
-                                };
-                                let same_bar = defined.contains(name)
-                                    && anchors.into_iter().any(|po| {
-                                        let prov_ok = matches!(
-                                            (
-                                                facts.diffs.get(&off),
-                                                facts.nbelem.get(name),
-                                                facts.nbelem.get(po),
-                                            ),
-                                            (Some((a, b)), Some(this), Some(prim))
-                                                if a == this && b == prim
-                                        );
-                                        let end_ok = matches!(
-                                            (facts.endidx.get(name), facts.endidx.get(po)),
-                                            (Some(e1), Some(e2)) if exprs_equal(e1, e2)
-                                        ) || (facts.end_last.contains_key(name)
-                                            && facts.end_last.contains_key(po));
-                                        prov_ok && end_ok
-                                    });
-                                if same_bar {
-                                    recognized_off.insert(off);
-                                } else {
-                                    err = Some(StreamError::Unsupported(format!(
-                                        "composed map reads `{name}[cursor+{off}]` but `{off}` is not a \
-                                         proven same-bar shift: it must be the element-count difference \
-                                         of the two sub-outputs (as in APO's `fastNb - *outNBElement`), \
-                                         produced with a shared endIdx argument or both ending on the \
-                                         endIdx bar; a genuine lag needs a ring, not a combine map"
-                                    )));
-                                }
-                            }
-                            IndexForm::Other => {
-                                err = Some(StreamError::Unsupported(format!(
-                                    "composed map accesses `{name}` outside series[cursor] form"
-                                )));
-                            }
-                        }
+        walk_stmt_exprs(bst, &mut |top| {
+            walk_expr_outside_indices(top, &mut |e| {
+                if let Expr::Var(v) = e {
+                    if !cursors.contains(v) && !params.contains(v) && !defined.contains(v) {
+                        temps.insert(v.clone());
                     }
                 }
-                Expr::FuncCall(name, _) => {
-                    if is_stateful_call(name) {
-                        err = Some(StreamError::UnsupportedCall(name.clone()));
-                    }
-                }
-                Expr::Var(v)
-                    if !cursors.contains(v)
-                        && !params.contains(v)
-                        && !defined.contains(v)
-                        && !recognized_off.contains(v) =>
-                {
-                    temps.insert(v.clone());
-                }
-                _ => {}
-            }
+            });
         });
     }
-    if let Some(e) = err {
-        return Err(e);
-    }
-    Ok(())
+    stateful.map_or(Ok(()), |name| Err(StreamError::UnsupportedCall(name)))
 }
 
 /// True when an expression heap-allocates: a `malloc`/`TA_Malloc` call
@@ -4870,10 +5675,8 @@ fn derive_stream_plan<'a>(
                 })?;
             }
             // The per-bar pipeline must resolve every sub source, align source,
-            // and output to a materialized series — the same cur-map the
-            // emitter walks, so a plan the emitter would panic on is rejected
-            // loudly here instead (the loopless tier has no producer transition
-            // to lean on, so this is its build gate).
+            // and output to a materialized series (the loopless tier has no
+            // producer transition to lean on, so this is its build gate).
             check_composed_emittable(&plan).map_err(|e| {
                 format!(
                     "{}: composed by analysis but the per-bar pipeline cannot be emitted: {e}",
@@ -7874,15 +8677,7 @@ fn ring_cursor_read(ring: &RingSpec, array: &str, off: Expr, names: &dyn NameMap
         BinOp::Sub,
         Box::new(off),
     );
-    let idx = Expr::Ternary(
-        Box::new(Expr::BinOp(
-            Box::new(x.clone()),
-            BinOp::GreaterEq,
-            Box::new(cap.clone()),
-        )),
-        Box::new(Expr::BinOp(Box::new(x.clone()), BinOp::Sub, Box::new(cap))),
-        Box::new(x),
-    );
+    let idx = wrap_sum(x, cap);
     Expr::ArrayAccess(names.ring_buf(&ring.var, array), Box::new(idx))
 }
 
@@ -8106,34 +8901,12 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
             });
         }
     }
-    out.push(Statement::Assign {
-        target: Expr::Var(names.ring_pos(&ring.var)),
-        value: Expr::BinOp(
-            Box::new(Expr::Var(names.ring_pos(&ring.var))),
-            BinOp::Add,
-            Box::new(Expr::IntLiteral(1)),
-        ),
-        compound: false,
-    });
     let cap = if proven {
         ring_cap_local(&ring.var)
     } else {
         names.ring_cap(&ring.var)
     };
-    out.push(Statement::If {
-        condition: Expr::BinOp(
-            Box::new(Expr::Var(names.ring_pos(&ring.var))),
-            BinOp::GreaterEq,
-            Box::new(Expr::Var(cap)),
-        ),
-        then_body: vec![Statement::Assign {
-            target: Expr::Var(names.ring_pos(&ring.var)),
-            value: Expr::IntLiteral(0),
-            compound: false,
-        }],
-        else_body: vec![],
-        cond_comments: vec![],
-    });
+    push_wrap_tail(out, &names.ring_pos(&ring.var), &cap);
 }
 
 fn rewrite_expr_for_transition(
@@ -8541,9 +9314,7 @@ pub struct PeekTransition {
 
 /// The handle's HEAP buffers a transition can index, with `true` for integer
 /// elements. Fixed-size array state fields are not here — see
-/// [`transition_buffers_with_state_arrays`]. Composed lag rings are absent by
-/// design: the composed tier emits its own push as text and drops it in peek
-/// mode.
+/// [`transition_buffers_with_state_arrays`].
 #[must_use]
 pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(String, bool)> {
     let mut out: Vec<(String, bool)> = Vec::new();
@@ -10748,6 +11519,79 @@ mod tests {
         // Integer (period == 1) identity guard -> the enum rule never touches it.
         let p1 = guard(eq(var("optInTimePeriod"), Expr::IntLiteral(1)), "TA_SUCCESS");
         assert!(!is_fastpath_block(&p1, &params, &enum_params, &NoCallees));
+    }
+
+    fn adxr_plan_with_a_second_tap(f: &FuncDef) -> ComposedPlan<'_> {
+        let registry = crate::registry::Registry::from_dir(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../input"),
+        );
+        let StreamPlan::Composed(mut cp) =
+            validate_streamable(f, &registry).expect("ADXR derives a plan")
+        else {
+            panic!("ADXR must derive a composed plan");
+        };
+        let mut second = cp.edges[cp.lines[0].taps[0].edge].clone();
+        second.class = EdgeClass::Tap { line: 0, tap: 1 };
+        cp.edges.push(second);
+        let mut tap = cp.lines[0].taps[0].clone();
+        tap.edge = cp.edges.len() - 1;
+        tap.back = TapBack::Field;
+        cp.lines[0].taps.push(tap);
+        cp
+    }
+
+    fn load_adxr() -> FuncDef {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../input/adxr");
+        let mut f = crate::parser::yaml::parse_yaml(&dir.join("adxr.yaml"));
+        let parsed = crate::parser::c_source::parse_c_source(&dir.join("adxr.c"));
+        crate::parser::c_source::wire_parsed_source(&mut f, &parsed);
+        f
+    }
+
+    #[test]
+    fn two_taps_of_one_line_read_pos_and_cap_once() {
+        let f = load_adxr();
+        let cp = adxr_plan_with_a_second_tap(&f);
+        assert_eq!(hoisted_lines(&cp), BTreeSet::from([0]));
+        let (_, ints) = lag_step_locals(&cp, false);
+        assert!(ints.contains(&"lagP0".to_string()) && ints.contains(&"lagC0".to_string()), "{ints:?}");
+
+        let loads = lag_tap_loads(&cp, &[(0, 0), (0, 1)], &TestNames);
+        let text = format!("{loads:?}");
+        for local in ["lagP0", "lagC0"] {
+            let reads = loads
+                .iter()
+                .filter(|st| matches!(st, Statement::Assign { target: Expr::Var(t), .. } if t == local))
+                .count();
+            assert_eq!(reads, 1, "{local} is read once: {text}");
+        }
+        assert_eq!(text.matches("sp->lagPos0").count(), 1, "{text}");
+        assert_eq!(text.matches("sp->lagCap0").count(), 1, "{text}");
+        let hoisted_loads = loads
+            .iter()
+            .filter(|st| matches!(st, Statement::Assign { value: Expr::ArrayAccess(..), .. }))
+            .count();
+        assert_eq!(hoisted_loads, 2, "{text}");
+        let uses = text.matches("lagP0").count();
+        assert!(uses >= 3, "the target and both loads use lagP0: {text}");
+    }
+
+    #[test]
+    fn one_tap_of_a_line_is_not_hoisted() {
+        let f = load_adxr();
+        let StreamPlan::Composed(cp) = validate_streamable(
+            &f,
+            &crate::registry::Registry::from_dir(
+                &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../input"),
+            ),
+        )
+        .expect("plan") else {
+            panic!("composed")
+        };
+        assert!(hoisted_lines(&cp).is_empty());
+        let text = format!("{:?}", lag_tap_loads(&cp, &[(0, 0)], &TestNames));
+        assert_eq!(text, format!("{:?}", lag_tap_load(&cp, 0, 0, &TestNames)));
+        assert!(!text.contains("lagP0"), "{text}");
     }
 
     struct TestNames;

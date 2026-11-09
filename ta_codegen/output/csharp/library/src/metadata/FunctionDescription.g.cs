@@ -5941,6 +5941,130 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- GATOR -->
+	<FinancialFunction>
+		<Abbreviation>GATOR</Abbreviation>
+		<ShortDescription>Gator Oscillator</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Display Shift</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Jaw Period</Name>
+				<ShortDescription>Time period for the jaw line</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>13</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Jaw Shift</Name>
+				<ShortDescription>Bars ahead the jaw line is drawn</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>0</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>0</SuggestedStart>
+					<SuggestedEnd>30</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>8</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Teeth Period</Name>
+				<ShortDescription>Time period for the teeth line</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>8</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Teeth Shift</Name>
+				<ShortDescription>Bars ahead the teeth line is drawn</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>0</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>0</SuggestedStart>
+					<SuggestedEnd>30</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>5</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Lips Period</Name>
+				<ShortDescription>Time period for the lips line</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>5</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Lips Shift</Name>
+				<ShortDescription>Bars ahead the lips line is drawn</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>0</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>0</SuggestedStart>
+					<SuggestedEnd>30</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>3</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outUpper</Name>
+				<Flags>
+					<Flag>Histogram</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
+					<Flag>Display Shift</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outLower</Name>
+				<Flags>
+					<Flag>Histogram</Flag>
+					<Flag>Negative</Flag>
+					<Flag>Zero</Flag>
+					<Flag>Display Shift</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- HA -->
 	<FinancialFunction>
 		<Abbreviation>HA</Abbreviation>

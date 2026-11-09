@@ -424,15 +424,16 @@ fn sv_ptr_roles(
             for (i, sub) in cp.subs.iter().enumerate() {
                 roles.insert(format!("sub{i}"), SvPtr::Sub { callee: sub.callee.to_uppercase() });
             }
-            for ring in &cp.sub_lag_rings {
-                let s = &ring.series;
-                phases.insert(format!("lagRingPos_{s}"));
+            for k in 0..cp.lines.len() {
+                use crate::streaming::{lag_line_field, LineField};
+                let pos = lag_line_field(k, LineField::Pos);
+                phases.insert(pos.clone());
                 roles.insert(
-                    format!("lagRing_{s}"),
+                    lag_line_field(k, LineField::Buf),
                     SvPtr::Slots {
-                        count: format!("lagRingCap_{s}"),
+                        count: lag_line_field(k, LineField::Cap),
                         is_int: false,
-                        phase: Some(format!("lagRingPos_{s}")),
+                        phase: Some(pos),
                     },
                 );
             }

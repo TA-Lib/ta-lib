@@ -1143,7 +1143,7 @@ fn stoch_derives_composed_plan() {
     assert!(matches!(cp.steps[1], streaming::UpdateStep::Sub { sub_idx: 1 }));
     assert!(matches!(
         &cp.steps[2],
-        streaming::UpdateStep::Align { dst, src } if dst == "outSlowK" && src == "tempBuffer"
+        streaming::UpdateStep::Align { dst, src, copy: false } if dst == "outSlowK" && src == "tempBuffer"
     ));
 }
 
@@ -1159,7 +1159,7 @@ fn stochf_derives_composed_plan() {
     assert_eq!(cp.subs[0].dsts, ["outFastD"]);
     assert!(matches!(
         &cp.steps[1],
-        streaming::UpdateStep::Align { dst, src } if dst == "outFastK" && src == "tempBuffer"
+        streaming::UpdateStep::Align { dst, src, copy: false } if dst == "outFastK" && src == "tempBuffer"
     ));
 }
 
@@ -1205,6 +1205,10 @@ fn composed_hard_errors_when_subcall_callee_lacks_stream() {
     assert!(
         matches!(err, StreamError::UnsupportedCall(ref m) if m.contains("no stream")),
         "expected no-stream sub-call error, got: {err}"
+    );
+    assert_eq!(
+        classifier_verdict(&f, &MaUnflagged),
+        "refused: unsupported call in steady loop: composed sub-call `ma` has no stream"
     );
 }
 
@@ -1325,6 +1329,12 @@ TA_RetCode apo( int startIdx, int endIdx,
             if m.contains("success-guard") && m.contains("flatten")),
         "G2 must guide to the error-guard flatten, got: {err}"
     );
+    assert_classifier_verdict(
+        &f,
+        "refused: sub-call nested inside an `if (rc == TA_SUCCESS) { ... }` success-guard; flatten to a \
+         top-level `if (rc != TA_SUCCESS) return rc;` error-guard (see STDDEV)",
+        "",
+    );
 }
 
 #[test]
@@ -1375,14 +1385,17 @@ TA_RetCode apo( int startIdx, int endIdx,
         matches!(err, StreamError::Unsupported(ref m) if m.contains("multi-cursor")),
         "G1 must guide to the single-cursor begIdx-offset form, got: {err}"
     );
+    assert_classifier_verdict(
+        &f,
+        "refused: multi-cursor combine loop; rewrite as a single cursor with a begIdx-offset index (see APO)",
+        "",
+    );
 }
 
 #[test]
 fn apo_derives_composed_plan_with_same_bar_offset_map() {
-    // The shipped (Flat-B) APO: fast MA -> tempBuffer, slow MA -> outReal, then
-    // a single-cursor combine map reading tempBuffer[i + offset] where
-    // `offset = fastNb - *outNBElement` is proven a same-bar element-count
-    // difference (both sub-calls share endIdx).
+    // The shipped APO: fast MA -> tempBuffer, slow MA -> outReal, then the
+    // combine map.
     let f = load("apo");
     let plan = streaming::validate_streamable(&f, lookup()).expect("APO derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
@@ -1441,13 +1454,101 @@ fn assert_refused(f: &FuncDef, needle: &str) {
     }
 }
 
+/// What [`streaming::analyze_composed`] makes of `f`: the head of its refusal,
+/// or its non-Zero edges.
+fn classifier_verdict(f: &FuncDef, lk: &dyn streaming::CalleeLookup) -> String {
+    match streaming::analyze_composed(f, lk) {
+        Ok(cp) => format!("accepted {:?}", non_zero_edges(&cp)),
+        Err(e) => {
+            let m = e.to_string();
+            format!("refused: {}", m.split(": it must be a same-bar shift").next().unwrap_or(&m))
+        }
+    }
+}
+
+/// Pins [`classifier_verdict`]; `why` is the hand derivation of an acceptance.
+fn assert_classifier_verdict(f: &FuncDef, want: &str, why: &str) {
+    assert_eq!(classifier_verdict(f, lookup()), want, "{why}");
+}
+
+/// Pins a refusal of the delay derivation: its head, and the guidance every
+/// such refusal carries.
+fn assert_delay_refused(f: &FuncDef, consumer: &str, buffer: &str, reason: &str) {
+    assert_delay_refused_why(f, consumer, buffer, reason, "");
+}
+
+/// [`assert_delay_refused`], naming the row in a failure.
+fn assert_delay_refused_why(f: &FuncDef, consumer: &str, buffer: &str, reason: &str, why: &str) {
+    let head = format!("composed {consumer} reads `{buffer}` at a delay that is not a stream constant ({reason})");
+    let row = if why.is_empty() { String::new() } else { format!("{why}: ") };
+    match streaming::analyze_composed(f, lookup()) {
+        Err(StreamError::Unsupported(m)) => assert!(
+            m.starts_with(&head) && m.contains("same-bar shift") && m.contains("element-count difference"),
+            "{row}want {head:?}, got {m:?}"
+        ),
+        Err(e) => panic!("{row}want {head:?}, got {e}"),
+        Ok(cp) => panic!("{row}want {head:?}, accepted {:?}", non_zero_edges(&cp)),
+    }
+}
+
 #[test]
-fn composed_map_reads_a_bar_input_only_at_the_begidx_of_what_it_writes() {
-    // At the plain cursor the input is `begIdx` bars behind the output; at the
-    // fast MA's begIdx it is the fast MA's bar, not the slow one's.
+fn composed_map_bar_input_reads_are_judged_by_their_delay() {
     let read = "fabs(inReal[*outBegIdx + i])";
-    assert_refused(&ppo_variant(read, "fabs(inReal[i])"), "bar input `inReal`");
-    assert_refused(&ppo_variant(read, "fabs(inReal[fastBeg + i])"), "bar input `inReal`");
+    // inReal holds endIdx + 1 bars and the map runs n = endIdx - Bslow + 1 times,
+    // so inReal[i] is Bslow bars behind its newest: startIdx once the begin is
+    // presumed at its start argument.
+    assert_delay_refused(
+        &ppo_variant(read, "fabs(inReal[i])"),
+        "map",
+        "inReal",
+        "pairs bars at a distance that depends on where the batch started",
+    );
+    // inReal[fastBeg + i] is Bslow - Bfast behind: 0 with both begins presumed at
+    // startIdx.
+    assert_classifier_verdict(
+        &ppo_variant(read, "fabs(inReal[fastBeg + i])"),
+        r#"accepted ["presumed lagzero.inReal.1.map0.r0 <- (inReal,1) map0.then inReal[fastBeg+i]"]"#,
+        "loud at Open: presume check fails when the MA lookbacks differ",
+    );
+}
+
+#[test]
+fn a_map_read_delay_renders_from_the_whole_offset_round_the_cursor() {
+    use streaming::LagTerm;
+    let apo = |read: &str| {
+        apo_with_tail(&format!(
+            r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   offset = fastNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = {read} - outReal[i];"
+        ))
+    };
+    let f = apo("tempBuffer[i+offset-1]");
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempBuffer.1.t0 ge1 Oldest <- (tempBuffer,1) map0 tempBuffer[i+offset-1]"]"#,
+        "fastNb - *outNBElement - (fastNb - *outNBElement - 1) = 1",
+    );
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted above");
+    let tap = &cp.lines[0].taps[0];
+    let depth = streaming::render_lag_formula(&cp.edge_delay_formula(tap.edge), &|t| match t {
+        LagTerm::Nb(s) => format!("lagNb{s}"),
+        LagTerm::Const(k) => k.to_string(),
+        LagTerm::Batch(x) => show(x),
+    });
+    assert_eq!(depth, "lagNb0 - (*outNBElement) - offset + 1");
+    // The Tracker reduces it to `i + offset`, but Open renders only a `+`/`-` chain
+    // holding the cursor once.
+    assert_classifier_verdict(
+        &apo("tempBuffer[i+i-i+offset]"),
+        "refused: composed map reads `tempBuffer` at a delay that is not a stream constant (index is not affine \
+         in the cursor)",
+        "",
+    );
 }
 
 #[test]
@@ -1464,6 +1565,10 @@ fn composed_map_state_is_set_only_before_the_maps() {
         &ppo_variant(tail, &format!("   zeroRun = 0;\n{tail}")),
         "after a map has run",
     );
+    let late = "refused: composed tail sets map state `zeroRun` after a map has run: Open would see the \
+                write and a step never would";
+    assert_classifier_verdict(&load_with_source("ppo", &moved), late, "");
+    assert_classifier_verdict(&ppo_variant(tail, &format!("   zeroRun = 0;\n{tail}")), late, "");
 }
 
 #[test]
@@ -1473,28 +1578,43 @@ fn composed_map_variant_selector_reads_only_what_the_handle_fixes() {
     assert_refused(&ppo_variant(sel, "if( zeroRun != 0 )"), "which a map moves");
     // A signature name is not a handle constant.
     assert_refused(&ppo_variant(sel, "if( endIdx != 0 )"), "not param-pure");
+    assert_classifier_verdict(
+        &ppo_variant(sel, "if( zeroRun != 0 )"),
+        "refused: composed map variant condition reads `zeroRun`, which a map moves: batch selects the \
+         variant once, a step on every bar",
+        "",
+    );
+    assert_classifier_verdict(
+        &ppo_variant(sel, "if( endIdx != 0 )"),
+        "refused: composed map variant condition is not param-pure",
+        "",
+    );
 }
 
 #[test]
 fn composed_map_state_moves_bar_to_bar_in_one_map_only() {
     // Batch runs the first map over every bar before the second; a step runs
     // both on one bar, so the second would see a different count.
-    assert_refused(
-        &ppo_variant(
-            "   free( tempBuffer );\n\n   return",
-            "   for( i=0; i < (int)*outNBElement; i++ )\n   {\n      zeroRun = zeroRun + 1;\n      \
-             outReal[i] = outReal[i] + 0.0 * zeroRun;\n   }\n   free( tempBuffer );\n\n   return",
-        ),
-        "more than one map",
+    let f = ppo_variant(
+        "   free( tempBuffer );\n\n   return",
+        "   for( i=0; i < (int)*outNBElement; i++ )\n   {\n      zeroRun = zeroRun + 1;\n      \
+         outReal[i] = outReal[i] + 0.0 * zeroRun;\n   }\n   free( tempBuffer );\n\n   return",
+    );
+    assert_refused(&f, "more than one map");
+    assert_classifier_verdict(
+        &f,
+        "refused: composed map state `zeroRun` moves bar to bar in more than one map",
+        "",
     );
 }
 
 #[test]
-fn adxr_derives_composed_plan_with_sub_lag_ring() {
-    // ADXR = adx(inHigh,inLow,inClose) over an extended range -> adx buffer,
-    // then outReal[k] = (adx[k+(period-1)] + adx[k])/2: the current ADX plus the
-    // ADX from (period-1) bars ago. That self-lag over the sub-output is a lag
-    // ring (a param depth), NOT a same-bar combine.
+fn adxr_derives_composed_plan_with_a_delay_line() {
+    // outReal[k] = (adx[k+(period-1)] + adx[k])/2: the current ADX plus the ADX
+    // from period-1 bars ago, a lag fixed by the parameters, so the plain-cursor
+    // read is one tap of a delay line on the sub-call's output.
+    use streaming::{Consumer, DefSite, EdgeClass, LagTerm, OpenAction, OpenAt, TapBack};
+    use ta_codegen_lib::ir::Expr;
     let f = load("adxr");
     let plan = streaming::validate_streamable(&f, lookup()).expect("ADXR derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
@@ -1507,27 +1627,363 @@ fn adxr_derives_composed_plan_with_sub_lag_ring() {
     // Multi-price direct feed: the three raw price inputs go straight to adx().
     assert_eq!(cp.subs[0].srcs, ["inHigh", "inLow", "inClose"]);
     assert_eq!(cp.subs[0].dsts, ["adx"]);
-    // The lag ring over the ADX sub-output.
-    assert_eq!(cp.sub_lag_rings.len(), 1, "one sub-output lag ring");
-    assert_eq!(cp.sub_lag_rings[0].series, "adx");
-    // The lag depth is the parameter expression optInTimePeriod - 1.
-    use ta_codegen_lib::ir::{BinOp, Expr};
-    match &cp.sub_lag_rings[0].lag {
-        Expr::BinOp(l, BinOp::Sub, r) => {
-            assert!(matches!(l.as_ref(), Expr::Var(v) if v == "optInTimePeriod"));
-            assert!(matches!(r.as_ref(), Expr::IntLiteral(1)));
+
+    assert_eq!(cp.lines.len(), 1, "one delay line");
+    let line = &cp.lines[0];
+    let def = &cp.defs[line.def];
+    assert_eq!((def.buffer.as_str(), def.ordinal), ("adx", 1));
+    assert_eq!(def.site, DefSite::Sub { sub_idx: 0, out: 0 });
+    assert!(matches!(&def.count_open, Some(Expr::PointerDeref(p)) if p == "outNBElement"));
+    assert_eq!(line.taps.len(), 1);
+    let tap = &line.taps[0];
+    assert!(tap.ge1, "period - 1 >= 1 for every accepted period");
+    assert_eq!(tap.back, TapBack::Oldest);
+    assert_eq!(tap.key, "lagdepth.adx.1.t0");
+    let edge = &cp.edges[tap.edge];
+    assert_eq!(edge.class, EdgeClass::Tap { line: 0, tap: 0 });
+    let Consumer::MapRead { step, arm: None, buffer, index } = &edge.consumer else {
+        panic!("the tap is a top-level map read: {:?}", edge.consumer);
+    };
+    assert!(matches!(cp.steps[*step], streaming::UpdateStep::Map { .. }));
+    assert_eq!(buffer, "adx");
+    assert!(matches!(index, Expr::Var(v) if v == "outIdx"), "the plain-cursor read: {index:?}");
+
+    // Depth captured at Open from the exact counts, never from the parameter.
+    let terms = cp.edge_delay_formula(tap.edge).terms;
+    assert!(
+        matches!(terms.as_slice(), [(1, LagTerm::Nb(0)), (-1, LagTerm::Batch(Expr::Var(t)))] if t == "nbElement"),
+        "depth = lagNb0 - nbElement: {terms:?}"
+    );
+
+    assert_eq!(cp.snapshots, [line.def], "the line's count is lagNb0");
+    let call = cp.subs[0].tail_idx;
+    let kinds: Vec<String> = cp
+        .open_actions
+        .iter()
+        .map(|(at, a)| {
+            let what = match a {
+                OpenAction::Snapshot { def } => format!("snapshot ({},{})", cp.defs[*def].buffer, cp.defs[*def].ordinal),
+                OpenAction::EmptyGuard { count } => format!("empty {count:?}"),
+                OpenAction::Capture { line, tap } => format!("capture {line}.{tap}"),
+                OpenAction::Seed { line } => format!("seed {line}"),
+                other => format!("{other:?}"),
+            };
+            let at = match at {
+                OpenAt::AfterStmt(i) => format!("after {}", i - call),
+                OpenAt::BeforeStmt(i) => format!("before {}", i - call),
+                other => format!("{other:?}"),
+            };
+            format!("{at}: {what}")
+        })
+        .collect();
+    // The snapshot follows the call's returning guard; the checks and the seed
+    // precede the map that reads the tap.
+    let map_tail = match cp.steps[*step] {
+        streaming::UpdateStep::Map { tail_idx } => tail_idx - call,
+        _ => unreachable!("checked"),
+    };
+    assert_eq!(
+        kinds,
+        [
+            "after 1: snapshot (adx,1)".to_string(),
+            format!("before {map_tail}: empty Var(\"nbElement\")"),
+            format!("before {map_tail}: capture 0.0"),
+            format!("before {map_tail}: seed 0"),
+        ]
+    );
+}
+
+/// A BBANDS body whose first memmove is followed by `tail`.
+fn bbands_with_tail(tail: &str) -> FuncDef {
+    load_with_source("bbands", &bbands_source(tail))
+}
+
+fn bbands_source(tail: &str) -> String {
+    format!(
+        r#"
+TA_RetCode bbands( int startIdx, int endIdx, const double inReal[],
+   int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{{
+   double *tmp;
+   TA_RetCode retCode;
+   int b1, n, b2, n2;
+   int i;
+
+   tmp = malloc((endIdx-startIdx+1) * sizeof(double));
+   retCode = sma( startIdx, endIdx, inReal, optInTimePeriod, &b1, &n, tmp );
+   if( retCode != TA_SUCCESS )
+   {{
+      free( tmp );
+      return retCode;
+   }}
+   memmove( outRealUpperBand, &tmp[0], n * sizeof(double) );
+{tail}
+   free( tmp );
+   *outBegIdx = b1;
+   *outNBElement = n;
+   return TA_SUCCESS;
+}}
+"#
+    )
+}
+
+fn align_copies(f: &FuncDef) -> Vec<bool> {
+    let cp = streaming::analyze_composed(f, lookup()).unwrap_or_else(|e| panic!("accepted: {e}"));
+    cp.steps
+        .iter()
+        .filter_map(|s| match s {
+            streaming::UpdateStep::Align { copy, .. } => Some(*copy),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn align_whose_source_a_later_call_redefines_copies() {
+    let f = bbands_with_tail(
+        r"
+   retCode = ema( startIdx, endIdx, inReal, optInTimePeriod, &b2, &n2, tmp );
+   if( retCode != TA_SUCCESS )
+   {
+      free( tmp );
+      return retCode;
+   }
+   for( i=0; i<n; i++ )
+   {
+      outRealMiddleBand[i] = tmp[i];
+      outRealLowerBand[i] = tmp[i];
+   }",
+    );
+    assert_eq!(align_copies(&f), [true]);
+}
+
+#[test]
+fn align_whose_destination_a_later_map_writes_copies() {
+    let f = bbands_with_tail(
+        r"
+   for( i=0; i<n; i++ )
+   {
+      outRealUpperBand[i] = outRealUpperBand[i] * 2.0;
+      outRealMiddleBand[i] = tmp[i] + 1.0;
+      outRealLowerBand[i] = tmp[i];
+   }",
+    );
+    assert_eq!(align_copies(&f), [true]);
+    // The copy gives the destination its own scalar, so the map's write leaves
+    // the source the middle band reads unchanged.
+    let c = ta_codegen_lib::backends::c_stream::generate(
+        &f,
+        &crate::common::load_enums(),
+        lookup(),
+        crate::common::make_helpers(),
+    );
+    let step = &c[c.find("TA_BBANDS_StepImpl(").expect("step")..];
+    let step = &step[..step.find("\n}").expect("step end")];
+    let copy = step.find("cur_outRealUpperBand = cur_tmp;").expect("the copy");
+    let write = step.find("cur_outRealUpperBand = cur_outRealUpperBand * 2.0;").expect("the write");
+    assert!(copy < write, "{step}");
+    assert!(step.contains("cur_outRealMiddleBand = cur_tmp + 1.0;"), "{step}");
+}
+
+/// A tail over the first memmove that nothing later writes.
+const BBANDS_READ_ONLY_TAIL: &str = r"
+   for( i=0; i<n; i++ )
+   {
+      outRealMiddleBand[i] = tmp[i] + 1.0;
+      outRealLowerBand[i] = tmp[i];
+   }";
+
+#[test]
+fn align_nothing_later_writes_aliases() {
+    assert_eq!(align_copies(&bbands_with_tail(BBANDS_READ_ONLY_TAIL)), [false]);
+}
+
+/// Every lag tap of a composed plan as `(definition, consumer)`. The definition is
+/// `buffer,ordinal`, the ordinal counting writes to that buffer in body order from 1;
+/// the consumer ends in ` ge1` when the tap is proved at least one bar deep.
+fn derived_taps(cp: &streaming::ComposedPlan<'_>) -> Vec<(String, String)> {
+    use streaming::Consumer;
+    let mut out = Vec::new();
+    for line in &cp.lines {
+        let def = &cp.defs[line.def];
+        for tap in &line.taps {
+            let what = match &cp.edges[tap.edge].consumer {
+                Consumer::SubSrc { sub_idx, input } => format!("sub {sub_idx} source {input}"),
+                Consumer::Align { step } => format!("align at step {step}"),
+                Consumer::MapRead { buffer, index, .. } => format!("map read of {buffer}[{index:?}]"),
+                Consumer::MapPrior { buffer, .. } => format!("map prior of {buffer}"),
+                Consumer::TailScalar { tail_idx } => format!("tail scalar at {tail_idx}"),
+                Consumer::Return { output } => format!("return of {output}"),
+            };
+            let ge1 = if tap.ge1 { " ge1" } else { "" };
+            out.push((format!("{},{}", def.buffer, def.ordinal), format!("{what}{ge1}")));
         }
-        other => panic!("lag depth must be optInTimePeriod - 1, got {other:?}"),
     }
+    out
+}
+
+#[test]
+fn gator_start_form_derives_four_lagged_reads() {
+    // Equal shifts give a leg a read-back of zero, so no tap is provably >= 1.
+    let f = load("gator");
+    let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&f, lookup()) else {
+        panic!("GATOR must derive a composed plan");
+    };
+    let taps = derived_taps(&cp);
+    let defs: std::collections::BTreeSet<&str> = taps.iter().map(|(d, _)| d.as_str()).collect();
+    assert_eq!(
+        defs,
+        ["tempA,1", "tempA,2", "tempB,1", "tempB,2"].into_iter().collect(),
+        "every leg buffer definition is read through a tap: {taps:?}"
+    );
+    assert!(taps.iter().all(|(_, c)| !c.ends_with(" ge1")), "no GATOR tap is ge1: {taps:?}");
+}
+
+#[test]
+fn gator_end_form_taps_the_median_price_once_per_leg() {
+    // The form whose legs end early: each rma ends `back` bars before tempMP's
+    // newest element, so it reads tempMP `back` bars behind, exact, and 0 for one
+    // leg of each pair; four depths with no fixed difference share one line. Each
+    // leg then holds nbElement elements, a 0 the prover sees only by presuming each
+    // begin at its start argument.
+    let mut src = std::fs::read_to_string(input_dir().join("gator/gator.c")).expect("gator.c");
+    let edits = [
+        ("   int i, nbElement, maxBack;", "   int i, nbElement;"),
+        (
+            "   maxBack = backJaw + backTeethUpper;\n   if( backTeethLower + backLips > maxBack )\n      \
+             maxBack = backTeethLower + backLips;\n\n",
+            "",
+        ),
+        ("malloc((nbElement+maxBack) * sizeof(double));\n   if( !tempA )", "malloc(nbElement * sizeof(double));\n   if( !tempA )"),
+        ("malloc((nbElement+maxBack) * sizeof(double));\n   if( !tempB )", "malloc(nbElement * sizeof(double));\n   if( !tempB )"),
+        ("localStart-backJaw, localEnd,", "localStart-backJaw, localEnd-backJaw,"),
+        ("localStart-backTeethUpper, localEnd,", "localStart-backTeethUpper, localEnd-backTeethUpper,"),
+        ("localStart-backTeethLower, localEnd,", "localStart-backTeethLower, localEnd-backTeethLower,"),
+        ("localStart-backLips, localEnd,", "localStart-backLips, localEnd-backLips,"),
+    ];
+    for (from, to) in edits {
+        assert_eq!(src.matches(from).count(), 1, "the end-form edit {from:?} does not apply once");
+        src = src.replacen(from, to, 1);
+    }
+    let want = [
+        "tap lagdepth.tempMP.1.t0 Field <- (tempMP,1) sub1.in0",
+        "tap lagdepth.tempMP.1.t1 Field <- (tempMP,1) sub2.in0",
+        "presumed lagzero.tempA.1.map0.r0 <- (tempA,1) map0 tempA[i]",
+        "presumed lagzero.tempB.1.map0.r0 <- (tempB,1) map0 tempB[i]",
+        "tap lagdepth.tempMP.1.t2 Field <- (tempMP,1) sub3.in0",
+        "tap lagdepth.tempMP.1.t3 Field <- (tempMP,1) sub4.in0",
+        "presumed lagzero.tempA.2.map1.r0 <- (tempA,2) map1 tempA[i]",
+        "presumed lagzero.tempB.2.map1.r0 <- (tempB,2) map1 tempB[i]",
+    ];
+    assert_classifier_verdict(&load_with_source("gator", &src), &format!("accepted {want:?}"), "the end form");
+}
+
+#[test]
+fn apo_fast_ma_started_early_derives_a_tap() {
+    // Only the start arguments say three: a clamp to either lookback moves it, so the
+    // depth is not provably >= 1.
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx-3, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i] - outReal[i];",
+    );
+    let cp = streaming::analyze_composed(&f, lookup())
+        .unwrap_or_else(|e| panic!("an early-started fast average streams through a tap: {e}"));
+    let taps = derived_taps(&cp);
+    assert_eq!(
+        taps.iter().map(|(d, _)| d.as_str()).collect::<Vec<_>>(),
+        ["tempBuffer,1"],
+        "one tap, on the fast average: {taps:?}"
+    );
+    assert!(!taps[0].1.ends_with(" ge1"), "the tap is not ge1: {taps:?}");
+}
+
+#[test]
+fn a_tapped_align_is_a_copy_to_every_later_decision() {
+    // The second memmove reads tmp two bars back, so it copies its tap, and the map's
+    // in-place write lands on that copy: nothing later writes tmp, so the first
+    // memmove may alias it.
+    let src = r#"
+TA_RetCode bbands( int startIdx, int endIdx, const double inReal[],
+   int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement,
+   double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double *tmp;
+   TA_RetCode retCode;
+   int b1, n, nb;
+   int i;
+
+   nb = endIdx - startIdx + 1;
+   tmp = malloc((nb+2) * sizeof(double));
+   retCode = sma( startIdx-2, endIdx, inReal, optInTimePeriod, &b1, &n, tmp );
+   if( retCode != TA_SUCCESS )
+   {
+      free( tmp );
+      return retCode;
+   }
+   memmove( outRealMiddleBand, &tmp[2], nb * sizeof(double) );
+   memmove( outRealUpperBand, &tmp[0], nb * sizeof(double) );
+   for( i=0; i<nb; i++ )
+   {
+      outRealUpperBand[i] = outRealUpperBand[i] * 2.0;
+      outRealLowerBand[i] = outRealMiddleBand[i];
+   }
+   free( tmp );
+   *outBegIdx = startIdx;
+   *outNBElement = nb;
+   return TA_SUCCESS;
+}
+"#;
+    let f = load_with_source("bbands", src);
+    let cp = streaming::analyze_composed(&f, lookup()).unwrap_or_else(|e| panic!("accepted: {e}"));
+    let si = cp.steps.iter().rposition(|s| matches!(s, streaming::UpdateStep::Align { .. })).expect("align");
+    assert!(cp.align_tap(si).is_some(), "the second memmove reads a tap: {:?}", non_zero_edges(&cp));
+    assert_eq!(align_copies(&f), [false, true]);
+}
+
+#[test]
+fn an_open_check_never_reads_a_reassigned_parameter() {
+    let src = std::fs::read_to_string(input_dir().join("adxr").join("adxr.c")).expect("adxr.c");
+    let (bound, inline) = (
+        "   nbElement = *outNBElement - (optInTimePeriod-1);\n   for( outIdx = 0; outIdx < nbElement; outIdx++ )",
+        "   for( outIdx = 0; outIdx < *outNBElement - (optInTimePeriod-1); outIdx++ )",
+    );
+    assert!(src.contains(bound), "the ADXR map moved");
+    let inlined = src.replacen(bound, inline, 1).replacen(
+        "   *outNBElement = nbElement;",
+        "   *outNBElement = *outNBElement - (optInTimePeriod-1);",
+        1,
+    );
+    // The depth check reads the map bound, which names the period.
+    streaming::analyze_composed(&load_with_source("adxr", &inlined), lookup())
+        .unwrap_or_else(|e| panic!("the inlined bound composes: {e}"));
+    let reassigned = inlined.replacen(inline, &format!("   optInTimePeriod = optInTimePeriod + 0;\n{inline}"), 1);
+    assert_refused(
+        &load_with_source("adxr", &reassigned),
+        "Open check reads parameter `optInTimePeriod` after the body reassigns it",
+    );
+    // The check is positional: the map's EmptyGuard and Capture are the last
+    // Open checks reading the period, so a reassignment after the map leaves
+    // each reading the caller's value.
+    let after_map = "   free(adx);\n\n   *outBegIdx";
+    assert!(inlined.contains(after_map), "the ADXR tail moved");
+    let late = inlined.replacen(after_map, &format!("   optInTimePeriod = optInTimePeriod + 0;\n{after_map}"), 1);
+    streaming::analyze_composed(&load_with_source("adxr", &late), lookup())
+        .unwrap_or_else(|e| panic!("a reassignment after the last check composes: {e}"));
 }
 
 #[test]
 fn data_dependent_lag_offset_rejected() {
-    // A lag ring has a FIXED capacity sized at open, so its depth must be a
-    // parameter expression. A data-dependent offset (here `*outNBElement / 2`,
-    // varying with history length) cannot be a ring and must be refused —
-    // otherwise the analyzer would size a ring from a value it cannot know
-    // at open. This pins the param-purity guard on the lag depth.
+    // adx[outIdx + runtimeLag] is 0 bars behind (the map bound subtracts the same
+    // runtimeLag), but adx[outIdx] is runtimeLag = *outNBElement / 2 behind: a
+    // quotient the Tracker does not model, fixed by no parameter.
     let src = r#"
 TA_RetCode adxr( int startIdx, int endIdx,
    const double inHigh[], const double inLow[], const double inClose[],
@@ -1559,11 +2015,7 @@ TA_RetCode adxr( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("adxr", src);
-    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
-    assert!(
-        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar shift")),
-        "a data-dependent lag must be refused (not sized into a fixed ring), got: {err}"
-    );
+    assert_delay_refused(&f, "map", "adx", "depends on data or an unmodelled value");
 }
 
 #[test]
@@ -1611,23 +2063,11 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
-    assert!(
-        matches!(err, StreamError::Unsupported(ref m)
-            if m.contains("element-count difference") && m.contains("same-bar")),
-        "begIdx offset must be refused with the count-difference guidance, got: {err}"
-    );
+    assert_delay_refused(&f, "map", "tempBuffer", "subtracts a begin index with no guard proving it non-negative");
 }
 
 #[test]
-fn mismatched_endidx_combine_rejected() {
-    // The count-difference `nb(a) - nb(b)` equals the begIdx shift ONLY when the
-    // two producers share an endIdx. Here the slow MA runs over `endIdx - 1`, so
-    // `offset = fastNb - *outNBElement` still satisfies the receiver-provenance
-    // check but is NOT a same-bar shift (the windows end on different bars). The
-    // shared-endIdx clause must reject it — otherwise the emitter's index-blind
-    // rewrite would ship a silently-lagged stream. This pins that clause (its
-    // provenance sibling is pinned by the begIdx-form test above).
+fn an_endidx_lagged_slow_ma_taps_its_source() {
     let src = r#"
 TA_RetCode apo( int startIdx, int endIdx,
    const double inReal[],
@@ -1666,16 +2106,22 @@ TA_RetCode apo( int startIdx, int endIdx,
 }
 "#;
     let f = load_with_source("apo", src);
-    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
-    assert!(
-        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
-        "combine over sub-calls with different endIdx must be refused as not same-bar, got: {err}"
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.inReal.1.t0 ge1 Oldest <- (inReal,1) sub1.in0"]"#,
+        "the slow ma's last source bar is endIdx-1: delay (endIdx+1) - 1 - (endIdx-1) = 1. Its \
+         output then ends a bar early, which the offset absorbs: the map reads are 0 bars behind",
     );
 }
 
-/// APO's metadata over two scratch series and a hand-written sub-call tail.
+/// APO's metadata over two scratch series and a hand-written sub-call tail; the
+/// spare locals are for the tails below.
 fn apo_with_tail(tail: &str) -> FuncDef {
-    let src = format!(
+    load_with_source("apo", &apo_source(tail))
+}
+
+fn apo_source(tail: &str) -> String {
+    format!(
         r#"
 TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
    int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
@@ -1683,9 +2129,12 @@ TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
 {{
    double *tempBuffer;
    double *tempBuffer2;
+   double *res;
    TA_RetCode retCode;
    int fastBeg, fastNb;
    int offset;
+   int nb, backFast, backSlow;
+   double last;
    int i;
 
    tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
@@ -1696,15 +2145,41 @@ TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
    return TA_SUCCESS;
 }}
 "#
-    );
-    load_with_source("apo", &src)
+    )
+}
+
+/// APO's shipped tail over [`apo_with_tail`]'s scratch series.
+const APO_TAIL: &str = r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   offset = fastNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i+offset] - outReal[i];";
+
+/// [`APO_TAIL`] with each `(from, to)` edit applied once.
+fn apo_tail_with(edits: &[(&str, &str)]) -> FuncDef {
+    let mut tail = APO_TAIL.to_string();
+    for (from, to) in edits {
+        assert!(tail.contains(from), "fixture edit `{from}` does not apply");
+        tail = tail.replacen(from, to, 1);
+    }
+    apo_with_tail(&tail)
 }
 
 #[test]
-fn count_receiver_rewritten_after_its_series_rejected() {
-    // `fastNb` counts tempBuffer2 (one bar short) by the time `offset` reads it,
-    // yet tempBuffer and outReal still share the endIdx argument.
-    let f = apo_with_tail(
+fn apo_tail_reads_every_series_at_its_newest_element() {
+    // nb(fast) = endIdx - Bf + 1, nb(slow) = endIdx - Bs + 1 and offset = Bs - Bf,
+    // so tempBuffer[i+offset] is nb(fast) - nb(slow) - offset = 0 behind; outReal's
+    // prior and return are its own count.
+    assert_classifier_verdict(&apo_tail_with(&[]), "accepted []", "every delay cancels exactly");
+}
+
+/// The fast average's count receiver is rewritten by a later call ending a bar
+/// early, before the offset reads it.
+fn count_receiver_rewritten() -> FuncDef {
+    apo_with_tail(
         r"
    retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
       &fastBeg, &fastNb, tempBuffer );
@@ -1715,18 +2190,43 @@ fn count_receiver_rewritten_after_its_series_rejected() {
    offset = fastNb - *outNBElement;
    for( i=0; i < (int)*outNBElement; i++ )
       outReal[i] = tempBuffer[i+offset] - outReal[i];",
-    );
-    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
-    assert!(
-        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
-        "a count receiver rewritten by a later sub-call must not vouch for the first, got: {err}"
+    )
+}
+
+#[test]
+fn a_count_receiver_rewritten_after_its_series_taps_both_reads() {
+    assert_classifier_verdict(
+        &count_receiver_rewritten(),
+        r#"accepted ["tap lagdepth.inReal.1.t0 ge1 Oldest <- (inReal,1) sub2.in0", "tap lagdepth.tempBuffer.1.t0 Oldest <- (tempBuffer,1) map0 tempBuffer[i+offset]"]"#,
+        "the third ma reads inReal only up to endIdx-1: delay (endIdx+1) - 1 - (endIdx-1) = 1, exact, \
+         ge1. offset = nb(tempBuffer2) - nb(outReal) = (endIdx - B2) - (endIdx - B1 + 1), so \
+         tempBuffer[i+offset] is (endIdx - B0 + 1) - (endIdx - B1 + 1) - offset = B2 - B0 + 1 behind: \
+         1 with both begins presumed at startIdx, a tap that is not ge1",
     );
 }
 
 #[test]
-fn endidx_argument_its_own_call_rewrites_rejected() {
+fn a_capture_floors_at_one_only_for_a_ge1_tap() {
+    let f = count_receiver_rewritten();
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    let floors: Vec<(String, i32)> = cp
+        .open_actions
+        .iter()
+        .filter_map(|(_, a)| match a {
+            streaming::OpenAction::Capture { line, tap } => {
+                let def = &cp.defs[cp.lines[*line].def];
+                Some((format!("{},{}", def.buffer, def.ordinal), cp.lines[*line].taps[*tap].capture_floor()))
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(floors, [("inReal,1".to_string(), 1), ("tempBuffer,1".to_string(), 0)]);
+}
+
+#[test]
+fn an_endidx_argument_its_own_call_rewrites_taps_the_next_source() {
     // Both later calls spell `fastNb-1`, but the first reads tempBuffer's count
-    // and the second tempBuffer2's, so outReal stops short of tempBuffer2.
+    // and the second tempBuffer2's.
     let f = apo_with_tail(
         r"
    retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
@@ -1739,16 +2239,18 @@ fn endidx_argument_its_own_call_rewrites_rejected() {
    for( i=0; i < (int)*outNBElement; i++ )
       outReal[i] = tempBuffer2[i+offset] - outReal[i];",
     );
-    let err = streaming::analyze_composed(&f, lookup()).unwrap_err();
-    assert!(
-        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
-        "an endIdx argument its own call rewrites must not match a later spelling, got: {err}"
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempBuffer.1.t0 Oldest <- (tempBuffer,1) sub2.in0"]"#,
+        "the second ma starts at 0, at or before its lookback LB = ma_lookback(slow), so it begins at LB \
+         and rewrites fastNb to nb(tempBuffer) - LB; the third reads tempBuffer up to nb(tempBuffer) - LB \
+         - 1: LB bars behind, exact, and LB is only known to be at least 0, so not ge1. The map reads \
+         tempBuffer2 at nb(tempBuffer2) - nb(outReal) - offset = 0",
     );
 }
 
 /* ---- #431: sub-outputs over different index spaces, both ending on endIdx ----
- * CRSI's shape without its error paths. No two of its sub-calls share an endIdx
- * argument, so only the end-on-the-endIdx-bar proof can accept its offset reads. */
+ * CRSI's shape without its error paths. */
 const END_ALIGNED: &str = r#"
 TA_RetCode crsi( int startIdx, int endIdx, const double inReal[],
    int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod,
@@ -1828,16 +2330,8 @@ fn end_aligned_with(edits: &[(&str, &str)]) -> FuncDef {
     load_with_source("crsi", &src)
 }
 
-fn assert_not_same_bar(f: &FuncDef, why: &str) {
-    match streaming::analyze_composed(f, lookup()) {
-        Err(StreamError::Unsupported(m)) if m.contains("same-bar") => {}
-        Err(e) => panic!("{why}: refused for another reason: {e}"),
-        Ok(_) => panic!("{why}: accepted"),
-    }
-}
-
 #[test]
-fn end_aligned_sub_outputs_prove_offset_reads_same_bar() {
+fn end_aligned_fixture_derives_a_composed_plan() {
     let f = end_aligned_with(&[]);
     let plan = streaming::validate_streamable(&f, lookup()).expect("the fixture derives a plan");
     let streaming::StreamPlan::Composed(cp) = plan else {
@@ -1849,57 +2343,88 @@ fn end_aligned_sub_outputs_prove_offset_reads_same_bar() {
     assert!(matches!(cp.steps.last(), Some(streaming::UpdateStep::Map { .. })));
 }
 
+// In the rows below the producer writes N = endIdx - anchorIdx elements, one per
+// bar up to endIdx, and each offset is a count difference against percentrank's
+// count n, which the map runs over.
+
 #[test]
-fn end_aligned_rejects_a_producer_sub_call_ending_early() {
+fn end_aligned_producer_sub_call_ending_early_taps_the_producer() {
     let f = end_aligned_with(&[("rsi( 0, outIdx-1,", "rsi( 0, outIdx-2,")]);
-    assert_not_same_bar(&f, "the streak RSI stops a bar short of the producer series");
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempStreak.1.t0 ge1 Oldest <- (tempStreak,1) sub0.in0"]"#,
+        "the streak rsi reads the producer up to outIdx - 2 = N - 2: delay N - 1 - (N - 2) = 1, exact. \
+         Its output ends a bar early, which offsetStreak absorbs",
+    );
 }
 
 #[test]
-fn end_aligned_rejects_a_chained_sub_call_ending_early() {
+fn end_aligned_chained_sub_call_ending_early_taps_its_source() {
     let f = end_aligned_with(&[("percentrank( 0, rocNb-1,", "percentrank( 0, rocNb-2,")]);
-    assert_not_same_bar(&f, "the rank stops a bar short of the rocp series");
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempRank.1.t0 ge1 Oldest <- (tempRank,1) sub3.in0"]"#,
+        "percentrank reads rocp's rocNb elements up to rocNb - 2: delay rocNb - 1 - (rocNb - 2) = 1, \
+         exact. Every map read is a count difference against percentrank's own count, so 0",
+    );
 }
 
 #[test]
 fn end_aligned_rejects_an_offset_that_is_not_a_count_difference() {
+    // tempRSI[i+offsetRSI] is nb(rsi) - n - (nb(rsi) - n + 1) = -1 bars behind.
     let f = end_aligned_with(&[(
         "offsetRSI = rsiNb - *outNBElement;",
         "offsetRSI = rsiNb - *outNBElement + 1;",
     )]);
-    assert_not_same_bar(&f, "a count difference plus one is a lag");
+    assert_delay_refused(&f, "map", "tempRSI", "reads ahead");
 }
 
 #[test]
-fn end_aligned_rejects_a_count_receiver_reused_by_a_later_sub_call() {
+fn end_aligned_count_receiver_reused_by_a_later_sub_call_taps_at_a_parameter_depth() {
     // `streakNb` holds the input RSI's count by the time either offset reads it.
     let f = end_aligned_with(&[
         ("&tempBegIdx, &rsiNb, tempRSI", "&tempBegIdx, &streakNb, tempRSI"),
         ("offsetRSI = rsiNb", "offsetRSI = streakNb"),
     ]);
-    assert_not_same_bar(&f, "a receiver rewritten by another sub-call no longer counts the first");
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempStreak.2.t0 Oldest <- (tempStreak,2) map0 tempStreak[i+offsetStreak]"]"#,
+        "the input rsi begins at its start anchorIdx + rsi_lookback(p), at or past its lookback since \
+         startIdx >= lookbackTotal, so offsetStreak = (endIdx - anchorIdx - rsi_lookback(p) + 1) - n. The \
+         streak rsi begins at rsi_lookback(s) over the N producer elements, so (tempStreak,2) holds N - \
+         rsi_lookback(s) and tempStreak[i+offsetStreak] is rsi_lookback(p) - rsi_lookback(s) - 1 behind: \
+         exact, of either sign, so neither ge1 nor refused. A negative depth fails Open's Capture range \
+         check, an internal error, never a wrong value",
+    );
 }
 
 #[test]
-fn end_aligned_rejects_a_paced_var_rewritten_before_its_sub_call() {
+fn end_aligned_paced_var_rewritten_before_its_sub_call_taps_the_producer() {
     let f = end_aligned_with(&[(
         "   retCode = rsi( 0, outIdx-1,",
         "   outIdx = outIdx - 1;\n   retCode = rsi( 0, outIdx-1,",
     )]);
-    assert_not_same_bar(&f, "`outIdx-1` no longer names the producer series' last element");
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempStreak.1.t0 ge1 Oldest <- (tempStreak,1) sub0.in0"]"#,
+        "outIdx - 1 after the decrement is N - 2: the streak rsi reads 1 bar behind, exact",
+    );
 }
 
 #[test]
 fn end_aligned_rejects_an_endidx_rewritten_between_sub_calls() {
+    // endIdx names the current bar; a body that rewrites it has none.
     let f = end_aligned_with(&[(
         "   retCode = rocp(",
         "   endIdx = endIdx - 1;\n   retCode = rocp(",
     )]);
-    assert_not_same_bar(&f, "the rank ends a bar before both RSI legs");
+    assert_delay_refused(&f, "body", "endIdx", "endIdx is rewritten");
 }
 
 #[test]
 fn end_aligned_rejects_a_producer_that_is_not_one_element_per_bar() {
+    // Each edit breaks the one write per bar up to endIdx, so the producer's count
+    // is unproven, and the streak rsi's delay over it opaque: the count's reason.
     let write = "      tempStreak[outIdx++] = streak;";
     let rows: [(&str, &str, &str); 8] = [
         ("stops before endIdx", "while( today <= endIdx )", "while( today < endIdx )"),
@@ -1912,12 +2437,18 @@ fn end_aligned_rejects_a_producer_that_is_not_one_element_per_bar() {
         ("hands the series to a call", write, "      tempStreak[outIdx++] = streak;\n      memset( tempStreak, 0, 8 );"),
     ];
     for (why, from, to) in rows {
-        assert_not_same_bar(&end_aligned_with(&[(from, to)]), &format!("a producer that {why}"));
+        assert_delay_refused_why(
+            &end_aligned_with(&[(from, to)]),
+            "sub-call `rsi`",
+            "tempStreak",
+            "producer series is not provably one element per bar",
+            &format!("a producer that {why}"),
+        );
     }
 }
 
 #[test]
-fn end_aligned_rejects_a_pointer_copied_series() {
+fn end_aligned_streams_a_pointer_copied_series_as_one() {
     let f = end_aligned_with(&[
         ("   double *tempRank;", "   double *tempRank;\n   double *streakBuf;"),
         (
@@ -1925,14 +2456,95 @@ fn end_aligned_rejects_a_pointer_copied_series() {
             "   streakBuf = malloc((endIdx-anchorIdx) * sizeof(double));\n   tempStreak = streakBuf;",
         ),
     ]);
-    assert_not_same_bar(&f, "a write through either name moves a pointer-copied series");
+    assert_classifier_verdict(
+        &f,
+        "accepted []",
+        "tempStreak = streakBuf is an unconditional top-level copy, a must-alias: the two names are one \
+         series, and every read is the shipped fixture's",
+    );
 }
 
-/* ---- #543: an offset read anchored on a sibling series ---- */
+/// Handle fields as `sp.<name>`; a composed map step names nothing else.
+struct StepNames;
 
-/// The shipped SQZMOM with each `(from, to)` edit applied once. Its level map
-/// writes only `outSqueeze`, which no sub-call produced, so the staged centre's
-/// offset read can be proved only against a series the map reads at the cursor.
+impl streaming::NameMap for StepNames {
+    fn state(&self, name: &str) -> String {
+        format!("sp.{name}")
+    }
+    fn bar(&self, array: &str) -> String {
+        unreachable!("bar {array}")
+    }
+    fn output(&self, name: &str) -> ir::Expr {
+        unreachable!("output {name}")
+    }
+    fn ring_buf(&self, var: &str, array: &str) -> String {
+        unreachable!("ring_buf {var} {array}")
+    }
+    fn ring_pos(&self, var: &str) -> String {
+        unreachable!("ring_pos {var}")
+    }
+    fn ring_lag(&self, var: &str) -> String {
+        unreachable!("ring_lag {var}")
+    }
+    fn ring_cap(&self, var: &str) -> String {
+        unreachable!("ring_cap {var}")
+    }
+    fn win_buf(&self, var: &str, array: &str) -> String {
+        unreachable!("win_buf {var} {array}")
+    }
+    fn win_pos(&self, var: &str) -> String {
+        unreachable!("win_pos {var}")
+    }
+    fn win_cap(&self, var: &str) -> String {
+        unreachable!("win_cap {var}")
+    }
+    fn circ_buf(&self, storage: &str) -> String {
+        unreachable!("circ_buf {storage}")
+    }
+    fn extrema_buf(&self, array: &str) -> String {
+        unreachable!("extrema_buf {array}")
+    }
+    fn extrema_mask(&self) -> String {
+        unreachable!("extrema_mask")
+    }
+}
+
+#[test]
+fn a_map_reaches_a_must_alias_series_through_the_storage_its_writes_used() {
+    // The class key is the first name in body order, which no step writes.
+    let renamed = end_aligned_with(&[
+        ("   double *tempRSI;", "   double *streakBuf;\n   double *tempRSI;"),
+        (
+            "   tempStreak = malloc((endIdx-anchorIdx) * sizeof(double));",
+            "   streakBuf = malloc((endIdx-anchorIdx) * sizeof(double));\n   tempStreak = streakBuf;",
+        ),
+    ]);
+    // The map reads the output it writes through another name, before the write.
+    let self_read = end_aligned_with(&[
+        ("   double *tempRank;", "   double *tempRank;\n   double *res;"),
+        ("   tempRank = malloc(", "   res = outReal;\n   tempRank = malloc("),
+        ("+ outReal[i] ) / 3.0;", "+ res[i] ) / 3.0;"),
+    ]);
+    for (f, key) in [(&renamed, "streakBuf"), (&self_read, "res")] {
+        let cp = streaming::analyze_composed(f, lookup()).expect("the classifier accepts it");
+        assert!(cp.defs.iter().any(|d| d.buffer == key && d.name != key), "{key} keys no renamed definition");
+        let si = cp
+            .steps
+            .iter()
+            .position(|s| matches!(s, streaming::UpdateStep::Map { .. }))
+            .expect("a map step");
+        let lowered = format!("{:?}", streaming::lower_map_step(&cp, si, &StepNames));
+        for storage in ["cur_tempStreak", "cur_tempRSI", "cur_outReal"] {
+            assert!(lowered.contains(&format!("Var(\"{storage}\")")), "{key}: no {storage} in {lowered}");
+        }
+        assert!(!lowered.contains("ArrayAccess") && !lowered.contains(&format!("\"{key}\"")), "{key}: {lowered}");
+        assert_eq!(cp.output_storage("outReal"), "cur_outReal", "{key}");
+    }
+}
+
+/* ---- #543: an offset read beside a sibling series ---- */
+
+/// The shipped SQZMOM with each `(from, to)` edit applied once.
 fn sqzmom_with(edits: &[(&str, &str)]) -> FuncDef {
     let mut src = std::fs::read_to_string(input_dir().join("sqzmom/sqzmom.c")).expect("sqzmom.c");
     for (from, to) in edits {
@@ -1943,7 +2555,7 @@ fn sqzmom_with(edits: &[(&str, &str)]) -> FuncDef {
 }
 
 #[test]
-fn map_written_output_anchors_an_offset_read_on_a_plain_cursor_series() {
+fn sqzmom_derives_a_composed_plan() {
     let f = sqzmom_with(&[]);
     let plan = streaming::validate_streamable(&f, lookup()).expect("SQZMOM streams");
     let streaming::StreamPlan::Composed(cp) = plan else {
@@ -1953,40 +2565,65 @@ fn map_written_output_anchors_an_offset_read_on_a_plain_cursor_series() {
     assert_eq!(callees, ["midprice", "sma", "trange", "sma", "sma", "stddev", "linearreg"]);
 }
 
+/// What a SQZMOM variant row derives.
+enum SqzWant {
+    /// Accepted with the shipped edges.
+    Shipped,
+    /// Accepted with the shipped edges less those reading this buffer.
+    ShippedLess(&'static str),
+    /// Refused: a map reads this buffer ahead of its newest element.
+    Ahead(&'static str),
+    /// Refused with this verdict.
+    Refused(&'static str),
+}
+
+// In the rows below n = endIdx - startIdx + 1 is the level map's count, and each
+// begin B is presumed at its call's start argument: sqzmom_lookback takes real
+// parameters, so the prover cannot order startIdx against a callee's lookback.
 #[test]
-fn sibling_anchor_rejects_what_is_not_a_same_bar_shift() {
-    let rows: [(&str, &[(&str, &str)]); 6] = [
+fn sqzmom_offset_read_variants_classify_by_their_delays() {
+    use SqzWant::{Ahead, Refused, Shipped, ShippedLess};
+    type Row<'a> = (&'a str, &'a [(&'a str, &'a str)], SqzWant);
+    let rows: [Row; 6] = [
         (
-            "a lag ring's plain read is an earlier bar and anchors nothing",
+            "tempSD[i] is startIdx - Bsd behind, presumed 0, and the added read bb - 1 less: \
+             -(bb - 1) <= -1 with Bsd entering at coefficient -1",
             &[(
                 "dev = tempSD[i]*optInNbDev;",
                 "dev = (tempSD[i]+tempSD[i+(optInBBPeriod-1)])*optInNbDev;",
             )],
+            Ahead("tempSD"),
         ),
         (
-            "a count difference plus one is a lag",
+            "kcmShift = Bsd - Bkcm + 1, so tempKCM[i+kcmShift] is startIdx - Bsd - 1 behind: -1",
             &[("kcmShift = kcmNb - sdNb;", "kcmShift = kcmNb - sdNb + 1;")],
+            Ahead("tempKCM"),
         ),
         (
-            "the anchor ends a bar before the centre",
+            "stddev reads inClose a bar back, a ge1 tap, and holds endIdx - Bsd elements, so \
+             tempSD[i] is startIdx - Bsd - 1 behind: -1",
             &[(
                 "stddev( startIdx, endIdx, inClose,",
                 "stddev( startIdx, endIdx-1, inClose,",
             )],
+            Ahead("tempSD"),
         ),
         (
-            "the anchor's count is against a series the map does not read at the cursor",
+            "the level map no longer reads tempSD",
             &[("dev = tempSD[i]*optInNbDev;", "dev = optInNbDev;")],
+            ShippedLess("tempSD"),
         ),
         (
-            "linearreg rewrites the anchor's receiver before the map reads the shift",
+            "tempNbElement holds stddev's count when kcmShift reads it, and linearreg rewrites it only \
+             after: the shipped values, the tempSD count snapshotted after its call",
             &[
                 ("&tempBegIdx, &sdNb, tempSD", "&tempBegIdx, &tempNbElement, tempSD"),
                 ("kcmShift = kcmNb - sdNb;", "kcmShift = kcmNb - tempNbElement;"),
             ],
+            Shipped,
         ),
         (
-            "a primary a sub-call produced is the only anchor, even with its count gone",
+            "the level map writes tempMid in place of the output",
             &[
                 ("outSqueeze[i] = 3;", "tempMid[i] = 3;"),
                 ("outSqueeze[i] = 2;", "tempMid[i] = 2;"),
@@ -1994,10 +2631,32 @@ fn sibling_anchor_rejects_what_is_not_a_same_bar_shift() {
                 ("outSqueeze[i] = -1;", "tempMid[i] = -1;"),
                 ("outSqueeze[i] = 0;", "tempMid[i] = 0;"),
             ],
+            Refused("refused: composed pipeline never defines output `outSqueeze`"),
         ),
     ];
-    for (why, edits) in rows {
-        assert_not_same_bar(&sqzmom_with(edits), why);
+    // kcmShift is kcmNb - nb(stddev), so tempKCM[i+kcmShift] is nb(stddev) - n
+    // behind: the 0 the tempSD[i] read presumes.
+    let shipped = [
+        "presumed lagzero.inClose.1.map0.r0 <- (inClose,1) map0 inClose[*outBegIdx+i]",
+        "presumed lagzero.tempKCM.1.map0.r0 <- (tempKCM,1) map0 tempKCM[i]",
+        "presumed lagzero.tempDev.1.map0.r0 <- (tempDev,1) map0 prior tempDev",
+        "presumed lagzero.tempWork.1.sub3 <- (tempWork,1) sub3.in0",
+        "presumed lagzero.tempSD.1.map1.r0 <- (tempSD,1) map1 tempSD[i]",
+        "presumed lagzero.tempMid.1.map1.r0 <- (tempMid,1) map1 tempMid[i]",
+        "presumed lagzero.tempKCM.1.map1.r0 <- (tempKCM,1) map1 tempKCM[i+kcmShift]",
+    ];
+    for (why, edits, want) in rows {
+        let f = sqzmom_with(edits);
+        match want {
+            Shipped => assert_classifier_verdict(&f, &format!("accepted {shipped:?}"), why),
+            ShippedLess(buffer) => {
+                let edges: Vec<&str> =
+                    shipped.iter().copied().filter(|e| !e.contains(&format!("({buffer},"))).collect();
+                assert_classifier_verdict(&f, &format!("accepted {edges:?}"), why);
+            }
+            Ahead(buffer) => assert_delay_refused(&f, "map", buffer, "reads ahead"),
+            Refused(verdict) => assert_classifier_verdict(&f, verdict, why),
+        }
     }
 }
 
@@ -2252,4 +2911,925 @@ fn window_evaluable_refuses_state_derived_from_the_input() {
     let (func, _) = crate::common::load_indicator_with_source("alma", &tainted);
     let why = streaming::window_evaluable(&func, lookup()).expect_err("input-derived weights");
     assert!(why.contains("depends on the input or the range"), "{why}");
+}
+
+// ---------------------------------------------------------------------------
+// Composed delay classes
+// ---------------------------------------------------------------------------
+
+fn show(e: &ir::Expr) -> String {
+    use ir::{BinOp, Expr};
+    match e {
+        Expr::Var(v) => v.clone(),
+        Expr::IntLiteral(k) => k.to_string(),
+        Expr::PointerDeref(p) => format!("*{p}"),
+        Expr::Cast(_, x) => show(x),
+        Expr::BinOp(l, op, r) => {
+            let op = match op {
+                BinOp::Add => "+",
+                BinOp::Sub => "-",
+                BinOp::Mul => "*",
+                _ => "?",
+            };
+            format!("{}{op}{}", show(l), show(r))
+        }
+        other => format!("{other:?}"),
+    }
+}
+
+/// Each non-Zero edge of a composed plan: its class, then what reads what.
+fn non_zero_edges(cp: &streaming::ComposedPlan) -> Vec<String> {
+    use streaming::{Consumer, EdgeClass, UpdateStep};
+    let map_no = |step: usize| cp.steps[..step].iter().filter(|s| matches!(s, UpdateStep::Map { .. })).count();
+    let copy_no = |step: usize| cp.steps[..step].iter().filter(|s| matches!(s, UpdateStep::Align { .. })).count();
+    let arm_of = |arm: &Option<(bool, usize)>| match arm {
+        Some((true, _)) => ".then",
+        Some((false, _)) => ".else",
+        None => "",
+    };
+    let mut out = Vec::new();
+    for e in &cp.edges {
+        let def = &cp.defs[e.def];
+        let reader = match &e.consumer {
+            Consumer::SubSrc { sub_idx, input } => format!("sub{sub_idx}.in{input}"),
+            Consumer::Align { step } => format!("copy{}", copy_no(*step)),
+            Consumer::MapRead { step, arm, buffer, index } => {
+                format!("map{}{} {buffer}[{}]", map_no(*step), arm_of(arm), show(index))
+            }
+            Consumer::MapPrior { step, arm, buffer } => {
+                format!("map{}{} prior {buffer}", map_no(*step), arm_of(arm))
+            }
+            Consumer::TailScalar { tail_idx } => format!("tail{tail_idx}"),
+            Consumer::Return { output } => format!("ret {output}"),
+        };
+        let class = match &e.class {
+            EdgeClass::Zero => continue,
+            EdgeClass::ZeroPresumed { key } => format!("presumed {key}"),
+            EdgeClass::Tap { line, tap } => {
+                let t = &cp.lines[*line].taps[*tap];
+                format!("tap {} {}{:?}", t.key, if t.ge1 { "ge1 " } else { "" }, t.back)
+            }
+        };
+        out.push(format!("{class} <- ({},{}) {reader}", def.buffer, def.ordinal));
+    }
+    out
+}
+
+/// Every composed plan of every streaming function under `input/`, one per
+/// language, with its classification.
+fn classified_corpus() -> Vec<(String, ir::Lang, Result<Vec<String>, String>)> {
+    let lk = lookup();
+    let mut out = Vec::new();
+    for name in crate::common::discover_indicators() {
+        if name.starts_with("synth") {
+            continue;
+        }
+        let f = load(&name);
+        if !f.streaming {
+            continue;
+        }
+        for lang in ir::ALL_LANGS {
+            let resolved = f.resolved_for(lang);
+            let got = match streaming::validate_streamable(&resolved, lk) {
+                Ok(streaming::StreamPlan::Composed(cp)) => Ok(non_zero_edges(&cp)),
+                Err(e) if e.contains("composed body is not streamable") => Err(e),
+                _ => continue,
+            };
+            out.push((name.to_uppercase(), lang, got));
+        }
+    }
+    out
+}
+
+/// Zero is implied for every edge not listed. A Tap on a shipped function is
+/// a per-bar delay line in its Update; a ZeroPresumed edge is a 0 the prover
+/// could not show, checked at Open on the exact counts, so its reason is the
+/// hand derivation of that 0.
+#[test]
+fn composed_edge_classes_are_pinned() {
+    let expected: [(&str, &[&str], &str); 26] = [
+        ("ADXR", &["tap lagdepth.adx.1.t0 ge1 Oldest <- (adx,1) map0 adx[outIdx]"],
+            "outReal[i] averages adx[i+(p-1)] with adx[i], a lag fixed by the period and \
+             at least 1 for every accepted one"),
+        ("ALLIGATOR", &[
+            "presumed lagzero.outJaw.1.ret.outJaw <- (outJaw,1) ret outJaw",
+            "presumed lagzero.outTeeth.1.ret.outTeeth <- (outTeeth,1) ret outTeeth",
+        ], "every rma starts at lookbackTotal, the largest of the three rma lookbacks, so no leg \
+            clamps and each line holds the lips count the body returns; the prover only sees each \
+            begin as max(lookbackTotal, that leg's rma_lookback)"),
+        ("APO", &[], ""),
+        ("BBANDS", &["presumed lagzero.tempBuffer1.1.copy0 <- (tempBuffer1,1) copy0"],
+            "stddev starts at the ma's begin, so it begins no earlier and shiftIdx is exactly the \
+             begin difference: the memmove takes the ma's last n elements; the guarded difference \
+             is an opaque join to the prover"),
+        ("BBW", &[], ""),
+        ("CRSI", &[], ""),
+        ("GATOR", &[
+            "tap lagdepth.tempA.1.t0 Oldest <- (tempA,1) map0 tempA[i]",
+            "tap lagdepth.tempB.1.t0 Oldest <- (tempB,1) map0 tempB[i]",
+            "tap lagdepth.tempA.2.t0 Oldest <- (tempA,2) map1 tempA[i]",
+            "tap lagdepth.tempB.2.t0 Oldest <- (tempB,2) map1 tempB[i]",
+        ], "each rma starts max(its shift - its partner's shift, 0) bars before lookbackTotal, so \
+            its cursor read is that many bars behind its newest element: 0 for one leg of every \
+            pair at any parameter set, so no tap is ge1"),
+        ("ICHIMOKU", &[
+            "presumed lagzero.tempT.1.sub3 <- (tempT,1) sub3.in0",
+            "presumed lagzero.tempK.1.sub3 <- (tempK,1) sub3.in1",
+            "presumed lagzero.tempT.1.map0.r0 <- (tempT,1) map0 tempT[i]",
+            "presumed lagzero.tempK.1.map0.r0 <- (tempK,1) map0 tempK[i]",
+            "presumed lagzero.outSenkouSpanB.1.ret.outSenkouSpanB <- (outSenkouSpanB,1) ret outSenkouSpanB",
+        ], "startIdx is clamped to the longest period minus 1, so every midprice begins at startIdx \
+            and holds n elements; the prover does not see through the if-chain lookback"),
+        ("KC", &[
+            "presumed lagzero.tempTP.1.sub2 <- (tempTP,1) sub2.in0",
+            "presumed lagzero.tempATR.1.map0.r0 <- (tempATR,1) map0 tempATR[i]",
+        ], "startIdx is clamped to max(ema_lookback, atr_lookback), so typprice starts at or after \
+            0 and atr at or after its lookback: neither clamps, and both hold the ema's count; the \
+            prover keeps that max opaque"),
+        ("KDJ", &[], ""),
+        ("KSTEXT", &[
+            "presumed lagzero.tempBuffer.2.map0.r0 <- (tempBuffer,2) map0 tempBuffer[i]",
+            "presumed lagzero.tempBuffer.4.map1.r0 <- (tempBuffer,4) map1 tempBuffer[i]",
+            "presumed lagzero.tempBuffer.6.map2.r0 <- (tempBuffer,6) map2 tempBuffer[i]",
+            "presumed lagzero.kstBuffer.5.copy0 <- (kstBuffer,5) copy0",
+            "presumed lagzero.outKST.1.ret.outKST <- (outKST,1) ret outKST",
+        ], "startIdx is clamped to the longest ROC period plus its MA lookback, plus the signal \
+            lookback, so every roc begins at its start and each leg holds kstNb elements; the \
+            prover keeps the if-chain max opaque"),
+        ("MACDEXT", &[
+            "presumed lagzero.fastMABuffer.1.map0.r0 <- (fastMABuffer,1) map0 prior fastMABuffer",
+            "presumed lagzero.fastMABuffer.2.copy0 <- (fastMABuffer,2) copy0",
+            "presumed lagzero.outMACD.1.map1.r0 <- (outMACD,1) map1 outMACD[i]",
+            "presumed lagzero.outMACD.1.ret.outMACD <- (outMACD,1) ret outMACD",
+        ], "after the period swap both MAs start at startIdx - lookbackSignal, at or after the \
+            larger of their lookbacks, so both begin there with equal counts; an MA lookback over \
+            a swapped parameter has no interval, so the prover cannot order it against that max"),
+        ("PERCENTB", &[
+            "presumed lagzero.tempX.1.map0.r0 <- (tempX,1) map0.then tempX[i]",
+            "presumed lagzero.tempX.1.map0.r1 <- (tempX,1) map0.else tempX[i]",
+        ], "one tempX read per variant arm. percentb_lookback = bbands_lookback = max(ma_lookback, p-1), \
+            so firstIdx = max(startIdx, LB_ma, p-1). var starts at the ma's begin \
+            max(startIdx, LB_ma) and its own lookback p-1 clamps that begin to \
+            max(startIdx, LB_ma, p-1) = firstIdx: the read is 0 bars behind. The prover cannot \
+            see it: percentb_lookback takes real parameters and is not inlined"),
+        ("PPO", &[], ""),
+        ("PVO", &[], ""),
+        ("RVIR", &[], ""),
+        ("SQZMOM", &[
+            "presumed lagzero.inClose.1.map0.r0 <- (inClose,1) map0 inClose[*outBegIdx+i]",
+            "presumed lagzero.tempKCM.1.map0.r0 <- (tempKCM,1) map0 tempKCM[i]",
+            "presumed lagzero.tempDev.1.map0.r0 <- (tempDev,1) map0 prior tempDev",
+            "presumed lagzero.tempWork.1.sub3 <- (tempWork,1) sub3.in0",
+            "presumed lagzero.tempSD.1.map1.r0 <- (tempSD,1) map1 tempSD[i]",
+            "presumed lagzero.tempMid.1.map1.r0 <- (tempMid,1) map1 tempMid[i]",
+            "presumed lagzero.tempKCM.1.map1.r0 <- (tempKCM,1) map1 tempKCM[i+kcmShift]",
+        ], "(tempWork,1) sub3.in0: sqzmom_lookback >= trange_lookback + sma_lookback(k) = k, so the \
+            clamped startIdx >= k and stageIdx = startIdx - linearreg_lookback(k) = startIdx - \
+            (k-1) >= 1 = trange_lookback; trange begins at its start and the delay is 0. The \
+            other edges read buffers whose calls start at startIdx or stageIdx, which the \
+            clamp to sqzmom_lookback puts at or past each call's own lookback. The prover \
+            cannot see any of it: sqzmom_lookback takes real parameters"),
+        ("STDDEV", &[], ""),
+        ("STOCH", &[], ""),
+        ("STOCHF", &[], ""),
+        ("STOCHRSI", &[], "Zero, not presumed: lookbackTotal = rsi_lookback(p) + lookbackSTOCHF, \
+            so the rsi begins at its start, and the stochf feed ends at the rsi count - 1: \
+            delay = count - 1 - end = 0"),
+        ("SYNTH13", &[], ""),
+        ("SYNTH14", &[], ""),
+        ("SYNTH25", &[
+            "tap lagdepth.tempM.1.t0 Field <- (tempM,1) sub2.in0",
+            "tap lagdepth.tempM.1.t1 Field <- (tempM,1) sub3.in0",
+            "tap lagdepth.tempA.1.t0 Oldest <- (tempA,1) map0 tempA[i]",
+            "presumed lagzero.tempB.1.map0.r0 <- (tempB,1) map0 tempB[i]",
+            "presumed lagzero.tempC.1.map0.r0 <- (tempC,1) map0 tempC[i]",
+        ], "the if-chain lookback LT = p + max(shA,shB,shC) stays opaque, so each midpoint begin \
+            is presumed at its start argument. tempM holds nbElement + LT - 1 elements ending at \
+            localEnd, so the legs ending shB and shC early read it shB and shC behind, exact. The \
+            first leg starts lastLookback - shA >= p - 1 bars in and holds nbElement + shA, so \
+            tempA[i] is shA behind; tempB and tempC hold nbElement"),
+        ("SYNTH26", &[
+            "tap lagdepth.tempX.1.t0 ge1 Literal(2) <- (tempX,1) map0 tempX[i+lookbackTotal-1]",
+            "tap lagdepth.tempX.1.t1 ge1 Literal(1) <- (tempX,1) map0 tempX[i+lookbackTotal-2]",
+            "tap lagdepth.tempX.1.t2 ge1 Literal(0) <- (tempX,1) map0 tempX[i+lookbackTotal-3]",
+            "tap lagdepth.inReal.1.t0 ge1 Oldest <- (inReal,1) map0 inReal[startIdx+i-1]",
+        ], "LT = p + 2 inlines: the producer holds nbElement + LT elements and the midpoint \
+            begins at LT, 3 past its lookback, so nbM = nbElement. tempX[i+LT-j] is j behind, \
+            inReal[startIdx+i-1] is endIdx + 1 - nbM - (startIdx - 1) = 1 behind"),
+        ("SYNTH28", &[
+            "tap lagdepth.tempA.1.t0 ge1 Oldest <- (tempA,1) copy1",
+            "tap lagdepth.tempA.2.t0 Oldest <- (tempA,2) map1 prior tempA",
+            "tap lagdepth.tempD.1.t0 ge1 Oldest <- (tempD,1) map2 tempD[i]",
+        ], "LT = p - 1 + lag inlines, so tempA begins at startIdx - lag and holds nA = nbElement + \
+            lag: the second memmove takes it lag behind. The in-place period-2 midpoint holds \
+            nA - 1, so the partial write's prior is lag - 1 behind. tempD holds nA, so tempD[i] \
+            is lag behind"),
+    ];
+    let want: std::collections::BTreeMap<&str, Vec<String>> = expected
+        .iter()
+        .map(|(n, e, _)| (*n, e.iter().map(|s| (*s).to_string()).collect()))
+        .collect();
+    for (name, edges, why) in &expected {
+        assert!(edges.is_empty() || !why.is_empty(), "{name}: a non-Zero edge needs its reason");
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    let mut check = |name: String, lang: &str, got: Result<Vec<String>, String>| {
+        let got = got.unwrap_or_else(|e| panic!("{name} ({lang}) is refused: {e}"));
+        let w = want.get(name.as_str()).unwrap_or_else(|| panic!("{name} composes but is not pinned: {got:#?}"));
+        assert_eq!(&got, w, "{name} ({lang})");
+        seen.insert(name);
+    };
+    for (name, lang, got) in classified_corpus() {
+        check(name, &format!("{lang:?}"), got);
+    }
+    for synth in ["synth13", "synth14", "synth25", "synth26", "synth28"] {
+        let f = crate::common::load_synth(synth).0;
+        let got = streaming::analyze_composed(&f, lookup()).map(|cp| non_zero_edges(&cp));
+        check(synth.to_uppercase(), "base", got.map_err(|e| e.to_string()));
+    }
+    let pinned: std::collections::BTreeSet<String> = want.keys().map(|n| (*n).to_string()).collect();
+    assert_eq!(seen, pinned, "a pinned function no longer composes");
+}
+
+#[test]
+fn synth26_reads_through_its_unconditional_copy() {
+    use streaming::{Consumer, EdgeClass};
+    let f = crate::common::load_synth("synth26").0;
+    let cp = streaming::analyze_composed(&f, lookup()).expect("SYNTH26 composes");
+    let work = cp
+        .edges
+        .iter()
+        .find(|e| matches!(&e.consumer, Consumer::MapRead { buffer, .. } if buffer == "work"))
+        .expect("the map reads through work");
+    let def = &cp.defs[work.def];
+    assert_eq!((def.buffer.as_str(), def.ordinal, &work.class), ("tempM", 1, &EdgeClass::Zero));
+}
+
+#[test]
+fn synth28_copies_its_tapped_align_and_seeds_a_tapped_prior() {
+    use ir::{Expr, Statement};
+    let f = crate::common::load_synth("synth28").0;
+    let cp = streaming::analyze_composed(&f, lookup()).expect("SYNTH28 composes");
+    // The first memmove's source is rewritten by the in-place midpoint and the
+    // partial write; the second copies its tap.
+    assert_eq!(align_copies(&f), [true, true]);
+    let maps: Vec<usize> = (0..cp.steps.len())
+        .filter(|&s| matches!(cp.steps[s], streaming::UpdateStep::Map { .. }))
+        .collect();
+    let partial = streaming::lower_map_step(&cp, maps[1], &StepNames);
+    let k = (0..cp.lines.len())
+        .find(|&k| {
+            let d = &cp.defs[cp.lines[k].def];
+            (d.buffer.as_str(), d.ordinal) == ("tempA", 2)
+        })
+        .expect("a delay line on the partial write's prior");
+    let tap = streaming::lag_tap_local(k, 0);
+    let prologue = partial
+        .iter()
+        .position(|s| matches!(s, Statement::Assign { target: Expr::Var(t), value: Expr::Var(v), .. }
+            if t == "cur_tempA" && *v == tap))
+        .unwrap_or_else(|| panic!("no tapped prior prologue reading {tap}: {partial:?}"));
+    let load = partial
+        .iter()
+        .position(|s| matches!(s, Statement::Assign { target: Expr::Var(t), .. } if *t == tap))
+        .unwrap_or_else(|| panic!("{tap} is never loaded: {partial:?}"));
+    assert!(load < prologue, "the tap is loaded before the prologue reads it: {partial:?}");
+    let write = partial.iter().position(|s| matches!(s, Statement::If { .. })).expect("the partial write");
+    assert!(prologue < write, "the prior is seeded before the write: {partial:?}");
+    let text = format!("{partial:?}");
+    assert!(text.contains("Var(\"cur_outMaxLag\")") && text.contains("Var(\"cur_outMaxNow\")"), "{text}");
+    assert!(cp.intermediates.iter().any(|s| s == "tempD"), "{:?}", cp.intermediates);
+    assert!(freed_series(&cp).iter().any(|s| s == "tempD"), "{:?}", freed_series(&cp));
+    let last = format!("{:?}", streaming::lower_map_step(&cp, maps[2], &StepNames));
+    assert!(last.contains("Var(\"cur_tempD\")"), "{last}");
+}
+
+// ---------------------------------------------------------------------------
+// Delay rows: one fact varied from an accepted tail
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_start_argument_sliding_with_endidx_is_refused() {
+    let f = apo_tail_with(&[(
+        "ma( startIdx, endIdx, inReal, optInFastPeriod",
+        "ma( endIdx-5, endIdx, inReal, optInFastPeriod",
+    )]);
+    assert_delay_refused(&f, "sub-call `ma`", "inReal", "slides with endIdx");
+}
+
+#[test]
+fn a_memmove_offset_sliding_with_endidx_is_refused() {
+    let src = bbands_source(BBANDS_READ_ONLY_TAIL);
+    assert!(src.contains("&tmp[0], n"), "the BBANDS memmove moved");
+    let f = load_with_source("bbands", &src.replacen("&tmp[0], n", "&tmp[endIdx-startIdx], n", 1));
+    assert_delay_refused(&f, "memmove", "tmp", "slides with endIdx");
+}
+
+#[test]
+fn an_end_argument_halving_endidx_is_refused() {
+    // The fast ma's source delay is endIdx - endIdx/2: the quotient is opaque, and
+    // the endIdx term beside it survives.
+    let f = apo_tail_with(&[(
+        "ma( startIdx, endIdx, inReal, optInFastPeriod",
+        "ma( startIdx, endIdx/2, inReal, optInFastPeriod",
+    )]);
+    assert_delay_refused(&f, "sub-call `ma`", "inReal", "slides with endIdx");
+}
+
+#[test]
+fn an_offset_read_from_the_data_is_refused() {
+    // tempBuffer[i+offset] is Bslow - Bfast - tempBuffer[0] behind.
+    let f = apo_tail_with(&[("offset = fastNb - *outNBElement;", "offset = (int)tempBuffer[0];")]);
+    assert_delay_refused(&f, "map", "tempBuffer", "depends on data or an unmodelled value");
+}
+
+#[test]
+fn a_read_not_affine_in_the_cursor_is_refused() {
+    let f = apo_tail_with(&[("tempBuffer[i+offset]", "tempBuffer[i*2]")]);
+    assert_delay_refused(&f, "map", "tempBuffer", "index is not affine in the cursor");
+}
+
+#[test]
+fn a_map_reading_its_own_output_at_an_offset_is_refused() {
+    let f = apo_tail_with(&[("- outReal[i];", "- outReal[i+1];")]);
+    assert_delay_refused(&f, "map", "outReal", "reads the map's own output at an offset");
+}
+
+#[test]
+fn a_return_count_short_of_its_output_is_refused() {
+    // The map writes nbElement elements and the body returns one fewer: the newest
+    // element returned is one bar behind outReal's newest.
+    let src = std::fs::read_to_string(input_dir().join("adxr").join("adxr.c")).expect("adxr.c");
+    let ret = "   *outNBElement = nbElement;";
+    assert!(src.contains(ret), "the ADXR return moved");
+    let f = load_with_source("adxr", &src.replacen(ret, "   *outNBElement = nbElement - 1;", 1));
+    assert_delay_refused(&f, "return", "outReal", "non-Zero return edge");
+}
+
+/// [`APO_TAIL`] with `offset` set in the prologue, by a join on `cond`.
+fn apo_offset_joined_on(cond: &str) -> FuncDef {
+    let first = "\n   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod";
+    let joined = format!("\n   if( {cond} )\n      offset = 1;\n   else\n      offset = 0;{first}");
+    apo_tail_with(&[(first, &joined), ("   offset = fastNb - *outNBElement;\n", "")])
+}
+
+#[test]
+fn an_offset_joined_on_data_or_endidx_is_refused() {
+    // tempBuffer[i+offset] is Bslow - Bfast - offset behind, and a join on what no
+    // parameter fixes is opaque.
+    for cond in ["inReal[0] > 0.0", "endIdx > 100"] {
+        assert_delay_refused(
+            &apo_offset_joined_on(cond),
+            "map",
+            "tempBuffer",
+            "depends on data or an unmodelled value",
+        );
+    }
+}
+
+#[test]
+fn a_partial_map_write_with_no_prior_definition_is_refused() {
+    // The path that skips the write leaves tempBuffer2 holding what nothing defined.
+    let f = apo_tail_with(&[(
+        "      outReal[i] = tempBuffer[i+offset] - outReal[i];",
+        "   {\n      if( outReal[i] > 0.0 )\n         tempBuffer2[i] = outReal[i];\n      \
+         outReal[i] = tempBuffer[i+offset] - outReal[i];\n   }",
+    )]);
+    assert_delay_refused(&f, "map", "tempBuffer2", "a partial map write has no prior definition");
+}
+
+#[test]
+fn a_tail_read_of_the_newest_element_is_refused() {
+    // fastNb - 1 is tempBuffer's newest element, a bar that moves with endIdx, read
+    // where Open alone runs: once by a statement, once by a frozen prelude loop.
+    let scalar = apo_tail_with(&[("   offset = fastNb", "   last = tempBuffer[fastNb-1];\n   offset = fastNb")]);
+    assert_delay_refused(&scalar, "tail statement", "tempBuffer", "slides with endIdx");
+    let prelude = apo_tail_with(&[(
+        "   offset = fastNb",
+        "   for( i=fastNb-1; i<fastNb; i++ )\n      last = tempBuffer[i];\n   offset = fastNb",
+    )]);
+    assert_delay_refused(&prelude, "tail loop", "tempBuffer", "slides with endIdx");
+}
+
+#[test]
+fn a_may_alias_election_written_through_one_name_is_refused() {
+    // Which buffer the ema writes is the mode's: in mode 1 the map reads sma - ema,
+    // otherwise the ema overwrites tempBuf and it reads 0. Once the ema writes
+    // `work`, every other name it may share storage with is unknown.
+    let src = r#"
+int gator_display_shift(int optInJawPeriod, int optInJawShift,
+   int optInTeethPeriod, int optInTeethShift,
+   int optInLipsPeriod, int optInLipsShift,
+   int outputIdx)
+{
+   if( outputIdx == 0 )
+      return optInJawShift < optInTeethShift ? optInJawShift : optInTeethShift;
+   return optInTeethShift < optInLipsShift ? optInTeethShift : optInLipsShift;
+}
+
+TA_RetCode gator( int startIdx, int endIdx, const double inHigh[], const double inLow[],
+   int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift,
+   int optInLipsPeriod, int optInLipsShift,
+   int *outBegIdx, int *outNBElement, double outUpper[], double outLower[] )
+{
+   double *tempBuf;
+   double *work;
+   TA_RetCode retCode;
+   int b1, n1, b2, n2;
+   int i;
+
+   tempBuf = malloc((endIdx-startIdx+1) * sizeof(double));
+   if( optInJawShift == 1 )
+      work = outUpper;
+   else
+      work = tempBuf;
+   retCode = sma( startIdx, endIdx, inHigh, optInJawPeriod, &b1, &n1, tempBuf );
+   retCode = ema( startIdx, endIdx, inHigh, optInJawPeriod, &b2, &n2, work );
+   for( i=0; i<n1; i++ )
+   {
+      outUpper[i] = tempBuf[i] - work[i];
+      outLower[i] = tempBuf[i];
+   }
+   free( tempBuf );
+   *outBegIdx = b1;
+   *outNBElement = n1;
+   return TA_SUCCESS;
+}
+"#;
+    assert_delay_refused(&load_with_source("gator", src), "map", "tempBuf", "a may-alias name was written");
+}
+
+#[test]
+fn a_count_receiver_rewritten_by_an_unmodelled_statement_is_refused() {
+    // fastNb * fastNb is no linear form, so offset loses the endIdx term it cancelled
+    // against nb(slow): tempBuffer[i+offset]'s delay keeps endIdx at coefficient 1.
+    let f = apo_tail_with(&[("   offset = fastNb", "   fastNb = fastNb * fastNb;\n   offset = fastNb")]);
+    assert_delay_refused(&f, "map", "tempBuffer", "slides with endIdx");
+}
+
+#[test]
+fn a_presume_check_reads_the_count_its_call_left() {
+    use streaming::{LagTerm, OpenAction, OpenAt};
+    // Both calls write fastNb, and the map runs over the second count.
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer2 );
+   for( i=0; i < fastNb; i++ )
+      outReal[i] = tempBuffer[i] - tempBuffer2[i];
+   *outBegIdx = fastBeg;
+   *outNBElement = fastNb;",
+    );
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["presumed lagzero.tempBuffer.1.map0.r0 <- (tempBuffer,1) map0 tempBuffer[i]"]"#,
+        "tempBuffer[i] is nb(fast) - nb(slow) = Bslow - Bfast behind: 0 with both begins presumed at \
+         startIdx; tempBuffer2[i] is its own count, 0",
+    );
+    // The check reads the fast count from the snapshot taken before the slow call
+    // overwrites fastNb, and the map bound where the map runs.
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted above");
+    let slow = cp.subs[1].tail_idx;
+    let snapped = cp.open_actions.iter().find_map(|(at, a)| matches!(a, OpenAction::Snapshot { .. }).then_some(at));
+    assert!(matches!(snapped, Some(OpenAt::AfterStmt(i)) if *i < slow), "{snapped:?}");
+    let presumed = cp
+        .open_actions
+        .iter()
+        .find_map(|(_, a)| match a {
+            OpenAction::Presume { edge } => Some(*edge),
+            _ => None,
+        })
+        .expect("a presume check");
+    let terms = cp.edge_delay_formula(presumed).terms;
+    assert!(
+        matches!(terms.as_slice(), [(1, LagTerm::Nb(0)), (-1, LagTerm::Batch(ir::Expr::Var(v)))] if v == "fastNb"),
+        "{terms:?}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Delay rows: coverage of the accepted shapes
+// ---------------------------------------------------------------------------
+
+#[test]
+fn literal_offsets_share_one_line_with_literal_backs() {
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   nb = fastNb - 3;
+   for( i=0; i < nb; i++ )
+      outReal[i] = (tempBuffer[i+3] + tempBuffer[i+2]) + (tempBuffer[i+1] + tempBuffer[i]);
+   *outBegIdx = fastBeg + 3;
+   *outNBElement = nb;",
+    );
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempBuffer.1.t0 ge1 Literal(2) <- (tempBuffer,1) map0 tempBuffer[i+2]", "tap lagdepth.tempBuffer.1.t1 ge1 Literal(1) <- (tempBuffer,1) map0 tempBuffer[i+1]", "tap lagdepth.tempBuffer.1.t2 ge1 Literal(0) <- (tempBuffer,1) map0 tempBuffer[i]"]"#,
+        "the map runs fastNb - 3 times over tempBuffer's fastNb elements, so tempBuffer[i+k] is 3 - k \
+         behind: Zero at k = 3, then depths 1, 2 and 3, exact, on one line whose deepest tap sets cap 3 \
+         and the others read 2, 1 and 0 slots back",
+    );
+}
+
+#[test]
+fn opposite_shift_legs_each_tap_at_a_depth_that_may_be_zero() {
+    let f = apo_with_tail(
+        r"
+   backFast = 0;
+   if( optInFastPeriod > optInSlowPeriod )
+      backFast = optInFastPeriod - optInSlowPeriod;
+   backSlow = 0;
+   if( optInSlowPeriod > optInFastPeriod )
+      backSlow = optInSlowPeriod - optInFastPeriod;
+   retCode = ma( startIdx-backFast, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx-backSlow, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, tempBuffer2 );
+   nb = endIdx - startIdx + 1;
+   for( i=0; i < nb; i++ )
+      outReal[i] = tempBuffer[i] - tempBuffer2[i];
+   *outBegIdx = startIdx;
+   *outNBElement = nb;",
+    );
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempBuffer.1.t0 Oldest <- (tempBuffer,1) map0 tempBuffer[i]", "tap lagdepth.tempBuffer2.1.t0 Oldest <- (tempBuffer2,1) map0 tempBuffer2[i]"]"#,
+        "each ma starts max(its period - the other's, 0) bars before startIdx, so with its begin presumed \
+         at that start its cursor read is that many bars behind: a parameter join that is 0 for one leg \
+         at any parameter set, so neither tap is ge1",
+    );
+}
+
+/// CRSI's metadata over a producer writing one element per bar from the bar
+/// before startIdx, then an rsi over it into the output.
+const CRSI_PRODUCER: &str = r#"
+TA_RetCode crsi( int startIdx, int endIdx, const double inReal[],
+   int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempX;
+   TA_RetCode retCode;
+   int lookbackTotal, anchorIdx, today, outIdx, i, lb, b, nbM;
+
+   lookbackTotal = crsi_lookback( optInTimePeriod, optInStreakPeriod, optInRankPeriod );
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   lb = rsi_lookback( optInStreakPeriod );
+   anchorIdx = startIdx - 1;
+   tempX = malloc((endIdx-anchorIdx+1) * sizeof(double));
+   outIdx = 0;
+   today = anchorIdx;
+   while( today <= endIdx )
+   {
+      tempX[outIdx++] = inReal[today] * 0.5;
+      today++;
+   }
+   retCode = rsi( 0, outIdx-1, tempX, optInStreakPeriod, &b, &nbM, outReal );
+   for( i=0; i < nbM; i++ )
+      outReal[i] = outReal[i] + tempX[i+lb] - tempX[i+lb-1];
+   free( tempX );
+   *outBegIdx = startIdx;
+   *outNBElement = nbM;
+   return TA_SUCCESS;
+}
+"#;
+
+/// [`apo_with_tail`] with a map writing a scratch series a later map reads a bar back.
+const MAP_OUTPUT_LAGGED: &str = r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   for( i=0; i < fastNb; i++ )
+      tempBuffer2[i] = tempBuffer[i] * 0.5;
+   nb = fastNb - 1;
+   for( i=0; i < nb; i++ )
+      outReal[i] = tempBuffer2[i+1] - tempBuffer2[i];
+   *outBegIdx = fastBeg + 1;
+   *outNBElement = nb;";
+
+#[test]
+fn lagged_bar_input_producer_and_map_output_reads_tap_their_definitions() {
+    let input = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = outReal[i] - inReal[*outBegIdx+i-1];",
+    );
+    assert_classifier_verdict(
+        &input,
+        r#"accepted ["tap lagdepth.inReal.1.t0 ge1 Oldest <- (inReal,1) map0 inReal[*outBegIdx+i-1]"]"#,
+        "*outBegIdx is the ma's begin B and the map runs endIdx - B + 1 times, so inReal[*outBegIdx+i-1] \
+         is (endIdx + 1) - (endIdx - B + 1) - (B - 1) = 1 behind, exact",
+    );
+    assert_classifier_verdict(
+        &load_with_source("crsi", CRSI_PRODUCER),
+        r#"accepted ["tap lagdepth.tempX.1.t0 ge1 Oldest <- (tempX,1) map0 tempX[i+lb-1]"]"#,
+        "the producer holds N = endIdx - startIdx + 2 elements, one per bar. The rsi starts at 0, at or \
+         before its lookback lb, so it begins at lb and the map runs N - lb times: tempX[i+lb] is 0 \
+         behind and tempX[i+lb-1] 1, exact",
+    );
+    assert_classifier_verdict(
+        &apo_with_tail(MAP_OUTPUT_LAGGED),
+        r#"accepted ["tap lagdepth.tempBuffer2.1.t0 ge1 Oldest <- (tempBuffer2,1) map1 tempBuffer2[i]"]"#,
+        "the first map defines tempBuffer2 with fastNb elements and the second runs fastNb - 1 times: \
+         tempBuffer2[i+1] is 0 behind and tempBuffer2[i] 1, exact",
+    );
+}
+
+/// Every `cur_` identifier `body` names, field accesses aside.
+fn cur_uses(body: &str) -> std::collections::BTreeSet<String> {
+    let mut out = std::collections::BTreeSet::new();
+    let mut rest = body;
+    while let Some(at) = rest.find("cur_") {
+        let before = &rest[..at];
+        let boundary = !before.ends_with(|c: char| c.is_alphanumeric() || c == '_')
+            && !before.ends_with("->")
+            && !before.ends_with('.');
+        let name: String =
+            rest[at..].chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect();
+        if boundary {
+            out.insert(name.clone());
+        }
+        rest = &rest[at + name.len()..];
+    }
+    out
+}
+
+/// The names each line of `body` declares after one of `heads`.
+fn declared_after(body: &str, heads: &[&str]) -> std::collections::BTreeSet<String> {
+    body.lines()
+        .filter_map(|l| heads.iter().find_map(|h| l.trim_start().strip_prefix(h)))
+        .map(|rest| rest.chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect())
+        .collect()
+}
+
+/// The brace-balanced body of the first definition whose signature starts at `needle`.
+fn fn_body<'s>(src: &'s str, needle: &str) -> &'s str {
+    let at = src.find(needle).unwrap_or_else(|| {
+        let word = needle.trim_end_matches('(').rsplit(' ').next().unwrap_or(needle);
+        let near: Vec<&str> = src.lines().filter(|l| l.contains(word)).collect();
+        panic!("no {needle}; lines naming {word}:\n{}", near.join("\n"))
+    });
+    let open = at + src[at..].find('{').expect("a body");
+    let mut depth = 0usize;
+    for (k, c) in src[open..].char_indices() {
+        match c {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return &src[open..=open + k];
+                }
+            }
+            _ => {}
+        }
+    }
+    panic!("{needle}: unbalanced body")
+}
+
+#[test]
+fn every_cur_storage_a_step_uses_is_declared() {
+    let f = apo_with_tail(MAP_OUTPUT_LAGGED);
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    let stored: std::collections::BTreeSet<String> =
+        (0..cp.defs.len()).map(|d| cp.def_storage(d)).filter(|s| s.starts_with("cur_")).collect();
+    assert!(stored.contains("cur_tempBuffer2"), "{stored:?}");
+    let planned: std::collections::BTreeSet<String> = cp.cur_scalars().iter().map(|n| format!("cur_{n}")).collect();
+    assert_eq!(planned, stored);
+
+    let enums = crate::common::load_enums();
+    let helpers = crate::common::make_helpers();
+    let c = ta_codegen_lib::backends::c_stream::generate(&f, &enums, lookup(), helpers);
+    let rust = ta_codegen_lib::backends::rust_lang::generate(&f, &enums, lookup(), helpers);
+    for (text, sig, heads) in [
+        (&c, "TA_RetCode TA_APO_StepImpl( struct", &["double ", "int "][..]),
+        (&rust, "fn apo_step_impl(", &["let mut "][..]),
+    ] {
+        let body = fn_body(text, sig);
+        let used = cur_uses(body);
+        assert!(used.contains("cur_tempBuffer2"), "{sig}: {used:?}");
+        let declared = declared_after(body, heads);
+        let missing: Vec<&String> = used.difference(&declared).collect();
+        assert!(missing.is_empty(), "{sig} uses undeclared {missing:?}:\n{body}");
+    }
+}
+
+/// [`apo_with_tail`] with a map writing a scratch series a later map reads at the same bar.
+const MAP_SCRATCH: &str = r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   for( i=0; i < fastNb; i++ )
+      tempBuffer2[i] = (int)(tempBuffer[i] * 0.5);
+   for( i=0; i < fastNb; i++ )
+      outReal[i] = tempBuffer2[i] / 2;
+   *outBegIdx = fastBeg;
+   *outNBElement = fastNb;";
+
+/// SQZMOM's signature over a tail whose second map reads its integer output
+/// through `read`, before a third map writes that output again.
+fn sqzmom_reading_its_int_output(read: &str) -> FuncDef {
+    let src = format!(
+        r"
+TA_RetCode sqzmom(int startIdx, int endIdx,
+   const double inHigh[], const double inLow[], const double inClose[],
+   int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+   double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+   int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[])
+{{
+   TA_RetCode retCode;
+   int tempBeg, tempNb, nb, i;
+   double *tempSD;
+
+   tempSD = malloc((endIdx-startIdx+1) * sizeof(double));
+   retCode = sma( startIdx, endIdx, inClose, optInBBPeriod,
+      &tempBeg, &tempNb, tempSD );
+   for( i=0; i < tempNb; i++ )
+   {{
+      if( tempSD[i] > 0.0 )
+         outSqueeze[i] = 3;
+      else
+         outSqueeze[i] = 0;
+   }}
+   nb = tempNb - 1;
+   for( i=0; i < nb; i++ )
+      outMomentum[i] = tempSD[i+1] - {read} / 2;
+   for( i=0; i < nb; i++ )
+   {{
+      if( tempSD[i+1] > 0.0 )
+         outSqueeze[i] = 3;
+      else
+         outSqueeze[i] = 0;
+   }}
+   free( tempSD );
+   *outBegIdx = tempBeg + 1;
+   *outNBElement = nb;
+   return TA_SUCCESS;
+}}
+"
+    );
+    load_with_source("sqzmom", &src)
+}
+
+#[test]
+fn a_step_holds_no_integer_series_in_a_double() {
+    assert_classifier_verdict(
+        &apo_with_tail(MAP_SCRATCH),
+        "accepted []",
+        "tempBuffer, tempBuffer2 and outReal each hold fastNb elements and both maps run fastNb \
+         times, so every read is 0 behind",
+    );
+    // Batch divides tempBuffer2[i] / 2 in int; a step holding the series in
+    // its double cur_ local would divide in double.
+    let src = apo_source(MAP_SCRATCH);
+    assert!(src.contains("double *tempBuffer2;"), "the fixture no longer declares tempBuffer2");
+    assert_classifier_verdict(
+        &load_with_source("apo", &src.replacen("double *tempBuffer2;", "int *tempBuffer2;", 1)),
+        "refused: composed intermediate `tempBuffer2` is an integer series: a step holds an \
+         intermediate in a double, so it would compute in double where batch computes in int",
+        "",
+    );
+    assert_classifier_verdict(
+        &sqzmom_reading_its_int_output("outSqueeze[i+1]"),
+        "accepted []",
+        "the first map writes outSqueeze with tempNb elements and the second runs nb = tempNb - 1 \
+         times, so outSqueeze[i+1] and tempSD[i+1] are 0 behind; the third map writes nb elements \
+         of outSqueeze, and both outputs return at nb",
+    );
+    // outSqueeze[i] is tempNb - nb = 1 behind, exact: a Tap on (outSqueeze,1).
+    // Its delay line holds doubles, so `tap / 2` would divide in double where
+    // batch divides in int.
+    assert_classifier_verdict(
+        &sqzmom_reading_its_int_output("outSqueeze[i]"),
+        "refused: composed stream delays integer series `outSqueeze`: a delay line holds \
+         doubles, so a lagged read would compute in double where batch computes in int",
+        "",
+    );
+}
+
+/// The series each replayable free in `cp` frees.
+fn freed_series(cp: &streaming::ComposedPlan<'_>) -> Vec<String> {
+    cp.series_frees
+        .iter()
+        .filter_map(|sf| {
+            let mut freed = None;
+            streaming::walk_stmt_exprs(&sf.stmt, &mut |e| {
+                if let ir::Expr::FuncCall(f, args) = e {
+                    if let (true, Some(ir::Expr::Var(v))) = (f == "free", args.first()) {
+                        freed.get_or_insert_with(|| v.clone());
+                    }
+                }
+            });
+            freed
+        })
+        .collect()
+}
+
+#[test]
+fn a_series_only_a_map_writes_is_freed_on_inserted_failure_returns() {
+    let f = apo_with_tail(MAP_SCRATCH);
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    assert_eq!(freed_series(&cp), ["tempBuffer", "tempBuffer2"]);
+    let src = apo_source(MAP_SCRATCH);
+    let free = "   free(tempBuffer2);\n";
+    let alloc = "   tempBuffer2 = malloc((endIdx-startIdx+1) * sizeof(double));\n";
+    let first_map = "   for( i=0; i < fastNb; i++ )\n      tempBuffer2[i]";
+    assert!(src.contains(free) && src.contains(alloc) && src.contains(first_map), "fixture edits do not apply");
+    let never_freed = src.replacen(free, "", 1);
+    // Sub-call 0's failure return runs before the allocation.
+    let allocated_in_tail = src.replacen(alloc, "", 1).replacen(first_map, &format!("{alloc}{first_map}"), 1);
+    for (why, src) in [("never freed", never_freed), ("allocated in the tail", allocated_in_tail)] {
+        match streaming::analyze_composed(&load_with_source("apo", &src), lookup()) {
+            Err(StreamError::Unsupported(m))
+                if m.contains("composed series `tempBuffer2` is heap-allocated but the tail has no replayable free") => {}
+            other => panic!("{why}: want the no-replayable-free refusal, got {:?}", other.map(|cp| freed_series(&cp))),
+        }
+    }
+}
+
+#[test]
+fn a_map_reads_back_what_it_wrote_on_one_path_through_a_must_alias_name() {
+    use streaming::Consumer;
+    let f = apo_with_tail(
+        r"
+   res = outReal;
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   offset = fastNb - *outNBElement;
+   if( optInFastPeriod > 3 )
+   {
+      for( i=0; i < (int)*outNBElement; i++ )
+      {
+         if( tempBuffer[i+offset] > 0.0 )
+            outReal[i] = tempBuffer[i+offset];
+         outReal[i] = res[i] - tempBuffer[i+offset];
+      }
+   }
+   else
+   {
+      for( i=0; i < (int)*outNBElement; i++ )
+         outReal[i] = tempBuffer[i+offset] - outReal[i];
+   }",
+    );
+    // Batch reads res[i] after a write on one path and the slow ma's value on the
+    // other; the step runs the same statements over one storage, seeded with that
+    // value. Every read is 0 behind.
+    assert_classifier_verdict(&f, "accepted []", "the APO tail's delays, in each arm");
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted above");
+    assert!(
+        cp.edges.iter().any(|e| matches!(&e.consumer,
+            Consumer::MapPrior { arm: Some((true, _)), buffer, .. } if buffer == "outReal")),
+        "the then-arm reads outReal's prior: {:?}",
+        cp.edges
+    );
+    let si = cp.steps.iter().position(|s| matches!(s, streaming::UpdateStep::Map { .. })).expect("a map step");
+    let lowered = format!("{:?}", streaming::lower_map_step(&cp, si, &StepNames));
+    assert!(lowered.contains("Var(\"cur_outReal\")") && !lowered.contains("\"res\""), "{lowered}");
+}
+
+#[test]
+fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   nb = fastNb - 1;
+   for( i=0; i < nb; i++ )
+      outReal[i] = 0.5*tempBuffer[i] + tempBuffer[i+1];
+   *outBegIdx = fastBeg + 1;
+   *outNBElement = nb;",
+    );
+    assert_classifier_verdict(
+        &f,
+        r#"accepted ["tap lagdepth.tempBuffer.1.t0 ge1 Oldest <- (tempBuffer,1) map0 tempBuffer[i]"]"#,
+        "tempBuffer[i] is fastNb - (fastNb - 1) = 1 behind, exact",
+    );
+    use ta_codegen_lib::backends;
+    let enums = crate::common::load_enums();
+    let (reg, helpers) = (lookup(), crate::common::make_helpers());
+    let rust = backends::rust_lang::generate(&f, &enums, reg, helpers);
+    let rust_batch = if rust.contains("fn apo_impl_scalar(") { "fn apo_impl_scalar(" } else { "fn apo_impl(" };
+    let rows = [
+        ("c", backends::c::generate(&f, &enums, reg, helpers), "TA_RetCode TA_APO(", "TA_RetCode TA_APO_StepImpl( struct", "fma("),
+        ("rust", rust.clone(), rust_batch, "fn apo_step_impl(", ".mul_add("),
+        ("java", backends::java::generate(&f, &enums, reg, helpers), "RetCode apoImpl(", "private void apoStepImpl(", "Math.fma("),
+        ("csharp", backends::csharp::generate(&f, &enums, reg, helpers), "internal RetCode ApoImpl(", "private void ApoStepImpl(", "Math.FusedMultiplyAdd("),
+        ("ts", backends::ts::generate(&f, &enums, reg, helpers), "export function apoImpl(", "function apoStepImpl(", "fma("),
+    ];
+    for (lang, text, batch, step, marker) in &rows {
+        let fused = fn_body(text, batch).matches(marker).count();
+        let stepped = fn_body(text, step).matches(marker).count();
+        assert!(fused > 0, "{lang}: the batch map fuses nothing");
+        assert_eq!(stepped, fused, "{lang}: the step fuses {stepped} sites, batch {fused}");
+    }
 }

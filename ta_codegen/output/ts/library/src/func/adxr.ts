@@ -375,11 +375,11 @@ export class AdxrStream {
   /** @internal */
   cur_outReal: number = 0;
   /** @internal */
-  lagRingPos_adx: number = 0;
+  lagPos0: number = 0;
   /** @internal */
-  lagRingCap_adx: number = 1;
+  lagCap0: number = 0;
   /** @internal */
-  lagRing_adx: Float64Array = new Float64Array(1);
+  lagBuf0: Float64Array = new Float64Array(1);
   /** @internal */
   sub0!: AdxStream;
   /** @internal */
@@ -462,8 +462,10 @@ export class AdxrStream {
     const inClose = close;
     let cur_adx = 0;
     let cur_outReal = 0;
+    let lagTap0_0 = 0;
     cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
-    cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
+    lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+    cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
     return cur_outReal;
   }
 
@@ -482,9 +484,9 @@ export class AdxrStream {
     const c = new AdxrStream(this.core);
     c.optInTimePeriod = this.optInTimePeriod;
     c.cur_outReal = this.cur_outReal;
-    c.lagRingPos_adx = this.lagRingPos_adx;
-    c.lagRingCap_adx = this.lagRingCap_adx;
-    c.lagRing_adx = this.lagRing_adx.slice();
+    c.lagPos0 = this.lagPos0;
+    c.lagCap0 = this.lagCap0;
+    c.lagBuf0 = this.lagBuf0.slice();
     c.sub0 = this.sub0.clone();
     c.outRangeBegIdx = this.outRangeBegIdx;
     c.outRangeCount = this.outRangeCount;
@@ -495,10 +497,19 @@ export class AdxrStream {
 function adxrStepImpl(sp: AdxrStream, inHigh: number, inLow: number, inClose: number): void {
   let cur_adx = 0;
   let cur_outReal = 0;
+  let lagIn0 = 0;
+  let lagTap0_0 = 0;
+  let lagCapL0 = 0;
   cur_adx = sp.sub0.update(inHigh, inLow, inClose);
-  cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-  sp.lagRing_adx[sp.lagRingPos_adx] = cur_adx;
-  sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
+  lagIn0 = cur_adx;
+  lagTap0_0 = sp.lagBuf0[sp.lagPos0];
+  cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+  lagCapL0 = sp.lagCap0;
+  sp.lagBuf0[sp.lagPos0] = lagIn0;
+  sp.lagPos0 = sp.lagPos0 + 1;
+  if (sp.lagPos0 >= lagCapL0) {
+    sp.lagPos0 = 0;
+  }
   sp.cur_outReal = cur_outReal;
 }
 
@@ -541,6 +552,11 @@ function adxrOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
+  let lagPos0 = 0;
+  let lagCap0 = 0;
+  let lagBuf0!: Float64Array;
+  let lagD0_0 = 0;
+  let lagNb0 = 0;
   /* Original implementation from Wilder's book was doing some integer
    * rounding in its calculations.
    *
@@ -572,11 +588,23 @@ function adxrOpenImpl(
    * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
    */
   const sub0 = adxOpenAndFillInternal(core, inHigh, inLow, inClose, startIdx - (optInTimePeriod - 1), optInTimePeriod, outBegIdx, outNBElement, adx);
+  lagNb0 = outNBElement.value;
   /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
    * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
    * is adx[k]; the ADX range holds (period-1) more elements than the output.
    */
   nbElement = outNBElement.value - (optInTimePeriod - 1);
+  if (nbElement < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  lagD0_0 = lagNb0 - nbElement;
+  if (lagD0_0 < 1 || lagD0_0 > lagNb0 - 1) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  lagCap0 = lagD0_0;
+  lagBuf0 = new Float64Array(lagCap0 > 0 ? lagCap0 : 1);
+  lagBuf0.set(adx.subarray(lagNb0 - lagCap0, lagNb0), 0);
+  lagPos0 = 0;
   for (outIdx = 0; outIdx < nbElement; outIdx += 1) {
     sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
   }
@@ -585,16 +613,11 @@ function adxrOpenImpl(
   if (outNBElement.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  const lagCap_adx = optInTimePeriod - 1;
-  const lagRing_adx = new Float64Array(lagCap_adx);
-  for (let lagI = 0; lagI < lagCap_adx; lagI++) {
-    lagRing_adx[lagI] = adx[outNBElement.value + lagI];
-  }
   sp.optInTimePeriod = optInTimePeriod;
   sp.sub0 = sub0;
-  sp.lagRingPos_adx = 0;
-  sp.lagRingCap_adx = lagCap_adx;
-  sp.lagRing_adx = lagRing_adx;
+  sp.lagPos0 = lagPos0;
+  sp.lagCap0 = lagCap0;
+  sp.lagBuf0 = lagBuf0;
   sp.cur_outReal = sc_outReal[outNBElement.value - 1];
   return RetCode.SUCCESS;
 }

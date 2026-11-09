@@ -81,6 +81,7 @@ Each page charts the function at default parameters over one fixed price series 
 - [FISHER](/functions/fisher.md) — Fisher Transform
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [FRACTAL](/functions/fractal.md) — Williams Fractal
+- [GATOR](/functions/gator.md) — Gator Oscillator
 - [IBS](/functions/ibs.md) — Internal Bar Strength
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [KDJ](/functions/kdj.md) — KDJ Stochastic

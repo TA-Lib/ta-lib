@@ -1144,6 +1144,7 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      int lagNb0 = 0;
       lookbackTotal = PercentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
       firstIdx = startIdx;
       if( firstIdx < lookbackTotal ) {
@@ -1162,6 +1163,7 @@ public partial class Core
          tempX[outIdx++] = inReal[today];
          today += 1;
       }
+      lagNb0 = outIdx;
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MaStream sub0 = MaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, out maBegIdx, out maNbElement, tempMA);
@@ -1171,6 +1173,21 @@ public partial class Core
       VarStream sub1 = VarOpenAndFillInternal(inReal, maBegIdx, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, sc_outReal);
       retCode = RetCode.Success;
       offset = maNbElement - outNBElement;
+      if( optInNbDevUp == optInNbDevDn ) {
+         if( (int)outNBElement < 1 ) {
+            return RetCode.InsufficientHistory;
+         }
+         if( lagNb0 - (int)outNBElement != 0 ) {
+            return RetCode.InternalError;
+         }
+      } else {
+         if( (int)outNBElement < 1 ) {
+            return RetCode.InsufficientHistory;
+         }
+         if( lagNb0 - (int)outNBElement != 0 ) {
+            return RetCode.InternalError;
+         }
+      }
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offset];

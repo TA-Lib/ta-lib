@@ -894,6 +894,8 @@ function alligatorOpenImpl(
   const sc_outJaw = outStride === 1 ? outJaw : new Float64Array(historyLen);
   const sc_outTeeth = outStride === 1 ? outTeeth : new Float64Array(historyLen);
   const sc_outLips = outStride === 1 ? outLips : new Float64Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
   lookbackTotal = alligatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, core);
   /* Return before touching anything, so that an input which stops short of
    * endIdx is never read past its end.
@@ -923,12 +925,14 @@ function alligatorOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
+  lagNb0 = tempNbElement.value;
   const sub2 = rmaOpenAndFillInternal(core, tempMP.slice(0, (endIdx - mpStartIdx) + 1), lookbackTotal, optInTeethPeriod, tempBegIdx, tempNbElement, sc_outTeeth);
   if (tempNbElement.value === 0) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
+  lagNb1 = tempNbElement.value;
   const sub3 = rmaOpenAndFillInternal(core, tempMP.slice(0, (endIdx - mpStartIdx) + 1), lookbackTotal, optInLipsPeriod, tempBegIdx, tempNbElement, sc_outLips);
   if (tempNbElement.value === 0) {
     outBegIdx.value = 0;
@@ -939,6 +943,12 @@ function alligatorOpenImpl(
   outNBElement.value = tempNbElement.value;
   if (outNBElement.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb1 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
   }
   sp.optInJawPeriod = optInJawPeriod;
   sp.optInJawShift = optInJawShift;

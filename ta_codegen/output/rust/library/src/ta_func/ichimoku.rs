@@ -525,6 +525,9 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outSenkouSpanB: &mut [f64] =
             if outStride == 1 { &mut *outSenkouSpanB } else { &mut owned_sc_outSenkouSpanB };
+        let mut lagNb0: i64 = 0;
+        let mut lagNb1: i64 = 0;
+        let mut lagNb2: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut lookbackTotal: usize = 0_usize;
         let mut n: usize = 0_usize;
@@ -551,20 +554,38 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTenkanPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempT[..])?;
         retCode = RetCode::Success;
+        lagNb0 = (tempNbElement as i64);
         // Sub-stream 1: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInKijunPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempK[..])?;
         retCode = RetCode::Success;
+        lagNb1 = (tempNbElement as i64);
         // Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub2 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSenkouBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanB[..])?;
         retCode = RetCode::Success;
+        lagNb2 = (tempNbElement as i64);
         // Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
         // double in the last bit.
         // Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub3 = self.medprice_open_and_fill_internal(&tempT[..((n - 1) as usize) + 1], &tempK[..((n - 1) as usize) + 1], ((0) as usize), &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanA[..])?;
         retCode = RetCode::Success;
+        if lagNb0 - 1 - ((n - 1) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb1 - 1 - ((n - 1) as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if (n as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - (n as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
+        if lagNb1 - (n as i64) != 0 {
+            return Err(RetCode::InternalError);
+        }
         // for( i = 0; i < n; i += 1 )
         i = 0;
         while i < n {
@@ -578,6 +599,9 @@ impl Core {
         // Capture the live producer state + sub handles.
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb2 - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
         }
         let mut state = IchimokuStreamState {
             cur_outTenkanSen: 0.0_f64,

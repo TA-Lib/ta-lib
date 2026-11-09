@@ -992,6 +992,9 @@ public partial class Core
       Span<double> sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
       Span<double> sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
       Span<double> sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -1047,11 +1050,19 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       MaStream sub1 = MaOpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       retCode = RetCode.Success;
+      lagNb0 = outNbElement2;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */
+      lagNb1 = outNbElement1;
+      if( outNbElement1 < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - outNbElement1 != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < outNbElement1; i += 1 ) {
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
@@ -1059,6 +1070,13 @@ public partial class Core
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
+      lagNb2 = endIdx - startIdx + 1;
+      if( endIdx - startIdx + 1 < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
+         return RetCode.InternalError;
+      }
       fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(sc_outMACD.Slice(0));
       /* Calculate the signal/trigger line. */
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
@@ -1069,6 +1087,12 @@ public partial class Core
       MaStream sub2 = MaOpenAndFillInternal(subSrc2_0, 0, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
       /* Calculate the histogram. */
+      if( outNbElement2 < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb2 - outNbElement2 != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < outNbElement2; i += 1 ) {
          sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
       }
@@ -1078,6 +1102,9 @@ public partial class Core
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
          return RetCode.InsufficientHistory;
+      }
+      if( lagNb2 - outNBElement != 0 ) {
+         return RetCode.InternalError;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInFastMAType = optInFastMAType;

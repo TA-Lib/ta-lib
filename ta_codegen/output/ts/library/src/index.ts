@@ -281,6 +281,8 @@ export { fractal, fractalLookback, fractalDisplayShift, fractalOpen, fractalOpen
 export type { FractalOptions, FractalResult } from './func/fractal.ts';
 export { frama, framaLookback, framaDisplayShift, framaOpen, framaOpenAndFill, FramaStream } from './func/frama.ts';
 export type { FramaOptions, FramaResult } from './func/frama.ts';
+export { gator, gatorLookback, gatorDisplayShift, gatorOpen, gatorOpenAndFill, GatorStream, GatorOut } from './func/gator.ts';
+export type { GatorOptions, GatorResult } from './func/gator.ts';
 export { ha, haLookback, haDisplayShift, haOpen, haOpenAndFill, HaStream, HaOut } from './func/ha.ts';
 export type { HaOptions, HaResult } from './func/ha.ts';
 export { hma, hmaLookback, hmaDisplayShift, hmaOpen, hmaOpenAndFill, HmaStream } from './func/hma.ts';

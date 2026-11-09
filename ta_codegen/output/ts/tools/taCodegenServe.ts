@@ -128,6 +128,7 @@ import * as FLOOR from '../library/src/func/floor.ts';
 import * as FOSC from '../library/src/func/fosc.ts';
 import * as FRACTAL from '../library/src/func/fractal.ts';
 import * as FRAMA from '../library/src/func/frama.ts';
+import * as GATOR from '../library/src/func/gator.ts';
 import * as HA from '../library/src/func/ha.ts';
 import * as HMA from '../library/src/func/hma.ts';
 import * as HT_DCPERIOD from '../library/src/func/htDcperiod.ts';
@@ -792,6 +793,7 @@ const FUNCTION_LIST = '{"functions":[' + [
   '"TA_FOSC"',
   '"TA_FRACTAL"',
   '"TA_FRAMA"',
+  '"TA_GATOR"',
   '"TA_HA"',
   '"TA_HMA"',
   '"TA_HT_DCPERIOD"',
@@ -9490,6 +9492,81 @@ function handle_FRAMA(p: Params): string {
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
+function handle_GATOR(p: Params): string {
+  const startIdx = int(p, 'startIdx', 0);
+  const endIdx = int(p, 'endIdx', 0);
+  const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;
+  const inHigh = pre ? refHigh.slice(0, refN) : f64Array(p, 'inHigh');
+  const inLow = pre ? refLow.slice(0, refN) : f64Array(p, 'inLow');
+  const benchMode = int(p, 'bench_mode', 0);
+  const warm_inHigh = benchMode === 0 ? inHigh : warmView(inHigh, endIdx + 1);
+  const warm_inLow = benchMode === 0 ? inLow : warmView(inLow, endIdx + 1);
+  const optInJawPeriod = int(p, 'optInJawPeriod', Core.INTEGER_DEFAULT);
+  const optInJawShift = int(p, 'optInJawShift', Core.INTEGER_DEFAULT);
+  const optInTeethPeriod = int(p, 'optInTeethPeriod', Core.INTEGER_DEFAULT);
+  const optInTeethShift = int(p, 'optInTeethShift', Core.INTEGER_DEFAULT);
+  const optInLipsPeriod = int(p, 'optInLipsPeriod', Core.INTEGER_DEFAULT);
+  const optInLipsShift = int(p, 'optInLipsShift', Core.INTEGER_DEFAULT);
+  const outLen = outLength(p, startIdx, endIdx, GATOR.gatorLookback({ jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core }));
+  const out0 = f64Out(outLen);
+  const out1 = f64Out(outLen);
+  const iters = benchIters(p);
+  const timed = int(p, 'timed', 0) !== 0;
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  let rc: number = RetCode.SUCCESS;
+  let t0 = 0n;
+  for (let bi = 0; bi <= iters; bi++) {
+    if (bi === 1) t0 = process.hrtime.bigint();
+    if (benchMode !== 0) {
+      try {
+        if (benchMode === 1) {
+          GATOR.gatorOpen({ high: warm_inHigh, low: warm_inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core });
+        } else {
+          const wh = GATOR.gatorOpenAndFill({ high: warm_inHigh, low: warm_inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core, outUpper: out0, outLower: out1 });
+          outBegIdx.value = wh.begIdx;
+          outNBElement.value = wh.outUpper.length;
+        }
+        rc = RetCode.SUCCESS;
+      } catch (e) {
+        rc = e instanceof TALibError ? e.retCode : RetCode.BAD_PARAM;
+      }
+      continue;
+    }
+    try {
+      if (timed) {
+        rc = GATOR.gatorImpl(core, startIdx, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outBegIdx, outNBElement, out0, out1);
+      } else {
+        const r = GATOR.gator({ high: inHigh, low: inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outUpper: out0, outLower: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpper.length;
+        rc = RetCode.SUCCESS;
+      }
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+  }
+  const elapsedNs = (process.hrtime.bigint() - t0) / BigInt(iters);
+  let usedFloat = 0;
+  if (int(p, 'use_float', 0) !== 0) {
+    try {
+      const r = GATOR.gator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outUpper: out0, outLower: out1 });
+      outBegIdx.value = r.begIdx;
+      outNBElement.value = r.outUpper.length;
+      rc = RetCode.SUCCESS;
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+    usedFloat = 1;
+  }
+  const rideFields = rideGator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
+  return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
+}
+
 function handle_HA(p: Params): string {
   const startIdx = int(p, 'startIdx', 0);
   const endIdx = int(p, 'endIdx', 0);
@@ -18081,6 +18158,7 @@ const FUNCTIONS = new Map<string, (p: Params) => string>([
   ['TA_FOSC', handle_FOSC],
   ['TA_FRACTAL', handle_FRACTAL],
   ['TA_FRAMA', handle_FRAMA],
+  ['TA_GATOR', handle_GATOR],
   ['TA_HA', handle_HA],
   ['TA_HMA', handle_HMA],
   ['TA_HT_DCPERIOD', handle_HT_DCPERIOD],
@@ -38219,6 +38297,204 @@ function sv_FRAMA(p: Params): string {
         if (rcS === RetCode.SUCCESS && nbS.value > 0) {
           try {
             const stA = FRAMA.framaOpenInternal(c2, fz_h.slice(0, svN), fz_l.slice(0, svN), Sidx, optInTimePeriod);
+            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+            if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;
+          } catch (e) { svRejected(e); rangeOk = false; if (diag === '') diag = ',"anchoredOpenRejected":1'; }
+        }
+      }
+    }
+  }
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+}
+
+function sv_GATOR(p: Params): string {
+  const svShape = int(p, 'gen_shape', 0);
+  const svSeed = int(p, 'gen_seed', 0);
+  let svN = int(p, 'gen_n', 0);
+  if (svN < 2) svN = 2;
+  if (svN > 256) svN = 256;
+  const svK = int(p, 'unstablePeriod', 0);
+  const optInJawPeriod = int(p, 'optInJawPeriod', 13);
+  const optInJawShift = int(p, 'optInJawShift', 8);
+  const optInTeethPeriod = int(p, 'optInTeethPeriod', 8);
+  const optInTeethShift = int(p, 'optInTeethShift', 5);
+  const optInLipsPeriod = int(p, 'optInLipsPeriod', 5);
+  const optInLipsShift = int(p, 'optInLipsShift', 3);
+  const fz_o = new Float64Array(svN);
+  const fz_h = new Float64Array(svN);
+  const fz_l = new Float64Array(svN);
+  const fz_c = new Float64Array(svN);
+  const fz_v = new Float64Array(svN);
+  const fz_oi = new Float64Array(svN);
+  fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+  const b0 = new Float64Array(svN);
+  const b1 = new Float64Array(svN);
+  let legs = 0;
+  let allOk = true;
+  let peekAll = true;
+  let peekReps = 0;
+  let peekRejects = 0;
+  let peekRepAll = true;
+  let fillChecked = 0;
+  let fillOk = true;
+  const beg = new MInteger();
+  const nb = new MInteger();
+  let diag = '';
+  let rangeChecked = 0;
+  let rangeOk = true;
+  let rangeLegs = 0;
+  let rangeSites = 0;
+  const zsign = [0];
+  const rounds = 1;
+  for (let rd = 0; rd < rounds; rd++) {
+    let c2: Core;
+    try { c2 = Core.builder().unstablePeriod(24, svK).build(); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; return '{"error":"unstablePeriod out of range"}'; }
+    let rc: number;
+    try { rc = GATOR.gatorImpl(c2, 0, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, beg, nb, b0, b1); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
+    const lb = GATOR.gatorLookback({ jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 });
+    if (rc !== RetCode.SUCCESS || nb.value === 0) {
+      let openRejects: boolean;
+      try { GATOR.gatorOpen({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
+      return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
+    }
+    fillChecked = 1;
+    try {
+      const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const _fh = GATOR.gatorOpenAndFill({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2, outUpper: f0, outLower: f1 });
+      const _fr = _fh.stream.outRange();
+      rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) rangeOk = false;
+      if (_fh.begIdx !== _fr.begIdx || _fh.outUpper.length !== _fr.count || _fh.outLower.length !== _fr.count) fillOk = false;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) fillOk = false;
+      else {
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f0[i] !== -1.2345678901234e300) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f1[i] !== -1.2345678901234e300) fillOk = false;
+      }
+      try { GATOR.gatorOpenAndFill({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2, outUpper: fz_h, outLower: f1 }); fillOk = false; } catch (e) { svRejected(e); }
+      try { GATOR.gatorOpenAndFill({ high: fz_h, low: fz_l }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2, outUpper: f0, outLower: f0 }); fillOk = false; } catch (e) { svRejected(e); }
+    } catch (e) { svRejected(e); fillOk = false; }
+    const pcs = [lb + 1, lb + 13, Math.trunc(svN / 2), svN - 1].sort((x, y) => x - y);
+    let prevP = -1;
+    for (let pi = 0; pi < pcs.length; pi++) {
+      const P = pcs[pi];
+      if (P < lb + 1 || P > svN - 1 || P === prevP) continue;
+      prevP = P;
+      let st: GATOR.GatorStream;
+      try { st = GATOR.gatorOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); }
+      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
+      legs++;
+      const v0 = new GATOR.GatorOut(); st.value(v0);
+      if (svXtierNe(v0.outUpper, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
+      if (svXtierNe(v0.outLower, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
+      const pk = new GATOR.GatorOut();
+      const up = new GATOR.GatorOut();
+      const vc = new GATOR.GatorOut();
+      const rp = new GATOR.GatorOut();
+      for (let t = P; t < svN; t++) {
+        let pkTook = true;
+        try { st.peek(fz_h[t], fz_l[t], pk); } catch (e) { svRejected(e); pkTook = false; peekRejects++; }
+        if (t % 7 === 0) {
+          let rpTook = pkTook;
+          try { st.peek(fz_h[t - 1], fz_l[t - 1], rp); } catch (e) { svRejected(e); peekRejects++; }
+          try { st.peek(fz_h[t], fz_l[t], rp); } catch (e) { svRejected(e); rpTook = false; }
+          if (rpTook) {
+            peekReps++;
+            if (svBne(rp.outUpper, pk.outUpper)) peekRepAll = false;
+            if (svBne(rp.outLower, pk.outLower)) peekRepAll = false;
+          } else { peekRejects++; }
+        }
+        st.update(fz_h[t], fz_l[t], up);
+        if (pkTook && svBne(pk.outUpper, up.outUpper)) peekAll = false;
+        if (pkTook && svBne(pk.outLower, up.outLower)) peekAll = false;
+        try { st.peek(fz_h[t - 1], fz_l[t - 1], pk); } catch (e) { svRejected(e); peekRejects++; }
+        st.value(vc);
+        if (svBne(vc.outUpper, up.outUpper)) allOk = false;
+        if (svBne(vc.outLower, up.outLower)) allOk = false;
+        if (svXtierNe(up.outUpper, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":0,"batchv":"${hex64(float64Bits(b0[t - beg.value]))}","streamv":"${hex64(float64Bits(up.outUpper))}"`; }
+        if (svXtierNe(up.outLower, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":1,"batchv":"${hex64(float64Bits(b1[t - beg.value]))}","streamv":"${hex64(float64Bits(up.outLower))}"`; }
+      }
+      if (allOk) {
+        rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value) rangeOk = false;
+        rangeLegs++; rangeSites |= 16;
+        st.advance();
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value + 1) rangeOk = false;
+      }
+    }
+    {
+      const p0 = lb + 1;
+      if (p0 <= svN - 1) {
+        try {
+          const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const sA = GATOR.gatorOpenAndFill({ high: fz_h.slice(0, p0), low: fz_l.slice(0, p0) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2, outUpper: f0, outLower: f1 }).stream;
+          const mid = Math.trunc((p0 + svN) / 2);
+          const uA = new GATOR.GatorOut();
+          const uB = new GATOR.GatorOut();
+          for (let t = p0; t < mid; t++) {
+            sA.update(fz_h[t], fz_l[t], uA);
+            if (svXtierNe(uA.outUpper, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svXtierNe(uA.outLower, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          const sB = sA.clone();
+          sB.advance();
+          sB.advance();
+          const fk0 = new Float64Array(svN);
+          const fk1 = new Float64Array(svN);
+          for (let t = mid; t < svN; t++) {
+            sB.update(fz_h[t], fz_l[t], uB);
+            fk0[t] = uB.outUpper;
+            if (svXtierNe(uB.outUpper, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            fk1[t] = uB.outLower;
+            if (svXtierNe(uB.outLower, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          for (let t = mid; t < svN; t++) {
+            sA.update(fz_h[t], fz_l[t], uA);
+            if (svBne(uA.outUpper, fk0[t]) || svXtierNe(uA.outUpper, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+            if (svBne(uA.outLower, fk1[t]) || svXtierNe(uA.outLower, b1[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          if (allOk) {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+            if (sA.outRange().begIdx !== beg.value || sA.outRange().count !== nb.value) { rangeOk = false; if (diag === '') diag = ',"copyRangeSrc":1'; }
+            if (sB.outRange().begIdx !== beg.value || sB.outRange().count !== nb.value + 2) { rangeOk = false; if (diag === '') diag = ',"copyRange":1'; }
+          }
+        } catch (e) { svRejected(e); allOk = false; if (diag === '') diag = ',"copyOpenReject":1'; }
+      }
+    }
+    if (lb >= 1 && lb < svN) {
+      try { GATOR.gatorOpen({ high: fz_h.slice(0, lb), low: fz_l.slice(0, lb) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); allOk = false; if (diag === '') diag = ',"shortHistoryAccepted":1'; }
+      catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryWrongType":1'; } }
+      {
+        const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+        const f1 = new Float64Array(svN).fill(-1.2345678901234e300);
+        try { GATOR.gatorOpenAndFill({ high: fz_h.slice(0, lb), low: fz_l.slice(0, lb) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2, outUpper: f0, outLower: f1 }); allOk = false; if (diag === '') diag = ',"shortHistoryFillAccepted":1'; }
+        catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryFillWrongType":1'; } }
+      }
+    }
+    try {
+      const sD = GATOR.gatorOpen({ high: fz_h, low: fz_l }, { jawPeriod: Core.INTEGER_DEFAULT, jawShift: Core.INTEGER_DEFAULT, teethPeriod: Core.INTEGER_DEFAULT, teethShift: Core.INTEGER_DEFAULT, lipsPeriod: Core.INTEGER_DEFAULT, lipsShift: Core.INTEGER_DEFAULT, core: c2 });
+      const sE = GATOR.gatorOpen({ high: fz_h, low: fz_l }, { jawPeriod: 13, jawShift: 8, teethPeriod: 8, teethShift: 5, lipsPeriod: 5, lipsShift: 3, core: c2 });
+      const vD = new GATOR.GatorOut(); sD.value(vD);
+      const vE = new GATOR.GatorOut(); sE.value(vE);
+      if (svBne(vD.outUpper, vE.outUpper)) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+      if (svBne(vD.outLower, vE.outLower)) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+    } catch (e) { svRejected(e); }
+    {
+      const Sidx = lb + Math.trunc((svN - lb) / 3);
+      if (Sidx > lb && Sidx < svN - 1) {
+        const begS = new MInteger();
+        const nbS = new MInteger();
+        let rcS: number;
+        try { rcS = GATOR.gatorImpl(c2, Sidx, svN - 1, fz_h, fz_l, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, begS, nbS, b0, b1); }
+        catch (e) { if (!(e instanceof TALibError)) throw e; rcS = e.retCode; }
+        if (rcS === RetCode.SUCCESS && nbS.value > 0) {
+          try {
+            const stA = GATOR.gatorOpenInternal(c2, fz_h.slice(0, svN), fz_l.slice(0, svN), Sidx, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
             rangeChecked = 1; rangeLegs++; rangeSites |= 4;
             if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;
           } catch (e) { svRejected(e); rangeOk = false; if (diag === '') diag = ',"anchoredOpenRejected":1'; }
@@ -59257,6 +59533,7 @@ function handleStreamVerify(p: Params): string {
     case 'TA_FOSC': return sv_FOSC(p);
     case 'TA_FRACTAL': return sv_FRACTAL(p);
     case 'TA_FRAMA': return sv_FRAMA(p);
+    case 'TA_GATOR': return sv_GATOR(p);
     case 'TA_HA': return sv_HA(p);
     case 'TA_HMA': return sv_HMA(p);
     case 'TA_HT_DCPERIOD': return sv_HT_DCPERIOD(p);
@@ -71856,6 +72133,117 @@ function rideBodyFrama(core: Core, p: Params, endIdx: number, inHigh: Float64Arr
         for (let k = 0; k < nb; k++) {
           let cmp = true;
           if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
+          if (cmp) r.fillBars++;
+          if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+        }
+      }
+    } catch (_e) { r.ok = false; r.leg = 2; }
+  }
+
+  if (r.ok) {
+    rideSeenUsed[slot] = 1; rideSeenA[slot] = hash.a; rideSeenB[slot] = hash.b;
+    rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+  }
+}
+
+function rideGator(core: Core, p: Params, endIdx: number, inHigh: Float64Array, inLow: Float64Array, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number): string {
+  if (!rideGate(p)) return '';
+  const r = new RideResult();
+  rideBodyGator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, r);
+  return r.emit();
+}
+
+function rideBodyGator(core: Core, p: Params, endIdx: number, inHigh: Float64Array, inLow: Float64Array, optInJawPeriod: number, optInJawShift: number, optInTeethPeriod: number, optInTeethShift: number, optInLipsPeriod: number, optInLipsShift: number, r: RideResult): void {
+  r.lb = GATOR.gatorLookback({ jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core });
+  const lb = r.lb;
+  let navail = endIdx + 1;
+  if (inHigh.length < navail) navail = inHigh.length;
+  if (inLow.length < navail) navail = inLow.length;
+  let m = lb >= 0 ? 2 * lb + 10 : navail;
+  if (m > navail) m = navail;
+  r.m = m;
+  if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+  if (m < 1) { r.skip = 2; return; }
+  if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+  if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
+
+  let hash = rideKey();
+  hash = rideMixStr(hash, 'TA_GATOR');
+  hash = rideMix(hash, m);
+  hash = rideMix(hash, rideGen);
+  hash = rideMix(hash, int(p, 'unstablePeriod', 0));
+  hash = rideMix(hash, optInJawPeriod);
+  hash = rideMix(hash, optInJawShift);
+  hash = rideMix(hash, optInTeethPeriod);
+  hash = rideMix(hash, optInTeethShift);
+  hash = rideMix(hash, optInLipsPeriod);
+  hash = rideMix(hash, optInLipsShift);
+  hash = rideMixArr(hash, inHigh, m);
+  hash = rideMixArr(hash, inLow, m);
+  const slot = hash.a & (RIDE_SEEN_N - 1);
+  if (rideSeenUsed[slot] !== 0 && rideSeenA[slot] === hash.a && rideSeenB[slot] === hash.b) {
+    r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+  }
+
+  const rb0 = new Float64Array(m);
+  const rb1 = new Float64Array(m);
+  let beg = 0;
+  let nb = 0;
+  let codeB = '';
+  let rejected = false;
+  try { const _rr = GATOR.gator({ high: inHigh.slice(0, m), low: inLow.slice(0, m) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx: 0, endIdx: m - 1, core, outUpper: rb0, outLower: rb1 }); beg = _rr.begIdx; nb = _rr.outUpper.length; }
+  catch (_e) { r.rcBatch = rideCode(_e); codeB = rideCodeName(_e); rejected = true; }
+  if (rejected) {
+    let codeO = '';
+    let codeF = '';
+    try { GATOR.gatorOpen({ high: inHigh.slice(0, m), low: inLow.slice(0, m) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core }); } catch (_e) { r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }
+    const fb0 = new Float64Array(m);
+    const fb1 = new Float64Array(m);
+    try { GATOR.gatorOpenAndFill({ high: inHigh.slice(0, m), low: inLow.slice(0, m) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core, outUpper: fb0, outLower: fb1 }); } catch (_e) { r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }
+    const cmpO = r.rcOpen === r.rcBatch && codeO === codeB;
+    if (cmpO) r.rej++;
+    if (!cmpO) { r.ok = false; r.leg = r.rcOpen === r.rcBatch ? 4 : 3; }
+    const cmpF = r.rcFill === r.rcBatch && codeF === codeB;
+    if (cmpF) r.rej++;
+    if (!cmpF) { r.ok = false; r.leg = r.rcFill === r.rcBatch ? 4 : 3; }
+    return;
+  }
+  if (lb < 0) { r.skip = 7; return; }
+  if (nb === 0) { r.skip = 5; return; }
+  if (beg !== lb) { r.skip = 6; return; }
+
+  try {
+    let cmp: boolean;
+    const st = GATOR.gatorOpen({ high: inHigh.slice(0, lb + 1), low: inLow.slice(0, lb + 1) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core });
+    const uo = new GATOR.GatorOut(); st.value(uo);
+    cmp = true;
+    if (cmp && svXtierNe(rb0[lb - beg], uo.outUpper, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[lb - beg]); r.stream = float64Bits(uo.outUpper); }
+    if (cmp && svXtierNe(rb1[lb - beg], uo.outLower, r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[lb - beg]); r.stream = float64Bits(uo.outLower); }
+    if (cmp) r.openBars++;
+    if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+    for (let t = lb + 1; r.ok && t < m; t++) {
+      st.update(inHigh[t], inLow[t], uo);
+      cmp = true;
+      if (cmp && svXtierNe(rb0[t - beg], uo.outUpper, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[t - beg]); r.stream = float64Bits(uo.outUpper); }
+      if (cmp && svXtierNe(rb1[t - beg], uo.outLower, r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[t - beg]); r.stream = float64Bits(uo.outLower); }
+      if (cmp) r.openBars++;
+      if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+    }
+  } catch (_e) { r.ok = false; r.leg = 1; }
+
+  if (r.ok) {
+    const fb0 = new Float64Array(m);
+    const fb1 = new Float64Array(m);
+    try {
+      const f2 = GATOR.gatorOpenAndFill({ high: inHigh.slice(0, m), low: inLow.slice(0, m) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core, outUpper: fb0, outLower: fb1 });
+      const st2 = f2.stream;
+      if (f2.begIdx !== beg || f2.outUpper.length !== nb || f2.outLower.length !== nb) { r.ok = false; r.leg = 2; }
+      if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }
+      if (r.ok) {
+        for (let k = 0; k < nb; k++) {
+          let cmp = true;
+          if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
+          if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = float64Bits(rb1[k]); r.stream = float64Bits(fb1[k]); }
           if (cmp) r.fillBars++;
           if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
         }

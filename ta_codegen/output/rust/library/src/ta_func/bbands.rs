@@ -828,6 +828,7 @@ impl Core {
             if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
         let sc_outRealLowerBand: &mut [f64] =
             if outStride == 1 { &mut *outRealLowerBand } else { &mut owned_sc_outRealLowerBand };
+        let mut lagNb0: i64 = 0;
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut maBegIdx: usize = 0_usize;
@@ -870,6 +871,7 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        lagNb0 = ((*outNBElement) as i64);
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;
         // Calculate the Standard Deviation into tempBuffer2.
@@ -889,6 +891,12 @@ impl Core {
             shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
         } else {
             shiftIdx = 0;
+        }
+        if ((*outNBElement) as i64) < 1 {
+            return Err(RetCode::InsufficientHistory);
+        }
+        if lagNb0 - (shiftIdx as i64) - ((*outNBElement) as i64) != 0 {
+            return Err(RetCode::InternalError);
         }
         {
             let _n = ((*outNBElement) * 1) as usize;

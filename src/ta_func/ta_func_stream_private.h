@@ -136,6 +136,7 @@ struct TA_FLOOR_Stream;
 struct TA_FOSC_Stream;
 struct TA_FRACTAL_Stream;
 struct TA_FRAMA_Stream;
+struct TA_GATOR_Stream;
 struct TA_HA_Stream;
 struct TA_HMA_Stream;
 struct TA_HT_DCPERIOD_Stream;
@@ -379,6 +380,7 @@ TA_RetCode TA_FLOOR_OpenInternal( struct TA_FLOOR_Stream **stream, const double 
 TA_RetCode TA_FOSC_OpenInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_FRACTAL_OpenInternal( struct TA_FRACTAL_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInLeftBars, int optInRightBars, int *outSwingHigh, int *outSwingLow );
 TA_RetCode TA_FRAMA_OpenInternal( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_GATOR_OpenInternal( struct TA_GATOR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, double *outUpper, double *outLower );
 TA_RetCode TA_HA_OpenInternal( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outHAOpen, double *outHAHigh, double *outHALow, double *outHAClose );
 TA_RetCode TA_HMA_OpenInternal( struct TA_HMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_HT_DCPERIOD_OpenInternal( struct TA_HT_DCPERIOD_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
@@ -624,6 +626,7 @@ TA_RetCode TA_FLOOR_OpenAndFillInternal( struct TA_FLOOR_Stream **stream, const 
 TA_RetCode TA_FOSC_OpenAndFillInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_FRACTAL_OpenAndFillInternal( struct TA_FRACTAL_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInLeftBars, int optInRightBars, int *outBegIdx, int *outNBElement, int outSwingHigh[], int outSwingLow[] );
 TA_RetCode TA_FRAMA_OpenAndFillInternal( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_GATOR_OpenAndFillInternal( struct TA_GATOR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int *outBegIdx, int *outNBElement, double outUpper[], double outLower[] );
 TA_RetCode TA_HA_OpenAndFillInternal( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] );
 TA_RetCode TA_HMA_OpenAndFillInternal( struct TA_HMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_HT_DCPERIOD_OpenAndFillInternal( struct TA_HT_DCPERIOD_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );

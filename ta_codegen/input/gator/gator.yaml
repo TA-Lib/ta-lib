@@ -1,0 +1,58 @@
+name: GATOR
+group: Momentum Indicators
+hint: Gator Oscillator
+flags: [stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInJawPeriod
+    type: integer
+    display_name: Jaw Period
+    hint: Time period for the jaw line
+    range: [1, 100000]
+    default: 13
+    suggested: [1, 200, 1]
+  - name: optInJawShift
+    type: integer
+    display_name: Jaw Shift
+    hint: Bars ahead the jaw line is drawn
+    range: [0, 100000]
+    default: 8
+    suggested: [0, 30, 1]
+  - name: optInTeethPeriod
+    type: integer
+    display_name: Teeth Period
+    hint: Time period for the teeth line
+    range: [1, 100000]
+    default: 8
+    suggested: [1, 200, 1]
+  - name: optInTeethShift
+    type: integer
+    display_name: Teeth Shift
+    hint: Bars ahead the teeth line is drawn
+    range: [0, 100000]
+    default: 5
+    suggested: [0, 30, 1]
+  - name: optInLipsPeriod
+    type: integer
+    display_name: Lips Period
+    hint: Time period for the lips line
+    range: [1, 100000]
+    default: 5
+    suggested: [1, 200, 1]
+  - name: optInLipsShift
+    type: integer
+    display_name: Lips Shift
+    hint: Bars ahead the lips line is drawn
+    range: [0, 100000]
+    default: 3
+    suggested: [0, 30, 1]
+outputs:
+  - name: outUpper
+    type: real
+    flags: [histogram, display_shift, zero, positive]
+  - name: outLower
+    type: real
+    flags: [histogram, display_shift, zero, negative]

@@ -430,6 +430,8 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
    TA_TYPPRICE_Stream *sub0;
    TA_ATR_Stream *sub1;
    TA_EMA_Stream *sub2;
+   int lagNb0;
+   int lagNb1;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -438,6 +440,8 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
    sub0 = NULL;
    sub1 = NULL;
    sub2 = NULL;
+   lagNb0 = 0;
+   lagNb1 = 0;
    if( outStride ) sc_outRealUpperBand = outRealUpperBand;
    else
    {
@@ -528,6 +532,7 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
+      lagNb0 = tempNbElement;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
@@ -553,6 +558,7 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
+      lagNb1 = tempNbElement;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
@@ -568,6 +574,13 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
             return subRc;
          }
       }
+      if( lagNb0 - 1 - (endIdx - tpStartIdx) != 0 )
+      {
+         free(tempTP);
+         free(tempATR);
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_INTERNAL_ERROR(531);
+      }
       retCode = subRc;
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
@@ -578,6 +591,20 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
          return retCode;
       }
       dummyBegIdx = startIdx;
+      if( (int)dummyNBElement < 1 )
+      {
+         free(tempTP);
+         free(tempATR);
+         *outBegIdx = 0; *outNBElement = 0; TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      if( lagNb1 - (int)dummyNBElement != 0 )
+      {
+         free(tempTP);
+         free(tempATR);
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_INTERNAL_ERROR(532);
+      }
       for( i = 0; i < (int)dummyNBElement; i += 1 )
       {
          middle = sc_outRealMiddleBand[i];

@@ -1221,6 +1221,11 @@ public partial class Core
       }
       Span<double> sc_outKST = outStride == 1 ? outKST : new double[historyLen];
       Span<double> sc_outKSTSignal = outStride == 1 ? outKSTSignal : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
+      int lagNb3 = 0;
+      int lagNb4 = 0;
       /* With every type SMA this is bit-exact with kst(): each leg's average
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
@@ -1298,6 +1303,13 @@ public partial class Core
       tempBegIdx = _xr1.BegIdx;
       legNb = _xr1.Count;
       retCode = RetCode.Success;
+      lagNb0 = legNb;
+      if( kstNb < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - kstNb != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < kstNb; i += 1 ) {
          kstBuffer[i] = Math.FusedMultiplyAdd(2.0, tempBuffer[i], kstBuffer[i]);
       }
@@ -1315,6 +1327,13 @@ public partial class Core
       tempBegIdx = _xr2.BegIdx;
       legNb = _xr2.Count;
       retCode = RetCode.Success;
+      lagNb1 = legNb;
+      if( kstNb < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb1 - kstNb != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < kstNb; i += 1 ) {
          kstBuffer[i] = Math.FusedMultiplyAdd(3.0, tempBuffer[i], kstBuffer[i]);
       }
@@ -1332,10 +1351,25 @@ public partial class Core
       tempBegIdx = _xr3.BegIdx;
       legNb = _xr3.Count;
       retCode = RetCode.Success;
+      lagNb2 = legNb;
+      lagNb3 = kstNb;
+      if( kstNb < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb2 - kstNb != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < kstNb; i += 1 ) {
          kstBuffer[i] = Math.FusedMultiplyAdd(4.0, tempBuffer[i], kstBuffer[i]);
       }
       /* Every read of inReal is done: an output may alias it. */
+      lagNb4 = endIdx - startIdx + 1;
+      if( endIdx - startIdx + 1 < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb3 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
+         return RetCode.InternalError;
+      }
       kstBuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(sc_outKST.Slice(0));
       /* Sub-stream 8: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -1349,6 +1383,9 @@ public partial class Core
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
          return RetCode.InsufficientHistory;
+      }
+      if( lagNb4 - outNBElement != 0 ) {
+         return RetCode.InternalError;
       }
       sp.optInROC1Period = optInROC1Period;
       sp.optInROC2Period = optInROC2Period;

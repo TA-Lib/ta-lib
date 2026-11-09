@@ -845,6 +845,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["GATOR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.GatorImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["HA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.HaImpl(
@@ -2308,6 +2314,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["GATOR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.GatorImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["HA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.HaImpl(
@@ -3166,6 +3178,7 @@ internal static class NoPhantomIoBinder
         ["FOSC"] = static (core, c) => core.FoscOpen(c.Series(0), c.IntOpt(0)),
         ["FRACTAL"] = static (core, c) => core.FractalOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),
         ["FRAMA"] = static (core, c) => core.FramaOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
+        ["GATOR"] = static (core, c) => core.GatorOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5)),
         ["HA"] = static (core, c) => core.HaOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["HMA"] = static (core, c) => core.HmaOpen(c.Series(0), c.IntOpt(0)),
         ["HT_DCPERIOD"] = static (core, c) => core.HtDcperiodOpen(c.Series(0)),

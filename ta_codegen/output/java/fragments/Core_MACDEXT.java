@@ -890,6 +890,9 @@
       double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
       double[] sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
       double[] sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -945,11 +948,19 @@
        * sub-call's own startIdx (the seeding point). */
       MaStream sub1 = maOpenAndFillInternal(inReal, tempInteger, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
       retCode = RetCode.SUCCESS;
+      lagNb0 = outNbElement2.value;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1.value != tempInteger || outBegIdx2.value != tempInteger || outNbElement1.value != outNbElement2.value || outNbElement1.value != endIdx - startIdx + 1 + lookbackSignal ) {
          return RetCode.BAD_PARAM ;
       }
       /* Calculate (fast MA) - (slow MA). */
+      lagNb1 = outNbElement1.value;
+      if( outNbElement1.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - outNbElement1.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < outNbElement1.value; i += 1 ) {
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
@@ -957,6 +968,13 @@
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
+      lagNb2 = endIdx - startIdx + 1;
+      if( endIdx - startIdx + 1 < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       System.arraycopy(fastMABuffer, lookbackSignal, sc_outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
@@ -964,6 +982,12 @@
       MaStream sub2 = maOpenAndFillInternal(java.util.Arrays.copyOfRange(fastMABuffer, 0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, sc_outMACDSignal);
       retCode = RetCode.SUCCESS;
       /* Calculate the histogram. */
+      if( outNbElement2.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb2 - outNbElement2.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < outNbElement2.value; i += 1 ) {
          sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
       }
@@ -973,6 +997,9 @@
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb2 - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInFastMAType = optInFastMAType;

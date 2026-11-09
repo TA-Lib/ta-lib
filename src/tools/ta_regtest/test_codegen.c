@@ -915,6 +915,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     /* ALLIGATOR's three legs are TA_RMA of the median price, each seeded at its
      * own lookback, so one RMA row warms all three. */
     {"ALLIGATOR",    TA_FUNC_UNST_RMA},
+    {"GATOR",        TA_FUNC_UNST_RMA},
     {"CKSP",         TA_FUNC_UNST_ATR},
     {"CE",           TA_FUNC_UNST_ATR},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.

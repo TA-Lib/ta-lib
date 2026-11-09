@@ -529,11 +529,13 @@ pub enum FuncId {
     SORTINO,
     /// Williams Alligator — [`Core::alligator`](crate::Core::alligator).
     ALLIGATOR,
+    /// Gator Oscillator — [`Core::gator`](crate::Core::gator).
+    GATOR,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 243;
+    pub const COUNT: usize = 244;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -891,7 +893,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 243] = [
+static FUNC_TABLE: [FuncInfo; 244] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3565,10 +3567,21 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         outputs: &[OutputInfo { param_name: "outJaw", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outTeeth", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outLips", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::GATOR,
+        name: "GATOR",
+        group: Group::MomentumIndicators,
+        hint: "Gator Oscillator",
+        flags: FuncFlags(0x02000002),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInJawPeriod", display_name: "Jaw Period", hint: "Time period for the jaw line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 13, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInJawShift", display_name: "Jaw Shift", hint: "Bars ahead the jaw line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 8, suggested: (0, 30, 1) } }, OptInputInfo { param_name: "optInTeethPeriod", display_name: "Teeth Period", hint: "Time period for the teeth line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 8, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTeethShift", display_name: "Teeth Shift", hint: "Bars ahead the teeth line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 5, suggested: (0, 30, 1) } }, OptInputInfo { param_name: "optInLipsPeriod", display_name: "Lips Period", hint: "Time period for the lips line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInLipsShift", display_name: "Lips Shift", hint: "Bars ahead the lips line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 3, suggested: (0, 30, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outUpper", kind: OutputType::Real, flags: OutputFlags(0x00004510) }, OutputInfo { param_name: "outLower", kind: OutputType::Real, flags: OutputFlags(0x00004610) }, ],
+        unst_id: None,
+    },
 ];
 
 /// [`FuncInfo::attributes`], indexed by [`FuncId`].
-static ATTRIBUTES: [&str; 243] = [
+static ATTRIBUTES: [&str; 244] = [
     "{}",
     "{}",
     "{}",
@@ -3808,6 +3821,7 @@ static ATTRIBUTES: [&str; 243] = [
     "{}",
     "{}",
     "{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}",
+    "{}",
     "{}",
     "{}",
     "{}",
@@ -4073,6 +4087,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "SHARPE" => FuncId::SHARPE,
         "SORTINO" => FuncId::SORTINO,
         "ALLIGATOR" => FuncId::ALLIGATOR,
+        "GATOR" => FuncId::GATOR,
         _ => return None,
     })
 }
@@ -4581,6 +4596,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SHARPE => self.core.sharpe_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
             FuncId::SORTINO => self.core.sortino_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
             FuncId::ALLIGATOR => self.core.alligator_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
+            FuncId::GATOR => self.core.gator_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
         }
     }
 
@@ -4837,6 +4853,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SHARPE => self.core.sharpe_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
             FuncId::SORTINO => self.core.sortino_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
             FuncId::ALLIGATOR => self.core.alligator_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], output_idx),
+            FuncId::GATOR => self.core.gator_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], output_idx),
         }
     }
 
@@ -8222,6 +8239,21 @@ impl<'a> ParamHolder<'a> {
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::GATOR => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.gator(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

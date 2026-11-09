@@ -749,6 +749,9 @@
       double[] sc_outKijunSen = outStride == 1 ? outKijunSen : new double[historyLen];
       double[] sc_outSenkouSpanA = outStride == 1 ? outSenkouSpanA : new double[historyLen];
       double[] sc_outSenkouSpanB = outStride == 1 ? outSenkouSpanB : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
       outBegIdx.value = 0;
       outNBElement.value = 0;
       lookbackTotal = ichimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
@@ -768,14 +771,17 @@
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInTenkanPeriod, tempBegIdx, tempNbElement, tempT);
       retCode = RetCode.SUCCESS;
+      lagNb0 = tempNbElement.value;
       /* Sub-stream 1: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub1 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInKijunPeriod, tempBegIdx, tempNbElement, tempK);
       retCode = RetCode.SUCCESS;
+      lagNb1 = tempNbElement.value;
       /* Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub2 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, tempBegIdx, tempNbElement, sc_outSenkouSpanB);
       retCode = RetCode.SUCCESS;
+      lagNb2 = tempNbElement.value;
       /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
        * double in the last bit.
        */
@@ -783,6 +789,21 @@
        * sub-call's own startIdx (the seeding point). */
       MedpriceStream sub3 = medpriceOpenAndFillInternal(java.util.Arrays.copyOfRange(tempT, 0, (n - 1) + 1), java.util.Arrays.copyOfRange(tempK, 0, (n - 1) + 1), 0, tempBegIdx, tempNbElement, sc_outSenkouSpanA);
       retCode = RetCode.SUCCESS;
+      if( lagNb0 - 1 - (n - 1) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb1 - 1 - (n - 1) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( n < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - n != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb1 - n != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < n; i += 1 ) {
          sc_outTenkanSen[i] = tempT[i];
          sc_outKijunSen[i] = tempK[i];
@@ -792,6 +813,9 @@
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb2 - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInTenkanPeriod = optInTenkanPeriod;
       sp.optInKijunPeriod = optInKijunPeriod;

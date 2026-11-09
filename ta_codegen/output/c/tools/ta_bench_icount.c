@@ -6357,6 +6357,62 @@ static void icount_FRAMA(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_GATOR(int iters) {
+    const char *nm = "GATOR";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_GATOR_Stream *st = NULL;
+    TA_GATOR_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_GATOR(0, g_nPoints - 1, g_high, g_low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("GATOR/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+
+    ICOUNT_ZERO();
+    rc = TA_GATOR_OpenAndFill(&stf, g_high, g_low, g_nPoints, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("GATOR/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    if( stf ) TA_GATOR_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_GATOR_Open(&st, g_high, g_low, g_nPoints, 13, 8, 8, 5, 5, 3, &v0, &v1);
+    ICOUNT_DUMP("GATOR/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_GATOR_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("GATOR/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_GATOR_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("GATOR/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_GATOR_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_HA(int iters) {
     const char *nm = "HA";
     int outBegIdx = 0, outNBElement = 0;
@@ -12881,6 +12937,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "FOSC") ) { icount_FOSC(iters); fflush(stdout); }
     if( func_matches(filter, "FRACTAL") ) { icount_FRACTAL(iters); fflush(stdout); }
     if( func_matches(filter, "FRAMA") ) { icount_FRAMA(iters); fflush(stdout); }
+    if( func_matches(filter, "GATOR") ) { icount_GATOR(iters); fflush(stdout); }
     if( func_matches(filter, "HA") ) { icount_HA(iters); fflush(stdout); }
     if( func_matches(filter, "HMA") ) { icount_HMA(iters); fflush(stdout); }
     if( func_matches(filter, "HT_DCPERIOD") ) { icount_HT_DCPERIOD(iters); fflush(stdout); }

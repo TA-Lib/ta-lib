@@ -795,6 +795,8 @@ function kcOpenImpl(
   const sc_outRealUpperBand = outStride === 1 ? outRealUpperBand : new Float64Array(historyLen);
   const sc_outRealMiddleBand = outStride === 1 ? outRealMiddleBand : new Float64Array(historyLen);
   const sc_outRealLowerBand = outStride === 1 ? outRealLowerBand : new Float64Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
   emaLookback = emaLookbackPositional(optInTimePeriod, core);
   lookbackTotal = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);
   /* Nothing to produce: the range ends before the lookback. Return before
@@ -819,19 +821,30 @@ function kcOpenImpl(
   tempTP = new Float64Array(endIdx - tpStartIdx + 1);
   tempATR = new Float64Array(endIdx - startIdx + 1);
   const sub0 = typpriceOpenAndFillInternal(core, inHigh, inLow, inClose, tpStartIdx, tempBegIdx, tempNbElement, tempTP);
+  lagNb0 = tempNbElement.value;
   /* The ATR consumes the price inputs before the moving average below writes
    * the middle band, which may be aliased onto one of them.
    */
   const sub1 = atrOpenAndFillInternal(core, inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
+  lagNb1 = tempNbElement.value;
   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
    * own lookback puts its first output on startIdx, where the ATR's already is.
    */
   const sub2 = emaOpenAndFillInternal(core, tempTP.slice(0, (endIdx - tpStartIdx) + 1), emaLookback, optInTimePeriod, outBegIdx, outNBElement, sc_outRealMiddleBand);
+  if (lagNb0 - 1 - (endIdx - tpStartIdx) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   if (outNBElement.value === 0) {
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
   outBegIdx.value = startIdx;
+  if (outNBElement.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb1 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < outNBElement.value; i += 1) {
     middle = sc_outRealMiddleBand[i];
     tempReal = tempATR[i] * optInNbDev;

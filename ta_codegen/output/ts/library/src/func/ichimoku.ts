@@ -820,6 +820,9 @@ function ichimokuOpenImpl(
   const sc_outKijunSen = outStride === 1 ? outKijunSen : new Float64Array(historyLen);
   const sc_outSenkouSpanA = outStride === 1 ? outSenkouSpanA : new Float64Array(historyLen);
   const sc_outSenkouSpanB = outStride === 1 ? outSenkouSpanB : new Float64Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
+  let lagNb2 = 0;
   outBegIdx.value = 0;
   outNBElement.value = 0;
   lookbackTotal = ichimokuLookbackPositional(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, core);
@@ -836,12 +839,30 @@ function ichimokuOpenImpl(
    * last midprice call, which is the last read of either input.
    */
   const sub0 = midpriceOpenAndFillInternal(core, inHigh, inLow, startIdx, optInTenkanPeriod, tempBegIdx, tempNbElement, tempT);
+  lagNb0 = tempNbElement.value;
   const sub1 = midpriceOpenAndFillInternal(core, inHigh, inLow, startIdx, optInKijunPeriod, tempBegIdx, tempNbElement, tempK);
+  lagNb1 = tempNbElement.value;
   const sub2 = midpriceOpenAndFillInternal(core, inHigh, inLow, startIdx, optInSenkouBPeriod, tempBegIdx, tempNbElement, sc_outSenkouSpanB);
+  lagNb2 = tempNbElement.value;
   /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
    * double in the last bit.
    */
   const sub3 = medpriceOpenAndFillInternal(core, tempT.slice(0, (n - 1) + 1), tempK.slice(0, (n - 1) + 1), 0, tempBegIdx, tempNbElement, sc_outSenkouSpanA);
+  if (lagNb0 - 1 - (n - 1) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb1 - 1 - (n - 1) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (n < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - n !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  if (lagNb1 - n !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < n; i += 1) {
     sc_outTenkanSen[i] = tempT[i];
     sc_outKijunSen[i] = tempK[i];
@@ -850,6 +871,9 @@ function ichimokuOpenImpl(
   outNBElement.value = n;
   if (outNBElement.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb2 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
   }
   sp.optInTenkanPeriod = optInTenkanPeriod;
   sp.optInKijunPeriod = optInKijunPeriod;

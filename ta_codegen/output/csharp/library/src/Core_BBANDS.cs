@@ -1183,6 +1183,7 @@ public partial class Core
       Span<double> sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       Span<double> sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       Span<double> sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      int lagNb0 = 0;
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
        * at the same bar. Two intermediate buffers are allocated so the input may
@@ -1219,6 +1220,7 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
+      lagNb0 = outNBElement;
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
@@ -1239,6 +1241,12 @@ public partial class Core
          shiftIdx = (int)outBegIdx - maBegIdx;
       } else {
          shiftIdx = 0;
+      }
+      if( outNBElement < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - shiftIdx - outNBElement != 0 ) {
+         return RetCode.InternalError;
       }
       tempBuffer1.Slice(shiftIdx, outNBElement * 1).CopyTo(sc_outRealMiddleBand.Slice(0));
       /* Now do a tight loop to calculate the upper/lower band at the same time. */

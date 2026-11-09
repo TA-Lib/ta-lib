@@ -1124,6 +1124,11 @@
       }
       double[] sc_outKST = outStride == 1 ? outKST : new double[historyLen];
       double[] sc_outKSTSignal = outStride == 1 ? outKSTSignal : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
+      int lagNb3 = 0;
+      int lagNb4 = 0;
       /* With every type SMA this is bit-exact with kst(): each leg's average
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
@@ -1195,6 +1200,13 @@
       tempBegIdx.value = _xr1.begIdx();
       legNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
+      lagNb0 = legNb.value;
+      if( kstNb.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - kstNb.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
       }
@@ -1209,6 +1221,13 @@
       tempBegIdx.value = _xr2.begIdx();
       legNb.value = _xr2.count();
       retCode = RetCode.SUCCESS;
+      lagNb1 = legNb.value;
+      if( kstNb.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb1 - kstNb.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
       }
@@ -1223,10 +1242,25 @@
       tempBegIdx.value = _xr3.begIdx();
       legNb.value = _xr3.count();
       retCode = RetCode.SUCCESS;
+      lagNb2 = legNb.value;
+      lagNb3 = kstNb.value;
+      if( kstNb.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb2 - kstNb.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < kstNb.value; i += 1 ) {
          kstBuffer[i] = Math.fma(4.0, tempBuffer[i], kstBuffer[i]);
       }
       /* Every read of inReal is done: an output may alias it. */
+      lagNb4 = endIdx - startIdx + 1;
+      if( endIdx - startIdx + 1 < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb3 - lookbackSignal - (endIdx - startIdx + 1) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       System.arraycopy(kstBuffer, lookbackSignal, sc_outKST, 0, (endIdx - startIdx + 1) * 1);
       /* Sub-stream 8: ma over `kstBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -1237,6 +1271,9 @@
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb4 - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInROC1Period = optInROC1Period;
       sp.optInROC2Period = optInROC2Period;

@@ -48,6 +48,7 @@ ErrorNumber test_func_fisher( TA_History *history );
 ErrorNumber test_func_kvo( TA_History *history );
 ErrorNumber test_func_ichimoku( TA_History *history );
 ErrorNumber test_func_alligator( TA_History *history );
+ErrorNumber test_func_gator( TA_History *history );
 ErrorNumber test_func_zigzag( TA_History *history );
 ErrorNumber test_func_wavetrend( TA_History *history );
 ErrorNumber test_func_dosc( TA_History *history );

@@ -729,6 +729,8 @@
       double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
       emaLookback = emaLookback(optInTimePeriod);
       lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range ends before the lookback. Return before
@@ -756,6 +758,7 @@
        * sub-call's own startIdx (the seeding point). */
       TyppriceStream sub0 = typpriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, tempBegIdx, tempNbElement, tempTP);
       retCode = RetCode.SUCCESS;
+      lagNb0 = tempNbElement.value;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
@@ -763,6 +766,7 @@
        * sub-call's own startIdx (the seeding point). */
       AtrStream sub1 = atrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
       retCode = RetCode.SUCCESS;
+      lagNb1 = tempNbElement.value;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
@@ -770,11 +774,20 @@
        * sub-call's own startIdx (the seeding point). */
       EmaStream sub2 = emaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempTP, 0, (endIdx - tpStartIdx) + 1), emaLookback, optInTimePeriod, outBegIdx, outNBElement, sc_outRealMiddleBand);
       retCode = RetCode.SUCCESS;
+      if( lagNb0 - 1 - (endIdx - tpStartIdx) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
+      if( (int)outNBElement.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb1 - (int)outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          middle = sc_outRealMiddleBand[i];
          tempReal = tempATR[i] * optInNbDev;

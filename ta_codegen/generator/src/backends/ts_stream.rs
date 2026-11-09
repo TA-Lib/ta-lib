@@ -19,8 +19,8 @@ use super::common;
 use super::ctype::CType;
 use super::fma::{self, FmaVarSets};
 use super::java_stream::{
-    build_composed_open_bodies, build_open_body_java, composed_cur_scalars, dual_scalar_union, has_return,
-    localize_state_writes, transform_map_step,
+    build_composed_open_bodies, build_open_body_java, dual_scalar_union, has_return,
+    localize_state_writes, managed_lag_cap, managed_lag_open_locals,
 };
 use super::ts::{self, ts_names, Services, TsCtx};
 use super::ts_doc::{self, StreamMethod};
@@ -477,6 +477,9 @@ pub(crate) fn generate_visiting(func: &FuncDef, svc: &Services, visit: Option<Vi
     let mut stream_fma = fma::build_fma_var_sets(func.stream_source(), &func.outputs, &fma::INDEX_PARAM_SEEDS);
     for input in streaming::input_array_names(func) {
         stream_fma.real_vars.insert(input);
+    }
+    if let StreamPlan::Composed(cp) = &plan {
+        stream_fma.real_vars.extend(streaming::lag_fma_reals(cp));
     }
     let counter = Cell::new(0usize);
     let em = Em { func, svc, fma: &stream_fma, counter: &counter, visit };
@@ -1307,6 +1310,11 @@ fn emit_open_region(
             continue;
         }
         o.push_str(&ctx.stmt(stmt, 2));
+    }
+    for (at, text) in inserts {
+        if *at == open_body.len() {
+            o.push_str(text);
+        }
     }
 }
 
@@ -2542,7 +2550,6 @@ fn emit_composed_step(
     em: &Em,
     cp: &streaming::ComposedPlan,
     step_settings: &BTreeSet<String>,
-    inputs: &[String],
     outputs: &[String],
     fields: &[Field],
     frame: bool,
@@ -2556,7 +2563,7 @@ fn emit_composed_step(
     if !frame {
         emit_step_sig(o, em);
     }
-    let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
+    let cur_scalars = cp.cur_scalars();
     let cur_ty = |name: &str| out_ctype(func, name);
 
     if let (Some(model), false) = (&cp.producer, frame) {
@@ -2570,6 +2577,10 @@ fn emit_composed_step(
     for name in &cur_scalars {
         let _ = writeln!(o, "{pad}let cur_{name} = 0;");
     }
+    let (lag_reals, lag_ints) = streaming::lag_step_locals(cp, !frame);
+    for name in lag_reals.iter().chain(&lag_ints) {
+        let _ = writeln!(o, "{pad}let {name} = 0;");
+    }
     let mut aliased: Vec<String> = Vec::new();
     if frame {
         for out in outputs {
@@ -2580,7 +2591,6 @@ fn emit_composed_step(
         }
     }
 
-    let mut cur: std::collections::BTreeMap<String, String> = inputs.iter().map(|b| (b.clone(), b.clone())).collect();
     let declare_composed = |ctx: &TsCtx| {
         for n in &cur_scalars {
             if !outputs.contains(n) {
@@ -2592,6 +2602,12 @@ fn emit_composed_step(
         }
         for st in &cp.map_state {
             ctx.env.declare(&st.name, CType::of_var_type(&st.ty));
+        }
+        for n in &lag_reals {
+            ctx.env.declare(n, CType::Real);
+        }
+        for n in &lag_ints {
+            ctx.env.declare(n, CType::Int32);
         }
     };
 
@@ -2614,20 +2630,24 @@ fn emit_composed_step(
             declare_composed(&ctx);
             o.push_str(&em.render(&ctx, &transition, indent));
         }
-        let series = cp.series.clone().expect("producer plan carries a series");
-        cur.insert(series.clone(), format!("cur_{series}"));
     }
 
     let verb = if frame { "peek" } else { "update" };
-    let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let lag_names = TsComposedNames { series: cp.series.clone().unwrap_or_default() };
+    let render_all = |o: &mut String, stmts: &[Statement]| {
+        let ctx = em.frame_ctx(stmts, fields, cp.producer.as_ref(), step_settings, false);
+        declare_composed(&ctx);
+        o.push_str(&em.render(&ctx, stmts, indent));
+    };
+    render_all(o, &streaming::lag_snapshots(cp, None, !frame));
     let mut state_loaded = false;
-    for step in &cp.steps {
+    for (si, step) in cp.steps.iter().enumerate() {
         match step {
             streaming::UpdateStep::Sub { sub_idx } => {
                 let sub = &cp.subs[*sub_idx];
                 let callee_key = sub.callee.to_lowercase();
-                let args: Vec<String> =
-                    sub.srcs.iter().map(|src| cur.get(src).expect("analyzer ordered sub srcs").clone()).collect();
+                let (loads, args) = streaming::lower_sub_sources(cp, *sub_idx, &lag_names);
+                render_all(o, &loads);
                 let arg_str = args.join(", ");
                 if sub.dsts.len() == 1 {
                     let d = &sub.dsts[0];
@@ -2642,36 +2662,28 @@ fn emit_composed_step(
                     }
                     let _ = writeln!(o, "{pad}}}");
                 }
-                for d in &sub.dsts {
-                    cur.insert(d.clone(), format!("cur_{d}"));
-                }
             }
-            streaming::UpdateStep::Align { dst, src } => {
-                let alias = cur.get(src).expect("analyzer ordered align src").clone();
-                cur.insert(dst.clone(), alias);
+            streaming::UpdateStep::Align { .. } => {
+                render_all(o, &streaming::lower_align_step(cp, si, &lag_names));
             }
-            streaming::UpdateStep::Map { tail_idx } => {
+            streaming::UpdateStep::Map { .. } => {
                 if !std::mem::replace(&mut state_loaded, true) {
                     for st in &cp.map_state {
                         let _ = writeln!(o, "{pad}let {0} = sp.{0};", st.name);
                     }
                 }
-                for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
-                    cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
-                }
-                let stmts = transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings);
+                let stmts = streaming::lower_map_step(cp, si, &lag_names);
                 let ctx = em.frame_ctx(&stmts, fields, cp.producer.as_ref(), step_settings, false);
                 ctx.inline_fma_per_bar(cp.tail);
                 declare_composed(&ctx);
                 o.push_str(&em.render(&ctx, &stmts, indent));
             }
         }
+        render_all(o, &streaming::lag_snapshots(cp, Some(si), !frame));
     }
     if !frame {
-        for ring in &cp.sub_lag_rings {
-            let sn = &ring.series;
-            let _ = writeln!(o, "{pad}sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
-            let _ = writeln!(o, "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};");
+        for k in 0..cp.lines.len() {
+            render_all(o, &streaming::lag_push(k, &lag_names));
         }
         for st in cp.map_state.iter().filter(|st| st.carried) {
             let _ = writeln!(o, "{pad}sp.{0} = {0};", st.name);
@@ -2679,8 +2691,8 @@ fn emit_composed_step(
     }
     let target = if frame { "" } else { "sp." };
     for out in outputs {
-        let src = cur.get(out).expect("analyzer gated output");
-        if frame && src == &format!("cur_{out}") {
+        let src = cp.output_storage(out);
+        if frame && src == format!("cur_{out}") {
             continue;
         }
         let _ = writeln!(o, "{pad}{target}cur_{out} = {src};");
@@ -2727,10 +2739,18 @@ fn emit_composed_open(
             let _ = writeln!(s, "  const sc_{out} = new {ty}(historyLen);");
         }
     }
+    for (_, name, init) in managed_lag_open_locals(cp, "", "") {
+        if name.starts_with("lagBuf") {
+            let _ = writeln!(s, "  let {name}!: Float64Array;");
+        } else {
+            let _ = writeln!(s, "  let {name} = {init};");
+        }
+    }
 
     let region_len = region_stmts.len();
     let own_inputs: BTreeSet<String> = streaming::input_array_names(func).into_iter().collect();
-    let mut inserts: Vec<(usize, String)> = Vec::new();
+    let lag = TsLagOpen { cp, outputs, ctx: &ctx };
+    let mut inserts: Vec<(usize, u8, String)> = streaming::lag_inserts(cp, region_len, &|t, a| lag.emit(t, a, 2));
     let mut replaced: BTreeSet<usize> = BTreeSet::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let mut t = String::new();
@@ -2782,27 +2802,24 @@ fn emit_composed_open(
             em.svc.import(&callee_key, &cn.open_internal);
             let _ = writeln!(t, "  const sub{si} = {}(core, {}, {anchor}{opt_tail});", cn.open_internal, srcs.join(", "));
         }
-        inserts.push((region_len + sub.tail_idx, t));
+        inserts.push((region_len + sub.tail_idx, 2, t));
     }
+    let inserts = streaming::order_lag_inserts(inserts);
 
     emit_open_region(&mut s, em, &combined, &ctx, &inserts, &replaced);
 
     let _ = writeln!(s, "  if (outNBElement.value < 1) {{\n    return RetCode.INSUFFICIENT_HISTORY;\n  }}");
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        let lag = ctx.value_for(CType::Int32, &ring.lag);
-        let _ = writeln!(s, "  const lagCap_{sr} = {lag};");
-        let _ = writeln!(s, "  const lagRing_{sr} = new Float64Array(lagCap_{sr});");
-        let _ = writeln!(s, "  for (let lagI = 0; lagI < lagCap_{sr}; lagI++) {{");
-        let _ = writeln!(s, "    lagRing_{sr}[lagI] = {sr}[outNBElement.value + lagI];\n  }}");
+    for (at, action) in &cp.open_actions {
+        if *at == streaming::OpenAt::Epilogue {
+            lag.emit(&mut s, action, 2);
+        }
     }
     let mut extra = String::new();
     for (si, _) in cp.subs.iter().enumerate() {
         let _ = writeln!(extra, "  sp.sub{si} = sub{si};");
     }
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        let _ = writeln!(extra, "  sp.lagRingPos_{sr} = 0;\n  sp.lagRingCap_{sr} = lagCap_{sr};\n  sp.lagRing_{sr} = lagRing_{sr};");
+    for name in streaming::lag_handle_fields(cp) {
+        let _ = writeln!(extra, "  sp.{name} = {name};");
     }
     for st in &cp.map_state {
         let _ = writeln!(extra, "  sp.{0} = {0};", st.name);
@@ -2829,6 +2846,94 @@ fn emit_composed_open(
     let _ = writeln!(o, "}}");
 }
 
+/// Renders the composed Open's delay-line actions in TypeScript.
+struct TsLagOpen<'a, 'c> {
+    cp: &'a streaming::ComposedPlan<'a>,
+    outputs: &'a [String],
+    ctx: &'a TsCtx<'c>,
+}
+
+impl TsLagOpen<'_, '_> {
+    fn scratch(&self, e: &Expr) -> Expr {
+        let outs = self.outputs;
+        streaming::rewrite_expr(e, &|x| match x {
+            Expr::Var(v) if outs.contains(&v) => Expr::Var(format!("sc_{v}")),
+            other => other,
+        })
+    }
+
+    fn int(&self, e: &Expr) -> String {
+        self.ctx.value_for(CType::Int32, &self.scratch(e))
+    }
+
+    fn formula(&self, edge: usize) -> String {
+        streaming::render_lag_formula(&self.cp.edge_delay_formula(edge), &|t| match t {
+            streaming::LagTerm::Nb(s) => streaming::lag_nb_local(*s),
+            streaming::LagTerm::Const(k) => k.to_string(),
+            streaming::LagTerm::Batch(e) => self.int(e),
+        })
+    }
+
+    fn emit(&self, o: &mut String, action: &streaming::OpenAction, indent: usize) {
+        use streaming::{lag_line_field, LineField, OpenAction};
+        let cp = self.cp;
+        let pad = " ".repeat(indent);
+        let fail = |o: &mut String, cond: &str, rc: &str| {
+            let _ = writeln!(o, "{pad}if ({cond}) {{\n{pad}  return RetCode.{rc};\n{pad}}}");
+        };
+        match action {
+            OpenAction::Snapshot { def } => {
+                let s = cp.snapshot_of(*def).expect("snapshotted definition");
+                let _ = writeln!(o, "{pad}{} = {};", streaming::lag_nb_local(s), self.int(&cp.snapshot_count(*def)));
+            }
+            OpenAction::EmptyGuard { count } => {
+                fail(o, &format!("{} < 1", self.int(count)), "INSUFFICIENT_HISTORY");
+            }
+            OpenAction::Presume { edge } => {
+                fail(o, &format!("{} !== 0", self.formula(*edge)), "INTERNAL_ERROR");
+            }
+            OpenAction::Capture { line, tap } => {
+                let t = &cp.lines[*line].taps[*tap];
+                let d = streaming::lag_depth_local(*line, *tap);
+                let nb = streaming::lag_nb_local(cp.snapshot_of(cp.lines[*line].def).expect("snapshotted line"));
+                let _ = writeln!(o, "{pad}{d} = {};", self.formula(t.edge));
+                fail(o, &format!("{d} < {} || {d} > {nb} - 1", t.capture_floor()), "INTERNAL_ERROR");
+            }
+            OpenAction::Seed { line } => {
+                let l = &cp.lines[*line];
+                let (buf, cap, pos) = (
+                    lag_line_field(*line, LineField::Buf),
+                    lag_line_field(*line, LineField::Cap),
+                    lag_line_field(*line, LineField::Pos),
+                );
+                let _ = writeln!(o, "{pad}{cap} = {};", managed_lag_cap(cp, *line, None));
+                for (j, tap) in l.taps.iter().enumerate() {
+                    if tap.back == streaming::TapBack::Field {
+                        let d = streaming::lag_depth_local(*line, j);
+                        let _ = writeln!(o, "{pad}{} = {d} < 0 ? 0 : {cap} - {d};", lag_line_field(*line, LineField::Back(j)));
+                    }
+                }
+                let nb = streaming::lag_nb_local(cp.snapshot_of(l.def).expect("snapshotted line"));
+                let src = self.ctx.expr(&self.scratch(&Expr::Var(cp.defs[l.def].buffer.clone())));
+                let _ = writeln!(o, "{pad}{buf} = new Float64Array({cap} > 0 ? {cap} : 1);");
+                let _ = writeln!(o, "{pad}{buf}.set({src}.subarray({nb} - {cap}, {nb}), 0);");
+                let _ = writeln!(o, "{pad}{pos} = 0;");
+            }
+            OpenAction::Mirror { cond, then_, else_ } => {
+                let _ = writeln!(o, "{pad}if ({}) {{", self.ctx.cond(&self.scratch(cond)));
+                for a in then_ {
+                    self.emit(o, a, indent + 2);
+                }
+                let _ = writeln!(o, "{pad}}} else {{");
+                for a in else_ {
+                    self.emit(o, a, indent + 2);
+                }
+                let _ = writeln!(o, "{pad}}}");
+            }
+        }
+    }
+}
+
 /// An out-meta argument of a fused sub-open: the `MInteger` box itself.
 fn meta_box(e: &Expr, ctx: &TsCtx) -> String {
     match e {
@@ -2843,7 +2948,6 @@ fn meta_box(e: &Expr, ctx: &TsCtx) -> String {
 
 fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
     let func = em.func;
-    let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let step_settings = match &cp.producer {
         Some(model) => detect_candle_settings(&model.steady_stmts),
@@ -2853,11 +2957,12 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
         Some(model) => state_fields(func, model, &step_settings),
         None => base_fields(func),
     };
-    for ring in &cp.sub_lag_rings {
-        let sr = &ring.series;
-        fields.push(field(format!("lagRingPos_{sr}"), CType::Int32, "0"));
-        fields.push(field(format!("lagRingCap_{sr}"), CType::Int32, "1"));
-        fields.push(field(format!("lagRing_{sr}"), CType::RealPtr, "new Float64Array(1)"));
+    for name in streaming::lag_handle_fields(cp) {
+        if name.starts_with("lagBuf") {
+            fields.push(field(name, CType::RealPtr, "new Float64Array(1)"));
+        } else {
+            fields.push(field(name, CType::Int32, "0"));
+        }
     }
     for st in &cp.map_state {
         fields.push(var_field(&st.name, &st.ty));
@@ -2869,10 +2974,10 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
         let _ = writeln!(members.copy, "    c.sub{si} = this.sub{si}.clone();");
     }
     let mut scratch = BTreeSet::new();
-    let frame = emit_composed_step(&mut String::new(), em, cp, &step_settings, &inputs, &outputs, &fields, true, &mut scratch)
+    let frame = emit_composed_step(&mut String::new(), em, cp, &step_settings, &outputs, &fields, true, &mut scratch)
         .map(PeekFrame::falls_through);
     emit_handle_class(o, em, &fields, &members, frame.as_ref());
-    emit_composed_step(o, em, cp, &step_settings, &inputs, &outputs, &fields, false, &mut scratch);
+    emit_composed_step(o, em, cp, &step_settings, &outputs, &fields, false, &mut scratch);
     emit_composed_open(o, em, cp, &step_settings, &outputs);
     emit_open_and_fill_internal_wrapper(o, em, true);
     emit_open_wrappers(o, em, true, false);

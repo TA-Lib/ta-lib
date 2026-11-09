@@ -1099,6 +1099,7 @@
       double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      int lagNb0 = 0;
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
        * at the same bar. Two intermediate buffers are allocated so the input may
@@ -1135,6 +1136,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
+      lagNb0 = outNBElement.value;
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;
       /* Calculate the Standard Deviation into tempBuffer2. */
@@ -1155,6 +1157,12 @@
          shiftIdx = (int)outBegIdx.value - maBegIdx;
       } else {
          shiftIdx = 0;
+      }
+      if( outNBElement.value < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - shiftIdx - outNBElement.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
       }
       System.arraycopy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement.value * 1);
       /* Now do a tight loop to calculate the upper/lower band at the same time. */

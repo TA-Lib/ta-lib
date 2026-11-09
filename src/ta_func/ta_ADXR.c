@@ -263,9 +263,9 @@ struct TA_ADXR_Stream {
    double cur_outReal;
    int optInTimePeriod;
    TA_ADX_Stream *sub0;
-   int lagRingPos_adx;
-   int lagRingCap_adx;
-   double *lagRing_adx;
+   int lagPos0;
+   int lagCap0;
+   double *lagBuf0;
 };
 
 /* Private function, not in public API. */
@@ -273,6 +273,9 @@ static TA_RetCode TA_ADXR_StepImpl( struct TA_ADXR_Stream *sp, double inHigh, do
 {
    double cur_adx = 0.0;
    double cur_outReal = 0.0;
+   double lagIn0 = 0.0;
+   double lagTap0_0 = 0.0;
+   int lagCapL0 = 0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -280,10 +283,17 @@ static TA_RetCode TA_ADXR_StepImpl( struct TA_ADXR_Stream *sp, double inHigh, do
       TA_RetCode subRc = TA_ADX_Update( sp->sub0, inHigh, inLow, inClose, &cur_adx );
       if( subRc != TA_SUCCESS ) return subRc;
    }
+   lagIn0 = cur_adx;
    /* Combine map (batch tail, per bar). */
-   cur_outReal = ((cur_adx + sp->lagRing_adx[sp->lagRingPos_adx]) / 2.0);
-   sp->lagRing_adx[sp->lagRingPos_adx] = cur_adx;
-   sp->lagRingPos_adx = (sp->lagRingPos_adx + 1) % sp->lagRingCap_adx;
+   lagTap0_0 = sp->lagBuf0[sp->lagPos0];
+   cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
+   lagCapL0 = sp->lagCap0;
+   sp->lagBuf0[sp->lagPos0] = lagIn0;
+   sp->lagPos0 = sp->lagPos0 + 1;
+   if( sp->lagPos0 >= lagCapL0 )
+   {
+      sp->lagPos0 = 0;
+   }
    *outReal = cur_outReal;
    return TA_SUCCESS;
 }
@@ -297,12 +307,22 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
    TA_RetCode subRc;
    double *sc_outReal;
    TA_ADX_Stream *sub0;
+   double *lagBuf0;
+   int lagCap0;
+   int lagPos0;
+   int lagD0_0;
+   int lagNb0;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    subRc = TA_SUCCESS;
    sub0 = NULL;
+   lagBuf0 = NULL;
+   lagCap0 = 0;
+   lagPos0 = 0;
+   lagD0_0 = 0;
+   lagNb0 = 0;
    if( outStride ) sc_outReal = outReal;
    else
    {
@@ -343,13 +363,13 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
          dummyBegIdx = 0;
          dummyNBElement = 0;
          *outBegIdx = 0; *outNBElement = 0;
-         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
          return TA_INSUFFICIENT_HISTORY;
       }
       adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
       if( !adx )
       {
-         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
          return TA_ALLOC_ERR;
       }
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
@@ -362,7 +382,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
          if( subRc != TA_SUCCESS )
          {
             free(adx);
-            TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
+            TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
             return subRc;
          }
       }
@@ -370,38 +390,57 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
       if( retCode != TA_SUCCESS )
       {
          free(adx);
-         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
          return retCode;
       }
+      lagNb0 = dummyNBElement;
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
        * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
        * is adx[k]; the ADX range holds (period-1) more elements than the output.
        */
       nbElement = dummyNBElement - (optInTimePeriod - 1);
+      if( nbElement < 1 )
+      {
+         free(adx);
+         *outBegIdx = 0; *outNBElement = 0; TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      lagD0_0 = lagNb0 - nbElement;
+      if( lagD0_0 < 1 || lagD0_0 > lagNb0 - 1 )
+      {
+         free(adx);
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
+         return TA_INTERNAL_ERROR(518);
+      }
+      lagCap0 = lagD0_0;
+      lagBuf0 = (double *)TA_Malloc( sizeof(double) * (size_t)(lagCap0 > 0 ? lagCap0 : 1) );
+      if( !lagBuf0 )
+      {
+         free(adx);
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 );
+         return TA_ALLOC_ERR;
+      }
+      lagBuf0[0] = 0.0;
+      memcpy( lagBuf0, adx + (lagNb0 - lagCap0), sizeof(double) * (size_t)lagCap0 );
+      lagPos0 = 0;
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
       {
          sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
       }
+      free(adx);
       dummyBegIdx = startIdx;
       dummyNBElement = nbElement;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_ADXR_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); TA_Free( lagBuf0 ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
-      sp->lagRingCap_adx = optInTimePeriod - 1;
-      sp->lagRing_adx = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_adx );
-      if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
-      {
-         int lagI;
-         for( lagI = 0; lagI < sp->lagRingCap_adx; lagI++ )
-            sp->lagRing_adx[lagI] = adx[dummyNBElement + lagI];
-      }
-      sp->lagRingPos_adx = 0;
-      free( adx );
       sp->sub0 = sub0;
+      sp->lagPos0 = lagPos0;
+      sp->lagCap0 = lagCap0;
+      sp->lagBuf0 = lagBuf0;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
       if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
@@ -511,6 +550,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh,
    const struct TA_ADXR_Stream *sp = stream;
    double cur_adx = 0.0;
    double cur_outReal = 0.0;
+   double lagTap0_0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
@@ -521,7 +561,8 @@ TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh,
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
-   cur_outReal = ((cur_adx + sp->lagRing_adx[sp->lagRingPos_adx]) / 2.0);
+   lagTap0_0 = sp->lagBuf0[sp->lagPos0];
+   cur_outReal = ((cur_adx + lagTap0_0) / 2.0);
    *outReal = cur_outReal;
    return TA_SUCCESS;
 }
@@ -530,7 +571,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;
    TA_ADX_Close( stream->sub0 );
-   TA_Free( stream->lagRing_adx );
+   TA_Free( stream->lagBuf0 );
    TA_Free( stream );
    return TA_SUCCESS;
 }
@@ -569,13 +610,13 @@ TA_LIB_API TA_RetCode TA_ADXR_Clone( const TA_ADXR_Stream *stream, TA_ADXR_Strea
    sp = (struct TA_ADXR_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
-   sp->lagRing_adx = NULL;
+   sp->lagBuf0 = NULL;
    sp->sub0 = NULL;
-   if( stream->lagRing_adx )
-   { size_t copyN = (size_t)sp->lagRingCap_adx;
-     sp->lagRing_adx = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->lagRing_adx ) { TA_ADXR_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->lagRing_adx, stream->lagRing_adx, sizeof(double) * copyN ); }
+   if( stream->lagBuf0 )
+   { size_t copyN = (size_t)(sp->lagCap0 > 0 ? sp->lagCap0 : 1);
+     sp->lagBuf0 = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->lagBuf0 ) { TA_ADXR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->lagBuf0, stream->lagBuf0, sizeof(double) * copyN ); }
    if( stream->sub0 )
    { TA_RetCode subRc = TA_ADX_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_ADXR_Close( sp ); return subRc; } }

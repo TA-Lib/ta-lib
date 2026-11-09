@@ -808,6 +808,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
    double *sc_outReal;
    TA_MA_Stream *sub0;
    TA_VAR_Stream *sub1;
+   int lagNb0;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -842,6 +843,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
    subRc = TA_SUCCESS;
    sub0 = NULL;
    sub1 = NULL;
+   lagNb0 = 0;
    if( outStride ) sc_outReal = outReal;
    else
    {
@@ -900,6 +902,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
          tempX[outIdx++] = inReal[today];
          today += 1;
       }
+      lagNb0 = outIdx;
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -945,6 +948,40 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
          return retCode;
       }
       offset = maNbElement - dummyNBElement;
+      if( optInNbDevUp == optInNbDevDn )
+      {
+         if( (int)dummyNBElement < 1 )
+         {
+            free(tempX);
+            free(tempMA);
+            *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+            return TA_INSUFFICIENT_HISTORY;
+         }
+         if( lagNb0 - (int)dummyNBElement != 0 )
+         {
+            free(tempX);
+            free(tempMA);
+            TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+            return TA_INTERNAL_ERROR(542);
+         }
+      }
+      else
+      {
+         if( (int)dummyNBElement < 1 )
+         {
+            free(tempX);
+            free(tempMA);
+            *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+            return TA_INSUFFICIENT_HISTORY;
+         }
+         if( lagNb0 - (int)dummyNBElement != 0 )
+         {
+            free(tempX);
+            free(tempMA);
+            TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+            return TA_INTERNAL_ERROR(543);
+         }
+      }
       if( optInNbDevUp == optInNbDevDn )
       {
          for( i = 0; i < (int)dummyNBElement; i += 1 )

@@ -5238,6 +5238,64 @@ static const TA_VOptSpec TA_VOpt_FRAMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 16.0 },
 };
 
+static TA_RetCode TA_GATOR_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_GATOR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outUpper */,
+               outReal[1] /* outLower */
+               );
+}
+static TA_RetCode TA_GATOR_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_GATOR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outUpper */,
+               outReal[1] /* outLower */
+               );
+}
+
+static const TA_VInputKind TA_VIn_GATOR[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_GATOR[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_GATOR[] = {
+   { "optInJawPeriod", TA_VOPT_INT, 1.0, 100000.0, 13.0 },
+   { "optInJawShift", TA_VOPT_INT, 0.0, 100000.0, 8.0 },
+   { "optInTeethPeriod", TA_VOPT_INT, 1.0, 100000.0, 8.0 },
+   { "optInTeethShift", TA_VOPT_INT, 0.0, 100000.0, 5.0 },
+   { "optInLipsPeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInLipsShift", TA_VOPT_INT, 0.0, 100000.0, 3.0 },
+};
+
 static TA_RetCode TA_HA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10676,6 +10734,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_FRACTAL, 2, TA_VOpt_FRACTAL, 2, TA_VOutIsInt_FRACTAL, 0 },
    { "FRAMA", TA_FRAMA_VFrameD, TA_FRAMA_VFrameS,
      2, TA_VIn_FRAMA, 1, TA_VOpt_FRAMA, 1, TA_VOutIsInt_FRAMA, 0 },
+   { "GATOR", TA_GATOR_VFrameD, TA_GATOR_VFrameS,
+     2, TA_VIn_GATOR, 6, TA_VOpt_GATOR, 2, TA_VOutIsInt_GATOR, 0 },
    { "HA", TA_HA_VFrameD, TA_HA_VFrameS,
      4, TA_VIn_HA, 0, NULL, 4, TA_VOutIsInt_HA, 0 },
    { "HMA", TA_HMA_VFrameD, TA_HMA_VFrameS,
@@ -10922,6 +10982,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 243
+#define TA_VARIANT_TABLE_SIZE 244
 
 #endif /* TA_VARIANT_FRAME_H */

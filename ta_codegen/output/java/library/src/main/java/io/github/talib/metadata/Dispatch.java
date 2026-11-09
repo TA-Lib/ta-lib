@@ -421,6 +421,9 @@ final class Dispatch {
          case "FRAMA":
             return core.frama(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
+         case "GATOR":
+            return core.gator(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.realOutput(0), h.realOutput(1));
          case "HA":
             return core.ha(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0), h.realOutput(1), h.realOutput(2), h.realOutput(3));
@@ -1040,6 +1043,8 @@ final class Dispatch {
             return core.fractalLookback(h.intOpt(0), h.intOpt(1));
          case "FRAMA":
             return core.framaLookback(h.intOpt(0));
+         case "GATOR":
+            return core.gatorLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5));
          case "HA":
             return core.haLookback();
          case "HMA":
@@ -1534,6 +1539,8 @@ final class Dispatch {
             return core.fractalDisplayShift(h.intOpt(0), h.intOpt(1), outputIdx);
          case "FRAMA":
             return core.framaDisplayShift(h.intOpt(0), outputIdx);
+         case "GATOR":
+            return core.gatorDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), outputIdx);
          case "HA":
             return core.haDisplayShift(outputIdx);
          case "HMA":

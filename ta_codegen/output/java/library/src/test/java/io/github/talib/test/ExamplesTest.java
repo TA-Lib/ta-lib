@@ -1967,6 +1967,21 @@ public class ExamplesTest {
         check("FRAMA", allFinite(out, r.count()));
     }
 
+    static void gator() {
+        double[] high = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) high[i] = 101 + 10 * Math.sin(0.1 * i);
+        double[] low = new double[252]; // your data, oldest first
+        for (int i = 0; i < 252; i++) low[i] = 99 + 10 * Math.sin(0.1 * i);
+        double[] upper = new double[252];
+        double[] lower = new double[252];
+
+        Core core = Core.DEFAULT;
+        OutRange r = core.gator(0, high.length - 1, high, low, 13, 8, 8, 5, 5, 3, upper, lower);
+        if (!check("GATOR", r.count() > 0)) return;
+        System.out.println(r.count() + " values from bar " + r.begIdx() + "; last upper = " + upper[r.count() - 1]);
+        check("GATOR", allFinite(upper, r.count()));
+    }
+
     static void ha() {
         double[] open = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) open[i] = 100 + 10 * Math.sin(0.1 * i - 0.05);
@@ -3759,6 +3774,7 @@ public class ExamplesTest {
         fosc();
         fractal();
         frama();
+        gator();
         ha();
         hma();
         htDcperiod();

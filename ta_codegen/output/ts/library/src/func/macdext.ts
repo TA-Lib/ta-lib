@@ -893,6 +893,9 @@ function macdextOpenImpl(
   const sc_outMACD = outStride === 1 ? outMACD : new Float64Array(historyLen);
   const sc_outMACDSignal = outStride === 1 ? outMACDSignal : new Float64Array(historyLen);
   const sc_outMACDHist = outStride === 1 ? outMACDHist : new Float64Array(historyLen);
+  let lagNb0 = 0;
+  let lagNb1 = 0;
+  let lagNb2 = 0;
   /* Make sure slow is really slower than
    * the fast period! if not, swap...
    */
@@ -942,11 +945,19 @@ function macdextOpenImpl(
   const sub0 = maOpenAndFillInternal(core, inReal, tempInteger, optInSlowPeriod, (optInSlowMAType as MAType), outBegIdx1, outNbElement1, slowMABuffer);
   /* Calculate the fast MA. */
   const sub1 = maOpenAndFillInternal(core, inReal, tempInteger, optInFastPeriod, (optInFastMAType as MAType), outBegIdx2, outNbElement2, fastMABuffer);
+  lagNb0 = outNbElement2.value;
   /* Parano tests. Will be removed eventually. */
   if (outBegIdx1.value !== tempInteger || outBegIdx2.value !== tempInteger || outNbElement1.value !== outNbElement2.value || outNbElement1.value !== endIdx - startIdx + 1 + lookbackSignal) {
     return RetCode.BAD_PARAM;
   }
   /* Calculate (fast MA) - (slow MA). */
+  lagNb1 = outNbElement1.value;
+  if (outNbElement1.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - outNbElement1.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < outNbElement1.value; i += 1) {
     fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
   }
@@ -954,10 +965,23 @@ function macdextOpenImpl(
   /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
    * reused as scratch, so source and destination overlap (issue #94).
    */
+  lagNb2 = endIdx - startIdx + 1;
+  if (endIdx - startIdx + 1 < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb1 - lookbackSignal - (endIdx - startIdx + 1) !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   sc_outMACD.set(fastMABuffer.subarray(lookbackSignal, lookbackSignal + (endIdx - startIdx + 1)), 0);
   /* Calculate the signal/trigger line. */
   const sub2 = maOpenAndFillInternal(core, fastMABuffer.slice(0, (outNbElement1.value - 1) + 1), 0, optInSignalPeriod, (optInSignalMAType as MAType), outBegIdx2, outNbElement2, sc_outMACDSignal);
   /* Calculate the histogram. */
+  if (outNbElement2.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb2 - outNbElement2.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
+  }
   for (i = 0; i < outNbElement2.value; i += 1) {
     sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
   }
@@ -966,6 +990,9 @@ function macdextOpenImpl(
   outNBElement.value = outNbElement2.value;
   if (outNBElement.value < 1) {
     return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb2 - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
   }
   sp.optInFastPeriod = optInFastPeriod;
   sp.optInFastMAType = optInFastMAType;

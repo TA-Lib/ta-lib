@@ -158,6 +158,7 @@ import * as FLOOR from '../func/floor.ts';
 import * as FOSC from '../func/fosc.ts';
 import * as FRACTAL from '../func/fractal.ts';
 import * as FRAMA from '../func/frama.ts';
+import * as GATOR from '../func/gator.ts';
 import * as HA from '../func/ha.ts';
 import * as HMA from '../func/hma.ts';
 import * as HT_DCPERIOD from '../func/htDcperiod.ts';
@@ -894,6 +895,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => FRAMA.framaLookbackPositional(h.opts[0], h.core),
     displayShift: (h, o) => FRAMA.framaDisplayShiftPositional(h.opts[0], o, h.core),
     call: (h, s, e) => FRAMA.framaPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.opts[0], h.outputs[0] as Float64Array, h.core),
+  }],
+  ['GATOR', {
+    lookback: (h) => GATOR.gatorLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.core),
+    displayShift: (h, o) => GATOR.gatorDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], o, h.core),
+    call: (h, s, e) => GATOR.gatorPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.core),
   }],
   ['HA', {
     lookback: (h) => HA.haLookbackPositional(h.core),

@@ -236,6 +236,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeFosc(),
             MakeFractal(),
             MakeFrama(),
+            MakeGator(),
             MakeHa(),
             MakeHma(),
             MakeHtDcperiod(),
@@ -3270,6 +3271,37 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Frama(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeGator() => new(
+        name: "GATOR",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Gator Oscillator",
+        flags: FuncFlags.Stream | FuncFlags.DisplayShift,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInJawPeriod", "Jaw Period", "Time period for the jaw line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 13, 1, 200, 1)),
+            new OptInputInfo("optInJawShift", "Jaw Shift", "Bars ahead the jaw line is drawn", OptInputFlags.None, new OptInputDomain.IntegerRange(0, 100000, 8, 0, 30, 1)),
+            new OptInputInfo("optInTeethPeriod", "Teeth Period", "Time period for the teeth line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 8, 1, 200, 1)),
+            new OptInputInfo("optInTeethShift", "Teeth Shift", "Bars ahead the teeth line is drawn", OptInputFlags.None, new OptInputDomain.IntegerRange(0, 100000, 5, 0, 30, 1)),
+            new OptInputInfo("optInLipsPeriod", "Lips Period", "Time period for the lips line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 5, 1, 200, 1)),
+            new OptInputInfo("optInLipsShift", "Lips Shift", "Bars ahead the lips line is drawn", OptInputFlags.None, new OptInputDomain.IntegerRange(0, 100000, 3, 0, 30, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outUpper", OutputFlags.Histogram | OutputFlags.Positive | OutputFlags.Zero | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Real, "outLower", OutputFlags.Histogram | OutputFlags.Negative | OutputFlags.Zero | OutputFlags.DisplayShift),
+        ],
+        attributes: "{}",
+        lookback: static (core, c) => core.GatorLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5)),
+        displayShift: static (core, c, outputIdx) => core.GatorDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Gator(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeHa() => new(
         name: "HA",

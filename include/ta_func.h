@@ -10763,6 +10763,127 @@ TA_LIB_API TA_RetCode TA_FRAMA_Advance( TA_FRAMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_FRAMA_Clone( const TA_FRAMA_Stream *stream, TA_FRAMA_Stream **clone );
 
 /*
+ * TA_GATOR - Gator Oscillator
+ * 
+ * Input  = High, Low
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInJawPeriod:(From 1 to 100000)
+ *    Time period for the jaw line
+ * 
+ * optInJawShift:(From 0 to 100000)
+ *    Bars ahead the jaw line is drawn
+ * 
+ * optInTeethPeriod:(From 1 to 100000)
+ *    Time period for the teeth line
+ * 
+ * optInTeethShift:(From 0 to 100000)
+ *    Bars ahead the teeth line is drawn
+ * 
+ * optInLipsPeriod:(From 1 to 100000)
+ *    Time period for the lips line
+ * 
+ * optInLipsShift:(From 0 to 100000)
+ *    Bars ahead the lips line is drawn
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+                                int    endIdx,
+                                           const double inHigh[],
+                                           const double inLow[],
+                                           int           optInJawPeriod, /* From 1 to 100000 */
+                                           int           optInJawShift, /* From 0 to 100000 */
+                                           int           optInTeethPeriod, /* From 1 to 100000 */
+                                           int           optInTeethShift, /* From 0 to 100000 */
+                                           int           optInLipsPeriod, /* From 1 to 100000 */
+                                           int           optInLipsShift, /* From 0 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outUpper[],
+                                           double        outLower[] );
+
+TA_LIB_API TA_RetCode TA_S_GATOR( int    startIdx,
+                                  int    endIdx,
+                                             const float  inHigh[],
+                                             const float  inLow[],
+                                             int           optInJawPeriod, /* From 1 to 100000 */
+                                             int           optInJawShift, /* From 0 to 100000 */
+                                             int           optInTeethPeriod, /* From 1 to 100000 */
+                                             int           optInTeethShift, /* From 0 to 100000 */
+                                             int           optInLipsPeriod, /* From 1 to 100000 */
+                                             int           optInLipsShift, /* From 0 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outUpper[],
+                                             double        outLower[] );
+
+TA_LIB_API int TA_GATOR_Lookback( int           optInJawPeriod, /* From 1 to 100000 */
+                                           int           optInJawShift, /* From 0 to 100000 */
+                                           int           optInTeethPeriod, /* From 1 to 100000 */
+                                           int           optInTeethShift, /* From 0 to 100000 */
+                                           int           optInLipsPeriod, /* From 1 to 100000 */
+                                           int           optInLipsShift );  /* From 0 to 100000 */
+TA_LIB_API int TA_GATOR_DisplayShift( int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_GATOR: incremental per-bar evaluation.
+ */
+typedef struct TA_GATOR_Stream TA_GATOR_Stream;
+
+TA_LIB_API TA_RetCode TA_GATOR_Open( TA_GATOR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, double *outUpper, double *outLower );
+
+TA_LIB_API TA_RetCode TA_GATOR_Update( TA_GATOR_Stream *stream, double inHigh, double inLow, double *outUpper, double *outLower );
+
+TA_LIB_API TA_RetCode TA_GATOR_Peek( const TA_GATOR_Stream *stream, double inHigh, double inLow, double *outUpper, double *outLower );
+
+TA_LIB_API TA_RetCode TA_GATOR_Close( TA_GATOR_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_GATOR( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_GATOR_OpenAndFill( TA_GATOR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int *outBegIdx, int *outNBElement, double outUpper[], double outLower[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_GATOR_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_GATOR_Value( const TA_GATOR_Stream *stream, double *outUpper, double *outLower );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_GATOR reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_GATOR_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_GATOR_OutRange( const TA_GATOR_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_GATOR_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_GATOR_Advance( TA_GATOR_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_GATOR_Clone( const TA_GATOR_Stream *stream, TA_GATOR_Stream **clone );
+
+/*
  * TA_HA - Heikin-Ashi Candles
  * 
  * Input  = Open, High, Low, Close

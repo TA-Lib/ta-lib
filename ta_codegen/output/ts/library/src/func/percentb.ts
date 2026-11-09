@@ -853,6 +853,7 @@ function percentbOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
+  let lagNb0 = 0;
   lookbackTotal = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
   firstIdx = startIdx;
   if (firstIdx < lookbackTotal) {
@@ -871,9 +872,25 @@ function percentbOpenImpl(
     tempX[outIdx++] = inReal[today];
     today += 1;
   }
+  lagNb0 = outIdx;
   const sub0 = maOpenAndFillInternal(core, inReal, startIdx, optInTimePeriod, (optInMAType as MAType), maBegIdx, maNbElement, tempMA);
   const sub1 = varOpenAndFillInternal(core, inReal, maBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
   offset = maNbElement.value - outNBElement.value;
+  if (optInNbDevUp === optInNbDevDn) {
+    if (outNBElement.value < 1) {
+      return RetCode.INSUFFICIENT_HISTORY;
+    }
+    if (lagNb0 - outNBElement.value !== 0) {
+      return RetCode.INTERNAL_ERROR;
+    }
+  } else {
+    if (outNBElement.value < 1) {
+      return RetCode.INSUFFICIENT_HISTORY;
+    }
+    if (lagNb0 - outNBElement.value !== 0) {
+      return RetCode.INTERNAL_ERROR;
+    }
+  }
   if (optInNbDevUp === optInNbDevDn) {
     for (i = 0; i < outNBElement.value; i += 1) {
       middle = tempMA[i + offset];

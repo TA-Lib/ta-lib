@@ -822,6 +822,8 @@ public partial class Core
       Span<double> sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       Span<double> sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       Span<double> sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
       emaLookback = EmaLookback(optInTimePeriod);
       lookbackTotal = KcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range ends before the lookback. Return before
@@ -849,6 +851,7 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       TyppriceStream sub0 = TyppriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, out tempBegIdx, out tempNbElement, tempTP);
       retCode = RetCode.Success;
+      lagNb0 = tempNbElement;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
@@ -856,6 +859,7 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       AtrStream sub1 = AtrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, out tempBegIdx, out tempNbElement, tempATR);
       retCode = RetCode.Success;
+      lagNb1 = tempNbElement;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
@@ -866,11 +870,20 @@ public partial class Core
       tempTP.Slice(0, subLen2).CopyTo(subSrc2_0);
       EmaStream sub2 = EmaOpenAndFillInternal(subSrc2_0, emaLookback, optInTimePeriod, out outBegIdx, out outNBElement, sc_outRealMiddleBand);
       retCode = RetCode.Success;
+      if( lagNb0 - 1 - (endIdx - tpStartIdx) != 0 ) {
+         return RetCode.InternalError;
+      }
       if( (int)outNBElement == 0 ) {
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
+      if( (int)outNBElement < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb1 - (int)outNBElement != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          middle = sc_outRealMiddleBand[i];
          tempReal = tempATR[i] * optInNbDev;

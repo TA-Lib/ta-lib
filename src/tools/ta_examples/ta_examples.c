@@ -2674,6 +2674,26 @@ static int example_FRAMA( void )
    return 0;
 }
 
+static int example_GATOR( void )
+{
+   int n = 252;
+   double high[252]; /* your data, oldest first */
+   double low[252]; /* your data, oldest first */
+   double upper[252], lower[252];
+   int outBegIdx, outNBElement;
+   { int i; for( i = 0; i < n; i++ ) high[i] = 101 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) low[i] = 99 + 10 * sin(0.1 * i); }
+   outBegIdx = -1; outNBElement = 0;
+
+   TA_Initialize();
+   TA_GATOR( 0, n - 1, high, low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, upper, lower );
+   if( !check( "GATOR", outNBElement > 0 ) ) { TA_Shutdown(); return 1; }
+   printf( "%d values from bar %d; last upper = %f\n", outNBElement, outBegIdx, upper[outNBElement - 1] );
+   if( !check( "GATOR", all_finite( upper, outNBElement ) ) ) { TA_Shutdown(); return 1; }
+   TA_Shutdown();
+   return 0;
+}
+
 static int example_HA( void )
 {
    int n = 252;
@@ -5168,6 +5188,7 @@ int main( void )
    example_FOSC();
    example_FRACTAL();
    example_FRAMA();
+   example_GATOR();
    example_HA();
    example_HMA();
    example_HT_DCPERIOD();
@@ -5290,6 +5311,6 @@ int main( void )
    example_WMA();
    example_ZIGZAG();
    example_ZLEMA();
-   printf( "ta_examples: %d examples, %d failures\n", 243, failures );
+   printf( "ta_examples: %d examples, %d failures\n", 244, failures );
    return failures == 0 ? 0 : 1;
 }

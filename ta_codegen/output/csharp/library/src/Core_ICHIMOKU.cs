@@ -831,6 +831,9 @@ public partial class Core
       Span<double> sc_outKijunSen = outStride == 1 ? outKijunSen : new double[historyLen];
       Span<double> sc_outSenkouSpanA = outStride == 1 ? outSenkouSpanA : new double[historyLen];
       Span<double> sc_outSenkouSpanB = outStride == 1 ? outSenkouSpanB : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
@@ -850,14 +853,17 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInTenkanPeriod, out tempBegIdx, out tempNbElement, tempT);
       retCode = RetCode.Success;
+      lagNb0 = tempNbElement;
       /* Sub-stream 1: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub1 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInKijunPeriod, out tempBegIdx, out tempNbElement, tempK);
       retCode = RetCode.Success;
+      lagNb1 = tempNbElement;
       /* Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub2 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, out tempBegIdx, out tempNbElement, sc_outSenkouSpanB);
       retCode = RetCode.Success;
+      lagNb2 = tempNbElement;
       /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
        * double in the last bit.
        */
@@ -870,6 +876,21 @@ public partial class Core
       tempK.Slice(0, subLen3).CopyTo(subSrc3_1);
       MedpriceStream sub3 = MedpriceOpenAndFillInternal(subSrc3_0, subSrc3_1, 0, out tempBegIdx, out tempNbElement, sc_outSenkouSpanA);
       retCode = RetCode.Success;
+      if( lagNb0 - 1 - (n - 1) != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb1 - 1 - (n - 1) != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( n < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - n != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb1 - n != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < n; i += 1 ) {
          sc_outTenkanSen[i] = tempT[i];
          sc_outKijunSen[i] = tempK[i];
@@ -879,6 +900,9 @@ public partial class Core
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
          return RetCode.InsufficientHistory;
+      }
+      if( lagNb2 - outNBElement != 0 ) {
+         return RetCode.InternalError;
       }
       sp.optInTenkanPeriod = optInTenkanPeriod;
       sp.optInKijunPeriod = optInKijunPeriod;

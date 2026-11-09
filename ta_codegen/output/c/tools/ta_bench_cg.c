@@ -147,6 +147,7 @@
 #include "ta_FOSC.c"
 #include "ta_FRACTAL.c"
 #include "ta_FRAMA.c"
+#include "ta_GATOR.c"
 #include "ta_HA.c"
 #include "ta_HMA.c"
 #include "ta_HT_DCPERIOD.c"
@@ -2318,6 +2319,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("FRAMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "GATOR") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_GATOR(0, g_nPoints - 1, g_high, g_low, 13, 8, 8, 5, 5, 3, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+        }
+        printf("GATOR %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "HA") ) {

@@ -1000,6 +1000,7 @@ function bbandsOpenImpl(
   const sc_outRealUpperBand = outStride === 1 ? outRealUpperBand : new Float64Array(historyLen);
   const sc_outRealMiddleBand = outStride === 1 ? outRealMiddleBand : new Float64Array(historyLen);
   const sc_outRealLowerBand = outStride === 1 ? outRealLowerBand : new Float64Array(historyLen);
+  let lagNb0 = 0;
   /* General path (every MA type other than SMA): the middle band is the moving
    * average and the deviation is the standard deviation of the input, combined
    * at the same bar. Two intermediate buffers are allocated so the input may
@@ -1033,6 +1034,7 @@ function bbandsOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
+  lagNb0 = outNBElement.value;
   /* Remember where the moving average begins, to realign it below. */
   maBegIdx = outBegIdx.value;
   /* Calculate the Standard Deviation into tempBuffer2. */
@@ -1050,6 +1052,12 @@ function bbandsOpenImpl(
     shiftIdx = outBegIdx.value - maBegIdx;
   } else {
     shiftIdx = 0;
+  }
+  if (outNBElement.value < 1) {
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  if (lagNb0 - shiftIdx - outNBElement.value !== 0) {
+    return RetCode.INTERNAL_ERROR;
   }
   sc_outRealMiddleBand.set(tempBuffer1.subarray(shiftIdx, shiftIdx + outNBElement.value), 0);
   /* Now do a tight loop to calculate the upper/lower band at the same time. */

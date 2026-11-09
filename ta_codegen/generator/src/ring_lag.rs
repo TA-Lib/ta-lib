@@ -20,7 +20,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Mutex, OnceLock};
 
 use crate::ir::{BinOp, CircBuf, Expr, FuncDef, LookbackExpr, ParamType, Statement, VarType};
-use crate::streaming::{CalleeLookback, CalleeLookup};
+use crate::streaming::{CalleeLookback, CalleeLookup, SubCallStep};
 
 /// A single-parameter group is enumerated only up to this many values; wider
 /// ranges fall back to interval bounds.
@@ -116,6 +116,8 @@ struct Ctx<'a> {
     /// Fact conjuncts that mention exactly one parameter, by that parameter.
     facts: BTreeMap<String, Vec<Expr>>,
     types: BTreeMap<String, Option<VarType>>,
+    /// Real parameters and `double` locals.
+    reals: BTreeSet<String>,
     /// Other functions' lookbacks, by lowercase name.
     callees: BTreeMap<String, CalleeLookback>,
 }
@@ -171,6 +173,18 @@ fn collect_decl_types(stmts: &[Statement], out: &mut BTreeMap<String, Option<Var
 }
 
 impl<'a> Ctx<'a> {
+    fn mentions_real(&self, l: &Lin) -> bool {
+        let mut found = false;
+        for (e, _) in l.terms.values() {
+            crate::streaming::walk_expr(e, &mut |x| {
+                if matches!(x, Expr::Var(n) if self.reals.contains(n) && self.params.contains(n)) {
+                    found = true;
+                }
+            });
+        }
+        found
+    }
+
     fn new(func: &'a FuncDef, facts: &[Expr], callees: BTreeMap<String, CalleeLookback>) -> Self {
         let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let mut types: BTreeMap<String, Option<VarType>> = BTreeMap::new();
@@ -178,12 +192,25 @@ impl<'a> Ctx<'a> {
         for n in ["startIdx", "endIdx"] {
             types.insert(n.to_string(), Some(VarType::Integer));
         }
+        let reals = func
+            .optional_inputs
+            .iter()
+            .filter(|p| p.param_type == ParamType::Real)
+            .map(|p| p.name.clone())
+            .chain(
+                types
+                    .iter()
+                    .filter(|(_, t)| matches!(t, Some(VarType::Real)))
+                    .map(|(n, _)| n.clone()),
+            )
+            .collect();
         let mut ctx = Ctx {
             func,
             params: params.clone(),
             boxes: BTreeMap::new(),
             facts: BTreeMap::new(),
             types,
+            reals,
             callees,
         };
         for p in &func.optional_inputs {
@@ -258,6 +285,40 @@ impl<'a> Ctx<'a> {
         let env: BTreeMap<String, Expr> =
             def.params.iter().map(|p| p.name.clone()).zip(args.iter().cloned()).collect();
         lookback_body_expr(&def.body, env)
+    }
+
+    /// Whether `<f>_lookback(args)` is at least 0 by the declarations alone:
+    /// each argument is a parameter whose declared range (or enum) lies inside
+    /// the callee parameter's, or an integer literal inside it. A lookback
+    /// answers -1 only for an argument outside its range.
+    fn lookback_axiom(&self, name: &str, args: &[Expr]) -> bool {
+        let Some(callee) = name.strip_suffix("_lookback") else { return false };
+        let params = if callee.eq_ignore_ascii_case(&self.func.name) {
+            &self.func.optional_inputs
+        } else {
+            match self.callees.get(&callee.to_ascii_lowercase()) {
+                Some(def) => &def.params,
+                None => return false,
+            }
+        };
+        params.len() == args.len()
+            && params.iter().zip(args).all(|(p, a)| match a {
+                Expr::Var(v) => self.func.optional_inputs.iter().any(|o| {
+                    o.name == *v
+                        && o.param_type == p.param_type
+                        && match (&p.param_type, o.range, p.range) {
+                            (ParamType::Enum(_), _, _) => true,
+                            (_, Some((lo, hi)), Some((clo, chi))) => clo <= lo && hi <= chi,
+                            _ => false,
+                        }
+                }),
+                #[allow(clippy::cast_possible_truncation)]
+                Expr::IntLiteral(k) => {
+                    p.param_type == ParamType::Integer
+                        && p.range.is_some_and(|(lo, hi)| (lo.ceil() as i64..=hi.floor() as i64).contains(k))
+                }
+                _ => false,
+            })
     }
 
     // --- concrete evaluation (C `int` semantics) ----------------------------
@@ -413,10 +474,10 @@ impl<'a> Ctx<'a> {
                 })
             }
             Expr::FuncCall(name, _) if is_unstable_call(name) => Some((0, INF)),
-            Expr::FuncCall(name, args) => {
-                let body = self.inline_lookback(name, args, depth + 1)?;
-                self.interval(&body, depth + 1)
-            }
+            Expr::FuncCall(name, args) => self
+                .inline_lookback(name, args, depth + 1)
+                .and_then(|body| self.interval(&body, depth + 1))
+                .or_else(|| self.lookback_axiom(name, args).then_some((0, INF))),
             _ => None,
         }
     }
@@ -602,50 +663,280 @@ fn lookback_body_expr(stmts: &[Statement], mut env: BTreeMap<String, Expr>) -> O
 // Relational tracker
 // ---------------------------------------------------------------------------
 
-/// `base + off`. Base 0 is the constant zero, so `(0, off)` is a
-/// parameter-pure value; any other base is an unknown minted once, and two
-/// values share a base only when one was computed from the other.
-#[derive(Clone, Debug, PartialEq)]
-struct Val {
-    base: u32,
+/// Where an unknown came from. The trailing-ring proof reads only identity;
+/// the composed walk refuses a delay by the tags left in it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum Tag {
+    /// `endIdx`.
+    V,
+    /// One version of `startIdx`.
+    S,
+    /// Sub-call `k`'s begin index, when no rule resolved it.
+    B(usize),
+    /// Free of `endIdx` and of data.
+    I,
+    /// May depend on data or on `endIdx`.
+    Top,
+}
+
+/// An unknown, minted once: equal ids are equal numbers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Atom {
+    id: u32,
+    tag: Tag,
+}
+
+/// `sum(coef * unknown) + off`, `off` over parameter atoms. Arithmetic
+/// cancels an unknown whatever its tag; only an unknown left in a result
+/// constrains it.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Val {
+    terms: BTreeMap<Atom, i64>,
     off: Lin,
+    /// Read from a begin receiver, through copies and casts only.
+    beg: bool,
+    /// Built from a subtraction of a begin index that no enclosing guard
+    /// orders: an empty sub-output resets its begin to 0. Never cleared.
+    usub: bool,
+}
+
+impl Val {
+    fn param(off: Lin) -> Self {
+        Val {
+            off,
+            ..Val::default()
+        }
+    }
+
+    pub(crate) fn konst(k: i64) -> Self {
+        Self::param(Lin::konst(k))
+    }
+
+    fn unknown(a: Atom) -> Self {
+        Val {
+            terms: std::iter::once((a, 1)).collect(),
+            ..Val::default()
+        }
+    }
+
+    /// Free of unknowns: a function of the parameters alone.
+    pub(crate) fn is_param(&self) -> bool {
+        self.terms.is_empty()
+    }
+
+    pub(crate) fn as_const(&self) -> Option<i64> {
+        if self.is_param() {
+            self.off.as_const()
+        } else {
+            None
+        }
+    }
+
+    /// Equal as numbers; the flags are not compared.
+    pub(crate) fn same(&self, other: &Val) -> bool {
+        self.terms == other.terms && self.off == other.off
+    }
+
+    /// `self + sign * other`, `None` on overflow. No longer a begin index.
+    pub(crate) fn plus(&self, other: &Val, sign: i64) -> Option<Val> {
+        let mut terms = self.terms.clone();
+        for (a, c) in &other.terms {
+            let slot = terms.entry(*a).or_insert(0);
+            *slot = slot.checked_add(c.checked_mul(sign)?)?;
+        }
+        terms.retain(|_, c| *c != 0);
+        Some(Val {
+            terms,
+            off: self.off.add(&other.off, sign)?,
+            beg: false,
+            usub: self.usub || other.usub,
+        })
+    }
+
+    fn scaled(&self, s: i64) -> Option<Val> {
+        let mut terms = BTreeMap::new();
+        if s != 0 {
+            for (a, c) in &self.terms {
+                terms.insert(*a, c.checked_mul(s)?);
+            }
+        }
+        Some(Val {
+            terms,
+            off: self.off.scale(s)?,
+            beg: false,
+            usub: self.usub,
+        })
+    }
+
+    fn tagged(&self, f: impl Fn(Tag) -> bool) -> bool {
+        self.terms.keys().any(|a| f(a.tag))
+    }
+
+    /// Free of `endIdx` and of data.
+    fn clean(&self) -> bool {
+        !self.tagged(|t| matches!(t, Tag::V | Tag::Top))
+    }
+}
+
+impl Val {
+    /// The coefficient of `endIdx`.
+    pub(crate) fn v_coef(&self) -> i64 {
+        self.terms
+            .iter()
+            .filter(|(a, _)| a.tag == Tag::V)
+            .map(|(_, c)| *c)
+            .sum()
+    }
+
+    pub(crate) fn has_top(&self) -> bool {
+        self.tagged(|t| t == Tag::Top)
+    }
+
+    pub(crate) fn has_start(&self) -> bool {
+        self.tagged(|t| t == Tag::S)
+    }
+
+    /// Exactly one version of `startIdx`: a copy of it.
+    fn is_start(&self) -> bool {
+        let mut terms = self.terms.iter();
+        matches!((terms.next(), terms.next()), (Some((a, 1)), None) if a.tag == Tag::S)
+            && self.off.as_const() == Some(0)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn is_begin(&self) -> bool {
+        self.beg
+    }
+
+    pub(crate) fn subtracts_begin(&self) -> bool {
+        self.usub
+    }
 }
 
 type Env = BTreeMap<String, Val>;
 
 /// An unmodelled construct on the path to the steady loop.
-struct Unsupported;
+pub(crate) struct Unsupported;
 
 /// Per-iteration net change of each scalar a loop body writes. `None` marks a
 /// write that is not an unconditional constant step.
 type Deltas = BTreeMap<String, Option<i64>>;
 
-struct Tracker<'c, 'a> {
-    ctx: &'c Ctx<'a>,
-    next: u32,
-    /// Proven lower bounds of minted bases (`base >= lin`).
-    floors: BTreeMap<u32, Vec<Lin>>,
+/// Floors a lower bound substitutes through before it gives up.
+const FLOOR_DEPTH: u32 = 4;
+
+/// What a join may keep of an `if`'s condition.
+struct Cond {
+    /// The condition over parameter atoms, when it is parameter-pure.
+    pure: Option<Expr>,
+    /// Every value it compares is free of `endIdx` and of data.
+    clean: bool,
 }
 
-impl Tracker<'_, '_> {
-    fn fresh(&mut self) -> Val {
-        self.next += 1;
-        Val {
-            base: self.next,
-            off: Lin::default(),
+struct Tracker<'a> {
+    ctx: Ctx<'a>,
+    next: u32,
+    /// Proven lower bounds of minted unknowns, by id.
+    floors: BTreeMap<u32, Vec<Val>>,
+    /// Each startIdx clamp's result, by id, with the value it clamped.
+    clamped: BTreeMap<u32, Val>,
+    /// The composed walk's rules: status codes and receiver cells.
+    composed: bool,
+    /// Per enclosing then-arm, the `(hi, lo)` pairs its condition orders.
+    guards: Vec<Vec<(Val, Val)>>,
+}
+
+/// The env slot of `*p`.
+fn cell(p: &str) -> String {
+    format!("*{p}")
+}
+
+/// `e` with each env-held name replaced by its parameter-pure value; any other
+/// name (a parameter, a constant) is kept. `None` when a held value is not
+/// parameter-pure or `e` reads memory.
+fn subst_env(e: &Expr, env: &Env) -> Option<Expr> {
+    let sub = |x: &Expr| subst_env(x, env).map(Box::new);
+    Some(match e {
+        Expr::Var(v) => match env.get(v) {
+            Some(x) if x.is_param() => x.off.to_expr(),
+            Some(_) => return None,
+            None => e.clone(),
+        },
+        Expr::IntLiteral(_) | Expr::Literal(_) => e.clone(),
+        Expr::BinOp(l, op, r) => Expr::BinOp(sub(l)?, op.clone(), sub(r)?),
+        Expr::Neg(x) => Expr::Neg(sub(x)?),
+        Expr::Not(x) => Expr::Not(sub(x)?),
+        Expr::Cast(t, x) => Expr::Cast(t.clone(), sub(x)?),
+        Expr::Ternary(c, a, b) => Expr::Ternary(sub(c)?, sub(a)?, sub(b)?),
+        Expr::FuncCall(n, args) => Expr::FuncCall(
+            n.clone(),
+            args.iter().map(|a| subst_env(a, env)).collect::<Option<_>>()?,
+        ),
+        _ => return None,
+    })
+}
+
+impl<'a> Tracker<'a> {
+    fn new(ctx: Ctx<'a>, composed: bool) -> Self {
+        Tracker {
+            ctx,
+            next: 0,
+            floors: BTreeMap::new(),
+            clamped: BTreeMap::new(),
+            composed,
+            guards: Vec::new(),
         }
     }
 
-    fn param(lin: Lin) -> Val {
-        Val { base: 0, off: lin }
+    fn mint(&mut self, tag: Tag) -> (u32, Val) {
+        self.next += 1;
+        (self.next, Val::unknown(Atom { id: self.next, tag }))
+    }
+
+    fn fresh(&mut self) -> Val {
+        self.mint(Tag::Top).1
+    }
+
+    /// A fresh unknown keeping the flag of the values it was computed from.
+    fn opaque(&mut self, from: &[&Val]) -> Val {
+        let mut v = self.fresh();
+        v.usub = from.iter().any(|x| x.usub);
+        v
+    }
+
+    fn at_least(&self, v: &Val, k: i64) -> bool {
+        self.at_least_within(v, k, FLOOR_DEPTH)
+    }
+
+    /// Parameter-pure: over the box. One unknown with coefficient 1: through
+    /// each of its floors.
+    fn at_least_within(&self, v: &Val, k: i64, depth: u32) -> bool {
+        if v.is_param() {
+            return self.ctx.at_least(&v.off, k);
+        }
+        let mut terms = v.terms.iter();
+        let (Some((a, &1)), None) = (terms.next(), terms.next()) else {
+            return false;
+        };
+        if depth == 0 {
+            return false;
+        }
+        let rest = Val::param(v.off.clone());
+        self.floors.get(&a.id).is_some_and(|fl| {
+            fl.iter()
+                .any(|f| f.plus(&rest, 1).is_some_and(|s| self.at_least_within(&s, k, depth - 1)))
+        })
     }
 
     fn read(&mut self, v: &str, env: &Env) -> Val {
         if let Some(x) = env.get(v) {
             return x.clone();
         }
-        if self.ctx.params.contains(v) && self.ctx.is_int(v) {
-            return Self::param(Lin::atom(Expr::Var(v.to_string())));
+        if self.ctx.params.contains(v) {
+            return Val::param(Lin::atom(Expr::Var(v.to_string())));
+        }
+        if self.composed && matches!(v, "TA_SUCCESS" | "SUCCESS") {
+            return Val::konst(0);
         }
         self.fresh()
     }
@@ -655,7 +946,7 @@ impl Tracker<'_, '_> {
     /// relative value only ever meets `+` and `-` before the capture's `int`,
     /// which the wrap commutes with.
     fn unsigned(v: Val) -> Val {
-        if v.base != 0 {
+        if !v.is_param() {
             return v;
         }
         let already = v.off.k == 0
@@ -667,40 +958,92 @@ impl Tracker<'_, '_> {
         if already {
             return v;
         }
-        Self::param(Lin::atom(Expr::Cast(VarType::Index, Box::new(v.off.to_expr()))))
+        Val {
+            off: Lin::atom(Expr::Cast(VarType::Index, Box::new(v.off.to_expr()))),
+            ..v
+        }
+    }
+
+    /// A value built from a real parameter, converted to `int`: the truncated
+    /// number is a different atom from the real itself.
+    fn truncated(&self, v: Val) -> Val {
+        if !v.is_param() || !self.ctx.mentions_real(&v.off) {
+            return v;
+        }
+        let already = v.off.k == 0
+            && v.off.terms.len() == 1
+            && v.off
+                .terms
+                .values()
+                .all(|(e, c)| *c == 1 && matches!(e, Expr::Cast(VarType::Integer, _)));
+        if already {
+            return v;
+        }
+        Val {
+            off: Lin::atom(Expr::Cast(VarType::Integer, Box::new(v.off.to_expr()))),
+            ..v
+        }
     }
 
     /// The value a store into `name` leaves, after C's implicit conversion to
-    /// its declared type. Anything but `int` and `size_t` is not tracked.
+    /// its declared type. Only `int`, `size_t`, an enum parameter and, in the
+    /// composed walk, a status code are tracked.
     fn store(&mut self, name: &str, v: Val, env: &mut Env) {
+        let enum_param = || {
+            self.ctx
+                .func
+                .optional_inputs
+                .iter()
+                .any(|p| p.name == name && matches!(p.param_type, ParamType::Enum(_)))
+        };
         let v = match self.ctx.types.get(name) {
-            Some(Some(VarType::Integer)) => v,
+            Some(Some(VarType::Integer)) => self.truncated(v),
             Some(Some(VarType::Index)) => Self::unsigned(v),
-            _ => self.fresh(),
+            Some(Some(VarType::RetCodeType)) if self.composed => v,
+            None if enum_param() => v,
+            _ => self.opaque(&[&v]),
         };
         env.insert(name.to_string(), v);
     }
 
     fn pure_expr(&mut self, e: &Expr, env: &Env) -> Option<Expr> {
         let v = self.aval(e, env);
-        (v.base == 0).then(|| v.off.to_expr())
+        v.is_param().then(|| v.off.to_expr())
     }
 
-    fn nonneg(&self, v: &Val) -> bool {
-        if v.base == 0 {
-            return self.ctx.at_least(&v.off, 0);
+    /// Computed in `double`: no integer identity holds of it.
+    fn real_valued(&self, e: &Expr) -> bool {
+        match e {
+            Expr::Literal(_) | Expr::Cast(VarType::Real, _) => true,
+            Expr::Var(v) => self.ctx.reals.contains(v),
+            Expr::BinOp(l, BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div | BinOp::Mod, r) => {
+                self.real_valued(l) || self.real_valued(r)
+            }
+            Expr::Neg(x) => self.real_valued(x),
+            Expr::Ternary(_, a, b) => self.real_valued(a) || self.real_valued(b),
+            Expr::FuncCall(name, args) if matches!(name.as_str(), "max" | "min") => {
+                args.iter().any(|a| self.real_valued(a))
+            }
+            _ => false,
         }
-        self.floors.get(&v.base).is_some_and(|fl| {
-            fl.iter()
-                .any(|f| f.add(&v.off, 1).is_some_and(|s| self.ctx.at_least(&s, 0)))
-        })
     }
 
     /// The value of `e` in `env`, reads taken before any of its side effects.
     #[allow(clippy::too_many_lines)]
     fn aval(&mut self, e: &Expr, env: &Env) -> Val {
+        if !matches!(e, Expr::Var(_)) && self.real_valued(e) {
+            let mut v = self.fresh();
+            let mut seen = Vec::new();
+            crate::streaming::walk_expr(e, &mut |x| {
+                if let Expr::Var(n) = x {
+                    seen.push(n.clone());
+                }
+            });
+            v.usub = seen.iter().any(|n| env.get(n).is_some_and(|w| w.usub));
+            return v;
+        }
         match e {
-            Expr::IntLiteral(k) => Self::param(Lin::konst(*k)),
+            Expr::IntLiteral(k) => Val::konst(*k),
             Expr::Var(v) => self.read(v, env),
             Expr::PostIncrement(x) | Expr::PostDecrement(x) => match x.as_ref() {
                 Expr::Var(v) => self.read(v, env),
@@ -714,20 +1057,24 @@ impl Tracker<'_, '_> {
             }
             Expr::Cast(VarType::Integer, x) => {
                 if let Some(arg) = sqrt_of_real(x) {
-                    return match self.pure_expr(arg, env) {
-                        Some(a) => Self::param(Lin::atom(Expr::Cast(
-                            VarType::Integer,
-                            Box::new(Expr::FuncCall(
-                                "sqrt".into(),
-                                vec![Expr::Cast(VarType::Real, Box::new(a))],
-                            )),
-                        ))),
-                        None => self.fresh(),
-                    };
+                    let a = self.aval(arg, env);
+                    if !a.is_param() {
+                        return self.opaque(&[&a]);
+                    }
+                    let mut v = Val::param(Lin::atom(Expr::Cast(
+                        VarType::Integer,
+                        Box::new(Expr::FuncCall(
+                            "sqrt".into(),
+                            vec![Expr::Cast(VarType::Real, Box::new(a.off.to_expr()))],
+                        )),
+                    )));
+                    v.usub = a.usub;
+                    return v;
                 }
                 // `+`, `-` and constant `*` commute with the wrap to the
                 // capture's `int`, and an in-range value survives the cast.
-                self.aval(x, env)
+                let v = self.aval(x, env);
+                self.truncated(v)
             }
             Expr::Cast(VarType::Index, x) => {
                 let v = self.aval(x, env);
@@ -737,93 +1084,158 @@ impl Tracker<'_, '_> {
                 let va = self.aval(lhs, env);
                 let vb = self.aval(rhs, env);
                 let sign = if *op == BinOp::Add { 1 } else { -1 };
-                let out = if vb.base == 0 {
-                    va.off.add(&vb.off, sign).map(|off| Val { base: va.base, off })
-                } else if va.base == 0 && sign == 1 {
-                    va.off.add(&vb.off, 1).map(|off| Val { base: vb.base, off })
-                } else if va.base == vb.base && sign == -1 {
-                    va.off.add(&vb.off, -1).map(Self::param)
-                } else {
-                    None
-                };
-                out.unwrap_or_else(|| self.fresh())
+                let unguarded = sign == -1 && vb.beg && !self.guarded(&va, &vb);
+                let mut out = va.plus(&vb, sign).unwrap_or_else(|| self.opaque(&[&va, &vb]));
+                out.usub |= unguarded;
+                out
             }
             Expr::BinOp(lhs, BinOp::Mul, rhs) => {
                 let va = self.aval(lhs, env);
                 let vb = self.aval(rhs, env);
-                if va.base == 0 && vb.base == 0 {
-                    let lin = match (va.off.as_const(), vb.off.as_const()) {
-                        (Some(c), _) => vb.off.scale(c),
-                        (_, Some(c)) => va.off.scale(c),
-                        _ => Some(Lin::atom(Expr::BinOp(
+                let out = match (va.as_const(), vb.as_const()) {
+                    (Some(c), _) => vb.scaled(c),
+                    (_, Some(c)) => va.scaled(c),
+                    _ if va.is_param() && vb.is_param() => {
+                        let mut v = Val::param(Lin::atom(Expr::BinOp(
                             Box::new(va.off.to_expr()),
                             BinOp::Mul,
                             Box::new(vb.off.to_expr()),
-                        ))),
-                    };
-                    return lin.map_or_else(|| self.fresh(), Self::param);
-                }
-                self.fresh()
+                        )));
+                        v.usub = va.usub || vb.usub;
+                        Some(v)
+                    }
+                    _ => None,
+                };
+                out.unwrap_or_else(|| self.opaque(&[&va, &vb]))
             }
             Expr::Neg(x) => {
                 let a = self.aval(x, env);
-                match (a.base, a.off.scale(-1)) {
-                    (0, Some(off)) => Self::param(off),
-                    _ => self.fresh(),
+                a.scaled(-1).unwrap_or_else(|| self.opaque(&[&a]))
+            }
+            Expr::FuncCall(name, args) if is_unstable_call(name) => {
+                match args.iter().map(|a| subst_env(a, env)).collect::<Option<Vec<_>>>() {
+                    Some(a) => Val::param(Lin::atom(Expr::FuncCall(name.clone(), a))),
+                    None => self.fresh(),
                 }
             }
-            Expr::FuncCall(name, _) if is_unstable_call(name) => Self::param(Lin::atom(e.clone())),
             Expr::FuncCall(name, args) => {
-                let mut pure = Vec::with_capacity(args.len());
-                for a in args {
-                    match self.pure_expr(a, env) {
-                        Some(x) => pure.push(x),
-                        None => return self.fresh(),
-                    }
-                }
+                // A real literal argument is its own constant.
+                let vals: Vec<Val> = args
+                    .iter()
+                    .map(|a| match a {
+                        Expr::Literal(_) => Val::param(Lin::atom(a.clone())),
+                        _ => self.aval(a, env),
+                    })
+                    .collect();
+                let refs: Vec<&Val> = vals.iter().collect();
                 // Only integer-valued calls may become exact atoms.
                 let int_valued = name.ends_with("_lookback")
-                    || (matches!(name.as_str(), "max" | "min") && pure.len() == 2);
-                if !int_valued {
-                    return self.fresh();
+                    || (matches!(name.as_str(), "max" | "min") && vals.len() == 2);
+                if !int_valued || !vals.iter().all(Val::is_param) {
+                    return self.opaque(&refs);
                 }
-                if let Some(body) = self.ctx.inline_lookback(name, &pure, 1) {
-                    let empty = Env::new();
-                    let v = self.aval(&body, &empty);
-                    if v.base == 0 {
-                        return v;
-                    }
+                let pure: Vec<Expr> = vals.iter().map(|v| v.off.to_expr()).collect();
+                let mut out = match self.ctx.inline_lookback(name, &pure, 1) {
+                    Some(body) => Some(self.aval(&body, &Env::new())).filter(Val::is_param),
+                    None => None,
                 }
-                Self::param(Lin::atom(Expr::FuncCall(name.clone(), pure)))
+                .unwrap_or_else(|| Val::param(Lin::atom(Expr::FuncCall(name.clone(), pure))));
+                out.usub = refs.iter().any(|v| v.usub);
+                out
             }
-            Expr::BinOp(lhs, op, rhs) => match (self.pure_expr(lhs, env), self.pure_expr(rhs, env)) {
-                (Some(va), Some(vb)) => {
-                    Self::param(Lin::atom(Expr::BinOp(Box::new(va), op.clone(), Box::new(vb))))
+            Expr::BinOp(lhs, op, rhs) => {
+                let va = self.aval(lhs, env);
+                let vb = self.aval(rhs, env);
+                if !(va.is_param() && vb.is_param()) {
+                    return self.opaque(&[&va, &vb]);
                 }
-                _ => self.fresh(),
-            },
-            Expr::Not(x) => match self.pure_expr(x, env) {
-                Some(a) => Self::param(Lin::atom(Expr::Not(Box::new(a)))),
+                let mut v = Val::param(Lin::atom(Expr::BinOp(
+                    Box::new(va.off.to_expr()),
+                    op.clone(),
+                    Box::new(vb.off.to_expr()),
+                )));
+                v.usub = va.usub || vb.usub;
+                v
+            }
+            Expr::Not(x) => {
+                let a = self.aval(x, env);
+                if !a.is_param() {
+                    return self.opaque(&[&a]);
+                }
+                let mut v = Val::param(Lin::atom(Expr::Not(Box::new(a.off.to_expr()))));
+                v.usub = a.usub;
+                v
+            }
+            Expr::Ternary(sel, yes, no) => {
+                let vc = self.aval(sel, env);
+                let va = self.aval(yes, env);
+                let vb = self.aval(no, env);
+                if !(vc.is_param() && va.is_param() && vb.is_param()) {
+                    return self.opaque(&[&vc, &va, &vb]);
+                }
+                let mut v = Val::param(Lin::atom(Expr::Ternary(
+                    Box::new(vc.off.to_expr()),
+                    Box::new(va.off.to_expr()),
+                    Box::new(vb.off.to_expr()),
+                )));
+                v.usub = vc.usub || va.usub || vb.usub;
+                v
+            }
+            Expr::PointerDeref(p) if self.composed => match env.get(&cell(p)) {
+                Some(v) => v.clone(),
                 None => self.fresh(),
             },
-            Expr::Ternary(c, a, b) => {
-                match (self.pure_expr(c, env), self.pure_expr(a, env), self.pure_expr(b, env)) {
-                    (Some(c), Some(a), Some(b)) => Self::param(Lin::atom(Expr::Ternary(
-                        Box::new(c),
-                        Box::new(a),
-                        Box::new(b),
-                    ))),
-                    _ => self.fresh(),
-                }
-            }
             _ => self.fresh(),
         }
     }
 
     fn shift(&mut self, v: &Val, by: &Lin) -> Val {
-        match v.off.add(by, 1) {
-            Some(off) => Val { base: v.base, off },
-            None => self.fresh(),
+        v.plus(&Val::param(by.clone()), 1)
+            .unwrap_or_else(|| self.opaque(&[v]))
+    }
+
+    /// The `(hi, lo)` pairs a then-arm of `cond` may assume `hi >= lo` of.
+    fn guard_pairs(&mut self, cond: &Expr, env: &Env) -> Vec<(Val, Val)> {
+        let mut cs = Vec::new();
+        conjuncts(cond, &mut cs);
+        let mut out = Vec::new();
+        for c in cs {
+            let Expr::BinOp(l, op, r) = &c else { continue };
+            let (hi, lo) = match op {
+                BinOp::Greater | BinOp::GreaterEq => (l, r),
+                BinOp::Less | BinOp::LessEq => (r, l),
+                _ => continue,
+            };
+            let pair = (self.aval(hi, env), self.aval(lo, env));
+            out.push(pair);
+        }
+        out
+    }
+
+    fn guarded(&self, hi: &Val, lo: &Val) -> bool {
+        self.guards
+            .iter()
+            .flatten()
+            .any(|(h, l)| h.same(hi) && l.same(lo))
+    }
+
+    /// Every value `cond` compares is free of `endIdx` and of data.
+    fn cond_clean(&mut self, cond: &Expr, env: &Env) -> bool {
+        match cond {
+            Expr::BinOp(
+                l,
+                BinOp::And
+                | BinOp::Or
+                | BinOp::Less
+                | BinOp::LessEq
+                | BinOp::Greater
+                | BinOp::GreaterEq
+                | BinOp::Eq
+                | BinOp::NotEq,
+                r,
+            ) => self.cond_clean(l, env) && self.cond_clean(r, env),
+            Expr::Not(x) => self.cond_clean(x, env),
+            _ => self.aval(cond, env).clean(),
         }
     }
 
@@ -839,6 +1251,25 @@ impl Tracker<'_, '_> {
         for v in clobbered {
             let f = self.fresh();
             env.insert(v, f);
+        }
+        if self.composed {
+            // A pointer handed to a call may be written through.
+            let mut cells = Vec::new();
+            crate::streaming::walk_expr(e, &mut |x| {
+                if let Expr::FuncCall(_, args) = x {
+                    for a in args {
+                        if let Expr::Var(p) = a {
+                            cells.push(cell(p));
+                        }
+                    }
+                }
+            });
+            for c in cells {
+                if env.contains_key(&c) {
+                    let f = self.fresh();
+                    env.insert(c, f);
+                }
+            }
         }
     }
 
@@ -868,18 +1299,53 @@ impl Tracker<'_, '_> {
         }))
     }
 
-    fn join(&mut self, a: Option<Env>, b: Option<Env>) -> Option<Env> {
-        let (a, b) = match (a, b) {
-            (None, x) | (x, None) => return x,
-            (Some(a), Some(b)) => (a, b),
+    fn exec_guarded(
+        &mut self,
+        guard: Vec<(Val, Val)>,
+        stmts: &[Statement],
+        env: &Env,
+    ) -> Result<Option<Env>, Unsupported> {
+        self.guards.push(guard);
+        let out = self.exec_scoped(stmts, env);
+        self.guards.pop();
+        out
+    }
+
+    /// A name's value at the end of one arm: the parameter itself when the
+    /// arm never wrote it.
+    fn arm_value(&mut self, n: &str, env: &Env) -> Val {
+        match env.get(n) {
+            Some(v) => v.clone(),
+            None if self.ctx.params.contains(n) => Val::param(Lin::atom(Expr::Var(n.to_string()))),
+            None => self.fresh(),
+        }
+    }
+
+    fn join(&mut self, cond: &Cond, then_env: Option<Env>, else_env: Option<Env>) -> Option<Env> {
+        let (then_env, else_env) = match (then_env, else_env) {
+            (None, live) | (live, None) => return live,
+            (Some(t), Some(e)) => (t, e),
         };
-        let names: BTreeSet<String> = a.keys().chain(b.keys()).cloned().collect();
+        let names: BTreeSet<String> = then_env.keys().chain(else_env.keys()).cloned().collect();
         let mut out = Env::new();
         for n in names {
-            let v = match (a.get(&n), b.get(&n)) {
-                (Some(x), Some(y)) if x == y => x.clone(),
-                _ => self.fresh(),
+            let x = self.arm_value(&n, &then_env);
+            let y = self.arm_value(&n, &else_env);
+            let mut v = if x.same(&y) {
+                x.clone()
+            } else if let (Some(c), true) = (&cond.pure, x.is_param() && y.is_param()) {
+                Val::param(Lin::atom(Expr::Ternary(
+                    Box::new(c.clone()),
+                    Box::new(x.off.to_expr()),
+                    Box::new(y.off.to_expr()),
+                )))
+            } else if cond.clean && x.clean() && y.clean() {
+                self.mint(Tag::I).1
+            } else {
+                self.fresh()
             };
+            v.beg = x.beg || y.beg;
+            v.usub = x.usub || y.usub;
             out.insert(n, v);
         }
         Some(out)
@@ -903,18 +1369,22 @@ impl Tracker<'_, '_> {
             Statement::Assign { target, value, .. } => {
                 let v = self.aval(value, &env);
                 self.apply_effects(value, &mut env);
-                if let Expr::Var(name) = target {
-                    let mut touched = Vec::new();
-                    let mut clobbered = BTreeSet::new();
-                    effects(value, false, &mut touched, &mut clobbered);
-                    let v = if touched.iter().any(|(t, _)| t == name) || clobbered.contains(name) {
-                        self.fresh()
-                    } else {
-                        v
-                    };
-                    self.store(name, v, &mut env);
-                } else {
-                    self.apply_effects(target, &mut env);
+                match target {
+                    Expr::Var(name) => {
+                        let mut touched = Vec::new();
+                        let mut clobbered = BTreeSet::new();
+                        effects(value, false, &mut touched, &mut clobbered);
+                        let v = if touched.iter().any(|(t, _)| t == name) || clobbered.contains(name) {
+                            self.opaque(&[&v])
+                        } else {
+                            v
+                        };
+                        self.store(name, v, &mut env);
+                    }
+                    Expr::PointerDeref(p) if self.composed => {
+                        env.insert(cell(p), v);
+                    }
+                    _ => self.apply_effects(target, &mut env),
                 }
             }
             Statement::Expr(e) => self.apply_effects(e, &mut env),
@@ -930,15 +1400,23 @@ impl Tracker<'_, '_> {
                 if let Some(e) = self.clamp(condition, then_body, else_body, &env) {
                     return Ok(Some(e));
                 }
-                let verdict = self.pure_expr(condition, &env).and_then(|c| self.ctx.decide(&c));
+                let pure = self.pure_expr(condition, &env);
+                let clean = pure.is_some() || self.cond_clean(condition, &env);
+                let verdict = pure.as_ref().and_then(|c| self.ctx.decide(c));
+                let guard = if self.composed {
+                    self.guard_pairs(condition, &env)
+                } else {
+                    Vec::new()
+                };
                 self.apply_effects(condition, &mut env);
+                let cond = Cond { pure, clean };
                 return match verdict {
-                    Some(true) => self.exec_scoped(then_body, &env),
+                    Some(true) => self.exec_guarded(guard, then_body, &env),
                     Some(false) => self.exec_scoped(else_body, &env),
                     None => {
-                        let t = self.exec_scoped(then_body, &env)?;
+                        let t = self.exec_guarded(guard, then_body, &env)?;
                         let e = self.exec_scoped(else_body, &env)?;
-                        Ok(self.join(t, e))
+                        Ok(self.join(&cond, t, e))
                     }
                 };
             }
@@ -985,20 +1463,32 @@ impl Tracker<'_, '_> {
             return None;
         }
         let bound = self.aval(r, env);
-        if bound.base != 0 {
+        if !bound.is_param() {
             return None;
         }
-        let signed = self.ctx.is_int(x) && expr_is_signed(r, self.ctx);
+        let signed = self.ctx.is_int(x) && expr_is_signed(r, &self.ctx);
         let x0 = self.read(x, env);
-        if !(signed || self.nonneg(&x0) && self.ctx.at_least(&bound.off, 0)) {
+        let x0_nonneg = self.at_least(&x0, 0);
+        if !(signed || x0_nonneg && self.ctx.at_least(&bound.off, 0)) {
             return None;
         }
-        let fresh = self.fresh();
-        let mut floors = vec![bound.off];
-        if self.nonneg(&x0) {
-            floors.push(Lin::konst(0));
+        let tag = if !x0.clean() {
+            Tag::Top
+        } else if x == "startIdx" || x0.is_start() {
+            Tag::S
+        } else {
+            Tag::I
+        };
+        let (id, mut fresh) = self.mint(tag);
+        if tag == Tag::S {
+            self.clamped.insert(id, x0.clone());
         }
-        self.floors.insert(fresh.base, floors);
+        fresh.usub = x0.usub || bound.usub;
+        let mut floors = vec![Val::param(bound.off)];
+        if x0_nonneg {
+            floors.push(Val::konst(0));
+        }
+        self.floors.insert(id, floors);
         let mut out = env.clone();
         out.insert(x.clone(), fresh);
         Some(out)
@@ -1042,7 +1532,9 @@ impl Tracker<'_, '_> {
             self.trip_count(s, &env, &deltas, &written, &cond_written)
         };
 
-        let mut groups: BTreeMap<(u32, i64), u32> = BTreeMap::new();
+        // Unknown trip count t: every value stepping by d moves by the one
+        // unknown d * t.
+        let mut moved: BTreeMap<i64, Val> = BTreeMap::new();
         for v in &written {
             let step = match deltas.get(v) {
                 _ if jumps || declared.contains(v) || cond_written.contains(v) => None,
@@ -1054,18 +1546,13 @@ impl Tracker<'_, '_> {
                 (Some(0), _) => cur,
                 (Some(d), Some(t)) => match t.scale(d) {
                     Some(by) => self.shift(&cur, &by),
-                    None => self.fresh(),
+                    None => self.opaque(&[&cur]),
                 },
                 (Some(d), None) => {
-                    // Unknown trip count t: every value with the same base
-                    // and step moves together, onto a base standing for
-                    // `base + d * t`.
-                    let base = *groups
-                        .entry((cur.base, d))
-                        .or_insert_with(|| self.fresh().base);
-                    Val { base, off: cur.off }
+                    let by = moved.entry(d).or_insert_with(|| self.fresh()).clone();
+                    cur.plus(&by, 1).unwrap_or_else(|| self.opaque(&[&cur]))
                 }
-                (None, _) => self.fresh(),
+                (None, _) => self.opaque(&[&cur]),
             };
             env.insert(v.clone(), next);
         }
@@ -1092,7 +1579,7 @@ impl Tracker<'_, '_> {
                             return None;
                         }
                         let i0 = self.read(i, env);
-                        return (i0.base == 0).then_some(i0.off).and_then(|lin| max0(self, lin));
+                        return i0.is_param().then_some(i0.off).and_then(|lin| max0(self, lin));
                     }
                 }
                 self.run_to_bound(condition, env, deltas, written, cond_written)
@@ -1136,16 +1623,16 @@ impl Tracker<'_, '_> {
         }
         let i0 = self.read(i, env);
         let b = self.aval(bound, env);
-        let signed = self.ctx.is_int(i) && expr_is_signed(bound, self.ctx);
-        if !(signed || self.nonneg(&i0) && self.nonneg(&b)) {
+        let signed = self.ctx.is_int(i) && expr_is_signed(bound, &self.ctx);
+        if !(signed || self.at_least(&i0, 0) && self.at_least(&b, 0)) {
             return None;
         }
         let (hi, lo) = if step == 1 { (&b, &i0) } else { (&i0, &b) };
-        if hi.base != lo.base {
+        let span = hi.plus(lo, -1)?.plus(&Val::konst(extra), 1)?;
+        if !span.is_param() {
             return None;
         }
-        let span = hi.off.add(&lo.off, -1)?.add(&Lin::konst(extra), 1)?;
-        self.ctx.at_least(&span, 0).then_some(span)
+        self.ctx.at_least(&span.off, 0).then_some(span.off)
     }
 }
 
@@ -1233,6 +1720,12 @@ fn written_names(stmts: &[Statement]) -> BTreeSet<String> {
         walk_stmts(s, &mut |st| match st {
             Statement::Assign { target: Expr::Var(v), .. } | Statement::VarDecl { name: v, .. } => {
                 out.insert(v.clone());
+            }
+            Statement::Assign {
+                target: Expr::PointerDeref(p),
+                ..
+            } => {
+                out.insert(cell(p));
             }
             Statement::For { var, .. } => {
                 out.insert(var.clone());
@@ -1405,14 +1898,21 @@ pub struct LagProofInput<'a> {
 
 /// Every other function's lookback reachable from `func`'s body through
 /// lookback calls, resolved once so the proof reads only its arguments.
-fn resolve_callees(func: &FuncDef, lookup: &dyn CalleeLookup) -> BTreeMap<String, CalleeLookback> {
-    fn called(stmts: &[Statement], out: &mut Vec<String>) {
+/// `subs` adds the lookback of every function the body calls.
+fn resolve_callees(
+    func: &FuncDef,
+    lookup: &dyn CalleeLookup,
+    subs: bool,
+) -> BTreeMap<String, CalleeLookback> {
+    fn called(stmts: &[Statement], subs: bool, out: &mut Vec<String>) {
         for s in stmts {
             crate::streaming::walk_stmt_exprs(s, &mut |e| {
                 crate::streaming::walk_expr(e, &mut |x| {
                     if let Expr::FuncCall(name, _) = x {
-                        if let Some(c) = name.strip_suffix("_lookback") {
-                            out.push(c.to_ascii_lowercase());
+                        match name.strip_suffix("_lookback") {
+                            Some(c) => out.push(c.to_ascii_lowercase()),
+                            None if subs => out.push(name.to_ascii_lowercase()),
+                            None => {}
                         }
                     }
                 });
@@ -1421,9 +1921,9 @@ fn resolve_callees(func: &FuncDef, lookup: &dyn CalleeLookup) -> BTreeMap<String
     }
     let own = func.name.to_ascii_lowercase();
     let mut todo = Vec::new();
-    called(func.stream_source(), &mut todo);
+    called(func.stream_source(), subs, &mut todo);
     if let Some(LookbackExpr::Code(body)) = &func.lookback {
-        called(body, &mut todo);
+        called(body, false, &mut todo);
     }
     let mut out = BTreeMap::new();
     let mut seen = BTreeSet::new();
@@ -1432,7 +1932,7 @@ fn resolve_callees(func: &FuncDef, lookup: &dyn CalleeLookup) -> BTreeMap<String
             continue;
         }
         if let Some(def) = lookup.lookback(&name) {
-            called(&def.body, &mut todo);
+            called(&def.body, false, &mut todo);
             out.insert(name, def);
         }
     }
@@ -1448,7 +1948,7 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
     use std::hash::{Hash, Hasher};
     type Memo = Mutex<BTreeMap<(String, u64), Vec<Option<i64>>>>;
     static MEMO: OnceLock<Memo> = OnceLock::new();
-    let callees = resolve_callees(func, input.lookup);
+    let callees = resolve_callees(func, input.lookup, false);
     let mut h = std::collections::hash_map::DefaultHasher::new();
     format!(
         "{:?}",
@@ -1483,7 +1983,7 @@ fn prove(
     callees: BTreeMap<String, CalleeLookback>,
 ) -> Vec<Option<i64>> {
     let none = vec![None; vars.len()];
-    let ctx = Ctx::new(func, &input.facts, callees);
+    let mut t = Tracker::new(Ctx::new(func, &input.facts, callees), false);
     let all: Vec<&Statement> = input
         .prologue
         .iter()
@@ -1495,7 +1995,7 @@ fn prove(
         w.extend(written_names(std::slice::from_ref(*s)));
     }
     // A reassigned parameter no longer means its validated value.
-    if w.iter().any(|n| ctx.params.contains(n)) {
+    if w.iter().any(|n| t.ctx.params.contains(n)) {
         return none;
     }
     let Some(steady_idx) = crate::streaming::steady_loop_index(input.region) else {
@@ -1507,17 +2007,11 @@ fn prove(
         .chain(written_names(input.epilogue))
         .collect::<BTreeSet<_>>();
 
-    let mut t = Tracker {
-        ctx: &ctx,
-        next: 0,
-        floors: BTreeMap::new(),
-    };
     let mut env = Env::new();
-    let start = t.fresh();
-    t.floors.insert(start.base, vec![Lin::konst(0)]);
+    let (start_id, start) = t.mint(Tag::S);
+    t.floors.insert(start_id, vec![Val::konst(0)]);
     env.insert("startIdx".into(), start);
-    let end = t.fresh();
-    env.insert("endIdx".into(), end);
+    env.insert("endIdx".into(), t.mint(Tag::V).1);
     let Ok(Some(mut env)) = t.exec_seq(input.prologue, env) else { return none };
     let Ok(Some(e)) = t.exec_seq(&input.region[..steady_idx], env) else { return none };
     env = e;
@@ -1558,16 +2052,272 @@ fn prove(
                 return None;
             }
             let var = t.read(v, &env);
-            if var.base != cursor.base {
+            let d = cursor.plus(&var, -1)?;
+            if !d.is_param() {
                 return None;
             }
-            let d = cursor.off.add(&var.off, -1)?;
-            let lb = ctx
-                .lower_bound(&d, false)
-                .max(ctx.lower_bound(&d, true))?;
+            let lb = t
+                .ctx
+                .lower_bound(&d.off, false)
+                .max(t.ctx.lower_bound(&d.off, true))?;
             i64::try_from(lb).ok()
         })
         .collect()
+}
+
+// ---------------------------------------------------------------------------
+// Composed walk
+// ---------------------------------------------------------------------------
+
+/// What a modelled sub-call leaves: its lookback, begin index and element
+/// count, exact under an Open whose sub-open succeeded.
+pub(crate) struct SubFacts {
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub(crate) lookback: Val,
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub(crate) begin: Val,
+    pub(crate) count: Val,
+}
+
+/// A sub-call statement goes through the sub-call entry only, never also the
+/// general one: both would apply its receiver writes.
+pub(crate) struct ComposedWalk<'a> {
+    t: Tracker<'a>,
+    /// `None` once every path returned.
+    env: Option<Env>,
+    end: Val,
+    /// Each unresolved sub-call begin, by atom id, with its start argument.
+    starts: BTreeMap<u32, Val>,
+}
+
+impl<'a> ComposedWalk<'a> {
+    pub(crate) fn new(func: &'a FuncDef, lookup: &dyn CalleeLookup) -> Self {
+        let mut t = Tracker::new(Ctx::new(func, &[], resolve_callees(func, lookup, true)), true);
+        let (start_id, start) = t.mint(Tag::S);
+        t.floors.insert(start_id, vec![Val::konst(0)]);
+        let end = t.mint(Tag::V).1;
+        let env: Env = [("startIdx".to_string(), start), ("endIdx".to_string(), end.clone())]
+            .into_iter()
+            .collect();
+        ComposedWalk {
+            t,
+            env: Some(env),
+            end,
+            starts: BTreeMap::new(),
+        }
+    }
+
+    /// Runs `stmts` under the shared rules; a returning path ends the walk.
+    pub(crate) fn exec(&mut self, stmts: &[Statement]) -> Result<(), Unsupported> {
+        let Some(env) = self.env.clone() else { return Ok(()) };
+        self.env = self.t.exec_seq(stmts, env)?;
+        Ok(())
+    }
+
+    pub(crate) fn reachable(&self) -> bool {
+        self.env.is_some()
+    }
+
+    pub(crate) fn value(&mut self, e: &Expr) -> Val {
+        match &self.env {
+            Some(env) => self.t.aval(e, env),
+            None => self.t.fresh(),
+        }
+    }
+
+    pub(crate) fn end_idx(&self) -> Val {
+        self.end.clone()
+    }
+
+    /// An unknown that may depend on data or on `endIdx`.
+    pub(crate) fn top(&mut self) -> Val {
+        self.t.fresh()
+    }
+
+    /// `off` when `idx` is `cursor + off` with `off` free of the cursor.
+    pub(crate) fn cursor_offset(&mut self, cursor: &str, idx: &Expr) -> Option<Val> {
+        let env = self.env.as_mut()?;
+        let saved = env.get(cursor).cloned();
+        let (id, x) = self.t.mint(Tag::I);
+        env.insert(cursor.to_string(), x);
+        let mut v = self.t.aval(idx, env);
+        match saved {
+            Some(s) => env.insert(cursor.to_string(), s),
+            None => env.remove(cursor),
+        };
+        let atom = Atom { id, tag: Tag::I };
+        if v.terms.remove(&atom) != Some(1) {
+            return None;
+        }
+        Some(v)
+    }
+
+    pub(crate) fn assign(&mut self, name: &str, v: Val) {
+        if let Some(env) = &mut self.env {
+            env.insert(name.to_string(), v);
+        }
+    }
+
+    /// Every scalar `s` may write becomes unknown.
+    pub(crate) fn forget_writes(&mut self, s: &Statement) {
+        if let Some(env) = &mut self.env {
+            for n in written_names(std::slice::from_ref(s)) {
+                let f = self.t.fresh();
+                env.insert(n, f);
+            }
+        }
+    }
+
+    pub(crate) fn at_least(&self, v: &Val, k: i64) -> bool {
+        self.t.at_least(v, k)
+    }
+
+    /// Enters the then-arm of `cond`, whose ordering tests a begin-index
+    /// subtraction inside may rely on.
+    pub(crate) fn push_guard(&mut self, cond: &Expr) {
+        let pairs = match &self.env {
+            Some(env) => self.t.guard_pairs(cond, env),
+            None => Vec::new(),
+        };
+        self.t.guards.push(pairs);
+    }
+
+    pub(crate) fn pop_guard(&mut self) {
+        self.t.guards.pop();
+    }
+
+    /// Sub-call `k` at `stmt`: its receivers take the begin and count, its
+    /// status variable 0, because a handle exists only when its sub-open
+    /// succeeded over the same arguments.
+    pub(crate) fn sub_call(&mut self, k: usize, stmt: &Statement, sub: &SubCallStep) -> SubFacts {
+        let Some(mut env) = self.env.take() else {
+            let mut top = || self.t.fresh();
+            return SubFacts {
+                lookback: top(),
+                begin: top(),
+                count: top(),
+            };
+        };
+        let start = self.t.aval(&sub.s_arg, &env);
+        let last = self.t.aval(&sub.e_arg, &env);
+        let call = Expr::FuncCall(format!("{}_lookback", sub.callee), sub.opt_args.clone());
+        let lookback = self.t.aval(&call, &env);
+        let begin = self.begin_of(k, &start, &lookback);
+        let count = last
+            .plus(&begin, -1)
+            .and_then(|span| span.plus(&Val::konst(1), 1))
+            .unwrap_or_else(|| self.t.opaque(&[&last, &begin]));
+        if let Statement::Assign { value, .. } = stmt {
+            self.t.apply_effects(value, &mut env);
+        }
+        let recv = |arg: &Expr| match arg {
+            Expr::AddressOf(inner) => match inner.as_ref() {
+                Expr::Var(local) => Some(local.clone()),
+                _ => None,
+            },
+            Expr::Var(ptr) if matches!(ptr.as_str(), "outBegIdx" | "outNBElement") => {
+                Some(cell(ptr))
+            }
+            _ => None,
+        };
+        let names = crate::streaming::batch_call_out_args(stmt, sub)
+            .map(|(meta, _)| (recv(meta[0]), recv(meta[1])));
+        match names {
+            Some((Some(beg_recv), Some(nb_recv))) if beg_recv != nb_recv => {
+                let mut held = begin.clone();
+                held.beg = true;
+                env.insert(beg_recv, held);
+                env.insert(nb_recv, count.clone());
+            }
+            Some((beg_recv, nb_recv)) => {
+                for name in [beg_recv, nb_recv].into_iter().flatten() {
+                    let unknown = self.t.fresh();
+                    env.insert(name, unknown);
+                }
+            }
+            None => {}
+        }
+        if let Statement::Assign {
+            target: Expr::Var(status),
+            ..
+        } = stmt
+        {
+            env.insert(status.clone(), Val::konst(0));
+        }
+        self.env = Some(env);
+        SubFacts {
+            lookback,
+            begin,
+            count,
+        }
+    }
+
+    /// The first rule that applies: the lookback when it is at least the
+    /// start, the start when it is at least the lookback, else a fresh begin
+    /// no smaller than either.
+    fn begin_of(&mut self, k: usize, s: &Val, lb: &Val) -> Val {
+        let usub = s.usub || lb.usub;
+        let pick = |v: &Val| Val {
+            beg: false,
+            usub,
+            ..v.clone()
+        };
+        if lb.plus(s, -1).is_some_and(|d| self.lookback_at_least(&d, lb)) || s.same(lb) {
+            return pick(lb);
+        }
+        if s.plus(lb, -1).is_some_and(|d| self.t.at_least(&d, 0)) {
+            return pick(s);
+        }
+        let (id, mut b) = self.t.mint(Tag::B(k));
+        b.usub = usub;
+        self.t.floors.insert(id, vec![pick(s), pick(lb)]);
+        self.starts.insert(id, s.clone());
+        b
+    }
+
+    /// `d >= 0`, granting the lookback atom `lb` of the call being resolved
+    /// `lb >= 0`: a lookback answering -1 fails the sub-open, so Open returns
+    /// before any handle exists.
+    fn lookback_at_least(&self, d: &Val, lb: &Val) -> bool {
+        if self.t.at_least(d, 0) {
+            return true;
+        }
+        let single = lb.is_param() && lb.off.k == 0 && lb.off.terms.len() == 1;
+        let Some((key, (call, 1))) = lb.off.terms.iter().next().filter(|_| single) else {
+            return false;
+        };
+        if !matches!(call, Expr::FuncCall(n, _) if n.ends_with("_lookback")) {
+            return false;
+        }
+        if d.off.terms.get(key).is_none_or(|(_, c)| *c <= 0) {
+            return false;
+        }
+        let mut rest = d.clone();
+        rest.off.terms.remove(key);
+        self.t.at_least(&rest, 0)
+    }
+
+    /// `v` as if no startIdx clamp fired and every unresolved begin were its
+    /// start argument: each such unknown replaced by the value it was computed
+    /// from, until none is left. Each replaced unknown is at least its
+    /// replacement, so the flag (every replaced coefficient was at most 0)
+    /// makes `v` at most the result. `None` on overflow.
+    ///
+    /// Newest first, so each unknown is replaced once, at its net coefficient:
+    /// one that a newer replacement cancels never counts against the flag.
+    pub(crate) fn presumed(&self, v: &Val) -> Option<(Val, bool)> {
+        let from = |id: u32| self.starts.get(&id).or_else(|| self.t.clamped.get(&id));
+        let mut cur = v.clone();
+        let mut nonpositive = true;
+        while let Some((a, c)) =
+            cur.terms.iter().rev().find(|(a, _)| from(a.id).is_some()).map(|(a, c)| (*a, *c))
+        {
+            nonpositive &= c <= 0;
+            cur.terms.remove(&a);
+            cur = cur.plus(&from(a.id)?.scaled(c)?, 1)?;
+        }
+        Some((cur, nonpositive))
+    }
 }
 
 #[cfg(test)]
@@ -1723,5 +2473,338 @@ mod tests {
         let none = crate::streaming::FuncsLookup(&[]);
         assert!(proven(&lag("max"), &none));
         assert!(!proven(&lag("fmax"), &none));
+    }
+
+    // --- composed walk ------------------------------------------------------
+
+    /// `body` as APO's batch body: two periods and an MA type over `inReal`.
+    fn apo_body(body: &str) -> FuncDef {
+        let src = format!(
+            "int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)\n\
+             {{\n   return 0;\n}}\n\n\
+             TA_RetCode apo(int startIdx, int endIdx, const double inReal[],\n\
+             int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,\n\
+             int *outBegIdx, int *outNBElement, double outReal[])\n{{\n{body}\n}}\n"
+        );
+        let mut f = crate::parser::yaml::parse_yaml(&base().join("apo/apo.yaml"));
+        let parsed = crate::parser::c_source::parse_c_source_str(&src);
+        crate::parser::c_source::wire_parsed_source(&mut f, &parsed);
+        f
+    }
+
+    fn var(n: &str) -> Expr {
+        Expr::Var(n.into())
+    }
+
+    /// A call of a function `lookup` knows, as the composed analysis records it.
+    fn sub_step(st: &Statement, lookup: &dyn CalleeLookup) -> Option<SubCallStep> {
+        let Statement::Assign {
+            value: Expr::FuncCall(name, args),
+            ..
+        } = st
+        else {
+            return None;
+        };
+        let sig = lookup.callee(name)?;
+        let opt = 2 + sig.n_inputs;
+        Some(SubCallStep {
+            tail_idx: 0,
+            callee: name.to_ascii_lowercase(),
+            opt_args: args[opt..opt + sig.n_opts].to_vec(),
+            s_arg: args[0].clone(),
+            e_arg: args[1].clone(),
+            srcs: Vec::new(),
+            dsts: args[opt + sig.n_opts + 2..].iter().map(|a| format!("{a:?}")).collect(),
+        })
+    }
+
+    /// Walks `body` statement by statement, each call `lookup` knows being
+    /// the next sub-call.
+    fn walk<'a>(
+        func: &'a FuncDef,
+        lookup: &dyn CalleeLookup,
+        body: &[Statement],
+    ) -> (ComposedWalk<'a>, Vec<SubFacts>) {
+        let mut w = ComposedWalk::new(func, lookup);
+        let mut subs = Vec::new();
+        for st in body {
+            if let Some(sub) = sub_step(st, lookup) {
+                let facts = w.sub_call(subs.len(), st, &sub);
+                subs.push(facts);
+            } else {
+                assert!(w.exec(std::slice::from_ref(st)).is_ok(), "unmodelled {st:?}");
+            }
+        }
+        (w, subs)
+    }
+
+    fn tags(v: &Val) -> Vec<(Tag, i64)> {
+        v.terms.iter().map(|(a, c)| (a.tag, *c)).collect()
+    }
+
+    #[test]
+    fn end_minus_start_cancels_across_clamp_versions() {
+        let f = apo_body(
+            "int n0, n1, lb;\n\
+             lb = optInSlowPeriod;\n\
+             n0 = endIdx - startIdx;\n\
+             if( startIdx < lb ) startIdx = lb;\n\
+             n1 = endIdx - startIdx;",
+        );
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&[]), &f.body);
+        let (n0, n1) = (w.value(&var("n0")), w.value(&var("n1")));
+        assert_eq!((n0.v_coef(), n1.v_coef()), (1, 1));
+        // endIdx cancels; the two startIdx versions stay apart.
+        assert_eq!(tags(&n0.plus(&n1, -1).unwrap()), vec![(Tag::S, -1), (Tag::S, 1)]);
+        let s1 = w.value(&var("startIdx"));
+        assert!(n1.plus(&s1, 1).unwrap().same(&w.end_idx()));
+        let over = s1.plus(&w.value(&var("lb")), -1).unwrap();
+        assert!(w.at_least(&over, 0));
+    }
+
+    #[test]
+    fn gator_clamp_floors_the_medprice_start() {
+        let gator = load("gator");
+        let callees = [load("medprice"), load("rma")];
+        let lookup = crate::streaming::FuncsLookup(&callees);
+        let first = gator.body.iter().position(|s| sub_step(s, &lookup).is_some()).unwrap();
+        let (mut w, subs) = walk(&gator, &lookup, &gator.body[..=first]);
+        assert!(w.reachable());
+        // No straight-line body: an atom, at least 0 by its own declarations.
+        let lt = w.value(&var("lookbackTotal"));
+        assert!(lt.is_param() && w.at_least(&lt, 0));
+        let s1 = w.value(&var("startIdx"));
+        assert!(s1.has_start() && w.at_least(&s1.plus(&lt, -1).unwrap(), 0));
+        assert!(subs[0].begin.same(&w.value(&var("mpStartIdx"))));
+        let nb = w.value(&var("nbElement"));
+        let span = w.value(&var("localEnd")).plus(&nb, -1).unwrap();
+        assert!(span.same(&lt.plus(&Val::konst(1), -1).unwrap()));
+        let back = w.value(&var("backJaw"));
+        assert!(back.is_param());
+        assert!(matches!(back.off.terms.values().collect::<Vec<_>>()[..], [(Expr::Ternary(..), 1)]));
+        assert!(w.value(&var("tempNbElement")).same(&subs[0].count));
+        assert!(w.value(&var("tempBegIdx")).is_begin());
+    }
+
+    #[test]
+    fn a_parameter_join_is_one_atom_however_the_condition_is_spelled() {
+        let f = apo_body(
+            "int a, b, fast, slow, tmp;\n\
+             a = 0;\n\
+             if( optInFastPeriod > optInSlowPeriod ) a = optInFastPeriod - optInSlowPeriod;\n\
+             fast = optInFastPeriod;\n\
+             slow = optInSlowPeriod;\n\
+             b = 0;\n\
+             if( fast > slow ) b = fast - slow;\n\
+             if( optInSlowPeriod < optInFastPeriod )\n\
+             {\n\
+                tmp = optInSlowPeriod;\n\
+                optInSlowPeriod = optInFastPeriod;\n\
+                optInFastPeriod = tmp;\n\
+             }",
+        );
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&[]), &f.body);
+        let a = w.value(&var("a"));
+        assert!(a.is_param() && a.off.terms.len() == 1 && a.same(&w.value(&var("b"))));
+        for p in ["optInFastPeriod", "optInSlowPeriod"] {
+            assert!(w.value(&var(p)).is_param(), "{p}");
+        }
+    }
+
+    #[test]
+    fn a_join_keeps_what_its_condition_is_free_of() {
+        let f = apo_body(
+            "int x, y, z;\n\
+             if( inReal[startIdx] > 0.0 ) x = 1; else x = 2;\n\
+             if( startIdx > optInFastPeriod ) y = 1; else y = 2;\n\
+             if( optInSlowPeriod > optInFastPeriod ) z = 1; else z = 2;",
+        );
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&[]), &f.body);
+        assert_eq!(tags(&w.value(&var("x"))), vec![(Tag::Top, 1)]);
+        assert_eq!(tags(&w.value(&var("y"))), vec![(Tag::I, 1)]);
+        assert!(w.value(&var("z")).is_param());
+    }
+
+    #[test]
+    fn sub_call_begins_resolve_by_literal_zero_same_atom_and_floor() {
+        let f = apo_body(
+            "int lb, b0, n0, b1, n1, b2, n2, b3, n3;\n\
+             TA_RetCode retCode;\n\
+             double *t;\n\
+             lb = ma_lookback( optInFastPeriod - 1, optInMAType );\n\
+             retCode = ma( 0, endIdx, inReal, optInFastPeriod - 1, optInMAType, &b0, &n0, t );\n\
+             retCode = ma( lb, endIdx, inReal, optInFastPeriod - 1, optInMAType, &b1, &n1, t );\n\
+             if( startIdx < lb ) startIdx = lb;\n\
+             retCode = ma( startIdx, endIdx, inReal, optInFastPeriod - 1, optInMAType, &b2, &n2, t );\n\
+             retCode = ma( optInSlowPeriod, endIdx, inReal, optInFastPeriod, optInMAType, &b3, &n3, t );",
+        );
+        let callees = [load("ma")];
+        let (mut w, subs) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        let lb = w.value(&var("lb"));
+        // Only the axiom of the call being resolved orders the literal 0.
+        assert!(lb.is_param() && !w.at_least(&lb, 0));
+        assert!(subs[0].begin.same(&lb));
+        assert!(subs[1].begin.same(&lb));
+        assert!(subs[2].begin.same(&w.value(&var("startIdx"))));
+        let b3 = &subs[3].begin;
+        assert_eq!(tags(b3), vec![(Tag::B(3), 1)]);
+        let slow = w.value(&var("optInSlowPeriod"));
+        assert!(w.at_least(&b3.plus(&slow, -1).unwrap(), 0));
+        assert!(w.at_least(&b3.plus(&subs[3].lookback, -1).unwrap(), 0));
+        let (p, nonpositive) = w.presumed(b3).unwrap();
+        assert!(p.same(&slow) && !nonpositive);
+        let (p, nonpositive) = w.presumed(&b3.scaled(-1).unwrap()).unwrap();
+        assert!(p.same(&slow.scaled(-1).unwrap()) && nonpositive);
+        assert!(w.value(&var("n0")).same(&subs[0].count));
+        assert!(w.value(&var("b0")).is_begin());
+    }
+
+    #[test]
+    fn a_presumption_lets_no_startidx_clamp_fire_and_cancels_before_it_replaces() {
+        let f = apo_body(
+            "int first, b0, n0;\n\
+             TA_RetCode retCode;\n\
+             double *t;\n\
+             first = startIdx;\n\
+             if( first < optInSlowPeriod ) first = optInSlowPeriod;\n\
+             if( startIdx < optInSlowPeriod ) startIdx = optInSlowPeriod;\n\
+             retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &b0, &n0, t );",
+        );
+        let callees = [load("ma")];
+        let (mut w, subs) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        let b = &subs[0].begin;
+        assert_eq!(tags(b), vec![(Tag::B(0), 1)]);
+        let s1 = w.value(&var("startIdx"));
+        let first = w.value(&var("first"));
+        assert_eq!(tags(&first), vec![(Tag::S, 1)]);
+        assert!(!first.same(&s1));
+        let (p, _) = w.presumed(&b.plus(&first, -1).unwrap()).unwrap();
+        assert!(p.same(&Val::konst(0)));
+        let (p, nonpositive) = w.presumed(&s1).unwrap();
+        assert!(p.has_start() && !p.same(&s1) && !nonpositive);
+        let ahead = s1.plus(b, -1).unwrap().plus(&Val::konst(1), -1).unwrap();
+        let (p, nonpositive) = w.presumed(&ahead).unwrap();
+        assert!(p.same(&Val::konst(-1)) && nonpositive, "the begin cancels the clamp first");
+    }
+
+    #[test]
+    fn a_receiver_cell_holds_the_count_after_a_modelled_call() {
+        let f = apo_body(
+            "TA_RetCode retCode;\n\
+             int before, after, saved;\n\
+             before = (int)*outNBElement;\n\
+             retCode = sma( startIdx, endIdx, inReal, optInFastPeriod, outBegIdx, outNBElement, outReal );\n\
+             after = (int)*outNBElement;\n\
+             if( retCode == TA_SUCCESS ) saved = 1; else saved = 0;",
+        );
+        let callees = [load("sma")];
+        let (mut w, subs) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        assert!(w.value(&var("before")).has_top());
+        let after = w.value(&var("after"));
+        assert!(after.same(&subs[0].count) && after.v_coef() == 1);
+        assert!(w.value(&Expr::PointerDeref("outBegIdx".into())).is_begin());
+        assert_eq!(w.value(&var("saved")).as_const(), Some(1));
+    }
+
+    #[test]
+    fn a_call_atom_over_a_derived_argument_has_no_interval() {
+        let apo = load("apo");
+        let callees = [load("ma")];
+        let ctx = Ctx::new(&apo, &[], resolve_callees(&apo, &crate::streaming::FuncsLookup(&callees), true));
+        let call = |a: Expr| Expr::FuncCall("ma_lookback".into(), vec![a, var("optInMAType")]);
+        assert_eq!(ctx.interval(&call(var("optInFastPeriod")), 0), Some((0, INF)));
+        assert_eq!(ctx.interval(&call(Expr::IntLiteral(3)), 0), Some((0, INF)));
+        let derived = Expr::BinOp(Box::new(var("optInFastPeriod")), BinOp::Sub, Box::new(Expr::IntLiteral(1)));
+        assert_eq!(ctx.interval(&call(derived), 0), None);
+        assert_eq!(ctx.interval(&call(Expr::IntLiteral(0)), 0), None);
+    }
+
+    #[test]
+    fn an_unguarded_begin_subtraction_is_flagged_and_bbands_guarded_one_is_not() {
+        let f = apo_body(
+            "TA_RetCode retCode;\n\
+             int fastBeg, fastNb, x;\n\
+             retCode = sma( startIdx, endIdx, inReal, optInFastPeriod, &fastBeg, &fastNb, outReal );\n\
+             retCode = sma( startIdx, endIdx, inReal, optInSlowPeriod, outBegIdx, outNBElement, outReal );\n\
+             x = (int)*outBegIdx - fastBeg;",
+        );
+        let callees = [load("sma")];
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        assert!(w.value(&var("x")).subtracts_begin());
+
+        let bbands = load("bbands");
+        let callees = [load("ma"), load("stddev")];
+        let lookup = crate::streaming::FuncsLookup(&callees);
+        let at = bbands
+            .body
+            .iter()
+            .rposition(|s| {
+                matches!(s, Statement::If { .. })
+                    && written_names(std::slice::from_ref(s)).contains("shiftIdx")
+            })
+            .unwrap();
+        let (mut w, subs) = walk(&bbands, &lookup, &bbands.body[..=at]);
+        assert_eq!(subs.len(), 2);
+        let shift = w.value(&var("shiftIdx"));
+        assert!(!shift.subtracts_begin());
+        assert_eq!(tags(&shift), vec![(Tag::I, 1)]);
+    }
+
+    #[test]
+    fn a_receiver_that_is_not_an_out_pointer_leaves_both_unknown() {
+        let f = apo_body(
+            "TA_RetCode retCode;\n\
+             int b0;\n\
+             int *p;\n\
+             retCode = sma( startIdx, endIdx, inReal, optInFastPeriod, &b0, p, outReal );",
+        );
+        let callees = [load("sma")];
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        let b0 = w.value(&var("b0"));
+        assert!(!b0.is_begin() && b0.has_top());
+    }
+
+    #[test]
+    fn a_truncated_real_parameter_is_not_the_real() {
+        let bbands = load("bbands");
+        let mut w = ComposedWalk::new(&bbands, &crate::streaming::FuncsLookup(&[]));
+        let real = w.value(&var("optInNbDevUp"));
+        let cast = w.value(&Expr::Cast(VarType::Integer, Box::new(var("optInNbDevUp"))));
+        assert!(real.is_param() && cast.is_param() && !real.same(&cast));
+        let store = Statement::Assign {
+            target: var("shiftIdx"),
+            value: var("optInNbDevUp"),
+            compound: false,
+        };
+        assert!(w.exec(std::slice::from_ref(&store)).is_ok());
+        assert!(!w.value(&var("shiftIdx")).same(&real));
+        assert!(w.value(&var("shiftIdx")).same(&cast));
+        let int_param = w.value(&Expr::Cast(VarType::Integer, Box::new(var("optInTimePeriod"))));
+        assert!(int_param.same(&w.value(&var("optInTimePeriod"))));
+    }
+
+    #[test]
+    fn a_real_valued_expression_keeps_the_unguarded_subtraction_flag() {
+        let f = apo_body(
+            "TA_RetCode retCode;\n\
+             int fastBeg, fastNb, x, z;\n\
+             retCode = sma( startIdx, endIdx, inReal, optInFastPeriod, &fastBeg, &fastNb, outReal );\n\
+             retCode = sma( startIdx, endIdx, inReal, optInSlowPeriod, outBegIdx, outNBElement, outReal );\n\
+             x = (int)*outBegIdx - fastBeg;\n\
+             z = (int)(x * 1.5);",
+        );
+        let callees = [load("sma")];
+        let (mut w, _) = walk(&f, &crate::streaming::FuncsLookup(&callees), &f.body);
+        assert!(w.value(&var("z")).subtracts_begin());
+    }
+
+    #[test]
+    fn an_unmodelled_statement_leaves_the_walk_where_it_was() {
+        let f = apo_body("int a;\na = 3;");
+        let mut w = ComposedWalk::new(&f, &crate::streaming::FuncsLookup(&[]));
+        assert!(w.exec(&f.body).is_ok());
+        assert!(w.exec(&[Statement::Break]).is_err());
+        assert!(w.reachable());
+        assert_eq!(w.value(&var("a")).as_const(), Some(3));
     }
 }

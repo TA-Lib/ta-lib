@@ -61,6 +61,10 @@ HIGH  = [12.0, 11.6, 25.0, 5.1, 110.0, 52.0, 30.5, 9.0, 65.0, 41.0, 27.0, 72.0, 
 LOW   = [ 9.0, 11.4, 15.0, 4.9,  90.0, 48.0, 29.0, 7.5, 58.0, 39.5, 24.0, 69.0, 14.0, 32.0, 85.0]
 CLOSE = [11.5, 11.55, 22.0, 5.05, 95.0, 51.0, 29.2, 8.8, 63.0, 40.2, 26.5, 71.5, 15.8, 33.5, 92.0]
 
+# IN_REAL with its first ten bars negated: SYNTH28's midpoint goes negative in the
+# output range, the only way its second `outSide` arm (tempD read at depth 0) fires.
+IN_REAL_NEG_HEAD = [-x for x in IN_REAL[:10]] + IN_REAL[10:]
+
 PERIOD = 4   # optInTimePeriod for the fixtures that take one
 
 INT_MIN = -2**31   # what a rejected display-shift query answers on the wire
@@ -254,6 +258,31 @@ GOLDEN = {
                 7: [None, 0, 7, -4, None],
                 100000: [None, 0, 100000, -50001, None],
                 0: [None, None, None, None, None]}),
+
+    # Each leg is MIDPOINT over MOM(inReal, 1), read 2, 1 and 3 bars back.
+    "TA_SYNTH25": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD,
+                "optInShiftA": 2, "optInShiftB": 1, "optInShiftC": 3}, beg=7,
+        outs={"outAB": [0, 1, -1, -1, 1, 0, -1, 1, 0],
+              "outAC": [0, 0, -1, 1, 1, -1, 0, 1, -1]}),
+
+    # SYNTH14's series: over IN_REAL every four-bar sum exceeds the midpoint,
+    # which would leave outSum a column of 1s.
+    "TA_SYNTH26": dict(
+        params={"inReal": [100.0, -100.0, 50.0, -50.0, 0.0, -20.0, -30.0, 200.0,
+                           -5.5, 5.5, -1.0, 1.0, 300.0, -300.0, 0.0, 12.0],
+                "optInTimePeriod": PERIOD}, beg=6,
+        outs={"outSum": [-1, 1, 1, 1, 1, 0, 1, 0, 1, 1],
+              "outRise": [0, 1, 0, 1, 0, 1, 1, 0, 1, 1]}),
+
+    # outMaxLag is outMaxNow two bars back.
+    "TA_SYNTH28": dict(
+        params={"inReal": IN_REAL_NEG_HEAD, "optInTimePeriod": PERIOD, "optInLag": 2}, beg=5,
+        outs={"outMaxNow": [-999985.0, -999999.9995, -25.1245, -149.9995, -349.9995, -344.0,
+                            -306.0, 400.0, 756.0, 772.5, 772.5],
+              "outMaxLag": [-999985.0, -999985.0, -999985.0, -999999.9995, -25.1245, -149.9995,
+                            -349.9995, -344.0, -306.0, 400.0, 756.0],
+              "outSide": [1, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0]}),
 }
 
 

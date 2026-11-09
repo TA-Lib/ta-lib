@@ -1069,6 +1069,12 @@
       }
       double[] sc_outMomentum = outStride == 1 ? outMomentum : new double[historyLen];
       int[] sc_outSqueeze = outStride == 1 ? outSqueeze : new int[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
+      int lagNb3 = 0;
+      int lagNb4 = 0;
+      int lagNb5 = 0;
       /* Each rolling statistic is a call to the shipped function, so it carries
        * that function's own arithmetic bit for bit:
        *
@@ -1119,18 +1125,33 @@
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
        * midprice is bit-identical to donchian's middle band.
        */
+      lagNb0 = endIdx + 1;
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, stageIdx, optInKCPeriod, outBegIdx, outNBElement, tempDev);
       retCode = RetCode.SUCCESS;
+      lagNb1 = outNBElement.value;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub1 = smaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, tempBegIdx, kcmNb, tempKCM);
       retCode = RetCode.SUCCESS;
+      lagNb2 = kcmNb.value;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
+      if( stageLen < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb0 - stageLen - outBegIdx.value != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb2 - stageLen != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb1 - stageLen != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < stageLen; i += 1 ) {
          tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
@@ -1142,9 +1163,13 @@
        * sub-call's own startIdx (the seeding point). */
       TrangeStream sub2 = trangeOpenAndFillInternal(inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
       retCode = RetCode.SUCCESS;
+      lagNb3 = tempNbElement.value;
       /* Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub3 = smaOpenInternal(java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), 0, optInKCPeriod);
+      if( lagNb3 - 1 - (stageLen - 1) != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       OutRange _xr0 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
@@ -1153,10 +1178,12 @@
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub4 = smaOpenAndFillInternal(inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
       retCode = RetCode.SUCCESS;
+      lagNb4 = tempNbElement.value;
       /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StddevStream sub5 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, sdNb, tempSD);
       retCode = RetCode.SUCCESS;
+      lagNb5 = sdNb.value;
       /* The centre is staged one regression window early; the shift puts it on
        * the bar the bands are on.
        */
@@ -1181,6 +1208,18 @@
        * upper one contracts into a fused multiply-add and the lower one cannot,
        * and a band within one ulp of an edge then changes level.
        */
+      if( n < 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      if( lagNb5 - n != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb4 - n != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      if( lagNb2 - n - kcmShift != 0 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
       for( i = 0; i < n; i += 1 ) {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;

@@ -11398,6 +11398,88 @@ fn legs_FRAMA(r: &mut Report) {
     r.legs_done("FRAMA", 2);
 }
 
+const V_GATOR: &[(&str, i32, i32, i32, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 1i32, 0i32, 1i32, 0i32, 1i32, 0i32),
+];
+
+fn sub_GATOR(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) in V_GATOR {
+        let Ok(lb) = core.gator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) else { continue; };
+        r.control("GATOR", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outUpper: Vec<f64> = Vec::with_capacity(1);
+            let mut outLower: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.gator_impl(0, lb, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outUpper, &mut outLower);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("GATOR", label); continue; }
+        r.quiet("GATOR", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outUpper: Vec<f64> = Vec::with_capacity(1);
+            let mut outLower: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.gator_impl(0, lb - 1, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outUpper, &mut outLower);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_GATOR(r: &mut Report) {
+    let core = Core::new();
+    let optInJawPeriod = i32::MIN;
+    let optInJawShift = i32::MIN;
+    let optInTeethPeriod = i32::MIN;
+    let optInTeethShift = i32::MIN;
+    let optInLipsPeriod = i32::MIN;
+    let optInLipsShift = i32::MIN;
+    let Ok(lb) = core.gator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) else { r.no_legs("GATOR"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outUpper: Vec<f64> = vec![Default::default(); 5];
+        let mut outLower: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("GATOR", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.gator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outUpper, &mut outLower);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outUpper: Vec<f64> = vec![Default::default(); 5];
+        let mut outLower: Vec<f64> = vec![Default::default(); 5];
+        r.leg("GATOR", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.gator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outUpper, &mut outLower);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outUpper: Vec<f64> = vec![Default::default(); 5];
+        let mut outLower: Vec<f64> = vec![Default::default(); 5];
+        r.leg("GATOR", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.gator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outUpper, &mut outLower);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("GATOR", 2);
+}
+
 const V_HA: &[&str] = &[
     "defaults",
 ];
@@ -20527,6 +20609,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("FOSC", sub_FOSC, legs_FOSC),
     ("FRACTAL", sub_FRACTAL, legs_FRACTAL),
     ("FRAMA", sub_FRAMA, legs_FRAMA),
+    ("GATOR", sub_GATOR, legs_GATOR),
     ("HA", sub_HA, legs_HA),
     ("HMA", sub_HMA, legs_HMA),
     ("HT_DCPERIOD", sub_HT_DCPERIOD, legs_HT_DCPERIOD),
@@ -20687,7 +20770,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 243, "probe count");
+    assert_eq!(PROBES.len(), 244, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -1176,6 +1176,12 @@ public partial class Core
       }
       Span<double> sc_outMomentum = outStride == 1 ? outMomentum : new double[historyLen];
       Span<int> sc_outSqueeze = outStride == 1 ? outSqueeze : new int[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
+      int lagNb2 = 0;
+      int lagNb3 = 0;
+      int lagNb4 = 0;
+      int lagNb5 = 0;
       /* Each rolling statistic is a call to the shipped function, so it carries
        * that function's own arithmetic bit for bit:
        *
@@ -1226,18 +1232,33 @@ public partial class Core
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
        * midprice is bit-identical to donchian's middle band.
        */
+      lagNb0 = endIdx + 1;
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = MidpriceOpenAndFillInternal(inHigh, inLow, stageIdx, optInKCPeriod, out outBegIdx, out outNBElement, tempDev);
       retCode = RetCode.Success;
+      lagNb1 = outNBElement;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub1 = SmaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, out tempBegIdx, out kcmNb, tempKCM);
       retCode = RetCode.Success;
+      lagNb2 = kcmNb;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
+      if( stageLen < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - stageLen - outBegIdx != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb2 - stageLen != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb1 - stageLen != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < stageLen; i += 1 ) {
          tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
@@ -1249,12 +1270,16 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       TrangeStream sub2 = TrangeOpenAndFillInternal(inHigh, inLow, inClose, stageIdx, out tempBegIdx, out tempNbElement, tempWork);
       retCode = RetCode.Success;
+      lagNb3 = tempNbElement;
       /* Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen3 = (stageLen - 1) + 1;
       double[] subSrc3_0 = new double[subLen3];
       tempWork.Slice(0, subLen3).CopyTo(subSrc3_0);
       SmaStream sub3 = SmaOpenInternal(subSrc3_0, 0, optInKCPeriod);
+      if( lagNb3 - 1 - (stageLen - 1) != 0 ) {
+         return RetCode.InternalError;
+      }
       OutRange _xr0 = Sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -1263,10 +1288,12 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub4 = SmaOpenAndFillInternal(inClose, startIdx, optInBBPeriod, out tempBegIdx, out tempNbElement, tempMid);
       retCode = RetCode.Success;
+      lagNb4 = tempNbElement;
       /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StddevStream sub5 = StddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, out tempBegIdx, out sdNb, tempSD);
       retCode = RetCode.Success;
+      lagNb5 = sdNb;
       /* The centre is staged one regression window early; the shift puts it on
        * the bar the bands are on.
        */
@@ -1294,6 +1321,18 @@ public partial class Core
        * upper one contracts into a fused multiply-add and the lower one cannot,
        * and a band within one ulp of an edge then changes level.
        */
+      if( n < 1 ) {
+         return RetCode.InsufficientHistory;
+      }
+      if( lagNb5 - n != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb4 - n != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb2 - n - kcmShift != 0 ) {
+         return RetCode.InternalError;
+      }
       for( i = 0; i < n; i += 1 ) {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;

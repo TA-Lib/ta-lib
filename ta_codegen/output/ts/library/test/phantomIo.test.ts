@@ -161,6 +161,7 @@ import * as m_floor from '../src/func/floor.ts';
 import * as m_fosc from '../src/func/fosc.ts';
 import * as m_fractal from '../src/func/fractal.ts';
 import * as m_frama from '../src/func/frama.ts';
+import * as m_gator from '../src/func/gator.ts';
 import * as m_ha from '../src/func/ha.ts';
 import * as m_hma from '../src/func/hma.ts';
 import * as m_htDcperiod from '../src/func/htDcperiod.ts';
@@ -2204,6 +2205,20 @@ const PROBES: Probe[] = [
     vectors: [
       ['defaults', Core.INTEGER_DEFAULT],
       ['minimums', 2],
+    ],
+  },
+  {
+    name: 'GATOR',
+    batch: m_gator.gatorPositional,
+    body: m_gator.gatorImpl,
+    lookback: m_gator.gatorLookbackPositional,
+    open: m_gator.gatorOpenPositional,
+    fill: m_gator.gatorOpenAndFillPositional,
+    ins: ['high', 'low'],
+    outs: ['f', 'f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT],
+      ['minimums', 1, 0, 1, 0, 1, 0],
     ],
   },
   {
@@ -4400,7 +4415,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 243;
+const CORPUS = 244;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

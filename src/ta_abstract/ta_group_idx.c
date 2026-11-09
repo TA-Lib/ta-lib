@@ -161,6 +161,7 @@ extern const TA_FuncDef TA_DEF_FLOOR;
 extern const TA_FuncDef TA_DEF_FOSC;
 extern const TA_FuncDef TA_DEF_FRACTAL;
 extern const TA_FuncDef TA_DEF_FRAMA;
+extern const TA_FuncDef TA_DEF_GATOR;
 extern const TA_FuncDef TA_DEF_HA;
 extern const TA_FuncDef TA_DEF_HMA;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
@@ -401,6 +402,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_FISHER,
 &TA_DEF_FOSC,
 &TA_DEF_FRACTAL,
+&TA_DEF_GATOR,
 &TA_DEF_IBS,
 &TA_DEF_IMI,
 &TA_DEF_KDJ,

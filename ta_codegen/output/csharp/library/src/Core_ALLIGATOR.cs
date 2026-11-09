@@ -940,6 +940,8 @@ public partial class Core
       Span<double> sc_outJaw = outStride == 1 ? outJaw : new double[historyLen];
       Span<double> sc_outTeeth = outStride == 1 ? outTeeth : new double[historyLen];
       Span<double> sc_outLips = outStride == 1 ? outLips : new double[historyLen];
+      int lagNb0 = 0;
+      int lagNb1 = 0;
       lookbackTotal = AlligatorLookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
       /* Return before touching anything, so that an input which stops short of
        * endIdx is never read past its end.
@@ -978,6 +980,7 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
+      lagNb0 = tempNbElement;
       /* Sub-stream 2: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen2 = (endIdx - mpStartIdx) + 1;
@@ -990,6 +993,7 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
+      lagNb1 = tempNbElement;
       /* Sub-stream 3: rma over `tempMP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen3 = (endIdx - mpStartIdx) + 1;
@@ -1007,6 +1011,12 @@ public partial class Core
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
          return RetCode.InsufficientHistory;
+      }
+      if( lagNb0 - outNBElement != 0 ) {
+         return RetCode.InternalError;
+      }
+      if( lagNb1 - outNBElement != 0 ) {
+         return RetCode.InternalError;
       }
       sp.optInJawPeriod = optInJawPeriod;
       sp.optInJawShift = optInJawShift;
