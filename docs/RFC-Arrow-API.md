@@ -47,7 +47,7 @@ gives every wrapper the same result, tested once.
   partition's ends. It may span chunks. Core finds segments; the caller never
   passes them.
 
-![Partitions, Arrow chunks, validity bitmaps and segments for a two-input function and its output](RFC-Arrow-API-terms.svg)
+![Partitions, Arrow chunks, validity bitmaps and segments for a two-input function, and its output under keep-null and fill-previous](RFC-Arrow-API-terms.svg)
 
 ## Semantics
 
