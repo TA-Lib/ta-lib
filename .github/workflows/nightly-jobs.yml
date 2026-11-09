@@ -1689,26 +1689,16 @@ jobs:
         with:
           ref: ${{ job.workflow_sha }}
 
-      # The wrapper's dev tracks TA-Lib C's dev, its master the release, so the
-      # pairing follows this run's branch. github.ref is refs/heads/main for both
-      # scheduled nightlies, so it comes off the definition's own ref instead. An
-      # unrecognised shape is refused rather than defaulted.
-      - name: Which wrapper branch pairs with this run
+      # Both nightlies pair with the wrapper's dev: it is kept current with
+      # TA-Lib C, while its master can lag a release by days.
+      #
+      # An EMPTY workflow_sha makes the checkout above fall back to the default
+      # branch, so a dev nightly would test MAIN's C, green.
+      - name: The checkout is this run's own definition
         shell: bash
         env:
-          WF_REF: ${{ job.workflow_ref }}
           WF_SHA: ${{ job.workflow_sha }}
         run: |
-          case "$WF_REF" in
-            */nightly-jobs.yml@refs/heads/main) echo "WRAPPER=master" >> "$GITHUB_ENV" ;;
-            */nightly-jobs.yml@refs/heads/*)    echo "WRAPPER=dev"    >> "$GITHUB_ENV" ;;
-            *) echo "::error::defined by '$WF_REF', which is not a branch pin of"\
-                    " nightly-jobs.yml. A caller's 'uses:' must name it as @<branch>."
-               exit 1 ;;
-          esac
-          # An EMPTY workflow_sha makes the checkout above fall back to the
-          # default branch, so a dev nightly would build MAIN's C and still pair
-          # it with the wrapper's dev -- the pairing tested backwards, green.
           [ -n "$WF_SHA" ] && [ "$(git rev-parse HEAD)" = "$WF_SHA" ] || {
             echo "::error::checked out $(git rev-parse HEAD), but this job is defined by '$WF_SHA'."
             exit 1; }
@@ -1735,9 +1725,9 @@ jobs:
           LD_LIBRARY_PATH: ${{ github.workspace }}/_wrapper/c/lib
         run: |
           set -euo pipefail
-          git clone -q --depth 1 -b "$WRAPPER" \
+          git clone -q --depth 1 -b dev \
               https://github.com/TA-Lib/ta-lib-python.git _wrapper/src
-          echo "wrapper $WRAPPER at $(git -C _wrapper/src rev-parse HEAD)"
+          echo "wrapper dev at $(git -C _wrapper/src rev-parse HEAD)"
           cd _wrapper/src
           pip install --upgrade pip wheel setuptools
           pip install -r requirements_test.txt
