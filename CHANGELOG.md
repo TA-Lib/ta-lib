@@ -9,7 +9,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.8.4] Not Released Yet
 ### Added
 - New TA Functions:
+  - ALLIGATOR: Williams Alligator, three smoothed moving averages of the median price (#584)
   - CE: Chandelier Exit, the highest high and lowest low offset by a multiple of the ATR (#568)
+  - GATOR: Gator Oscillator, the gaps between the Alligator's lines as two histograms (#583)
   - MACDV: MACD-V, Spiroglou's volatility-normalised MACD, the EMA spread over the ATR (#570)
   - SHARPE: Rolling Sharpe Ratio, annualized mean excess return over its standard deviation (#571)
   - SKEW: Rolling Skewness, the adjusted Fisher-Pearson coefficient (#569)
