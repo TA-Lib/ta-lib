@@ -275,6 +275,11 @@ GOLDEN = {
         outs={"outSum": [-1, 1, 1, 1, 1, 0, 1, 0, 1, 1],
               "outRise": [0, 1, 0, 1, 0, 1, 1, 0, 1, 1]}),
 
+    "TA_SYNTH27": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD,
+                "optInLag": 2, "optInMode": 1}, beg=6,
+        outs={"outUp": [1, 2, 2, 0, 1, 1, 1, 1, 1, 1]}),
+
     # outMaxLag is outMaxNow two bars back.
     "TA_SYNTH28": dict(
         params={"inReal": IN_REAL_NEG_HEAD, "optInTimePeriod": PERIOD, "optInLag": 2}, beg=5,

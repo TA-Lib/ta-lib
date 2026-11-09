@@ -3007,7 +3007,7 @@ fn classified_corpus() -> Vec<(String, ir::Lang, Result<Vec<String>, String>)> {
 /// hand derivation of that 0.
 #[test]
 fn composed_edge_classes_are_pinned() {
-    let expected: [(&str, &[&str], &str); 26] = [
+    let expected: [(&str, &[&str], &str); 27] = [
         ("ADXR", &["tap lagdepth.adx.1.t0 ge1 Oldest <- (adx,1) map0 adx[outIdx]"],
             "outReal[i] averages adx[i+(p-1)] with adx[i], a lag fixed by the period and \
              at least 1 for every accepted one"),
@@ -3116,6 +3116,13 @@ fn composed_edge_classes_are_pinned() {
         ], "LT = p + 2 inlines: the producer holds nbElement + LT elements and the midpoint \
             begins at LT, 3 past its lookback, so nbM = nbElement. tempX[i+LT-j] is j behind, \
             inReal[startIdx+i-1] is endIdx + 1 - nbM - (startIdx - 1) = 1 behind"),
+        ("SYNTH27", &[
+            "tap lagdepth.tempA.1.t0 Field <- (tempA,1) map0.then tempA[i+1]",
+            "tap lagdepth.tempA.1.t1 ge1 Field <- (tempA,1) map0.else tempA[i]",
+            "tap lagdepth.tempA.1.t2 Field <- (tempA,1) map0.else tempA[i+1]",
+        ], "LT = p + lag inlines, so the first midpoint begins at startIdx - lag - 1 >= p - 1 and \
+            holds nbElement + lag + 1: tempA[i+1] is lag behind and tempA[i] lag + 1. The line has \
+            taps in both arms"),
         ("SYNTH28", &[
             "tap lagdepth.tempA.1.t0 ge1 Oldest <- (tempA,1) copy1",
             "tap lagdepth.tempA.2.t0 Oldest <- (tempA,2) map1 prior tempA",
@@ -3142,7 +3149,7 @@ fn composed_edge_classes_are_pinned() {
     for (name, lang, got) in classified_corpus() {
         check(name, &format!("{lang:?}"), got);
     }
-    for synth in ["synth13", "synth14", "synth25", "synth26", "synth28"] {
+    for synth in ["synth13", "synth14", "synth25", "synth26", "synth27", "synth28"] {
         let f = crate::common::load_synth(synth).0;
         let got = streaming::analyze_composed(&f, lookup()).map(|cp| non_zero_edges(&cp));
         check(synth.to_uppercase(), "base", got.map_err(|e| e.to_string()));
@@ -3163,6 +3170,29 @@ fn synth26_reads_through_its_unconditional_copy() {
         .expect("the map reads through work");
     let def = &cp.defs[work.def];
     assert_eq!((def.buffer.as_str(), def.ordinal, &work.class), ("tempM", 1, &EdgeClass::Zero));
+}
+
+#[test]
+fn synth27_captures_each_arm_under_a_mirrored_mode_test() {
+    use streaming::OpenAction;
+    let f = crate::common::load_synth("synth27").0;
+    let cp = streaming::analyze_composed(&f, lookup()).expect("SYNTH27 composes");
+    let captures = |acts: &[OpenAction]| -> Vec<(usize, usize)> {
+        acts.iter()
+            .filter_map(|a| match a {
+                OpenAction::Capture { line, tap } => Some((*line, *tap)),
+                _ => None,
+            })
+            .collect()
+    };
+    let at = |want: &dyn Fn(&OpenAction) -> bool| cp.open_actions.iter().position(|(_, a)| want(a));
+    let mirror = at(&|a| matches!(a, OpenAction::Mirror { .. })).expect("a mirrored capture");
+    let OpenAction::Mirror { then_, else_, .. } = &cp.open_actions[mirror].1 else { unreachable!("found above") };
+    assert_eq!((captures(then_), captures(else_)), (vec![(0, 0)], vec![(0, 1), (0, 2)]));
+    let top: Vec<OpenAction> = cp.open_actions.iter().map(|(_, a)| a.clone()).collect();
+    assert!(captures(&top).is_empty(), "every capture sits in an arm: {:?}", cp.open_actions);
+    let seed = at(&|a| matches!(a, OpenAction::Seed { line: 0 })).expect("the line is seeded");
+    assert!(seed > mirror, "the seed follows both arms' captures");
 }
 
 #[test]
