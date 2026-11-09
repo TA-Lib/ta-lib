@@ -620,3 +620,60 @@ fn every_ring_position_advances_in_a_local() {
         assert!(n > 0, "no ring position advanced in {lang}: the gate checks nothing there");
     }
 }
+
+/// A delay line seeds from the name its series was written by. The alias class
+/// key here is `res`, declared first but assigned only after the seed point.
+#[test]
+fn a_delay_line_seeds_through_the_name_its_series_was_written_by() {
+    let src = r"
+int apo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)
+{
+   return ma_lookback( max(optInSlowPeriod,optInFastPeriod), optInMAType );
+}
+
+TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *res;
+   double *tempBuffer;
+   double *tempBuffer2;
+   TA_RetCode retCode;
+   int fastBeg, fastNb, slowBeg, slowNb, b3, n3;
+   int i;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   tempBuffer2 = malloc((endIdx-startIdx+1) * sizeof(double));
+   retCode = ma( startIdx-3, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( 0, fastNb-3, tempBuffer, optInSlowPeriod, optInMAType,
+      &slowBeg, &slowNb, tempBuffer2 );
+   res = tempBuffer;
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &b3, &n3, res );
+   for( i=0; i < slowNb; i++ )
+      outReal[i] = tempBuffer2[i];
+   *outBegIdx = slowBeg;
+   *outNBElement = slowNb;
+   free(tempBuffer);
+   free(tempBuffer2);
+   return TA_SUCCESS;
+}
+";
+    let (mut func, enums) = load("apo");
+    let parsed = parser::c_source::parse_c_source_str(src);
+    parser::c_source::wire_parsed_source(&mut func, &parsed);
+    let words = |l: &str| -> BTreeSet<String> {
+        l.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).map(str::to_string).collect()
+    };
+    for lang in ["c", "rust", "java", "csharp", "ts"] {
+        let text = render_stream(&func, &enums, lang);
+        let seeds: Vec<&str> =
+            text.lines().filter(|l| l.contains("lagNb0") && l.contains("lagCap0") && l.contains('-')).collect();
+        assert!(!seeds.is_empty(), "{lang}: no seed copy of line 0 to check");
+        for l in seeds {
+            let w = words(l);
+            assert!(w.contains("tempBuffer") && !w.contains("res"), "{lang}: seeds from `{}`", l.trim());
+        }
+    }
+}

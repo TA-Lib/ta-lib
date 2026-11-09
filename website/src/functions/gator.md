@@ -32,7 +32,7 @@ Lower = −| Teeth − Lips |
 
 ## Notes
 
-- Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts: at the default shifts Upper_t = | Jaw_t−3 − Teeth_t | and Lower_t = −| Teeth_t−2 − Lips_t |. `TA_GATOR_DisplayShift` reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.
+- Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts. `TA_GATOR_DisplayShift` reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.
 - Each histogram computes its own lines, each seeded over the bars its own lookback reaches back, so the Teeth an output reads can differ from the `TA_ALLIGATOR` Teeth by the seed until it has decayed; setting the `RMA` unstable period closes the gap.
 - A zero Lower is `+0.0`.
 

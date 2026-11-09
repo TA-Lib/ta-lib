@@ -41,6 +41,7 @@ const END_WRITTEN: &str = "endIdx is rewritten";
 const NO_PRIOR: &str = "a partial map write has no prior definition";
 const START_PAIRED: &str = "pairs bars at a distance that depends on where the batch started";
 const BEGIN_SUB: &str = "subtracts a begin index with no guard proving it non-negative";
+const CARRIED_READ: &str = "an arm reads a series it never writes, not at the same bar";
 
 fn refusal(what: &str, buffer: &str, reason: &str) -> StreamError {
     StreamError::Unsupported(format!(
@@ -914,6 +915,14 @@ impl Cx<'_, '_> {
             for (key, name) in &written {
                 let writes_key = self.unit_writes(u, key);
                 if !writes_key && !scan.self_reads.contains(key) {
+                    continue;
+                }
+                // An arm that never writes `key` hands its prior on at delay 0,
+                // and its reads go to that same storage: only a same-bar read agrees.
+                if !units.iter().any(|v| v.branch() == u.branch() && self.unit_writes(v, key)) {
+                    if !self.counts[self.cur[key]].same(&tvals[ui]) {
+                        return Err(refusal(what, name, CARRIED_READ));
+                    }
                     continue;
                 }
                 match earlier.get(key) {

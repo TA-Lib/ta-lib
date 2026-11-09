@@ -547,7 +547,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/gator">ta-lib.org/functions/gator</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts: at the default shifts Upper_t = | Jaw_t−3 − Teeth_t | and Lower_t = −| Teeth_t−2 − Lips_t |. <c>TA_GATOR_DisplayShift</c> reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</description></item>
+   /// <item><description>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts. <c>TA_GATOR_DisplayShift</c> reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</description></item>
    /// <item><description>Each histogram computes its own lines, each seeded over the bars its own lookback reaches back, so the Teeth an output reads can differ from the <c>TA_ALLIGATOR</c> Teeth by the seed until it has decayed; setting the <c>RMA</c> unstable period closes the gap.</description></item>
    /// <item><description>A zero Lower is <c>+0.0</c>.</description></item>
    /// </list>
@@ -657,7 +657,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/gator">ta-lib.org/functions/gator</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts: at the default shifts Upper_t = | Jaw_t−3 − Teeth_t | and Lower_t = −| Teeth_t−2 − Lips_t |. <c>TA_GATOR_DisplayShift</c> reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</description></item>
+   /// <item><description>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts. <c>TA_GATOR_DisplayShift</c> reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</description></item>
    /// <item><description>Each histogram computes its own lines, each seeded over the bars its own lookback reaches back, so the Teeth an output reads can differ from the <c>TA_ALLIGATOR</c> Teeth by the seed until it has decayed; setting the <c>RMA</c> unstable period closes the gap.</description></item>
    /// <item><description>A zero Lower is <c>+0.0</c>.</description></item>
    /// </list>

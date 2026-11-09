@@ -3867,6 +3867,63 @@ fn a_whole_arm_carry_reads_its_prior_at_delay_zero() {
     }
 }
 
+/// An arm that never writes a series hands it on unchanged, and its own reads of
+/// it go to that storage: a read at a lag would see the current bar.
+#[test]
+fn an_arm_reads_a_series_it_never_writes_only_at_the_same_bar() {
+    let tail = |bound: &str| {
+        format!(
+            r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      &backSlow, &nb, tempBuffer2 );
+   if( optInMAType == 0 )
+   {{
+      for( i=0; i < fastNb; i++ )
+         tempBuffer[i] = tempBuffer[i] * 2.0;
+   }}
+   else
+   {{
+      for( i=0; i < {bound}; i++ )
+         tempBuffer2[i] = tempBuffer[i] * 2.0;
+   }}
+   for( i=0; i < fastNb-1; i++ )
+      outReal[i] = tempBuffer[i];
+   *outBegIdx = fastBeg+1;
+   *outNBElement = fastNb-1;"
+        )
+    };
+    assert_refused(&apo_with_tail(&tail("fastNb-1")), "never writes");
+    assert!(streaming::analyze_composed(&apo_with_tail(&tail("fastNb")), lookup()).is_ok());
+}
+
+/// The copy decision follows storage by name, so an Align whose source is
+/// another name of its series must copy: here the later map's write to `res`
+/// would otherwise reach the output through the alias.
+#[test]
+fn an_align_through_another_name_of_its_series_copies() {
+    let f = apo_with_tail(
+        r"
+   res = tempBuffer;
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   for( i=0; i < fastNb; i++ )
+      res[i] = res[i] * 2.0;
+   memmove( outReal, &tempBuffer[0], fastNb * sizeof(double) );
+   for( i=0; i < fastNb; i++ )
+      res[i] = res[i] + 1.0;
+   *outBegIdx = fastBeg;
+   *outNBElement = fastNb;",
+    );
+    let cp = streaming::analyze_composed(&f, lookup()).expect("accepted");
+    let aligns: Vec<_> = cp.steps.iter().filter(|s| matches!(s, streaming::UpdateStep::Align { .. })).collect();
+    assert!(
+        matches!(aligns[..], [streaming::UpdateStep::Align { copy: true, .. }]),
+        "{aligns:?}"
+    );
+}
+
 /// A carried series' count is read where Open snapshots the arms' result, after
 /// the slow `ma` has rewritten the receiver the prior's count came from; the
 /// owning arm's bound has the same value and is still current there.

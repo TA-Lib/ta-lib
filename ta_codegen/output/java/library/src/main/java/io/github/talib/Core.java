@@ -109711,7 +109711,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/gator">ta-lib.org/functions/gator</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts: at the default shifts Upper_t = | Jaw_t−3 − Teeth_t | and Lower_t = −| Teeth_t−2 − Lips_t |. {@code TA_GATOR_DisplayShift} reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</li>
+    * <li>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts. {@code TA_GATOR_DisplayShift} reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</li>
     * <li>Each histogram computes its own lines, each seeded over the bars its own lookback reaches back, so the Teeth an output reads can differ from the {@code TA_ALLIGATOR} Teeth by the seed until it has decayed; setting the {@code RMA} unstable period closes the gap.</li>
     * <li>A zero Lower is {@code +0.0}.</li>
     * </ul>
@@ -109810,7 +109810,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/gator">ta-lib.org/functions/gator</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts: at the default shifts Upper_t = | Jaw_t−3 − Teeth_t | and Lower_t = −| Teeth_t−2 − Lips_t |. {@code TA_GATOR_DisplayShift} reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</li>
+    * <li>Each line is drawn ahead by its own shift, so the line drawn further ahead is read back by the difference of the two shifts. {@code TA_GATOR_DisplayShift} reports where a chart draws each histogram, the smaller of its two lines' shifts; it changes nothing about the values or the returned range.</li>
     * <li>Each histogram computes its own lines, each seeded over the bars its own lookback reaches back, so the Teeth an output reads can differ from the {@code TA_ALLIGATOR} Teeth by the seed until it has decayed; setting the {@code RMA} unstable period closes the gap.</li>
     * <li>A zero Lower is {@code +0.0}.</li>
     * </ul>

@@ -382,7 +382,7 @@ are what make a combine map streamable:
   plus a loop-invariant offset, never through a second cursor.
 - A leg that must lag starts its sub-call earlier or ends it earlier.
 - An offset is a difference of element counts. A difference of begin indexes
-  must sit under a test that the first exceeds the second: a sub-call that
+  must sit under a test that the first is at least the second: a sub-call that
   outputs nothing resets its begin to 0.
 - A sub-call left inside an `if (rc == TA_SUCCESS) { … }` must be flattened
   into a top-level `if (rc != TA_SUCCESS) return rc;`.

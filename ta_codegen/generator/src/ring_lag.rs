@@ -2359,6 +2359,20 @@ mod tests {
     }
 
     #[test]
+    fn a_callee_lookback_that_can_answer_negative_grants_no_floor() {
+        let (rsi, frama) = (load("rsi"), load("frama"));
+        let callees: BTreeMap<String, CalleeLookback> = ["frama", "sma"]
+            .into_iter()
+            .map(|n| (n.to_string(), crate::streaming::lookback_of(&load(n)).expect("a lookback")))
+            .collect();
+        let period = [Expr::Var("optInTimePeriod".into())];
+        let host = Ctx::new(&rsi, &[], callees);
+        assert!(host.lookback_axiom("sma_lookback", &period));
+        assert!(!host.lookback_axiom("frama_lookback", &period));
+        assert!(Ctx::new(&frama, &[], BTreeMap::new()).lookback_axiom("frama_lookback", &period));
+    }
+
+    #[test]
     fn facts_narrow_the_enumerated_parameters() {
         let trima = load("trima");
         let p = || Expr::Var("optInTimePeriod".into());
