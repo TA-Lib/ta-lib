@@ -59,7 +59,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 
 /* ---- Test data (corpus shapes live in bench_corpus.h) ---- */
 
-static TA_Real *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi;
+static TA_Real *g_open, *g_high, *g_low, *g_close, *g_volume, *g_oi, *g_periods;
 static int g_nPoints;
 
 static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
@@ -70,9 +70,10 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
     g_close  = calloc(n, sizeof(TA_Real));
     g_volume = calloc(n, sizeof(TA_Real));
     g_oi     = calloc(n, sizeof(TA_Real));
-    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi )
+    g_periods = calloc(n, sizeof(TA_Real));
+    if( !g_open || !g_high || !g_low || !g_close || !g_volume || !g_oi || !g_periods )
         TA_TOOL_OOM("the price data arrays");
-    bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi, NULL);
+    bench_corpus_gen(corpus, n, g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods);
 }
 
 /* ---- JSON helpers ---- */
@@ -142,6 +143,8 @@ static int send_load_data(BenchLanguage *lang, char *buf, int sz, char *resp, in
     pos = json_write_double_array(buf, sz, pos, g_volume, g_nPoints);
     pos = codegen_appendf(buf, sz, pos, ",\"openInterest\":");
     pos = json_write_double_array(buf, sz, pos, g_oi, g_nPoints);
+    pos = codegen_appendf(buf, sz, pos, ",\"periods\":");
+    pos = json_write_double_array(buf, sz, pos, g_periods, g_nPoints);
     pos = codegen_appendf(buf, sz, pos, "}}");
     if( codegen_pipe_call(&lang->cp, buf, resp, rsz) != TA_TEST_PASS ) return -1;
     return (strstr(resp, "\"ok\"") != NULL) ? 0 : -1;
@@ -578,7 +581,7 @@ int main(int argc, char *argv[]) {
         if( LANGUAGES[li].active )
             codegen_pipe_close(&LANGUAGES[li].cp);
     free(reqBuf); free(respBuf);
-    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     TA_Shutdown();
     return too_noisy ? 1 : 0;
 }

@@ -240754,6 +240754,7 @@ public class TaCodegenServe {
     static double[] refClose = new double[MAX_ARRAY_SIZE];
     static double[] refVolume = new double[MAX_ARRAY_SIZE];
     static double[] refOI = new double[MAX_ARRAY_SIZE];
+    static double[] refPeriods = new double[MAX_ARRAY_SIZE];
     static int refN = 0;
 
     static int jsonInt(String json, String field) {
@@ -242540,6 +242541,8 @@ public class TaCodegenServe {
             System.arraycopy(tmp, 0, refVolume, 0, Math.min(tmp.length, MAX_ARRAY_SIZE));
             tmp = jsonDoubleArray(json, "openInterest");
             System.arraycopy(tmp, 0, refOI, 0, Math.min(tmp.length, MAX_ARRAY_SIZE));
+            tmp = jsonDoubleArray(json, "periods");
+            System.arraycopy(tmp, 0, refPeriods, 0, Math.min(tmp.length, MAX_ARRAY_SIZE));
             return "{\"status\":\"ok\",\"n\":" + refN + "}";
         }
         else if (json.contains("\"stream_verify\"")) return handle_stream_verify(json);
@@ -267162,7 +267165,7 @@ public class TaCodegenServe {
             inReal0 = new double[MAX_ARRAY_SIZE];
             System.arraycopy(refClose, 0, inReal0, 0, refN);
             inReal1 = new double[MAX_ARRAY_SIZE];
-            System.arraycopy(refHigh, 0, inReal1, 0, refN);
+            System.arraycopy(refPeriods, 0, inReal1, 0, refN);
         } else {
             inReal0 = jsonDoubleArray(json, "inReal0");
             inReal1 = jsonDoubleArray(json, "inReal1");

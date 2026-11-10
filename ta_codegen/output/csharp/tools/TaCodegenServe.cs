@@ -16,6 +16,7 @@ public class TaCodegenServe {
     static double[] refClose = new double[MAX_ARRAY_SIZE];
     static double[] refVolume = new double[MAX_ARRAY_SIZE];
     static double[] refOI = new double[MAX_ARRAY_SIZE];
+    static double[] refPeriods = new double[MAX_ARRAY_SIZE];
     static int refN = 0;
 
     static readonly JsonDocument EmptyParamsDoc = JsonDocument.Parse("{}");
@@ -130,6 +131,7 @@ public class TaCodegenServe {
                 LoadRef(p, "close", refClose);
                 LoadRef(p, "volume", refVolume);
                 LoadRef(p, "openInterest", refOI);
+                LoadRef(p, "periods", refPeriods);
                 return $"{{\"status\":\"ok\",\"n\":{refN}}}";
             }
 
@@ -105820,7 +105822,7 @@ public class TaCodegenServe {
         double[] inReal1;
         if (use_preloaded != 0 && refN > 0) {
             inReal0 = new double[refN]; Array.Copy(refClose, inReal0, refN);
-            inReal1 = new double[refN]; Array.Copy(refHigh, inReal1, refN);
+            inReal1 = new double[refN]; Array.Copy(refPeriods, inReal1, refN);
         } else {
             inReal0 = GetDoubleArray(p, "inReal0");
             inReal1 = GetDoubleArray(p, "inReal1");

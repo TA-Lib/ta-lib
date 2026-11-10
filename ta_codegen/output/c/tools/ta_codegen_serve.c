@@ -527,6 +527,7 @@ static double g_refLow[MAX_ARRAY_SIZE];
 static double g_refClose[MAX_ARRAY_SIZE];
 static double g_refVolume[MAX_ARRAY_SIZE];
 static double g_refOI[MAX_ARRAY_SIZE];
+static double g_refPeriods[MAX_ARRAY_SIZE];
 static int g_refN = 0; /* number of pre-loaded points */
 
 #include "ta_abstract_serve.c"
@@ -106857,6 +106858,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         json_find_double_array(json, "close",         g_refClose,  MAX_ARRAY_SIZE);
         json_find_double_array(json, "volume",        g_refVolume, MAX_ARRAY_SIZE);
         json_find_double_array(json, "openInterest",  g_refOI,     MAX_ARRAY_SIZE);
+        json_find_double_array(json, "periods",       g_refPeriods, MAX_ARRAY_SIZE);
         snprintf(resp, resp_size, "{\"status\":\"ok\",\"n\":%d}", g_refN);
         return;
     }
@@ -121848,7 +121850,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
             memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
-            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refPeriods, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121869,7 +121871,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         TA_RetCode rc = 0;
         if( use_preloaded ) {
             memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
-            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refPeriods, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {

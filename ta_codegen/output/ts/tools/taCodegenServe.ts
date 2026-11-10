@@ -264,6 +264,7 @@ const refLow = new Float64Array(MAX_ARRAY_SIZE);
 const refClose = new Float64Array(MAX_ARRAY_SIZE);
 const refVolume = new Float64Array(MAX_ARRAY_SIZE);
 const refOI = new Float64Array(MAX_ARRAY_SIZE);
+const refPeriods = new Float64Array(MAX_ARRAY_SIZE);
 let refN = 0;
 
 const OK = '{"status":"ok"}';
@@ -386,6 +387,7 @@ function loadData(p: Params): string {
   loadRef(p, 'close', refClose);
   loadRef(p, 'volume', refVolume);
   loadRef(p, 'openInterest', refOI);
+  loadRef(p, 'periods', refPeriods);
   return `{"status":"ok","n":${refN}}`;
 }
 
@@ -11816,7 +11818,7 @@ function handle_MAVP(p: Params): string {
   const endIdx = int(p, 'endIdx', 0);
   const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;
   const inReal0 = pre ? refClose.slice(0, refN) : f64Array(p, 'inReal0');
-  const inReal1 = pre ? refHigh.slice(0, refN) : f64Array(p, 'inReal1');
+  const inReal1 = pre ? refPeriods.slice(0, refN) : f64Array(p, 'inReal1');
   const benchMode = int(p, 'bench_mode', 0);
   const warm_inReal0 = benchMode === 0 ? inReal0 : warmView(inReal0, endIdx + 1);
   const warm_inReal1 = benchMode === 0 ? inReal1 : warmView(inReal1, endIdx + 1);

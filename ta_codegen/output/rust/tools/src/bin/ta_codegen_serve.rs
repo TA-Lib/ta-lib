@@ -772,6 +772,7 @@ struct RefData {
     close: Vec<f64>,
     volume: Vec<f64>,
     oi: Vec<f64>,
+    periods: Vec<f64>,
     n: usize,
 }
 
@@ -784,6 +785,7 @@ impl RefData {
             close: vec![0.0; MAX_ARRAY_SIZE],
             volume: vec![0.0; MAX_ARRAY_SIZE],
             oi: vec![0.0; MAX_ARRAY_SIZE],
+            periods: vec![0.0; MAX_ARRAY_SIZE],
             n: 0,
         }
     }
@@ -1006,6 +1008,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             ref_data.volume[..ref_data.n].copy_from_slice(&volume[..ref_data.n]);
             let oi = parse_f64_array(&params["openInterest"]);
             ref_data.oi[..ref_data.n].copy_from_slice(&oi[..ref_data.n]);
+            let periods = parse_f64_array(&params["periods"]);
+            let np = periods.len().min(ref_data.n);
+            ref_data.periods[..np].copy_from_slice(&periods[..np]);
             format!("{{\"status\":\"ok\",\"n\":{}}}", ref_data.n)
         }
         "TA_AC" => rpc_ac(core, ref_data, params),
@@ -63753,7 +63758,7 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 inReal1 = &_json_inReal1;
             } else if use_preloaded != 0 && ref_data.n > 0 {
                 inReal0 = &ref_data.close[..ref_data.n];
-                inReal1 = &ref_data.high[..ref_data.n];
+                inReal1 = &ref_data.periods[..ref_data.n];
             } else {
                 _json_inReal0 = parse_f64_array(&params["inReal0"]);
                 inReal0 = &_json_inReal0;

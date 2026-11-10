@@ -83,7 +83,7 @@ pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
 /// name MAVP's `inPeriods` is indistinguishable from any other second real. This
 /// walks the ORIGINAL IR inputs in the same slot order to recover it — the same
 /// thing `variant_frame.rs` does for `TA_VIN_PERIODS`.
-fn periods_slots(func: &FuncDef) -> Vec<bool> {
+pub(crate) fn periods_slots(func: &FuncDef) -> Vec<bool> {
     let mut slots = Vec::new();
     for inp in &func.inputs {
         match &inp.param_type {
