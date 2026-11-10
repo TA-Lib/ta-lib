@@ -204,7 +204,7 @@ impl Core {
         let mut longestPeriod: usize = 0_usize;
         let mut longestIndex: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut j: i32 = 0_i32;
+        let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut negSlot: usize = 0_usize;
@@ -246,9 +246,9 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[(j) as usize] == 0 && ((periods[(j) as usize]) as usize) > longestPeriod {
-                    longestPeriod = (periods[(j) as usize]) as usize;
-                    longestIndex = (j) as usize;
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
+                    longestPeriod = (periods[j]) as usize;
+                    longestIndex = j;
                 }
                 j += 1;
             }
@@ -424,22 +424,22 @@ impl Core {
                     // for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
                     i = (optInTimePeriod3 - 1) as usize;
                     loop {
-                        j = (term_Idx - i) as i32;
-                        if j < 0 {
-                            j += optInTimePeriod3;
+                        j = term_Idx + ((optInTimePeriod3) as usize) - i;
+                        if j >= ((optInTimePeriod3) as usize) {
+                            j -= (optInTimePeriod3) as usize;
                         }
                         if i < ((optInTimePeriod1) as usize) {
-                            a1Total += term_closeMinusTrueLow[(j) as usize];
-                            b1Total += term_trueRange[(j) as usize];
+                            a1Total += term_closeMinusTrueLow[j];
+                            b1Total += term_trueRange[j];
                         }
                         if i < ((optInTimePeriod2) as usize) {
-                            a2Total += term_closeMinusTrueLow[(j) as usize];
-                            b2Total += term_trueRange[(j) as usize];
+                            a2Total += term_closeMinusTrueLow[j];
+                            b2Total += term_trueRange[j];
                         }
-                        a3Total += term_closeMinusTrueLow[(j) as usize];
-                        b3Total += term_trueRange[(j) as usize];
-                        if term_closeMinusTrueLow[(j) as usize] < 0.0 {
-                            negSlot = (j) as usize;
+                        a3Total += term_closeMinusTrueLow[j];
+                        b3Total += term_trueRange[j];
+                        if term_closeMinusTrueLow[j] < 0.0 {
+                            negSlot = j;
                         }
                         if i == 0 { break; }
                         i -= 1;
@@ -685,7 +685,7 @@ impl Core {
         let mut tempCY: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
-        let mut j: i32 = 0_i32;
+        let mut j: usize = 0_usize;
         let mut live: usize = 0_usize;
         // Add on today's terms
         tempLT = inLow;
@@ -756,22 +756,22 @@ impl Core {
                 // for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 )
                 i = (sp.optInTimePeriod3 - 1) as usize;
                 loop {
-                    j = (sp.term_Idx - i) as i32;
-                    if j < 0 {
-                        j += sp.optInTimePeriod3;
+                    j = sp.term_Idx + ((sp.optInTimePeriod3) as usize) - i;
+                    if j >= ((sp.optInTimePeriod3) as usize) {
+                        j -= (sp.optInTimePeriod3) as usize;
                     }
                     if i < ((sp.optInTimePeriod1) as usize) {
-                        sp.a1Total += sp.cb_term_closeMinusTrueLow[(j) as usize];
-                        sp.b1Total += sp.cb_term_trueRange[(j) as usize];
+                        sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
+                        sp.b1Total += sp.cb_term_trueRange[j];
                     }
                     if i < ((sp.optInTimePeriod2) as usize) {
-                        sp.a2Total += sp.cb_term_closeMinusTrueLow[(j) as usize];
-                        sp.b2Total += sp.cb_term_trueRange[(j) as usize];
+                        sp.a2Total += sp.cb_term_closeMinusTrueLow[j];
+                        sp.b2Total += sp.cb_term_trueRange[j];
                     }
-                    sp.a3Total += sp.cb_term_closeMinusTrueLow[(j) as usize];
-                    sp.b3Total += sp.cb_term_trueRange[(j) as usize];
-                    if sp.cb_term_closeMinusTrueLow[(j) as usize] < 0.0 {
-                        sp.negSlot = (j) as usize;
+                    sp.a3Total += sp.cb_term_closeMinusTrueLow[j];
+                    sp.b3Total += sp.cb_term_trueRange[j];
+                    if sp.cb_term_closeMinusTrueLow[j] < 0.0 {
+                        sp.negSlot = j;
                     }
                     if i == 0 { break; }
                     i -= 1;
@@ -883,7 +883,7 @@ impl Core {
         let mut longestPeriod: usize = 0_usize;
         let mut longestIndex: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut j: i32 = 0_i32;
+        let mut j: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut negSlot: usize = 0_usize;
@@ -922,9 +922,9 @@ impl Core {
             // for( j = 0; j < 3; j += 1 )
             j = 0;
             while j < 3 {
-                if usedFlag[(j) as usize] == 0 && ((periods[(j) as usize]) as usize) > longestPeriod {
-                    longestPeriod = (periods[(j) as usize]) as usize;
-                    longestIndex = (j) as usize;
+                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
+                    longestPeriod = (periods[j]) as usize;
+                    longestIndex = j;
                 }
                 j += 1;
             }
@@ -1091,22 +1091,22 @@ impl Core {
                     // for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
                     i = (optInTimePeriod3 - 1) as usize;
                     loop {
-                        j = (term_Idx - i) as i32;
-                        if j < 0 {
-                            j += optInTimePeriod3;
+                        j = term_Idx + ((optInTimePeriod3) as usize) - i;
+                        if j >= ((optInTimePeriod3) as usize) {
+                            j -= (optInTimePeriod3) as usize;
                         }
                         if i < ((optInTimePeriod1) as usize) {
-                            a1Total += term_closeMinusTrueLow[(j) as usize];
-                            b1Total += term_trueRange[(j) as usize];
+                            a1Total += term_closeMinusTrueLow[j];
+                            b1Total += term_trueRange[j];
                         }
                         if i < ((optInTimePeriod2) as usize) {
-                            a2Total += term_closeMinusTrueLow[(j) as usize];
-                            b2Total += term_trueRange[(j) as usize];
+                            a2Total += term_closeMinusTrueLow[j];
+                            b2Total += term_trueRange[j];
                         }
-                        a3Total += term_closeMinusTrueLow[(j) as usize];
-                        b3Total += term_trueRange[(j) as usize];
-                        if term_closeMinusTrueLow[(j) as usize] < 0.0 {
-                            negSlot = (j) as usize;
+                        a3Total += term_closeMinusTrueLow[j];
+                        b3Total += term_trueRange[j];
+                        if term_closeMinusTrueLow[j] < 0.0 {
+                            negSlot = j;
                         }
                         if i == 0 { break; }
                         i -= 1;
@@ -1372,7 +1372,7 @@ impl UltoscStream {
             let mut tempCY: f64 = 0.0_f64;
             let mut lowest: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
-            let mut j: i32 = 0_i32;
+            let mut j: usize = 0_usize;
             let mut live: usize = 0_usize;
             let mut a1Total = sp.a1Total;
             let mut a2Total = sp.a2Total;
@@ -1458,22 +1458,22 @@ impl UltoscStream {
                     // for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 )
                     i = (sp.optInTimePeriod3 - 1) as usize;
                     loop {
-                        j = (term_Idx - i) as i32;
-                        if j < 0 {
-                            j += sp.optInTimePeriod3;
+                        j = term_Idx + ((sp.optInTimePeriod3) as usize) - i;
+                        if j >= ((sp.optInTimePeriod3) as usize) {
+                            j -= (sp.optInTimePeriod3) as usize;
                         }
                         if i < ((sp.optInTimePeriod1) as usize) {
-                            a1Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[(j) as usize] } else { pkVal0 });
-                            b1Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[(j) as usize] } else { pkVal1 });
+                            a1Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
+                            b1Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
                         }
                         if i < ((sp.optInTimePeriod2) as usize) {
-                            a2Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[(j) as usize] } else { pkVal0 });
-                            b2Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[(j) as usize] } else { pkVal1 });
+                            a2Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
+                            b2Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
                         }
-                        a3Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[(j) as usize] } else { pkVal0 });
-                        b3Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[(j) as usize] } else { pkVal1 });
-                        if (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[(j) as usize] } else { pkVal0 }) < 0.0 {
-                            negSlot = (j) as usize;
+                        a3Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
+                        b3Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
+                        if (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 }) < 0.0 {
+                            negSlot = j;
                         }
                         if i == 0 { break; }
                         i -= 1;

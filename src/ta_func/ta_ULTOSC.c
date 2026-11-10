@@ -412,10 +412,10 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
             b3Total = 0.0;
             for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
             {
-               j = term_Idx - i;
-               if( j < 0 )
+               j = term_Idx + optInTimePeriod3 - i;
+               if( j >= optInTimePeriod3 )
                {
-                  j += optInTimePeriod3;
+                  j -= optInTimePeriod3;
                }
                if( i < optInTimePeriod1 )
                {
@@ -742,10 +742,10 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
             b3Total = 0.0;
             for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
             {
-               j = term_Idx - i;
-               if( j < 0 )
+               j = term_Idx + optInTimePeriod3 - i;
+               if( j >= optInTimePeriod3 )
                {
-                  j += optInTimePeriod3;
+                  j -= optInTimePeriod3;
                }
                if( i < optInTimePeriod1 )
                {
@@ -941,10 +941,10 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
          sp->b3Total = 0.0;
          for( i = sp->optInTimePeriod3 - 1; i >= 0; i -= 1 )
          {
-            j = sp->term_Idx - i;
-            if( j < 0 )
+            j = sp->term_Idx + sp->optInTimePeriod3 - i;
+            if( j >= sp->optInTimePeriod3 )
             {
-               j += sp->optInTimePeriod3;
+               j -= sp->optInTimePeriod3;
             }
             if( i < sp->optInTimePeriod1 )
             {
@@ -1296,10 +1296,10 @@ static TA_OPEN_INLINE TA_RetCode TA_ULTOSC_OpenBody( struct TA_ULTOSC_Stream **s
                b3Total = 0.0;
                for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
                {
-                  j = term_Idx - i;
-                  if( j < 0 )
+                  j = term_Idx + optInTimePeriod3 - i;
+                  if( j >= optInTimePeriod3 )
                   {
-                     j += optInTimePeriod3;
+                     j -= optInTimePeriod3;
                   }
                   if( i < optInTimePeriod1 )
                   {
@@ -1635,10 +1635,10 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
          b3Total = 0.0;
          for( i = sp->optInTimePeriod3 - 1; i >= 0; i -= 1 )
          {
-            j = term_Idx - i;
-            if( j < 0 )
+            j = term_Idx + sp->optInTimePeriod3 - i;
+            if( j >= sp->optInTimePeriod3 )
             {
-               j += sp->optInTimePeriod3;
+               j -= sp->optInTimePeriod3;
             }
             if( i < sp->optInTimePeriod1 )
             {

@@ -84,9 +84,9 @@ static const TaRefWaiver WAIVERS[] = {
    [W_DOMAIN_EDGE] = { "domain_edge",
                "VAR/STDDEV/CORREL/TRIX/PPO/EFI reading an input near the domain bound, where 0.8.1's rounding sits further from the current values than the rows sized on ordinary data", 0.55 },
    [W_REBUILT_EDGE] = { "rebuilt_edge_588",
-               "VORTEX/ULTOSC where a running sum first comes out negative as a bar near the domain bound retires: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
+               "VORTEX/ULTOSC where a vortex sum or an a-total first comes out negative as a bar near the domain bound retires: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
    [W_REBUILT] = { "rebuilt_588",
-               "VORTEX/ULTOSC where a running sum first comes out negative away from the domain bound, a few units in the last place below an exact zero: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
+               "VORTEX/ULTOSC where a vortex sum or an a-total first comes out negative away from the domain bound, a few units in the last place below an exact zero: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
 };
 
 /* Keeps those rows at their ordinary-data size: a case whose inputs pass
@@ -109,10 +109,11 @@ static int domain_edge( const TaRefCase *c )
 }
 
 /* Replays the running sums the current library keeps over the case's call,
- * in its order of operations, and reports the first window where one of them
- * comes out negative: there it rebuilds the sums from the window and 0.8.1
- * does not, and the two agree on every window before it. The retiring bar and
- * the one it reads decide which waiver the window takes. */
+ * in its order of operations, and reports the first window where it rebuilds
+ * them and 0.8.1 does not: a vortex sum or an a-total comes out negative, and
+ * for ULTOSC the ring slot it remembers (slot 0 until a rebuild) does not
+ * hold a negative term. The two agree on every window before it. The retiring
+ * bar and the one it reads decide which waiver the window takes. */
 static int bar_at_edge( const TaRefCase *c, int j )
 {
    return fabs( c->high[j] ) > DOMAIN_EDGE || fabs( c->low[j] ) > DOMAIN_EDGE
@@ -164,7 +165,7 @@ static int vortex_rebuilt( const TaRefCase *c )
       live = tr <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( nullRun >= n ) { nullRun = n; sTR = 0.0; }
-      if( sTR < 0.0 || sP < 0.0 || sM < 0.0 ) return rebuilt_window( c, t - n );
+      if( sP < 0.0 || sM < 0.0 ) return rebuilt_window( c, t - n );
       i = t - n + 1;
       sTR -= true_range( c, i );
       sP  -= fabs( c->high[i] - c->low[i-1] );
@@ -211,8 +212,12 @@ static int ultosc_rebuilt( const TaRefCase *c )
       nullRun = (nullRun + 1) & (live - 1);
       for( k = 0; k < 3 && nullRun >= p[k]; k++ ) { A[k] = 0.0; B[k] = 0.0; }
       if( nullRun > p[2] ) nullRun = p[2];
-      for( k = 0; k < 3; k++ )
-         if( A[k] < 0.0 || B[k] < 0.0 ) return rebuilt_window( c, t - p[k] );
+      for( k = 0; k < 3 && A[k] >= 0.0; k++ ) ;
+      if( k < 3 )
+      {
+         ultosc_terms( c, s - p[2] + 1 + (t - s + p[2] - 1) / p[2] * p[2], &a, &b );
+         if( a >= 0.0 ) return rebuilt_window( c, t - p[k] );
+      }
       for( k = 0; k < 3; k++ )
       {
          ultosc_terms( c, t - p[k] + 1, &a, &b );

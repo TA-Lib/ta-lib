@@ -225877,9 +225877,9 @@ class Core {
                 a3Total = 0.0;
                 b3Total = 0.0;
                 for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
-                   j = term_Idx - i;
-                   if( j < 0 ) {
-                      j += optInTimePeriod3;
+                   j = term_Idx + optInTimePeriod3 - i;
+                   if( j >= optInTimePeriod3 ) {
+                      j -= optInTimePeriod3;
                    }
                    if( i < optInTimePeriod1 ) {
                       a1Total += term_closeMinusTrueLow[j];
@@ -226145,9 +226145,9 @@ class Core {
                 a3Total = 0.0;
                 b3Total = 0.0;
                 for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
-                   j = term_Idx - i;
-                   if( j < 0 ) {
-                      j += optInTimePeriod3;
+                   j = term_Idx + optInTimePeriod3 - i;
+                   if( j >= optInTimePeriod3 ) {
+                      j -= optInTimePeriod3;
                    }
                    if( i < optInTimePeriod1 ) {
                       a1Total += term_closeMinusTrueLow[j];
@@ -226594,9 +226594,9 @@ class Core {
                 a3Total = 0.0;
                 b3Total = 0.0;
                 for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
-                   j = term_Idx - i;
-                   if( j < 0 ) {
-                      j += sp.optInTimePeriod3;
+                   j = term_Idx + sp.optInTimePeriod3 - i;
+                   if( j >= sp.optInTimePeriod3 ) {
+                      j -= sp.optInTimePeriod3;
                    }
                    if( i < sp.optInTimePeriod1 ) {
                       a1Total += (j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
@@ -226768,9 +226768,9 @@ class Core {
              sp.a3Total = 0.0;
              sp.b3Total = 0.0;
              for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
-                j = sp.term_Idx - i;
-                if( j < 0 ) {
-                   j += sp.optInTimePeriod3;
+                j = sp.term_Idx + sp.optInTimePeriod3 - i;
+                if( j >= sp.optInTimePeriod3 ) {
+                   j -= sp.optInTimePeriod3;
                 }
                 if( i < sp.optInTimePeriod1 ) {
                    sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
@@ -227091,9 +227091,9 @@ class Core {
                 a3Total = 0.0;
                 b3Total = 0.0;
                 for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 ) {
-                   j = term_Idx - i;
-                   if( j < 0 ) {
-                      j += optInTimePeriod3;
+                   j = term_Idx + optInTimePeriod3 - i;
+                   if( j >= optInTimePeriod3 ) {
+                      j -= optInTimePeriod3;
                    }
                    if( i < optInTimePeriod1 ) {
                       a1Total += term_closeMinusTrueLow[j];
@@ -240738,7 +240738,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "22e7e8b5e52fd6e9";
+    static final String SPLICED_GENCODE_DIGEST = "3f8fb406d173494f";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

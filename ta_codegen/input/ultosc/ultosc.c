@@ -273,8 +273,8 @@ TA_RetCode ultosc(int startIdx, int endIdx,
             b3Total = 0.0;
             for( i = optInTimePeriod3 - 1; i >= 0; i-- )
             {
-               j = term_Idx - i;
-               if( j < 0 ) j += optInTimePeriod3;
+               j = term_Idx + optInTimePeriod3 - i;
+               if( j >= optInTimePeriod3 ) j -= optInTimePeriod3;
                if( i < optInTimePeriod1 )
                {
                   a1Total += term_closeMinusTrueLow[j];
