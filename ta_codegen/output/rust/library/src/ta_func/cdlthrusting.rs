@@ -476,7 +476,7 @@ impl Core {
     /// # See also
     ///
     /// [`CDLINNECK`](Core::cdlinneck) · [`CDLONNECK`](Core::cdlonneck) ·
-    /// [`CDLPIERCING`](Core::cdlpiercing) · CDLMEETINGLINES
+    /// [`CDLPIERCING`](Core::cdlpiercing) · [`CDLCOUNTERATTACK`](Core::cdlcounterattack)
     #[doc(alias = "TA_CDLTHRUSTING")]
     #[doc(alias = "ThrustingPattern")]
     #[doc(alias = "ThrustingLine")]

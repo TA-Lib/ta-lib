@@ -343,7 +343,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// CDLMATCHINGHIGH · [`CDLHOMINGPIGEON`](Core::cdlhomingpigeon)
+    /// [`CDLHOMINGPIGEON`](Core::cdlhomingpigeon)
     #[doc(alias = "TA_CDLMATCHINGLOW")]
     #[doc(alias = "MatchingLow")]
     pub fn cdlmatchinglow(

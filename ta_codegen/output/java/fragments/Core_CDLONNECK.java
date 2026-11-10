@@ -261,6 +261,7 @@
     *
     * @see Core#cdlinneck
     * @see Core#cdlthrusting
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlonneck( int startIdx,
                               int endIdx,
@@ -333,6 +334,7 @@
     *
     * @see Core#cdlinneck
     * @see Core#cdlthrusting
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlonneck( int startIdx,
                               int endIdx,

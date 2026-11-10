@@ -457,7 +457,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`CDLBELTHOLD`](Core::cdlbelthold) · CDLMEETINGLINES
+    /// [`CDLBELTHOLD`](Core::cdlbelthold) · [`CDLCOUNTERATTACK`](Core::cdlcounterattack)
     #[doc(alias = "TA_CDLSEPARATINGLINES")]
     #[doc(alias = "SeparatingLines")]
     pub fn cdlseparatinglines(

@@ -347,6 +347,7 @@ export function cdlonneckDisplayShift(outputIdx: number, options?: CdlonneckOpti
  * ```
  * @see [`cdlinneck`](https://ta-lib.org/functions/cdlinneck)
  * @see [`cdlthrusting`](https://ta-lib.org/functions/cdlthrusting)
+ * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  */
 export function cdlonneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckResult {
   requireArgument('CDLONNECK', 'prices', prices);

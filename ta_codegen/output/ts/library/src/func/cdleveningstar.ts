@@ -391,6 +391,7 @@ export function cdleveningstarDisplayShift(outputIdx: number, options?: Cdleveni
  * @see [`cdleveningdojistar`](https://ta-lib.org/functions/cdleveningdojistar)
  * @see [`cdlmorningstar`](https://ta-lib.org/functions/cdlmorningstar)
  * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)
+ * @see [`cdl3starsinsouth`](https://ta-lib.org/functions/cdl3starsinsouth)
  */
 export function cdleveningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningstarOptions): CdleveningstarResult {
   requireArgument('CDLEVENINGSTAR', 'prices', prices);

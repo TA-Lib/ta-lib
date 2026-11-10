@@ -197,4 +197,4 @@ Matching Low
 
 ## See Also
 
-CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)
+[CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)

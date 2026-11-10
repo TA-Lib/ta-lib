@@ -307,6 +307,7 @@
     * @see Core#cdleveningdojistar
     * @see Core#cdlmorningstar
     * @see Core#cdlmorningdojistar
+    * @see Core#cdl3starsinsouth
     */
    public OutRange cdleveningstar( int startIdx,
                                    int endIdx,
@@ -385,6 +386,7 @@
     * @see Core#cdleveningdojistar
     * @see Core#cdlmorningstar
     * @see Core#cdlmorningdojistar
+    * @see Core#cdl3starsinsouth
     */
    public OutRange cdleveningstar( int startIdx,
                                    int endIdx,

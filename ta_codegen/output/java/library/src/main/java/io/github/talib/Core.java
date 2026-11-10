@@ -41241,6 +41241,7 @@ public final class Core {
     * @see Core#cdleveningdojistar
     * @see Core#cdlmorningstar
     * @see Core#cdlmorningdojistar
+    * @see Core#cdl3starsinsouth
     */
    public OutRange cdleveningstar( int startIdx,
                                    int endIdx,
@@ -41319,6 +41320,7 @@ public final class Core {
     * @see Core#cdleveningdojistar
     * @see Core#cdlmorningstar
     * @see Core#cdlmorningdojistar
+    * @see Core#cdl3starsinsouth
     */
    public OutRange cdleveningstar( int startIdx,
                                    int endIdx,
@@ -62143,6 +62145,7 @@ public final class Core {
     *
     * @see Core#cdlinneck
     * @see Core#cdlthrusting
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlonneck( int startIdx,
                               int endIdx,
@@ -62215,6 +62218,7 @@ public final class Core {
     *
     * @see Core#cdlinneck
     * @see Core#cdlthrusting
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlonneck( int startIdx,
                               int endIdx,
@@ -65647,6 +65651,7 @@ public final class Core {
     *        buffer untouched.
     *
     * @see Core#cdlbelthold
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlseparatinglines( int startIdx,
                                        int endIdx,
@@ -65718,6 +65723,7 @@ public final class Core {
     *        buffer untouched.
     *
     * @see Core#cdlbelthold
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlseparatinglines( int startIdx,
                                        int endIdx,
@@ -72442,6 +72448,7 @@ public final class Core {
     * @see Core#cdlinneck
     * @see Core#cdlonneck
     * @see Core#cdlpiercing
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlthrusting( int startIdx,
                                  int endIdx,
@@ -72517,6 +72524,7 @@ public final class Core {
     * @see Core#cdlinneck
     * @see Core#cdlonneck
     * @see Core#cdlpiercing
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlthrusting( int startIdx,
                                  int endIdx,

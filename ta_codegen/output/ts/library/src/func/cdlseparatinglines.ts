@@ -366,6 +366,7 @@ export function cdlseparatinglinesDisplayShift(outputIdx: number, options?: Cdls
  * console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
  * ```
  * @see [`cdlbelthold`](https://ta-lib.org/functions/cdlbelthold)
+ * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  */
 export function cdlseparatinglines(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlseparatinglinesOptions): CdlseparatinglinesResult {
   requireArgument('CDLSEPARATINGLINES', 'prices', prices);

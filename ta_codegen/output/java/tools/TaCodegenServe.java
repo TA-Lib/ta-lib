@@ -40863,6 +40863,7 @@ class Core {
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningstar
         * @see Core#cdlmorningdojistar
+        * @see Core#cdl3starsinsouth
         */
        public OutRange cdleveningstar( int startIdx,
                                        int endIdx,
@@ -40941,6 +40942,7 @@ class Core {
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningstar
         * @see Core#cdlmorningdojistar
+        * @see Core#cdl3starsinsouth
         */
        public OutRange cdleveningstar( int startIdx,
                                        int endIdx,
@@ -61765,6 +61767,7 @@ class Core {
         *
         * @see Core#cdlinneck
         * @see Core#cdlthrusting
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlonneck( int startIdx,
                                   int endIdx,
@@ -61837,6 +61840,7 @@ class Core {
         *
         * @see Core#cdlinneck
         * @see Core#cdlthrusting
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlonneck( int startIdx,
                                   int endIdx,
@@ -65269,6 +65273,7 @@ class Core {
         *        buffer untouched.
         *
         * @see Core#cdlbelthold
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlseparatinglines( int startIdx,
                                            int endIdx,
@@ -65340,6 +65345,7 @@ class Core {
         *        buffer untouched.
         *
         * @see Core#cdlbelthold
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlseparatinglines( int startIdx,
                                            int endIdx,
@@ -72064,6 +72070,7 @@ class Core {
         * @see Core#cdlinneck
         * @see Core#cdlonneck
         * @see Core#cdlpiercing
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlthrusting( int startIdx,
                                      int endIdx,
@@ -72139,6 +72146,7 @@ class Core {
         * @see Core#cdlinneck
         * @see Core#cdlonneck
         * @see Core#cdlpiercing
+        * @see Core#cdlcounterattack
         */
        public OutRange cdlthrusting( int startIdx,
                                      int endIdx,
@@ -240738,7 +240746,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "3f8fb406d173494f";
+    static final String SPLICED_GENCODE_DIGEST = "15d4b02e05f67927";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -436,7 +436,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`CDLINNECK`](Core::cdlinneck) · [`CDLTHRUSTING`](Core::cdlthrusting) · CDLMEETINGLINES
+    /// [`CDLINNECK`](Core::cdlinneck) · [`CDLTHRUSTING`](Core::cdlthrusting) ·
+    /// [`CDLCOUNTERATTACK`](Core::cdlcounterattack)
     #[doc(alias = "TA_CDLONNECK")]
     #[doc(alias = "On-NeckPattern")]
     #[doc(alias = "On-NeckLine")]

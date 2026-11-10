@@ -293,6 +293,7 @@
     *        buffer untouched.
     *
     * @see Core#cdlbelthold
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlseparatinglines( int startIdx,
                                        int endIdx,
@@ -364,6 +365,7 @@
     *        buffer untouched.
     *
     * @see Core#cdlbelthold
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlseparatinglines( int startIdx,
                                        int endIdx,

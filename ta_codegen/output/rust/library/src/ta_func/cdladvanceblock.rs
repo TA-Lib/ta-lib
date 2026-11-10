@@ -1461,7 +1461,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`CDL3WHITESOLDIERS`](Core::cdl3whitesoldiers) · CDLDELIBERATION ·
+    /// [`CDL3WHITESOLDIERS`](Core::cdl3whitesoldiers) ·
     /// [`CDLSTALLEDPATTERN`](Core::cdlstalledpattern)
     #[doc(alias = "TA_CDLADVANCEBLOCK")]
     #[doc(alias = "AdvanceBlock")]

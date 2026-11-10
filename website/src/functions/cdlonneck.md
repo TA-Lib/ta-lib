@@ -197,4 +197,4 @@ On-Neck Pattern, On-Neck Line
 
 ## See Also
 
-[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · CDLMEETINGLINES
+[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · [CDLCOUNTERATTACK](/functions/cdlcounterattack.md)

@@ -334,6 +334,7 @@ public partial class Core
    /// </exception>
    /// <seealso cref="Core.Cdlinneck(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    /// <seealso cref="Core.Cdlthrusting(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlcounterattack(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdlonneck( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inOpen,
@@ -427,6 +428,7 @@ public partial class Core
    /// </exception>
    /// <seealso cref="Core.Cdlinneck(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    /// <seealso cref="Core.Cdlthrusting(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlcounterattack(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdlonneck( int startIdx,
                               int endIdx,
                               ReadOnlySpan<float> inOpen,

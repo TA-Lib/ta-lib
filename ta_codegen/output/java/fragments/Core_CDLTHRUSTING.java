@@ -265,6 +265,7 @@
     * @see Core#cdlinneck
     * @see Core#cdlonneck
     * @see Core#cdlpiercing
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlthrusting( int startIdx,
                                  int endIdx,
@@ -340,6 +341,7 @@
     * @see Core#cdlinneck
     * @see Core#cdlonneck
     * @see Core#cdlpiercing
+    * @see Core#cdlcounterattack
     */
    public OutRange cdlthrusting( int startIdx,
                                  int endIdx,

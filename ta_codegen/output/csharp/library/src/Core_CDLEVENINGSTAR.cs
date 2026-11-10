@@ -376,6 +376,7 @@ public partial class Core
    /// <seealso cref="Core.Cdleveningdojistar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
    /// <seealso cref="Core.Cdlmorningstar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
    /// <seealso cref="Core.Cdlmorningdojistar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
+   /// <seealso cref="Core.Cdl3starsinsouth(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdleveningstar( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inOpen,
@@ -473,6 +474,7 @@ public partial class Core
    /// <seealso cref="Core.Cdleveningdojistar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
    /// <seealso cref="Core.Cdlmorningstar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
    /// <seealso cref="Core.Cdlmorningdojistar(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, double, Span{int})"/>
+   /// <seealso cref="Core.Cdl3starsinsouth(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdleveningstar( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inOpen,

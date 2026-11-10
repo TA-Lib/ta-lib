@@ -486,7 +486,8 @@ impl Core {
     /// # See also
     ///
     /// [`CDLEVENINGDOJISTAR`](Core::cdleveningdojistar) · [`CDLMORNINGSTAR`](Core::cdlmorningstar)
-    /// · [`CDLMORNINGDOJISTAR`](Core::cdlmorningdojistar) · CDLSTARSINSOUTH
+    /// · [`CDLMORNINGDOJISTAR`](Core::cdlmorningdojistar) ·
+    /// [`CDL3STARSINSOUTH`](Core::cdl3starsinsouth)
     #[doc(alias = "TA_CDLEVENINGSTAR")]
     #[doc(alias = "EveningStar")]
     pub fn cdleveningstar(

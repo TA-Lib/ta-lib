@@ -355,6 +355,7 @@ export function cdlthrustingDisplayShift(outputIdx: number, options?: Cdlthrusti
  * @see [`cdlinneck`](https://ta-lib.org/functions/cdlinneck)
  * @see [`cdlonneck`](https://ta-lib.org/functions/cdlonneck)
  * @see [`cdlpiercing`](https://ta-lib.org/functions/cdlpiercing)
+ * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  */
 export function cdlthrusting(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlthrustingOptions): CdlthrustingResult {
   requireArgument('CDLTHRUSTING', 'prices', prices);
