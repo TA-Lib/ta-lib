@@ -9,7 +9,7 @@ Single-candle pattern: a doji whose open and close sit at the high (no/very shor
 
 ## Chart
 
-<ta-chart src="/functions/cdltakuri.svg" ratio="720:274" label="CDLTAKURI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+<ta-chart src="/functions/cdltakuri.svg" ratio="720:274" label="CDLTAKURI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as an arrow up from the bottom of the pane to below the low of every bar it flags."></ta-chart>
 
 <div class="ta-chart-links">
 

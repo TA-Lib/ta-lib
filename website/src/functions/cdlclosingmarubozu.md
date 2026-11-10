@@ -9,7 +9,7 @@ Single-candle pattern: a long real body whose closing end has no or very short s
 
 ## Chart
 
-<ta-chart src="/functions/cdlclosingmarubozu.svg" ratio="720:274" label="CDLCLOSINGMARUBOZU over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdlclosingmarubozu.svg" ratio="720:274" label="CDLCLOSINGMARUBOZU over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one."></ta-chart>
 
 <div class="ta-chart-links">
 

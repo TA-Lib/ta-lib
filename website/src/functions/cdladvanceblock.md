@@ -9,7 +9,7 @@ Three-candle bearish reversal pattern: three white candles with consecutively hi
 
 ## Chart
 
-<ta-chart src="/functions/cdladvanceblock.svg" ratio="720:274" label="CDLADVANCEBLOCK over WBTC/USDC (Uniswap v3), daily, 2022" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdladvanceblock.svg" ratio="720:274" label="CDLADVANCEBLOCK over WBTC/USDC (Uniswap v3), daily, 2022" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call."></ta-chart>
 
 <div class="ta-chart-links">
 

@@ -9,7 +9,7 @@ Single-candle Doji recognizer: fires when the real body (|close-open|) is at or 
 
 ## Chart
 
-<ta-chart src="/functions/cdldoji.svg" ratio="720:274" label="CDLDOJI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+<ta-chart src="/functions/cdldoji.svg" ratio="720:274" label="CDLDOJI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as an arrow up from the bottom of the pane to below the low of every bar it flags."></ta-chart>
 
 <div class="ta-chart-links">
 

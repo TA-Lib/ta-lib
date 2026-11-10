@@ -9,7 +9,7 @@ A three-candle pattern of three white candles with consecutively higher closes w
 
 ## Chart
 
-<ta-chart src="/functions/cdlstalledpattern.svg" ratio="720:274" label="CDLSTALLEDPATTERN over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlstalledpattern.svg" ratio="720:274" label="CDLSTALLEDPATTERN over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call."></ta-chart>
 
 <div class="ta-chart-links">
 

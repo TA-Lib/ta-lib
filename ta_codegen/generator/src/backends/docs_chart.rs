@@ -44,7 +44,7 @@ const SERIES_CAPTION: &str = "IBM, daily, 1999";
 /// The chart's whole look, shipped inside every SVG: the `var(--vp-c-*, fallback)` hooks
 /// take the site's theme when the component inlines the file, and the fallbacks make the
 /// bare file render on its own (noscript image, direct link, a crawler).
-pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .level{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:6 4}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .hollow{fill:none;stroke-width:1.2}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}.ta-chart .credit{font-size:10px}";
+pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-bull:#1a8cff;--ta-bear:#ff9500;--ta-mark:#8b5cf6;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500;--ta-bull:#4dacff;--ta-bear:#ffb340;--ta-mark:#b69cff}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .level{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:6 4}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .gbull stop{stop-color:var(--ta-bull)}.ta-chart .gbear stop{stop-color:var(--ta-bear)}.ta-chart .gmark stop{stop-color:var(--ta-mark)}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}.ta-chart .credit{font-size:10px}";
 
 
 /// The reference run's CSV, as `ta_refdata` lays it out: `#` header lines, then
@@ -479,8 +479,6 @@ enum LegendMark<'a> {
     Line { cls: &'a str, dashed: bool },
     Dot(&'a str),
     Diamond(&'a str),
-    /// A sign marker pair in a slot colour.
-    Sign(&'a str),
     Hist,
     /// An up and a down candle.
     Candles,
@@ -518,6 +516,9 @@ fn join_and(parts: &[String]) -> String {
 
 struct Canvas<'a> {
     out: String,
+    /// Unique per page: the SVG is inlined, so its element ids share the page's.
+    id: String,
+    defs: bool,
     data: &'a RefData,
     n: usize,
     bw: f64,
@@ -530,6 +531,8 @@ impl<'a> Canvas<'a> {
         let slots = (bars as f64 + f64::from(max_shift)).max(1.0);
         Canvas {
             out: String::with_capacity(16 * 1024),
+            id: String::new(),
+            defs: false,
             data,
             n: bars,
             bw: (W - PAD_L - PAD_R) / slots,
@@ -546,6 +549,31 @@ impl<'a> Canvas<'a> {
 
     fn x_of(&self, i: usize) -> f64 {
         self.bar_x(i, 0).unwrap_or(PAD_L)
+    }
+
+    /// A marker's half-width: a candle body's, so markers on consecutive bars
+    /// never touch.
+    fn mark_hw(&self) -> f64 {
+        (self.bw * 0.36).max(0.6)
+    }
+
+    /// A call arrow (see `arrow`) filled with the `cls` gradient, fading toward the pane edge.
+    fn call_arrow(&mut self, cls: &str, x: f64, apex: f64, edge: f64, up: bool, heads: u32) {
+        if !self.defs {
+            self.defs = true;
+            let _ = write!(self.out, "<defs>");
+            for (g, down) in [("bull", false), ("bear", true), ("mark", false)] {
+                let (y1, y2) = if down { (0, 1) } else { (1, 0) };
+                let _ = write!(
+                    self.out,
+                    "<linearGradient id=\"{}-{g}\" class=\"g{g}\" x1=\"0\" y1=\"{y1}\" x2=\"0\" y2=\"{y2}\"><stop offset=\"0\" stop-opacity=\".12\"/><stop offset=\"1\"/></linearGradient>",
+                    self.id
+                );
+            }
+            let _ = writeln!(self.out, "</defs>");
+        }
+        let d = arrow(x, apex, edge, self.mark_hw(), up, heads);
+        let _ = writeln!(self.out, "<path class=\"{cls}\" fill=\"url(#{}-{cls})\" d=\"{d}\"/>", self.id);
     }
 
     /// Where a marker for bar `i` drawn `shift` bars later sits: its x and the
@@ -779,18 +807,6 @@ impl<'a> Canvas<'a> {
                     );
                     x += 14.0;
                 }
-                LegendMark::Sign(cls) => {
-                    let _ = writeln!(
-                        self.out,
-                        "<path class=\"f{}\" d=\"M{} {}l-4 6h8zM{} {}l-4 -6h8z\"/>",
-                        slot_digit(cls),
-                        fmt(x + 4.0),
-                        fmt(y - 9.0),
-                        fmt(x + 13.0),
-                        fmt(y - 1.0)
-                    );
-                    x += 20.0;
-                }
                 LegendMark::Hist => {
                     let _ = writeln!(
                         self.out,
@@ -850,6 +866,8 @@ impl<'a> Canvas<'a> {
 /// Where each output is drawn; derived from the metadata alone.
 struct Plan<'a> {
     candles: bool,
+    /// A Pattern Recognition function: its flags are arrows, not slot-coloured diamonds.
+    candlestick: bool,
     has_vol: bool,
     price_outs: Vec<&'a Output>,
     ind_outs: Vec<&'a Output>,
@@ -901,6 +919,7 @@ fn plan<'a>(func: &'a FuncDef, data: &RefData) -> Plan<'a> {
     let ints: Vec<&Output> = func.outputs.iter().filter(|o| o.param_type == ParamType::Integer).collect();
     let mut p = Plan {
         candles,
+        candlestick: is_candle,
         has_vol,
         price_outs: Vec::new(),
         ind_outs: Vec::new(),
@@ -1178,6 +1197,7 @@ fn draw_pattern_markers<'p>(
         let vals = data.output(&o.name);
         let sh = data.shift(&o.name);
         let is_bool = has(&o.flags, "pattern_bool");
+        let diamond = is_bool && !plan.candlestick;
         let bcls = SLOTS[k % SLOTS.len()];
         let mut hits = 0u32;
         let (mut saw_weak, mut saw_confirm) = (false, false);
@@ -1187,12 +1207,12 @@ fn draw_pattern_markers<'p>(
                 continue;
             }
             hits += 1;
-            let hollow = v.abs() == 80.0;
-            let ring = v.abs() == 200.0;
-            saw_weak |= hollow;
-            saw_confirm |= ring;
+            let weak = v.abs() == 80.0;
+            let confirm = v.abs() == 200.0;
+            saw_weak |= weak;
+            saw_confirm |= confirm;
             let Some((x, bar_high, bar_low)) = cv.marker_bar(i, sh) else { continue };
-            if is_bool {
+            if diamond {
                 let yy = price.sy(bar_high) - 6.0;
                 let _ = writeln!(
                     cv.out,
@@ -1203,42 +1223,33 @@ fn draw_pattern_markers<'p>(
                 );
                 continue;
             }
-            let (yy, cls, d) = if v > 0.0 {
-                let yy = price.sy(bar_low) + 5.0;
-                (yy, "up", format!("M{} {}l-4 6h8z", fmt(x), fmt(yy)))
-            } else {
-                let yy = price.sy(bar_high) - 5.0;
-                (yy, "down", format!("M{} {}l-4 -6h8z", fmt(x), fmt(yy)))
-            };
-            let _ = writeln!(
-                cv.out,
-                "<path class=\"{cls}{}\" d=\"{d}\"/>",
-                if hollow { " hollow" } else { "" }
-            );
-            if ring {
-                let _ = writeln!(
-                    cv.out,
-                    "<circle class=\"{cls} hollow\" r=\"6.5\" cx=\"{}\" cy=\"{}\"/>",
-                    fmt(x),
-                    fmt(yy + if v > 0.0 { 4.0 } else { -4.0 })
-                );
+            if is_bool {
+                cv.call_arrow("mark", x, price.sy(bar_low) + 4.0, price.y + price.h, true, 1);
+                continue;
             }
+            let up = v > 0.0;
+            let apex = if up { price.sy(bar_low) + 4.0 } else { price.sy(bar_high) - 4.0 };
+            let edge = if up { price.y + price.h } else { price.y };
+            let heads = if weak { 0 } else if confirm { 2 } else { 1 };
+            cv.call_arrow(if up { "bull" } else { "bear" }, x, apex, edge, up, heads);
         }
         let none = hits == 0 || data.flagged == Some(0);
         legend.push(LegendItem {
-            mark: if is_bool { LegendMark::Diamond(bcls) } else { LegendMark::None },
+            mark: if diamond { LegendMark::Diamond(bcls) } else { LegendMark::None },
             text: occurrence_text(&o.name, hits, none),
         });
-        let mut ph = if is_bool {
+        let mut ph = if diamond {
             format!("{} as a diamond above the high of every bar it flags", o.name)
+        } else if is_bool {
+            format!("{} as an arrow up from the bottom of the pane to below the low of every bar it flags", o.name)
         } else {
             let mut calls: Vec<String> = Vec::new();
             if has(&o.flags, "positive") {
-                calls.push("\u{25B2} below the low for a bullish call".to_string());
+                calls.push("an arrow up from the bottom of the pane to below the low for a bullish call".to_string());
             }
             if has(&o.flags, "negative") {
                 calls.push(format!(
-                    "\u{25BC} above the high for a bearish {}",
+                    "an arrow down from the top of the pane to above the high for a bearish {}",
                     if calls.is_empty() { "call" } else { "one" }
                 ));
             }
@@ -1251,10 +1262,10 @@ fn draw_pattern_markers<'p>(
         if !is_bool {
             let mut grades = Vec::new();
             if saw_weak || has(&o.flags, "pattern_weak") {
-                grades.push("a weak call (80) hollow".to_string());
+                grades.push("a weak call (80) with a round end and no head".to_string());
             }
             if saw_confirm || has(&o.flags, "pattern_confirm") {
-                grades.push("a confirmed call (200) ringed".to_string());
+                grades.push("a confirmed call (200) with a double head".to_string());
             }
             if !grades.is_empty() {
                 let _ = write!(ph, ", {}", join_and(&grades));
@@ -1269,6 +1280,43 @@ fn draw_pattern_markers<'p>(
     phrases
 }
 
+const HEAD_H: f64 = 7.0;
+/// Clearance between the pane edge and a call arrow's neck when the bar sits at the edge.
+const MIN_SHAFT: f64 = 4.0;
+
+/// A filled arrow, tip at `(x, apex)`, pointing up when `up`, its body as wide
+/// as its heads and running from the pane edge `edge` to the candle: `heads`
+/// heads stacked tip to base, or none and a round end. Fill only: a stroke
+/// would widen it past the candle body.
+fn arrow(x: f64, apex: f64, edge: f64, hw: f64, up: bool, heads: u32) -> String {
+    let dir = if up { 1.0 } else { -1.0 };
+    let neck = apex + dir * if heads == 0 { hw } else { f64::from(heads) * HEAD_H };
+    let tail = if up { edge.max(neck + MIN_SHAFT) } else { edge.min(neck - MIN_SHAFT) };
+    if heads == 0 {
+        return format!(
+            "M{} {}V{}A{r} {r} 0 0 {} {} {}V{}Z",
+            fmt(x - hw),
+            fmt(tail),
+            fmt(neck),
+            u8::from(up),
+            fmt(x + hw),
+            fmt(neck),
+            fmt(tail),
+            r = fmt(hw)
+        );
+    }
+    let mut d = format!("M{} {}V{}H{}V{}Z", fmt(x - hw), fmt(tail), fmt(neck), fmt(x + hw), fmt(tail));
+    for k in 0..heads {
+        d.push_str(&wedge_h(x, apex + dir * f64::from(k) * HEAD_H, hw, up, HEAD_H));
+    }
+    d
+}
+
+fn wedge_h(x: f64, apex: f64, hw: f64, up: bool, h: f64) -> String {
+    let h = if up { h } else { -h };
+    format!("M{} {}l{} {}h{}z", fmt(x), fmt(apex), fmt(-hw), fmt(h), fmt(2.0 * hw))
+}
+
 fn occurrence_text(name: &str, hits: u32, none: bool) -> String {
     if none {
         format!("{name}: no occurrence in the reference data")
@@ -1277,8 +1325,8 @@ fn occurrence_text(name: &str, hits: u32, none: bool) -> String {
     }
 }
 
-/// A candlestick function's plain integer output as markers in its slot colour:
-/// the sign is the candle's colour, not a call, so the marker says only which.
+/// A candlestick function's plain integer output as neutral arrows: its sign is
+/// the candle's colour, not a call, so a bull or bear arrow would misread it.
 fn draw_sign_markers<'p>(
     cv: &mut Canvas<'_>,
     plan: &Plan<'p>,
@@ -1287,32 +1335,23 @@ fn draw_sign_markers<'p>(
 ) -> Vec<String> {
     let data = cv.data;
     let mut phrases: Vec<String> = Vec::new();
-    for (k, o) in plan.sign_outs.iter().enumerate() {
+    for o in &plan.sign_outs {
         let vals = data.output(&o.name);
         let sh = data.shift(&o.name);
-        let cls = SLOTS[(plan.pattern_outs.len() + k) % SLOTS.len()];
         let mut hits = 0u32;
-        let mut d = String::new();
         for (i, v) in vals.iter().enumerate() {
             let Some(v) = *v else { continue };
             if v == 0.0 {
                 continue;
             }
             hits += 1;
-            let Some((x, bar_high, bar_low)) = cv.marker_bar(i, sh) else { continue };
-            if v > 0.0 {
-                let _ = write!(d, "M{} {}l-4 -6h8z", fmt(x), fmt(price.sy(bar_high) - 5.0));
-            } else {
-                let _ = write!(d, "M{} {}l-4 6h8z", fmt(x), fmt(price.sy(bar_low) + 5.0));
-            }
-        }
-        if !d.is_empty() {
-            let _ = writeln!(cv.out, "<path class=\"f{}\" d=\"{d}\"/>", slot_digit(cls));
+            let Some((x, _, bar_low)) = cv.marker_bar(i, sh) else { continue };
+            cv.call_arrow("mark", x, price.sy(bar_low) + 4.0, price.y + price.h, true, 1);
         }
         let none = hits == 0 || data.flagged == Some(0);
-        legend.push(LegendItem { mark: LegendMark::Sign(cls), text: occurrence_text(&o.name, hits, none) });
+        legend.push(LegendItem { mark: LegendMark::None, text: occurrence_text(&o.name, hits, none) });
         let mut ph = format!(
-            "{} as markers on the candles by sign (the candle's colour), \u{25B2} above the high for + and \u{25BC} below the low for \u{2212}",
+            "{} as an arrow up from the bottom of the pane to below the low of every bar it flags, either sign (the candle's colour shows which)",
             o.name
         );
         ph.push_str(&shift_phrase(sh));
@@ -1661,6 +1700,7 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     scale_price_pane(&mut price, &plan, data, &base);
 
     let mut cv = Canvas::new(data, bars, max_shift);
+    cv.id = func.name.to_lowercase();
     let label = chart_label(func, data, &synthetic);
     let _ = writeln!(
         cv.out,
@@ -1932,30 +1972,73 @@ mod tests {
         let d = candle_csv("; flagged bars: 1", "outA (shift -2) outB (shift -2)", &["0,0", "0,0", "100,-100", "0,0", "0,0"]);
         let chart = render(&f, &d);
         let p = price_pane(&d);
-        let (x0, high0) = (fmt(PAD_L + 0.5 * (W - PAD_L - PAD_R) / 5.0), p.sy(d.high[0]));
+        let high0 = p.sy(d.high[0]);
         assert_eq!(
-            first_path(&chart.svg, "<path class=\"f1\"").as_deref(),
-            Some(format!("M{x0} {}l4 4l-4 4l-4 -4z", fmt(high0 - 10.0)).as_str()),
+            first_path(&chart.svg, "<path class=\"mark\"").as_deref(),
+            Some(arrow(PAD_L + 0.5 * (W - PAD_L - PAD_R) / 5.0, p.sy(d.low[0]) + 4.0, p.y + p.h, 0.36 * (W - PAD_L - PAD_R) / 5.0, true, 1).as_str()),
             "{}",
             chart.svg
         );
         assert_eq!(
-            first_path(&chart.svg, "<path class=\"down\"").as_deref(),
-            Some(format!("M{x0} {}l-4 -6h8z", fmt(high0 - 5.0)).as_str()),
+            first_path(&chart.svg, "<path class=\"bear\"").as_deref(),
+            Some(arrow(PAD_L + 0.5 * (W - PAD_L - PAD_R) / 5.0, high0 - 4.0, p.y, 0.36 * (W - PAD_L - PAD_R) / 5.0, false, 1).as_str()),
             "{}",
             chart.svg
         );
         // Shifted off the plot: no marker, the hit still counts.
         let d = candle_csv("; flagged bars: 1", "outA (shift -2) outB (shift -2)", &["0,0", "100,100", "0,0", "0,0", "0,0"]);
         let chart = render(&f, &d);
-        assert!(first_path(&chart.svg, "<path class=\"f1\" d=\"M").unwrap().starts_with("M17 9l4 4"), "{}", chart.svg);
-        assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
+        assert!(first_path(&chart.svg, "<path class=\"mark\"").is_none(), "{}", chart.svg);
+        assert!(first_path(&chart.svg, "<path class=\"bull\" d=\"M").is_none(), "{}", chart.svg);
         assert!(chart.svg.contains(">outA: 1 bar flagged<") && chart.svg.contains(">outB: 1 bar flagged<"), "{}", chart.svg);
         // Shifted past the last bar: the same.
         let d = candle_csv("; flagged bars: 1", "outA (shift 2) outB (shift 2)", &["0,0", "0,0", "0,0", "0,0", "100,100"]);
         let chart = render(&f, &d);
-        assert!(first_path(&chart.svg, "<path class=\"f1\" d=\"M").unwrap().starts_with("M17 9l4 4"), "{}", chart.svg);
-        assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
+        assert!(first_path(&chart.svg, "<path class=\"mark\"").is_none(), "{}", chart.svg);
+        assert!(first_path(&chart.svg, "<path class=\"bull\" d=\"M").is_none(), "{}", chart.svg);
+    }
+
+    /// A call's grade is its arrow's heads: one for 100, two stacked for 200, and
+    /// none for 80, whose body ends round; every arrow is a candle body wide and
+    /// runs from the pane edge.
+    #[test]
+    fn a_calls_grade_is_its_arrows_heads() {
+        let f = func("P", &["candlestick"], vec![], vec![out("outA", ParamType::Integer, &["pattern_bull_bear", "positive", "negative"])]);
+        let d = candle_csv("; flagged bars: 3", "outA (shift 0)", &["100", "0", "-200", "0", "80"]);
+        let chart = render(&f, &d);
+        let arrows: Vec<&str> = chart.svg.lines().filter(|l| l.starts_with("<path class=\"bull\"") || l.starts_with("<path class=\"bear\"")).collect();
+        assert_eq!(arrows.len(), 3, "{}", chart.svg);
+        let heads = |l: &str| l.matches('z').count();
+        assert_eq!((heads(arrows[0]), heads(arrows[1]), heads(arrows[2])), (1, 2, 0), "{}", chart.svg);
+        assert!(arrows[2].contains('A'), "{}", arrows[2]);
+        let p = price_pane(&d);
+        let tail = |l: &str| -> f64 { l.split("d=\"M").nth(1).unwrap().split(['V', ' ']).nth(1).unwrap().parse().unwrap() };
+        assert!(tail(arrows[0]) >= p.y + p.h - 0.1, "bullish from the pane bottom: {}", arrows[0]);
+        assert!(tail(arrows[1]) <= p.y + 0.1, "bearish from the pane top: {}", arrows[1]);
+        assert_eq!(chart.svg.matches("<defs>").count(), 1, "{}", chart.svg);
+        let bw = (W - PAD_L - PAD_R) / 5.0;
+        let x0 = PAD_L + 0.5 * bw;
+        let a = arrow(x0, 50.0, 200.0, 0.36 * bw, true, 1);
+        assert!(a.starts_with(&format!("M{} ", fmt(x0 - 0.36 * bw))) && a.contains(&format!("H{}", fmt(x0 + 0.36 * bw))), "{a}");
+        assert!(chart.sentence.contains("a weak call (80) with a round end and no head and a confirmed call (200) with a double head"), "{}", chart.sentence);
+    }
+
+    /// Outside Pattern Recognition a `pattern_bool` output stays a diamond in its
+    /// slot colour, so two of them (FRACTAL's swing high and low) stay apart.
+    #[test]
+    fn a_non_candlestick_flag_is_a_slot_coloured_diamond() {
+        let f = func(
+            "F",
+            &[],
+            vec![],
+            vec![out("outA", ParamType::Integer, &["pattern_bool"]), out("outB", ParamType::Integer, &["pattern_bool"])],
+        );
+        let d = candle_csv("; flagged bars: 2", "outA (shift 0) outB (shift 0)", &["0,0", "100,0", "0,0", "0,100", "0,0"]);
+        let chart = render(&f, &d);
+        assert!(!chart.svg.contains("class=\"mark\""), "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<path class=\"f1\" d=\"M").count(), 2, "plot and legend: {}", chart.svg);
+        assert_eq!(chart.svg.matches("<path class=\"f2\" d=\"M").count(), 2, "plot and legend: {}", chart.svg);
+        assert!(chart.sentence.contains("outA as a diamond above the high"), "{}", chart.sentence);
     }
 
     /// Levels outside the data still reach the pane: a rule and a label each, and
@@ -1993,17 +2076,17 @@ mod tests {
         let bull = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]);
         let d = candle_csv("; flagged bars: 1", "outInteger (shift 0)", &["0", "0", "-100", "0", "0"]);
         let s = render(&func("CDLX", &["candlestick"], vec![], vec![both]), &d).sentence;
-        assert!(s.contains("outInteger as markers on the candles, \u{25B2} below the low for a bullish call and \u{25BC} above the high for a bearish one"), "{s}");
+        assert!(s.contains("outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one"), "{s}");
         let s = render(&func("CDL3BLACKCROWS", &["candlestick"], vec![], vec![bear]), &d).sentence;
-        assert!(s.contains("outInteger as markers on the candles, \u{25BC} above the high for a bearish call"), "{s}");
+        assert!(s.contains("outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call"), "{s}");
         assert!(!s.contains('\u{25B2}') && !s.contains("bullish"), "{s}");
         let s = render(&func("CDLX", &["candlestick"], vec![], vec![bull]), &d).sentence;
-        assert!(s.contains("outInteger as markers on the candles, \u{25B2} below the low for a bullish call"), "{s}");
+        assert!(s.contains("outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call"), "{s}");
         assert!(!s.contains('\u{25BC}') && !s.contains("bearish"), "{s}");
     }
 
-    /// A candlestick function's plain integer output is a slot-coloured marker by
-    /// sign, above the high for + and below the low for -, never a step pane.
+    /// A candlestick function's plain integer output is a neutral arrow onto the
+    /// low whatever its sign, never a bull/bear arrow and never a step pane.
     #[test]
     fn a_candle_sign_output_marks_the_candles() {
         let f = func("CDLX", &["candlestick"], vec![], vec![out("outInteger", ParamType::Integer, &["line", "zero", "positive", "negative"])]);
@@ -2011,16 +2094,18 @@ mod tests {
         let chart = render(&f, &d);
         assert!(!chart.svg.contains("<polyline class=\"line s1\""), "{}", chart.svg);
         let p = price_pane(&d);
-        let x = |i: f64| fmt(PAD_L + (i + 0.5) * (W - PAD_L - PAD_R) / 5.0);
+        let xf = |i: f64| PAD_L + (i + 0.5) * (W - PAD_L - PAD_R) / 5.0;
+        let hw = 0.36 * (W - PAD_L - PAD_R) / 5.0;
         assert_eq!(
-            first_path(&chart.svg, "<path class=\"f1\"").as_deref(),
-            Some(format!("M{} {}l-4 -6h8zM{} {}l-4 6h8z", x(1.0), fmt(p.sy(d.high[1]) - 5.0), x(3.0), fmt(p.sy(d.low[3]) + 5.0)).as_str()),
+            chart.svg.lines().filter(|l| l.starts_with("<path class=\"mark\"")).map(|l| l.split("d=\"").nth(1).unwrap().split('"').next().unwrap().to_string()).collect::<Vec<_>>(),
+            vec![arrow(xf(1.0), p.sy(d.low[1]) + 4.0, p.y + p.h, hw, true, 1), arrow(xf(3.0), p.sy(d.low[3]) + 4.0, p.y + p.h, hw, true, 1)],
             "{}",
             chart.svg
         );
+        assert!(!chart.svg.contains("class=\"bull\"") && !chart.svg.contains("class=\"bear\""), "{}", chart.svg);
         assert!(chart.svg.contains(">outInteger: 2 bars flagged<"), "{}", chart.svg);
         assert_eq!(chart.height, px(TOP + H_PRICE + H_AXIS + H_CAPTION));
-        assert!(chart.sentence.contains("by sign (the candle's colour), \u{25B2} above the high for + and \u{25BC} below the low for \u{2212}"), "{}", chart.sentence);
+        assert!(chart.sentence.contains("either sign (the candle's colour shows which)"), "{}", chart.sentence);
         assert!(!chart.sentence.contains("bullish"), "{}", chart.sentence);
         let d = candle_csv("; flagged bars: 0", "outInteger (shift 0)", &["0", "0", "0", "0", "0"]);
         let chart = render(&f, &d);
@@ -2383,8 +2468,8 @@ mod tests {
             assert!(!chart.sentence.contains('[') && !chart.sentence.contains("->"), "{}: {}", f.name, chart.sentence);
             for o in &f.outputs {
                 if o.flags.iter().any(|fl| fl == "pattern_bull_bear") {
-                    assert_eq!(chart.sentence.contains('\u{25B2}'), has(&o.flags, "positive"), "{}: {}", f.name, chart.sentence);
-                    assert_eq!(chart.sentence.contains('\u{25BC}'), has(&o.flags, "negative"), "{}: {}", f.name, chart.sentence);
+                    assert_eq!(chart.sentence.contains("for a bullish call"), has(&o.flags, "positive"), "{}: {}", f.name, chart.sentence);
+                    assert_eq!(chart.sentence.contains("for a bearish"), has(&o.flags, "negative"), "{}: {}", f.name, chart.sentence);
                 }
             }
         }

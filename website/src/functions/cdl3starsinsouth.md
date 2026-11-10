@@ -9,7 +9,7 @@ A three-candle bullish reversal pattern of three consecutive black candles that 
 
 ## Chart
 
-<ta-chart src="/functions/cdl3starsinsouth.svg" ratio="720:274" label="CDL3STARSINSOUTH over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdl3starsinsouth.svg" ratio="720:274" label="CDL3STARSINSOUTH over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 

@@ -9,7 +9,7 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 ## Chart
 
-<ta-chart src="/functions/cdlmorningdojistar.svg" ratio="720:274" label="CDLMORNINGDOJISTAR over WBTC/USDC (Uniswap v3), daily, 2022" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlmorningdojistar.svg" ratio="720:274" label="CDLMORNINGDOJISTAR over WBTC/USDC (Uniswap v3), daily, 2022" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 

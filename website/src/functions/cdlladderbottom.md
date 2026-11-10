@@ -9,7 +9,7 @@ Five-candle bullish reversal pattern: three consecutively lower black candles, a
 
 ## Chart
 
-<ta-chart src="/functions/cdlladderbottom.svg" ratio="720:274" label="CDLLADDERBOTTOM over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlladderbottom.svg" ratio="720:274" label="CDLLADDERBOTTOM over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 

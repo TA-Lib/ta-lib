@@ -9,7 +9,7 @@ A two-candle pattern: a long black candle followed by a white candle that opens 
 
 ## Chart
 
-<ta-chart src="/functions/cdlthrusting.svg" ratio="720:274" label="CDLTHRUSTING over WBTC/USDC (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlthrusting.svg" ratio="720:274" label="CDLTHRUSTING over WBTC/USDC (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call."></ta-chart>
 
 <div class="ta-chart-links">
 
