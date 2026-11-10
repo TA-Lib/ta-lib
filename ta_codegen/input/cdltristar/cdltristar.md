@@ -7,7 +7,8 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 ## Notes
 
 - This reversal pattern does not verify the prior trend it classically assumes.
-- Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))
+- Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/TriStarBull.html), [bearish](https://thepatternsite.com/TriStarBear.html)), and TA-Lib finds it 5 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

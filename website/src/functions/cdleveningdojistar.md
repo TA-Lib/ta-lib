@@ -24,6 +24,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 ## Notes
 
 - Does not verify the preceding uptrend the bearish reversal classically assumes.
+- Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it occurs ([Evening Doji Star](https://thepatternsite.com/EveningDojiStar.html)). TA-Lib finds it more often in crypto: 25 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

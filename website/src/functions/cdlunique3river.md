@@ -24,6 +24,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 ## Notes
 
 - Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 89th of 103 patterns by how often it occurs ([Unique Three River Bottom](https://thepatternsite.com/Unique3RiverBottom.html)), and TA-Lib finds it 5 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

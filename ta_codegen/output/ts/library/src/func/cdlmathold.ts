@@ -387,6 +387,11 @@ export function cdlmatholdDisplayShift(outputIdx: number, options?: CdlmatholdOp
  *   measured "will likely be wrong or at least subject to large change as
  *   additional samples become available."
  *   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
+ *   93rd of 103 patterns by how often it occurs ([Mat
+ *   Hold](https://thepatternsite.com/MatHold.html)), and TA-Lib finds it once in
+ *   [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

@@ -331,6 +331,12 @@ export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3line
  *   the opposite in practice — it acted as a reversal far more often than a
  *   continuation — so traders who follow his research read this pattern's signal
  *   in the opposite direction from what its sign here suggests.
+ * - Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th
+ *   of 103 patterns by how often they occur
+ *   ([bullish](https://thepatternsite.com/ThreeLineStrikeBull.html),
+ *   [bearish](https://thepatternsite.com/ThreeLineStrikeBear.html)). TA-Lib finds
+ *   it more often in crypto: 67 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

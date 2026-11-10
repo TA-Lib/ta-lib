@@ -326,6 +326,12 @@ export function cdlseparatinglinesDisplayShift(outputIdx: number, options?: Cdls
  *
  * **Notes**
  * - A prior trend is not verified, nor that the pattern aligns with it.
+ * - Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd
+ *   of 103 patterns by how often they occur
+ *   ([bullish](https://thepatternsite.com/SeparateLinesBull.html),
+ *   [bearish](https://thepatternsite.com/SeparateLinesBear.html)). TA-Lib finds it
+ *   more often in crypto: 120 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

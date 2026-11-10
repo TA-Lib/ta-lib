@@ -351,6 +351,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</see>). TA-Lib finds it more often in crypto: 19 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -444,6 +445,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</see>). TA-Lib finds it more often in crypto: 19 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

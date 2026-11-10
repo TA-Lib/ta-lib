@@ -342,6 +342,16 @@ export function cdlkickingbylengthDisplayShift(outputIdx: number, options?: Cdlk
  * Formula and more info at
  * [ta-lib.org/functions/cdlkickingbylength](https://ta-lib.org/functions/cdlkickingbylength).
  *
+ * **Notes**
+ * - Rare: it fires on the same bars as
+ *   [`CDLKICKING`](https://ta-lib.org/functions/cdlkicking), so a few years of one
+ *   symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form
+ *   100th and bearish 102nd of 103 patterns by how often they occur
+ *   ([bullish](https://thepatternsite.com/KickingBull.html),
+ *   [bearish](https://thepatternsite.com/KickingBear.html)), and TA-Lib finds none
+ *   in [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
+ *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlkickingbylengthLookback} is a success with empty outputs.

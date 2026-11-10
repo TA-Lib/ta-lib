@@ -365,6 +365,10 @@ export function cdlmorningdojistarDisplayShift(outputIdx: number, options?: Cdlm
  * - The gap-down is measured between the candles' real bodies, not between their
  *   high/low ranges.
  * - A prior downtrend is not verified.
+ * - Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it
+ *   occurs ([Morning Doji Star](https://thepatternsite.com/MorningDojiStar.html)).
+ *   TA-Lib finds it more often in crypto: 19 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

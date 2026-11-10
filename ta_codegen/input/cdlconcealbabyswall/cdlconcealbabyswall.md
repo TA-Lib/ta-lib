@@ -8,6 +8,7 @@ A four-candle pattern: two black marubozus, then a black candle that gaps down b
 
 - Does not verify the preceding downtrend the pattern classically assumes.
 - Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it last of 103 patterns by how often it occurs ([Concealing Baby Swallow](https://thepatternsite.com/ConcealBaby.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

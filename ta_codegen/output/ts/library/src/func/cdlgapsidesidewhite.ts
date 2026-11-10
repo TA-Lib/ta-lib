@@ -319,12 +319,16 @@ export function cdlgapsidesidewhiteDisplayShift(outputIdx: number, options?: Cdl
  *
  * **Notes**
  * - Does not verify the prior trend the continuation signal classically assumes.
- * - Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7
- *   million candle lines, frequency rank 73/103) but continues as labeled 66% of
- *   the time; the bearish form is rarer still (frequency rank 86/103) and its 56%
- *   continuation rate is "near random" — Bulkowski cautions the bearish sample is
- *   too thin to trust.
+ * - Bulkowski's data shows the bullish form continues as labeled 66% of the time;
+ *   the bearish form's 56% continuation rate is "near random", and Bulkowski
+ *   cautions the bearish sample is too thin to trust.
  *   ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
+ * - Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th
+ *   of 103 patterns by how often they occur
+ *   ([bullish](https://thepatternsite.com/SidebySideWhiteLinesBull.html),
+ *   [bearish](https://thepatternsite.com/SidebySideWhiteLinesBear.html)). TA-Lib
+ *   finds it more often in crypto: 18 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

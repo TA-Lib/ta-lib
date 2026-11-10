@@ -303,6 +303,11 @@ export function cdl2crowsDisplayShift(outputIdx: number, options?: Cdl2crowsOpti
  *   random" — despite the pattern's classic always-bearish label; the breakout
  *   direction cannot be predicted with any real accuracy.
  *   ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
+ *   64th of 103 patterns by how often it occurs ([Two
+ *   Crows](https://thepatternsite.com/TwoCrows.html)), and TA-Lib finds it once in
+ *   [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

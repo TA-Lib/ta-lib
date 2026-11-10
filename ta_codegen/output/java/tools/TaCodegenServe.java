@@ -23125,6 +23125,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
         * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<a href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/TwoCrows.html">Two Crows</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -23195,6 +23196,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
         * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<a href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/TwoCrows.html">Two Crows</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -23929,6 +23931,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</a>), and TA-Lib finds it 13 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -23998,6 +24001,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</a>), and TA-Lib finds it 13 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -25645,6 +25649,7 @@ class Core {
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
         * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). TA-Lib finds it more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -25717,6 +25722,7 @@ class Core {
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
         * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). TA-Lib finds it more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -27238,6 +27244,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
         * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<a href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 99th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ThreeStarsSouth.html">Three Stars in the South</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -27310,6 +27317,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
         * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<a href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 99th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ThreeStarsSouth.html">Three Stars in the South</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -29574,7 +29582,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
-        * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski found the Abandoned Baby unusually reliable when it does occur: 70% success as a reversal, overall performance rank 9 of 103. (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 92nd and the bearish 96th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/AbandonBabyBull.html">bullish</a>, <a href="https://thepatternsite.com/AbandonBaby.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -29649,7 +29658,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
-        * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski found the Abandoned Baby unusually reliable when it does occur: 70% success as a reversal, overall performance rank 9 of 103. (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 92nd and the bearish 96th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/AbandonBabyBull.html">bullish</a>, <a href="https://thepatternsite.com/AbandonBaby.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -32711,6 +32721,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
         * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<a href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 97th and the bearish 98th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/BullBreakaway.html">bullish</a>, <a href="https://thepatternsite.com/BearBreakaway.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -32782,6 +32793,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
         * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<a href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 97th and the bearish 98th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/BullBreakaway.html">bullish</a>, <a href="https://thepatternsite.com/BearBreakaway.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -34370,6 +34382,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
         * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<a href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it last of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ConcealBaby.html">Concealing Baby Swallow</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -34438,6 +34451,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
         * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<a href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it last of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/ConcealBaby.html">Concealing Baby Swallow</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -35246,6 +35260,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
         * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<a href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</a>, <a href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -35316,6 +35331,7 @@ class Core {
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
         * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<a href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</a>, <a href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -39851,6 +39867,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/EveningDojiStar.html">Evening Doji Star</a>). TA-Lib finds it more often in crypto: 25 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -39925,6 +39942,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/EveningDojiStar.html">Evening Doji Star</a>). TA-Lib finds it more often in crypto: 25 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -41681,7 +41699,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
-        * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's data shows the bullish form continues as labeled 66% of the time; the bearish form's 56% continuation rate is "near random", and Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">bullish</a>, <a href="https://thepatternsite.com/SidebySideWhiteLinesBear.html">bearish</a>). TA-Lib finds it more often in crypto: 18 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -41752,7 +41771,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
-        * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's data shows the bullish form continues as labeled 66% of the time; the bearish form's 56% continuation rate is "near random", and Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">bullish</a>, <a href="https://thepatternsite.com/SidebySideWhiteLinesBear.html">bearish</a>). TA-Lib finds it more often in crypto: 18 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -50461,6 +50481,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>
         * <li>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/Identical3Crows.html">Identical Three Crows</a>). TA-Lib finds it more often in crypto: 180 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -50530,6 +50551,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>
         * <li>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/Identical3Crows.html">Identical Three Crows</a>). TA-Lib finds it more often in crypto: 180 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -51381,6 +51403,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
         * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and TA-Lib finds it 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -51452,6 +51475,7 @@ class Core {
         * <ul>
         * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
         * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and TA-Lib finds it 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -53143,7 +53167,8 @@ class Core {
         * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -53211,7 +53236,8 @@ class Core {
         * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -54078,6 +54104,10 @@ class Core {
         * signal whose bull/bear bias is set by the longer of the two marubozu.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Rare: it fires on the same bars as <a href="https://ta-lib.org/functions/cdlkicking">{@code CDLKICKING}</a>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -54144,6 +54174,10 @@ class Core {
         * signal whose bull/bear bias is set by the longer of the two marubozu.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Rare: it fires on the same bars as <a href="https://ta-lib.org/functions/cdlkicking">{@code CDLKICKING}</a>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -54933,7 +54967,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
-        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time ("near random"), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 80th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/LadderBottom.html">Ladder Bottom</a>), and TA-Lib finds it 3 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -55004,7 +55039,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
-        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time ("near random"), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 80th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/LadderBottom.html">Ladder Bottom</a>), and TA-Lib finds it 3 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -58838,6 +58874,7 @@ class Core {
         * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
         * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
         * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -58913,6 +58950,7 @@ class Core {
         * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
         * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
         * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -59864,6 +59902,7 @@ class Core {
         * <ul>
         * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
         * <li>A prior downtrend is not verified.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</a>). TA-Lib finds it more often in crypto: 19 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -59941,6 +59980,7 @@ class Core {
         * <ul>
         * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
         * <li>A prior downtrend is not verified.</li>
+        * <li>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</a>). TA-Lib finds it more often in crypto: 19 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -64207,7 +64247,8 @@ class Core {
         * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
         * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
         * <li>The prior trend the continuation reading assumes is not verified.</li>
-        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and TA-Lib finds it 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -64280,7 +64321,8 @@ class Core {
         * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
         * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
         * <li>The prior trend the continuation reading assumes is not verified.</li>
-        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and TA-Lib finds it 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -65195,6 +65237,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/SeparateLinesBull.html">bullish</a>, <a href="https://thepatternsite.com/SeparateLinesBear.html">bearish</a>). TA-Lib finds it more often in crypto: 120 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -65262,6 +65305,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
+        * <li>Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/SeparateLinesBull.html">bullish</a>, <a href="https://thepatternsite.com/SeparateLinesBear.html">bearish</a>). TA-Lib finds it more often in crypto: 120 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -72788,7 +72832,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
-        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -72858,7 +72903,8 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
-        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
+        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -73588,6 +73634,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 89th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/Unique3RiverBottom.html">Unique Three River Bottom</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -73658,6 +73705,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 89th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/Unique3RiverBottom.html">Unique Three River Bottom</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -74437,6 +74485,7 @@ class Core {
         * <ul>
         * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
         * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<a href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 75th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/UpGapTwoCrows.html">Upside Gap Two Crows</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -74507,6 +74556,7 @@ class Core {
         * <ul>
         * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
         * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<a href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</a>)</li>
+        * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 75th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/UpGapTwoCrows.html">Upside Gap Two Crows</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -75220,6 +75270,7 @@ class Core {
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
         * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<a href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Rare in Bulkowski's tests: he ranks the upside form 85th and the downside 84th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/UpGap3Methods.html">upside</a>, <a href="https://thepatternsite.com/DownGap3Methods.html">downside</a>). TA-Lib finds it more often in crypto: 204 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -75292,6 +75343,7 @@ class Core {
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
         * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<a href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</a>)</li>
+        * <li>Rare in Bulkowski's tests: he ranks the upside form 85th and the downside 84th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/UpGap3Methods.html">upside</a>, <a href="https://thepatternsite.com/DownGap3Methods.html">downside</a>). TA-Lib finds it more often in crypto: 204 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -240208,7 +240260,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "2a3e5b608070e589";
+    static final String SPLICED_GENCODE_DIGEST = "2e07045a313b70b9";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

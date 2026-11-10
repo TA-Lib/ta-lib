@@ -367,6 +367,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the bearish reversal classically assumes.</description></item>
    /// <item><description>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/Identical3Crows.html">Identical Three Crows</see>). TA-Lib finds it more often in crypto: 180 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -452,6 +453,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the bearish reversal classically assumes.</description></item>
    /// <item><description>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/Identical3Crows.html">Identical Three Crows</see>). TA-Lib finds it more often in crypto: 180 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

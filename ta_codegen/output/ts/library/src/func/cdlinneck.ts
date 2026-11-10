@@ -314,6 +314,11 @@ export function cdlinneckDisplayShift(outputIdx: number, options?: CdlinneckOpti
  *   — "near random" — though its overall post-breakout performance still ranks a
  *   strong 17th of 103.
  *   ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
+ *   62nd of 103 patterns by how often it occurs ([In
+ *   Neck](https://thepatternsite.com/InNeck.html)), and TA-Lib finds it 9 times in
+ *   [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

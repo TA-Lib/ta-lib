@@ -362,6 +362,10 @@ export function cdleveningdojistarDisplayShift(outputIdx: number, options?: Cdle
  * **Notes**
  * - Does not verify the preceding uptrend the bearish reversal classically
  *   assumes.
+ * - Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it
+ *   occurs ([Evening Doji Star](https://thepatternsite.com/EveningDojiStar.html)).
+ *   TA-Lib finds it more often in crypto: 25 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

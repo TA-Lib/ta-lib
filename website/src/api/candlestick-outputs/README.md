@@ -1,6 +1,6 @@
 ---
 title: Candlestick Outputs
-description: "What the CDL* candlestick pattern functions return: 0 for no pattern, otherwise +/-100, +/-80 for a weaker form or +/-200 for a confirmation, the sign giving the direction where the pattern has one, and the flags that tell a program which values each function returns."
+description: "What the CDL* candlestick pattern functions return: 0 for no pattern, otherwise +/-100, +/-80 for a weaker form or +/-200 for a confirmation, the sign giving the direction where the pattern has one, the flags that tell a program which values each function returns, and how often the rare patterns fire."
 toc: false
 ---
 
@@ -26,6 +26,15 @@ A value describes the candles, not a trade. A pattern does not check the trend b
 ## Reading them from code
 
 You do not have to hard-code any of this. Through the [Abstract API](/api/abstract/), each candlestick function carries flags that say which of these values it can return, so a charting app or a strategy builder can find out at run time.
+
+## How often patterns fire
+
+Many patterns are rare: a few years of one symbol's daily bars may show none, and that is not a bug. The page of each rare pattern says so under **Notes**, with two numbers:
+
+- **Bulkowski's frequency rank.** Thomas Bulkowski ranks the 103 patterns he tested, over about 4.7 million candles, by how often each occurs, 1 being the most frequent. The note links his page for the pattern on [thepatternsite.com](https://thepatternsite.com/CandleEntry.html). His definitions are his own, so TA-Lib can find a pattern more or less often than his rank suggests.
+- **TA-Lib's own count** over about 16,000 daily bars of crypto, May 2021 to November 2026: eight trading pairs on Uniswap v3, Ethereum (WBTC/USDC, WETH/USDC, WETH/USDT, WBTC/WETH, LINK/WETH, UNI/WETH, AAVE/WETH, MKR/WETH), built from the pools' on-chain swaps. Crypto trades around the clock, so a day seldom opens away from the previous close, and a pattern that needs a gap between whole candles almost never fires there.
+
+A pattern counts as rare when Bulkowski ranks either of its forms 78th to 103rd, or when TA-Lib finds it fewer than 16 times in those bars (1 per 1,000).
 
 ## Related pages
 

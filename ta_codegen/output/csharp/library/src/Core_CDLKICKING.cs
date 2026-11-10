@@ -342,7 +342,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/KickingBull.html">bullish</see>, <see href="https://thepatternsite.com/KickingBear.html">bearish</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -426,7 +427,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/KickingBull.html">bullish</see>, <see href="https://thepatternsite.com/KickingBear.html">bearish</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

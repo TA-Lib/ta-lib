@@ -358,12 +358,17 @@ export function cdlrisefall3methodsDisplayShift(outputIdx: number, options?: Cdl
  * - The middle candles need only partially overlap the first candle's range, not
  *   be fully contained within it.
  * - The prior trend the continuation reading assumes is not verified.
- * - Bulkowski's testing found Rising Three Methods continues 74% of the time (102
- *   examples out of 4.7M candle lines) and Falling Three Methods continues 71% of
- *   the time (just 64 examples) — both act as classically labeled, but Bulkowski
- *   flags the samples as too thin to trust: Falling Three Methods is so rare he
- *   omitted its statistics from his book entirely.
+ * - Bulkowski's testing found Rising Three Methods continues 74% of the time and
+ *   Falling Three Methods 71%, both as classically labeled, but he flags both
+ *   samples as too thin to trust and left Falling Three Methods out of his book.
  *   ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
+ *   Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by
+ *   how often they occur
+ *   ([rising](https://thepatternsite.com/Rising3Methods.html),
+ *   [falling](https://thepatternsite.com/Falling3Methods.html)), and TA-Lib finds
+ *   it 12 times in [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

@@ -292,6 +292,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<see href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 89th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/Unique3RiverBottom.html">Unique Three River Bottom</see>), and TA-Lib finds it 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -378,6 +379,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<see href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 89th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/Unique3RiverBottom.html">Unique Three River Bottom</see>), and TA-Lib finds it 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

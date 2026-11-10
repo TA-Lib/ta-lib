@@ -308,6 +308,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend the pattern classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<see href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it last of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ConcealBaby.html">Concealing Baby Swallow</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -392,6 +393,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend the pattern classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<see href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</see>)</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it last of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ConcealBaby.html">Concealing Baby Swallow</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

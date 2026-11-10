@@ -318,6 +318,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>A prior trend is not verified, nor that the pattern aligns with it.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/SeparateLinesBull.html">bullish</see>, <see href="https://thepatternsite.com/SeparateLinesBear.html">bearish</see>). TA-Lib finds it more often in crypto: 120 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -401,6 +402,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>A prior trend is not verified, nor that the pattern aligns with it.</description></item>
+   /// <item><description>Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/SeparateLinesBull.html">bullish</see>, <see href="https://thepatternsite.com/SeparateLinesBear.html">bearish</see>). TA-Lib finds it more often in crypto: 120 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

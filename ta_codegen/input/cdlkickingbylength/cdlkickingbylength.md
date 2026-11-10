@@ -4,6 +4,10 @@
 
 A two-candle pattern of two opposite-color marubozu (long body, very short shadows on both ends) separated by a gap. A strong directional/reversal signal whose bull/bear bias is set by the longer of the two marubozu.
 
+## Notes
+
+- Rare: it fires on the same bars as [`CDLKICKING`](/functions/cdlkicking), so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/KickingBull.html), [bearish](https://thepatternsite.com/KickingBear.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+
 ## Inputs
 
 - `inOpen` — Open price of each bar

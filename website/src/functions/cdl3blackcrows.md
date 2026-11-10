@@ -24,6 +24,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 ## Notes
 
 - Does not verify the prior mature uptrend the pattern classically assumes for significance.
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs ([Three Black Crows](https://thepatternsite.com/ThreeBlackCrows.html)), and TA-Lib finds it 13 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

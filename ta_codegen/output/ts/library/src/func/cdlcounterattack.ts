@@ -327,6 +327,13 @@ export function cdlcounterattackDisplayShift(outputIdx: number, options?: Cdlcou
  *   and the bullish version reverses only 56% of the time, both "near random" by
  *   his classification.
  *   ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
+ *   the bullish form 72nd and the bearish 63rd of 103 patterns by how often they
+ *   occur ([bullish Meeting
+ *   Lines](https://thepatternsite.com/MeetingLinesBull.html), [bearish Meeting
+ *   Lines](https://thepatternsite.com/MeetingLinesBear.html)), and TA-Lib finds
+ *   none in [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

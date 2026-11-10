@@ -283,6 +283,10 @@
     * signal whose bull/bear bias is set by the longer of the two marubozu.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Rare: it fires on the same bars as <a href="https://ta-lib.org/functions/cdlkicking">{@code CDLKICKING}</a>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -349,6 +353,10 @@
     * signal whose bull/bear bias is set by the longer of the two marubozu.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Rare: it fires on the same bars as <a href="https://ta-lib.org/functions/cdlkicking">{@code CDLKICKING}</a>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -25,6 +25,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 
 - Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).
 - Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 97th and the bearish 98th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/BullBreakaway.html), [bearish](https://thepatternsite.com/BearBreakaway.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

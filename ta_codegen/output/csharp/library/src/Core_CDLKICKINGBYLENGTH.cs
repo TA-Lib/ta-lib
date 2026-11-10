@@ -341,6 +341,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>Rare: it fires on the same bars as <see href="https://ta-lib.org/functions/cdlkicking"><c>CDLKICKING</c></see>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/KickingBull.html">bullish</see>, <see href="https://thepatternsite.com/KickingBear.html">bearish</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are, and
@@ -423,6 +426,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>Rare: it fires on the same bars as <see href="https://ta-lib.org/functions/cdlkicking"><c>CDLKICKING</c></see>, so a few years of one symbol's daily bars may show none. Bulkowski ranks Kicking's bullish form 100th and bearish 102nd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/KickingBull.html">bullish</see>, <see href="https://thepatternsite.com/KickingBear.html">bearish</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

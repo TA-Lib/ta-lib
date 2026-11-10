@@ -331,6 +331,11 @@ export function cdlconcealbabyswallDisplayShift(outputIdx: number, options?: Cdl
  *   finding rests on just 4 occurrences out of 4.7 million candle lines, and it
  *   ranks 101st of 103 patterns overall.
  *   ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
+ *   last of 103 patterns by how often it occurs ([Concealing Baby
+ *   Swallow](https://thepatternsite.com/ConcealBaby.html)), and TA-Lib finds none
+ *   in [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

@@ -358,6 +358,11 @@ export function cdlidentical3crowsDisplayShift(outputIdx: number, options?: Cdli
  *   assumes.
  * - Does not require the three bodies to be equal in size; 'identical' refers only
  *   to each candle opening at or near the previous candle's close.
+ * - Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it
+ *   occurs ([Identical Three
+ *   Crows](https://thepatternsite.com/Identical3Crows.html)). TA-Lib finds it more
+ *   often in crypto: 180 times in [about 16,000 daily
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

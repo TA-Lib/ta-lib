@@ -25,6 +25,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 
 - This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.
 - Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))
+- Rare in Bulkowski's tests: he ranks the upside form 85th and the downside 84th of 103 patterns by how often they occur ([upside](https://thepatternsite.com/UpGap3Methods.html), [downside](https://thepatternsite.com/DownGap3Methods.html)). TA-Lib finds it more often in crypto: 204 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

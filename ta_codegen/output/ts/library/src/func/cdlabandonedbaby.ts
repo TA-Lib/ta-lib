@@ -369,10 +369,15 @@ export function cdlabandonedbabyDisplayShift(outputIdx: number, options?: Cdlaba
  * **Notes**
  * - Does not verify the prior trend the pattern classically assumes for
  *   significance.
- * - Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7
- *   million candle lines, frequency rank 92 of 103) and unusually reliable when it
- *   does occur (70% success as a reversal, overall performance rank 9 of 103).
+ * - Bulkowski found the Abandoned Baby unusually reliable when it does occur: 70%
+ *   success as a reversal, overall performance rank 9 of 103.
  *   ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))
+ * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
+ *   the bullish form 92nd and the bearish 96th of 103 patterns by how often they
+ *   occur ([bullish](https://thepatternsite.com/AbandonBabyBull.html),
+ *   [bearish](https://thepatternsite.com/AbandonBaby.html)), and TA-Lib finds none
+ *   in [about 16,000 daily crypto
+ *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

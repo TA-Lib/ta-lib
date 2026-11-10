@@ -294,6 +294,7 @@
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
     * <li>A prior downtrend is not verified.</li>
+    * <li>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</a>). TA-Lib finds it more often in crypto: 19 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -371,6 +372,7 @@
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
     * <li>A prior downtrend is not verified.</li>
+    * <li>Rare in Bulkowski's tests: he ranks it 78th of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MorningDojiStar.html">Morning Doji Star</a>). TA-Lib finds it more often in crypto: 19 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

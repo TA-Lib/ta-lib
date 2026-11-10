@@ -24,7 +24,8 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 ## Notes
 
 - Does not verify the preceding downtrend that this bullish reversal classically assumes.
-- Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
+- Bulkowski's testing found this reverses a downtrend only 56% of the time ("near random"), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 80th of 103 patterns by how often it occurs ([Ladder Bottom](https://thepatternsite.com/LadderBottom.html)), and TA-Lib finds it 3 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 
