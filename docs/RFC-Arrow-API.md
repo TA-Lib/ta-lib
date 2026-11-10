@@ -22,19 +22,18 @@ TA-Lib depends on no Arrow library.
 **Missing values inside a series.** Today a NaN or infinity in the input is
 unsupported and not detected. Wrappers pass a missing value as NaN, and
 functions react differently: some propagate NaN, some recover, and some (RSI
-among them) return wrong finite values for every later bar. So every table
-library guards against it in its own way, and no two agree on what follows a
-gap.
+among them) return wrong finite values for every later bar. We want simple
+deterministic behavior to eliminate unexpected NaN.
 
-**Many short series per call.** The common table workload is a panel: one
+**Many short series per call.** A common table workload is a panel: one
 column with many symbols, computed per symbol (`.over("symbol")` in Polars,
 `groupby(...).transform(...)` in pandas). Today each symbol is a separate call,
-and the call costs far more than the computation. Under callgrind, on a Polars
-plugin (ATR, 20-row groups), a call retires about 32,700 instructions, of which
-the kernel and its entry are about 600. Only fewer calls can save the rest.
+and the call overhead far exceeds the calculation: in a Polars plugin computing
+ATR on 20-row groups, a call costs about 32,700 CPU instructions, of which the
+ATR calculation is about 600. Only fewer calls remove that overhead.
 
 A wrapper could solve both itself. Solving them in the TA-Lib C and Rust Core
-gives every wrapper the same result, tested once.
+gives every wrapper the same result.
 
 ## Terms
 
@@ -44,8 +43,8 @@ gives every wrapper the same result, tested once.
 - **Validity.** Arrow's null bitmap: one bit per row, set when the row is
   valid.
 - **Segment.** A run of valid, finite rows in a partition, between nulls or the
-  partition's ends. It may span chunks. Core finds segments; the caller never
-  passes them.
+  partition's ends. It may span chunks. TA-Lib Core finds segments and
+  processes every one of their rows.
 
 ![Partitions, Arrow chunks, validity bitmaps and segments for a two-input function, and its output under keep-null and fill-previous](RFC-Arrow-API-terms.svg)
 
@@ -54,26 +53,20 @@ gives every wrapper the same result, tested once.
 - **Skip on null.** A null input row is skipped, and the state carries across
   it.
 - **Output control.** On a null input row, `keep-null` (the default) makes the
-  output null; `fill-previous` repeats the previous output. A filled output
-  copies the previous output, validity included; once the partition has an
-  output, a pattern-recognition output is filled with a valid 0 instead. With no
-  previous output in the partition, the row is null. The lookback (warm-up)
-  period always outputs null.
+  output null. Alternatively, the `fill-previous` option copies the previous
+  row's output and validity; a pattern-recognition output gets a valid 0
+  instead. Before the partition's first output, the row is null. The lookback
+  (warm-up), counted in non-null rows, always outputs null.
 - **Partitions.** Nothing carries from one partition to the next.
 - **Non-finite is null.** A NaN or infinite input makes its row null, so no
-  calculation uses it, and a non-finite result makes its row null. Arrow
-  treats NaN as a value, not a null; TA-Lib does not, because a non-finite
-  price is never usable.
-- **Alignment.** Output row `i` belongs to input row `i`.
+  calculation uses it. A non-finite result in any output makes its row null in
+  every output, under either output option. Arrow treats NaN as a value, not a
+  null; TA-Lib does not, because a non-finite price is never usable.
+- **Alignment.** Output row `i` belongs to input row `i`. An index output
+  (MAXINDEX) counts positions from its partition's first row, which is 0; nulls
+  count.
 - **Validity on multi-input.** A row is null when any input is null there, such
-  as a missing low in a price bar. All outputs are null on the same rows and
-  share one bitmap. A null output holds NaN, or 0 in an integer output; since 0
-  is also a valid integer (a candlestick with no pattern), only the bitmap tells
-  them apart.
-
-To restart the calculation after a null instead, as pandas and Polars rolling
-windows do, start a new partition at the first valid row after the null (after
-the last null of a run).
+  as a missing low in a price bar.
 
 ### Chaining
 
@@ -111,14 +104,16 @@ TA_RetCode TA_SMA_Segmented(const TA_Partitions *partitions,
   float64. Core reads them in place. An input's chunks add up to `len` rows, and
   inputs may be chunked differently.
 - **Offsets** split flat inputs into partitions, from 0 to `len`; NULL means one
-  partition. A list input has one partition per list.
+  partition. A list input has one partition per list; the rows of a null list
+  are null.
 - **Validity** follows Arrow, per chunk: row `r` is bit `offset + r`,
   least-significant bit first. A NULL buffer, or a `null_count` of 0, means
   every row is valid. For a multi-input function (high, low, close), Core ANDs
   the inputs' bitmaps. Inputs chunked alike may share one bitmap.
 - **Outputs** are buffers of `len` rows that the caller allocates, plus one
-  validity bitmap for the call, row `r` at bit `r`. With a NULL bitmap, only the
-  NaN (or 0) values mark null rows.
+  validity bitmap for the call, row `r` at bit `r`. A null row holds NaN, or 0
+  in an integer output. The bitmap is optional, but without it a null row and a
+  candlestick with no pattern both read 0.
 - **Flags.** `TA_PARTITIONS_FILL_PREVIOUS` selects `fill-previous`.
 - With no offsets, no validity, one flat chunk per input and finite inputs, the
   result matches today's batch result in input alignment within
@@ -179,7 +174,7 @@ C, for a float64 column that arrived in two chunks:
 ```c
 const struct ArrowArray *chunks[] = { &close0, &close1 };
 TA_Column     inReal = { NULL, chunks, 2 };     /* NULL schema: float64 */
-TA_Partitions parts  = { 0, len, NULL, 0 };    /* one partition, defaults */
+TA_Partitions parts  = { 0, len, NULL, 0 };    /* one partition, keep-null */
 
 double  *out   = malloc(len * sizeof *out);
 uint8_t *valid = malloc((len + 7) / 8);
@@ -209,38 +204,40 @@ rc = TA_ArrowExport(&result, out, valid, len, free_buffers);
 
 ## Scope
 
-C and Rust. Java, C# and TypeScript get the entry when someone asks: their
-users work bar by bar, which streaming covers, and adding it later breaks
-nothing.
+Only C and Rust are planned. Native support in Java, C# and TypeScript may
+follow if demand arises.
 
 ## Gates
 
-- **Equivalence, every function:** the output equals one plain batch call over
-  each partition's valid rows packed together, with each result put back on its
-  row. Null rows are filled as the output control says, and a null output holds
-  NaN (or 0) with a cleared bit. Compared within
-  [rH1](https://ta-lib.org/spec/streaming/#rh1)'s exceptions, as streaming's
-  gates compare.
+Every gate compares within [rH1](https://ta-lib.org/spec/streaming/#rh1)'s
+exceptions, as streaming's gates do.
+
+- **Equivalence, every function and output:** each output equals one plain
+  batch call over each partition's non-null rows packed together, with each
+  result put back on its row and an index output converted from a position
+  among the packed rows to that row's position in the partition. Null rows
+  follow the output control, a non-finite result in any output nulls its row
+  in every output under either option, and a null output holds NaN (or 0) with
+  a cleared bit.
 - **Output control:** `fill-previous`, `keep-null` and a pattern's zero, on null
-  rows before and after the first output, and a partition whose first `lookback
-  + 1` valid rows have nulls between them.
-- **Today's batch:** with no offsets, no validity, one flat chunk per input and
-  finite inputs, the output equals today's batch output in input alignment
-  within rH1's exceptions, with a non-finite result null.
-- **Partitions:** adjacent partitions with no null between them, an empty
-  partition, a partition no longer than `lookback`, and a null on a partition's
-  first and last row.
+  rows before and after the first output, a run of several nulls, a partition
+  whose first `lookback + 1` non-null rows have nulls between them; each with
+  and without an output bitmap.
+- **Partitions,** under each output option: adjacent partitions with no null
+  between them, an empty partition, a partition with at most `lookback` non-null
+  rows, a null on a partition's first and last row, and a null list.
 - **Bit offsets:** input chunks, flat and list children, at offsets not a
   multiple of 8, and lengths not a multiple of 64. A mistake here gives wrong
   nulls with no error.
-- **Non-finite:** NaN and infinite inputs become nulls; a non-finite result
-  (`LN` of a negative) nulls its row.
+- **Nulls and non-finite:** a null in one input only; NaN, with its validity bit
+  set or cleared, and infinite inputs become nulls; a non-finite result (`LN` of
+  a negative) nulls its row.
 - **Malformed input** (bad offsets, chunks not adding up to `len`, an
   unsupported type) answers `TA_BAD_PARAM`.
-- **Chunked equals unchunked,** every function, compared as
-  streaming's gates compare: a boundary inside the warm-up, on a null and right
-  after one, inside a partition; inputs chunked at different rows, or with
-  different validities, bit offsets and chunk boundaries in one call.
+- **Chunked equals unchunked,** every function: a boundary inside the warm-up,
+  on a null and right after one, inside a partition and on a partition
+  boundary; inputs chunked at different rows, or with different validities, bit
+  offsets and chunk boundaries in one call.
 - **Arrow round trip:** a float64 column, a list and a large list, sliced or
   not, chunked or not, read in place and exported back unchanged.
 - **pandas round trip** (ta-lib-python): pandas 2.2 and 3.x Series in Arrow

@@ -307,8 +307,8 @@
 <g transform="translate(18,526)"><rect x="0" y="-11" width="22" height="14" fill="none" stroke="#24425f" stroke-width="2.5" rx="3"/><text x="30" y="0" font-size="12" fill="#1f2933">Arrow chunk</text></g>
 <g transform="translate(144.6,526)"><rect x="0" y="-11" width="22" height="14" fill="#fad7c3" stroke="#9aa5b1"/><rect x="0" y="-11" width="22" height="14" fill="url(#hatch)"/><text x="30" y="0" font-size="12" fill="#1f2933">null</text></g>
 <g transform="translate(225.0,526)"><text x="11" y="0" font-size="12" font-weight="bold" fill="#b4462f" text-anchor="middle">X</text><text x="30" y="0" font-size="12" fill="#1f2933">don't care</text></g>
-<g transform="translate(345.0,526)"><path d="M2 -11 h6 V3 h-6" fill="none" stroke="#2f7d4f" stroke-width="2"/><text x="30" y="0" font-size="12" fill="#1f2933">s1-s5: segments; the state carries across them</text></g>
-<text x="18" y="558" font-size="12" fill="#5f6b76">MIDPRICE(3): (highest inHigh + lowest inLow) / 2 over the last 3 valid rows.</text>
+<g transform="translate(345.0,526)"><path d="M2 -11 h6 V3 h-6" fill="none" stroke="#2f7d4f" stroke-width="2"/><text x="30" y="0" font-size="12" fill="#1f2933">s1-s5: segments; the state carries across them, per partition</text></g>
+<text x="18" y="558" font-size="12" fill="#5f6b76">MIDPRICE(3): (highest inHigh + lowest inLow) / 2 over the last 3 non-null rows.</text>
 <text x="18" y="576" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 3:</tspan> if any validity bit is 0, the row is null.</text>
 <text x="18" y="594" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 6:</tspan> if any value is NaN, the row is null.</text>
 <text x="18" y="612" font-size="12" fill="#5f6b76"><tspan font-weight="bold">Row 9:</tspan> NaN with validity bit 1 is still null.</text>
