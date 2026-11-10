@@ -339,10 +339,11 @@ pub(crate) fn rewrite(body: &[Statement], declared: &Declared, outputs: &[Output
     let sets = super::fma::build_fma_var_sets(body, outputs, &super::fma::INDEX_PARAM_SEEDS);
     let fs = sets.view();
     let real = |e: &Expr| super::fma::expr_is_float_typed(e, Some(&fs)) && !super::fma::is_definitely_integer(e, &fs);
-    let mut decls: Vec<(String, VarType)> = Vec::new();
+    let (mut decls, mut inits): (Vec<(String, VarType)>, Vec<bool>) = (Vec::new(), Vec::new());
     each_statement(body, &mut |s| {
-        if let Statement::VarDecl { var_type, name, .. } = s {
+        if let Statement::VarDecl { var_type, name, init } = s {
             decls.push((name.clone(), var_type.clone()));
+            inits.push(init.is_some());
         }
     });
     // A local read before its first write is indeterminate in C, even where the
@@ -353,17 +354,27 @@ pub(crate) fn rewrite(body: &[Statement], declared: &Declared, outputs: &[Output
         each_statement(std::slice::from_ref(s), &mut |x| hit |= matches!(x, Statement::While { .. } | Statement::DoWhile { .. } | Statement::For { .. } | Statement::ForC { .. }));
         hit
     };
-    let mut defined: Vec<String> = Vec::new();
-    each_statement(body, &mut |s| {
-        if let Statement::VarDecl { name, init: Some(_), .. } = s {
-            defined.push(name.clone());
-        }
-    });
+    // A name declared twice is two variables, and a write names either, so
+    // only an initializer on every declaration defines it.
+    let once = |n: &str| decls.iter().filter(|(d, _)| d == n).count() <= 1;
+    let initialized = |n: &str| decls.iter().zip(&inits).all(|((d, _), i)| d != n || *i);
+    let mut defined: Vec<String> = decls.iter().map(|(n, _)| n.clone()).filter(|n| initialized(n)).collect();
+    // A local array element likewise, from its own write.
+    let mut set: Vec<(String, i64)> = Vec::new();
     for s in body.iter().take_while(|s| !holds_loop(s)) {
-        if let Statement::Assign { target: Expr::Var(v), compound: false, .. } = s {
-            defined.push(v.clone());
+        match s {
+            Statement::Assign { target: Expr::Var(v), compound: false, .. } if once(v) => defined.push(v.clone()),
+            Statement::Assign { target: Expr::ArrayAccess(a, i), compound: false, .. } if once(a) => {
+                if let Expr::IntLiteral(k) = i.as_ref() {
+                    set.push((a.clone(), *k));
+                }
+            }
+            _ => {}
         }
     }
+    let written = |n: &String| defined.contains(n) || declared.reals.contains(n) || written_first(body, n);
+    // A helper takes any name, so a local it takes must be written too.
+    let unwritten: Vec<String> = decls.iter().map(|(n, _)| n.clone()).filter(|n| !written(n)).collect();
     decls.extend(declared.reals.iter().map(|n| (n.clone(), VarType::Real)));
     // A name declared with two types somewhere is no name's type: refuse it.
     let one_type = |n: &str| {
@@ -373,7 +384,7 @@ pub(crate) fn rewrite(body: &[Statement], declared: &Declared, outputs: &[Output
     let arrays: Vec<String> = declared.arrays.iter().filter(|a| !decls.iter().any(|(d, _)| d == *a)).cloned().collect();
     let reals: Vec<String> = decls
         .iter()
-        .filter(|(n, t)| *t == VarType::Real && one_type(n) && (defined.contains(n) || declared.reals.contains(n) || written_first(body, n)))
+        .filter(|(n, t)| *t == VarType::Real && one_type(n) && written(n))
         .map(|(n, _)| n.clone())
         .collect();
     let sized: Vec<(String, i64)> = decls
@@ -392,6 +403,8 @@ pub(crate) fn rewrite(body: &[Statement], declared: &Declared, outputs: &[Output
         arrays: &arrays,
         reals: &reals,
         sized: &sized,
+        set: &set,
+        unwritten: &unwritten,
         taken: &writes_of(body).1,
         entering: entering(body, declared),
     };
@@ -472,6 +485,9 @@ struct Rules<'a> {
     arrays: &'a [String],
     reals: &'a [String],
     sized: &'a [(String, i64)],
+    /// Local array elements written before the first loop.
+    set: &'a [(String, i64)],
+    unwritten: &'a [String],
     /// Address-taken anywhere in the function.
     taken: &'a [String],
     entering: Entering,
@@ -560,11 +576,19 @@ fn pass_of(pass: &[Statement], counter: Option<&String>, entry: &Entry, rules: &
 }
 
 /// Where `v` takes `startIdx` before the loop: its last top-level assignment
-/// there, with nothing after it writing `v`.
+/// or declaration there, with nothing after it writing `v`. A `for` init that
+/// declares `v` is that declaration, else the loop enters at an earlier write.
 fn enters_as_start(v: &str, before: &[Statement]) -> Option<usize> {
-    let at = before.iter().rposition(|s| matches!(s, Statement::Assign { target: Expr::Var(t), .. } if t == v))?;
+    let at = before.iter().rposition(|s| match s {
+        Statement::Assign { target: Expr::Var(t), .. } => t == v,
+        Statement::VarDecl { name, .. } => name == v,
+        _ => false,
+    })?;
     let (later, taken) = writes_of(&before[at + 1..]);
-    let entry = matches!(&before[at], Statement::Assign { value: Expr::Var(n), compound: false, .. } if n == "startIdx");
+    let entry = match &before[at] {
+        Statement::Assign { value: Expr::Var(n), compound: false, .. } | Statement::VarDecl { init: Some(Expr::Var(n)), .. } => n == "startIdx",
+        _ => false,
+    };
     (entry && !later.iter().chain(&taken).any(|w| w == v)).then_some(at)
 }
 
@@ -1068,13 +1092,14 @@ fn pure(e: &Expr, rules: &Rules) -> bool {
 /// Whether running `e` on every pass can neither trap nor act. An allowlist:
 /// literals; names declared real, with one type throughout the function;
 /// input-array reads at a loop step plus or minus a literal inside the step's
-/// proven window (or a choice between two such); real local arrays at a
-/// literal inside their declared length; the pure candle helpers, which take
-/// any name as an argument; `fabs`, `max` and `min`; `+ - * /` with an operand
-/// declared real, so the arithmetic is floating; comparisons, `!`, `&&` and
-/// `||`; a choice between two literals; and a literal times a 1/-1 or 1/0
-/// flag. Everything else is refused, integer arithmetic above all: a guard on
-/// it may be what keeps it in range.
+/// proven window (or a choice between two such); real local array elements
+/// written before the first loop, at a literal inside their declared length;
+/// the pure candle helpers, which take any written name as an argument;
+/// `fabs`, `max` and `min`; `+ - * /` with an operand declared real, so the
+/// arithmetic is floating; comparisons, `!`, `&&` and `||`; a choice between
+/// two literals; and a literal times a 1/-1 or 1/0 flag. Everything else is
+/// refused, integer arithmetic above all: a guard on it may be what keeps it
+/// in range.
 fn eager_safe(e: &Expr, windows: &Windows, rules: &Rules) -> bool {
     let safe = |x: &Expr| eager_safe(x, windows, rules);
     let real = |x: &Expr| declared_real(x, rules);
@@ -1096,7 +1121,7 @@ fn eager_safe(e: &Expr, windows: &Windows, rules: &Rules) -> bool {
             if note_of(n).is_some() {
                 args.iter().all(safe)
             } else if PURE_HELPERS.contains(&n.as_str()) || n == DIVIDING_HELPER {
-                args.iter().all(|a| safe(a) || matches!(a, Expr::Var(_)))
+                args.iter().all(|a| safe(a) || matches!(a, Expr::Var(n) if !rules.unwritten.contains(n)))
             } else {
                 matches!(MathFn::from_name(n), Some(MathFn::Abs | MathFn::Max | MathFn::Min)) && args.iter().all(safe)
             }
@@ -1134,9 +1159,11 @@ fn scaled_flag(k: &Expr, f: &Expr, rules: &Rules) -> bool {
     int_value(k).is_some() && flag(f, rules.helpers).is_some_and(|(_, t, f)| matches!((t, f), (1, -1 | 0) | (-1 | 0, 1)))
 }
 
-/// A real local array read at a literal inside its declared length.
+/// A real local array read at a literal inside its declared length, written
+/// before the first loop.
 fn in_declared_length(a: &str, i: &Expr, rules: &Rules) -> bool {
-    matches!(i, Expr::IntLiteral(k) if rules.sized.iter().any(|(n, len)| n == a && (0..*len).contains(k)))
+    matches!(i, Expr::IntLiteral(k) if rules.sized.iter().any(|(n, len)| n == a && (0..*len).contains(k))
+        && rules.set.iter().any(|(n, j)| n == a && j == k))
 }
 
 /// A step plus or minus a literal inside the step's window, or a choice
@@ -1406,7 +1433,7 @@ mod tests {
         H.get_or_init(|| HelperRegistry::from_dir(&std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../input")))
     }
     fn rules() -> Rules<'static> {
-        Rules { outputs: vec!["out"], int_outputs: Vec::new(), helpers: helpers(), real: &real, arrays: &declared().arrays, reals: &declared().reals, sized: &[], taken: &[], entering: Entering::default() }
+        Rules { outputs: vec!["out"], int_outputs: Vec::new(), helpers: helpers(), real: &real, arrays: &declared().arrays, reals: &declared().reals, sized: &[], set: &[], unwritten: &[], taken: &[], entering: Entering::default() }
     }
     fn run(body: &[Statement]) -> Vec<Statement> {
         walk(body, None, true, &rules())
@@ -1538,9 +1565,9 @@ mod tests {
     #[test]
     fn the_eager_allowlist_admits_only_declared_reals_and_step_reads() {
         let (arrays, reals) = (names(&["inClose", "inOpen", "inHigh"]), names(&["x", "y"]));
-        let sized = [("tot".to_string(), 2)];
+        let (sized, set) = ([("tot".to_string(), 2)], [("tot".to_string(), 1), ("tot".to_string(), 2)]);
         let mut r = rules();
-        (r.arrays, r.reals, r.sized) = (&arrays, &reals, &sized);
+        (r.arrays, r.reals, r.sized, r.set) = (&arrays, &reals, &sized, &set);
         let windows = [("i".to_string(), -4, 0)];
         let ok = |e: Expr| eager_safe(&e, &windows, &r);
         let nonzero = |n: &str| bin(var(n), BinOp::NotEq, int(0));
@@ -1947,5 +1974,79 @@ mod tests {
         let doji = iff(a_gt_b(), vec![simple_if(c_lt_d(), int(100))], vec![store(stepped(), int(0))]);
         let Statement::If { condition, .. } = folded(doji) else { panic!() };
         same!(condition, a_gt_b());
+    }
+
+    /// Whether `rewrite` folds some tree of `body`.
+    fn folds_in(body: &[Statement], declared: &Declared) -> bool {
+        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
+        let mut hit = false;
+        each_statement(&rewrite(body, declared, &outputs, helpers()), &mut |s| hit |= is_fold(s));
+        hit
+    }
+    fn local(t: VarType, n: &str, init: Option<Expr>) -> Statement {
+        Statement::VarDecl { var_type: t, name: n.into(), init }
+    }
+    fn x_half_and(e: Expr) -> Statement {
+        simple_if(and(gt(var("x"), Expr::Literal(0.5)), e), int(1))
+    }
+
+    #[test]
+    fn a_step_declared_in_its_for_init_enters_where_the_declaration_says() {
+        let d = Declared { arrays: declared().arrays.clone(), reals: names(&["x"]), lookback: "f_lookback".into(), fixed: 3, ..Declared::default() };
+        let looped = |init: Statement| {
+            let body = vec![
+                assign("lookbackTotal", call("f_lookback", Vec::new())),
+                iff(bin(var("startIdx"), BinOp::Less, var("lookbackTotal")), vec![assign("startIdx", var("lookbackTotal"))], Vec::new()),
+                iff(gt(var("startIdx"), var("endIdx")), vec![Statement::Return { value: None }], Vec::new()),
+                assign("i", var("startIdx")),
+                Statement::ForC {
+                    init: Box::new(init),
+                    condition: bin(var("i"), BinOp::LessEq, var("endIdx")),
+                    update: Box::new(step()),
+                    body: vec![x_half_and(gt(at("inClose", i_minus(3)), at("inOpen", var("i"))))],
+                },
+            ];
+            folds_in(&body, &d)
+        };
+        let below = bin(var("startIdx"), BinOp::Sub, int(3));
+        assert!(!looped(local(VarType::Integer, "i", Some(below.clone()))), "a declared step entering below the floor folds");
+        assert!(!looped(assign("i", below)));
+        assert!(looped(local(VarType::Integer, "i", Some(var("startIdx")))));
+        assert!(looped(assign("i", var("startIdx"))));
+    }
+
+    #[test]
+    fn a_helper_argument_must_be_written_before_it_runs() {
+        let tree = || x_half_and(gt(call("ta_realbody", vec![var("z"), at("inClose", var("i"))]), Expr::Literal(1.0)));
+        let write = || assign("z", at("inClose", var("i")));
+        let looped = |pass: Vec<Statement>| vec![local(VarType::Real, "z", None), Statement::While { condition: gt(var("n"), int(0)), body: pass }];
+        assert!(!folds_in(&looped(vec![tree(), write(), reads(), step()]), declared()), "an unwritten local runs eagerly in a helper");
+        assert!(folds_in(&looped(vec![write(), tree(), reads(), step()]), declared()));
+    }
+
+    #[test]
+    fn an_inner_declaration_writes_only_its_own_name() {
+        let looped = |pre: Vec<Statement>| {
+            let mut body = pre;
+            body.extend(in_loop(x_half_and(gt(var("z"), at("inClose", var("i"))))));
+            body
+        };
+        let inner = Statement::Block { body: vec![local(VarType::Real, "z", Some(Expr::Literal(1.0)))] };
+        assert!(!folds_in(&looped(vec![local(VarType::Real, "z", None), inner]), declared()), "a shadowing declaration writes the outer name");
+        assert!(folds_in(&looped(vec![local(VarType::Real, "z", Some(Expr::Literal(1.0)))]), declared()));
+    }
+
+    #[test]
+    fn a_local_array_element_must_be_written_before_the_loop() {
+        let looped = |pre: Vec<Statement>| {
+            let mut body = vec![local(VarType::RealArray("2".into()), "buf", None)];
+            body.extend(pre);
+            body.extend(in_loop(x_half_and(gt(at("buf", int(0)), at("inClose", var("i"))))));
+            body
+        };
+        let set = |k: i64| store(at("buf", int(k)), Expr::Literal(0.0));
+        assert!(!folds_in(&looped(Vec::new()), declared()), "an unwritten array element runs eagerly");
+        assert!(!folds_in(&looped(vec![set(1)]), declared()));
+        assert!(folds_in(&looped(vec![set(0)]), declared()));
     }
 }
