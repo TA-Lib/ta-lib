@@ -1604,15 +1604,6 @@ fn build_index(funcs: &[&FuncDef]) -> String {
          formula, inputs, outputs, and links to the {} source.\n",
         labels.join(" / ")
     ));
-    s.push_str(
-        "\n## Reference data\n\n\
-         Each page charts the function at default parameters over one fixed price series (IBM, \
-         daily, 1999, the series `ta_regtest` ships), or over a synthetic input the page names for \
-         the Math Transform and Math Operators functions, and links a CSV of the inputs and every output, \
-         computed by the C library. Running TA-Lib over the CSV's own input columns from its first \
-         row reproduces the output columns. [Compare with a tolerance](/spec/versions/#tolerance) \
-         rather than bit for bit.\n",
-    );
     for (group, fns) in &by_group {
         s.push_str(&format!("\n## {group}\n\n"));
         for f in fns {
