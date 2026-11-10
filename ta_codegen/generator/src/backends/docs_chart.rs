@@ -44,7 +44,7 @@ const SERIES_CAPTION: &str = "IBM, daily, 1999";
 /// The chart's whole look, shipped inside every SVG: the `var(--vp-c-*, fallback)` hooks
 /// take the site's theme when the component inlines the file, and the fallbacks make the
 /// bare file render on its own (noscript image, direct link, a crawler).
-pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .level{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:6 4}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .hollow{fill:none;stroke-width:1.2}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}";
+pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .level{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:6 4}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .hollow{fill:none;stroke-width:1.2}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}.ta-chart .credit{font-size:10px}";
 
 
 /// The reference run's CSV, as `ta_refdata` lays it out: `#` header lines, then
@@ -316,9 +316,6 @@ pub struct Chart {
     pub label: String,
     /// One plain-English sentence stating how the chart is drawn.
     pub sentence: String,
-    /// The metadata that decided the drawing, as the site lists it: the function
-    /// flags, then the inputs that shaped the panes, then each output with its flags.
-    pub flags_used: Vec<String>,
     pub width: u32,
     pub height: u32,
 }
@@ -1025,89 +1022,6 @@ fn input_line_class(k: usize) -> (&'static str, &'static str) {
     if k == 0 { ("close", "close") } else { ("line s5", "s5") }
 }
 
-/// Per output class, the flags its drawing reads; an integer output's deciding fact
-/// is its type, which is no flag. An indicator-pane output lists `positive, negative`
-/// only when they drew its zero line.
-const PRICE_FLAGS_READ: [&str; 8] =
-    ["line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "segmented", "display_shift"];
-const IND_FLAGS_READ: [&str; 10] = [
-    "line", "dot", "dash_line", "histogram", "upper_limit", "lower_limit", "segmented", "positive", "negative",
-    "display_shift",
-];
-const PATTERN_FLAGS_READ: [&str; 4] = ["positive", "negative", "zero", "display_shift"];
-const SIGN_FLAGS_READ: [&str; 3] = ["positive", "negative", "display_shift"];
-const STEP_FLAGS_READ: [&str; 1] = ["display_shift"];
-
-/// What decided the drawing, in the site's order: the function's `overlap` or
-/// `candlestick` flag, the price bundles and synthetic inputs, then every output's
-/// flags with its display shift when it has one.
-fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
-    let mut used: Vec<String> = Vec::new();
-    if has(&func.flags, "overlap") && !plan.price_outs.is_empty() {
-        used.push("overlap".to_string());
-    }
-    if has(&func.flags, "candlestick") {
-        used.push("candlestick".to_string());
-    }
-    let mut groups_seen: Vec<usize> = Vec::new();
-    for input in &func.inputs {
-        if let Some(p) = input.price {
-            if groups_seen.contains(&p.group) {
-                continue;
-            }
-            groups_seen.push(p.group);
-            let comps: Vec<PriceComponent> = func
-                .inputs
-                .iter()
-                .filter_map(|i| i.price.filter(|q| q.group == p.group).map(|q| q.component))
-                .collect();
-            let comps = super::price_bundle::canonical(&comps);
-            let names: Vec<&str> = comps.iter().map(|c| c.token()).collect();
-            used.push(format!("{}: {}", super::price_bundle::canonical_name(&comps), names.join(", ")));
-        } else if let Some((lo, hi)) = input.domain {
-            used.push(format!("{}: series {} [{}, {}]", input.name, input.series.token(), fmt(lo), fmt(hi)));
-        }
-    }
-    let named = |outs: &[&Output], o: &Output| outs.iter().any(|p| p.name == o.name);
-    let near = near_zero(data, &plan.ind_outs);
-    for o in &func.outputs {
-        let shift = data.shift(&o.name);
-        let pattern = named(&plan.pattern_outs, o);
-        let ind = named(&plan.ind_outs, o);
-        let unread_signs = ind && !(near && has(&o.flags, "positive") && has(&o.flags, "negative"));
-        let (lead, keep): (Option<&str>, &[&str]) = if pattern {
-            (None, &PATTERN_FLAGS_READ)
-        } else if named(&plan.sign_outs, o) {
-            (Some("integer"), &SIGN_FLAGS_READ)
-        } else if named(&plan.index_outs, o) {
-            (Some("integer"), &["bar_index", "display_shift"])
-        } else if named(&plan.int_outs, o) {
-            (Some("integer"), &STEP_FLAGS_READ)
-        } else if plan.candle_outs.is_some_and(|c| named(&c, o)) {
-            (None, &[])
-        } else if ind {
-            (None, &IND_FLAGS_READ)
-        } else {
-            (None, &PRICE_FLAGS_READ)
-        };
-        let mut flags: Vec<String> = lead.map(String::from).into_iter().collect();
-        if pattern {
-            flags.extend(o.flags.iter().filter(|f| f.starts_with("pattern_")).cloned());
-        }
-        flags.extend(
-            o.flags
-                .iter()
-                .filter(|f| keep.contains(&f.as_str()) && !(unread_signs && (*f == "positive" || *f == "negative")))
-                .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() }),
-        );
-        if !o.levels.is_empty() {
-            flags.push(format!("levels {}", level_items(&o.levels).join(", ")));
-        }
-        used.push(if flags.is_empty() { o.name.clone() } else { format!("{}: {}", o.name, flags.join(", ")) });
-    }
-    used
-}
-
 /// The overlap outputs: strokes, the band fill, and each one's legend row.
 fn draw_price_outputs<'p>(
     cv: &mut Canvas<'_>,
@@ -1684,6 +1598,12 @@ fn draw_caption(cv: &mut Canvas<'_>, total_h: f64) {
         fmt(total_h - 4.0),
         esc(&cap)
     );
+    let _ = writeln!(
+        cv.out,
+        "<text class=\"credit\" x=\"{}\" y=\"{}\" text-anchor=\"end\">TA-Lib.org</text>",
+        fmt(W - PAD_R),
+        fmt(total_h - 4.0)
+    );
 }
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -1816,7 +1736,6 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
         svg: cv.out,
         label,
         sentence,
-        flags_used: flags_used(func, data, &plan),
         width: px(W),
         height: px(total_h),
     }
@@ -2039,8 +1958,8 @@ mod tests {
         assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
     }
 
-    /// Levels outside the data still reach the pane: a rule and a label each, in
-    /// the fold and in the sentence.
+    /// Levels outside the data still reach the pane: a rule and a label each, and
+    /// the sentence names them.
     #[test]
     fn an_outputs_levels_are_ruled_on_its_pane() {
         let mut o = out("outReal", ParamType::Real, &["line"]);
@@ -2049,7 +1968,6 @@ mod tests {
         let mut csv = String::from("# input: test.csv; window 1999-01-04..1999-01-06 (3 bars)\n# parameters: optInTimePeriod=14 (defaults)\n# inputs: inReal=close\n# outputs: outReal (shift 0)\ndate,open,high,low,close,volume,outReal\n");
         csv.push_str("1999-01-04,1,2,0.5,1.5,100,45\n1999-01-05,1,2,0.5,1.6,100,55\n1999-01-06,1,2,0.5,1.4,100,50\n");
         let chart = render(&rsi, &RefData::parse(&csv).unwrap());
-        assert_eq!(chart.flags_used, vec!["outReal: line, levels 30, 70"]);
         assert!(chart.sentence.contains("outReal as a solid line with dashed rules at 30 and 70"), "{}", chart.sentence);
         let rules: Vec<f64> = chart
             .svg
@@ -2064,65 +1982,6 @@ mod tests {
             assert!(*y > ind.y && *y < ind.y + ind.h, "a level rule left its pane: {y} vs {}..{}", ind.y, ind.y + ind.h);
         }
         assert!(chart.svg.contains(">30</text>") && chart.svg.contains(">70</text>"), "{}", chart.svg);
-    }
-
-    /// `flags_used` names only what each output class's drawing read: no `line` on
-    /// a pattern output, no `positive`/`negative` on a plain line, an integer
-    /// output's type in place of flags.
-    #[test]
-    fn flags_used_lists_what_each_output_class_read() {
-        let macd = func(
-            "MACD",
-            &[],
-            vec![Input::new("inReal", ParamType::Real)],
-            vec![
-                out("outMACD", ParamType::Real, &["line", "zero", "positive", "negative"]),
-                out("outMACDSignal", ParamType::Real, &["dash_line", "negative"]),
-                out("outMACDHist", ParamType::Real, &["histogram", "zero", "negative", "positive"]),
-            ],
-        );
-        let mut csv = String::from("# input: test.csv; window 1999-01-04..1999-01-05 (2 bars)\n# parameters: optInFastPeriod=12 (defaults)\n# inputs: inReal=close\n# outputs: outMACD (shift 0) outMACDSignal (shift 0) outMACDHist (shift 0)\ndate,open,high,low,close,volume,outMACD,outMACDSignal,outMACDHist\n");
-        csv.push_str("1999-01-04,1,2,0.5,1.5,100,1,2,-1\n1999-01-05,1,2,0.5,1.6,100,2,1,1\n");
-        let chart = render(&macd, &RefData::parse(&csv).unwrap());
-        assert_eq!(
-            chart.flags_used,
-            vec!["outMACD: line, positive, negative", "outMACDSignal: dash_line", "outMACDHist: histogram, negative, positive"]
-        );
-
-        let ohlc = [PriceComponent::Open, PriceComponent::High, PriceComponent::Low, PriceComponent::Close]
-            .into_iter()
-            .map(|component| Input {
-                price: Some(crate::ir::PriceRef { group: 0, component }),
-                ..Input::new(component.input_name(), ParamType::Real)
-            })
-            .collect();
-        let cdl = func(
-            "CDLX",
-            &["candlestick"],
-            ohlc,
-            vec![
-                out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "negative", "display_shift", "pattern_weak"]),
-                out("outSign", ParamType::Integer, &["line", "zero", "positive", "negative"]),
-                out("outFlag", ParamType::Integer, &["line", "pattern_bool", "zero", "positive"]),
-            ],
-        );
-        let d = candle_csv("; flagged bars: 1", "outInteger (shift -1) outSign (shift 0) outFlag (shift 0)", &["0,0,0", "-100,100,0", "0,0,100", "0,-100,0", "0,0,0"]);
-        let chart = render(&cdl, &d);
-        assert_eq!(
-            chart.flags_used,
-            vec![
-                "candlestick",
-                "inPriceOHLC: open, high, low, close",
-                "outInteger: pattern_bull_bear, pattern_weak, zero, negative, display_shift (-1)",
-                "outSign: integer, positive, negative",
-                "outFlag: pattern_bool, zero, positive",
-            ]
-        );
-
-        let step = func("HT_TRENDMODE", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outTrend", ParamType::Integer, &["line", "zero", "positive"])]);
-        let csv = "# input: test.csv; window 1999-01-04..1999-01-05 (2 bars)\n# parameters: (defaults)\n# inputs: inReal=close\n# outputs: outTrend (shift 0)\ndate,open,high,low,close,volume,outTrend\n1999-01-04,1,2,0.5,1.5,100,1\n1999-01-05,1,2,0.5,1.6,100,0\n";
-        let chart = render(&step, &RefData::parse(csv).unwrap());
-        assert_eq!(chart.flags_used, vec!["outTrend: integer"]);
     }
 
     /// The call markers a pattern sentence promises are the ones its sign flags
@@ -2291,10 +2150,6 @@ mod tests {
         assert_eq!(chart.label, "ADD over a sine between 90 and 110 and a ramp from 95 to 105");
         // The top pane's range spans both lines, not the close.
         assert!(!chart.svg.contains(">1.5<"), "{}", chart.svg);
-        assert_eq!(
-            chart.flags_used,
-            vec!["inReal0: series sine [90, 110]", "inReal1: series ramp [95, 105]", "outReal: line"]
-        );
     }
 
     #[test]
@@ -2380,7 +2235,6 @@ mod tests {
         assert_eq!(chart.svg.matches("<polyline class=\"line s1\"").count(), 2, "the step pane stays: {}", chart.svg);
         assert!(chart.sentence.contains("with close at the bar outInteger names as a solid line"), "{}", chart.sentence);
         assert!(chart.sentence.ends_with("a step pane of its own for the integer output outInteger."), "{}", chart.sentence);
-        assert_eq!(chart.flags_used, vec!["outInteger: integer, bar_index"]);
 
         let plain = render(&maxindex(&["line"]), &d);
         assert_eq!(plain.svg.matches("<polyline class=\"line s1\"").count(), 1, "{}", plain.svg);
@@ -2404,7 +2258,6 @@ mod tests {
         let zz = func("ZZ", &["overlap"], ohlc, vec![out("outZigZag", ParamType::Real, &["line"]), out("outPivotIdx", ParamType::Integer, &["line", "bar_index"])]);
         let chart = render(&zz, &candle_csv("", "outZigZag (shift 0) outPivotIdx (shift 0)", &["20,0", "30,0", "40,2", "50,2", "60,4"]));
         assert!(!chart.svg.contains("[outPivotIdx]"), "a price bundle is no one series: {}", chart.svg);
-        assert_eq!(chart.flags_used.last().unwrap(), "outPivotIdx: integer");
     }
 
     /// A `segmented` output breaks wherever the integer output changes and takes
@@ -2425,13 +2278,11 @@ mod tests {
             chart.sentence
         );
         assert!(chart.sentence.ends_with("a step pane of its own for the integer output outTrend."), "{}", chart.sentence);
-        assert_eq!(chart.flags_used, vec!["overlap", "outSupertrend: line, segmented", "outTrend: integer"]);
 
         let osc = func("OSC", &[], vec![], vec![out("outLine", ParamType::Real, &["line", "segmented"]), out("outTrend", ParamType::Integer, &["line", "positive", "negative"])]);
         let d_osc = candle_csv("", "outLine (shift 0) outTrend (shift 0)", &["15,1", "25,1", "45,-1", "55,-1", "45,1"]);
         let on_ind = render(&osc, &d_osc);
         assert_eq!(polyline_points(&on_ind.svg, "<polyline class=\"line down\"").len(), 2, "segmented off the price pane too: {}", on_ind.svg);
-        assert!(on_ind.flags_used.contains(&"outLine: line, segmented".to_string()), "{:?}", on_ind.flags_used);
 
         let plain = render(&st(&["line"]), &d);
         assert!(!plain.svg.contains("class=\"line up\""), "{}", plain.svg);
@@ -2475,7 +2326,6 @@ mod tests {
             "{}",
             chart.sentence
         );
-        assert_eq!(chart.flags_used, vec!["inPriceOHLC: open, high, low, close", "outHAOpen", "outHAHigh", "outHALow", "outHAClose"]);
     }
 
     /// The indicator pane takes in zero and rules it only for a histogram or an
@@ -2503,9 +2353,6 @@ mod tests {
         let c = render(&ind(&["line", "positive", "negative"]), &far);
         assert!(!zero_line(&c) && !c.svg.contains(">0</text>"), "data more than a span from zero: {}", c.svg);
         assert!(zero_line(&render(&ind(&["histogram"]), &far)));
-        assert_eq!(c.flags_used, vec!["outReal: line"], "no zero line drawn, so the signs decided nothing");
-        assert_eq!(render(&ind(&["line", "zero", "positive"]), &high).flags_used, vec!["outReal: line"]);
-        assert_eq!(render(&ind(&["line", "zero", "positive", "negative"]), &high).flags_used, vec!["outReal: line, positive, negative"]);
     }
 
     #[test]
@@ -2528,13 +2375,8 @@ mod tests {
                 let needle = if in_candles { candle_legend.clone().unwrap() } else { format!(">{}", o.name) };
                 assert!(chart.svg.contains(&needle), "{}: {} not in legend", f.name, o.name);
                 assert!(chart.sentence.contains(&o.name), "{}: sentence lacks {}: {}", f.name, o.name, chart.sentence);
-                let row = chart.flags_used.iter().filter(|r| *r == &o.name || r.starts_with(&format!("{}: ", o.name))).count();
-                assert_eq!(row, 1, "{}: flags_used names {} once: {:?}", f.name, o.name, chart.flags_used);
             }
-            assert!(!chart.flags_used.is_empty(), "{}", f.name);
-            assert!(chart.flags_used.iter().all(|r| !r.contains("independent")), "{}: {:?}", f.name, chart.flags_used);
             for (k, (name, _)) in f.inputs.iter().filter_map(|i| i.domain.map(|d| (i.name.as_str(), d))).enumerate() {
-                assert!(chart.flags_used.iter().any(|r| r.starts_with(&format!("{name}: series "))), "{}: {:?}", f.name, chart.flags_used);
                 assert!(chart.svg.contains(&format!(">{name}</text>")), "{}: input {k} not in the legend", f.name);
             }
             assert!(chart.sentence.ends_with('.') && chart.sentence.matches(". ").count() == 0, "{}: {}", f.name, chart.sentence);

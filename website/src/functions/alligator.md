@@ -13,15 +13,21 @@ The Alligator is a leg of Williams' Profitunity system, alongside the Awesome Os
 
 <ta-chart src="/functions/alligator.svg" ratio="720:274" label="ALLIGATOR over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles, with outJaw as a solid line moved 8 bars forward, outTeeth as a solid line moved 5 bars forward and outLips as a solid line moved 3 bars forward.
-
-Metadata flags used: `overlap` · `inPriceHL: high, low` · `outJaw: line, display_shift (+8)` · `outTeeth: line, display_shift (+5)` · `outLips: line, display_shift (+3)`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/alligator.csv) · [Chart (SVG)](/functions/alligator.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outJaw`: `line` · `display_shift`
+- `outTeeth`: `line` · `display_shift`
+- `outLips`: `line` · `display_shift`
+
+:::
 
 ## Formula
 
@@ -63,6 +69,8 @@ SMMA is Wilder's smoothed moving average ([`RMA`](/functions/rma.md)): seeded wi
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from RMA, which ALLIGATOR computes internally; tunable via RMA's unstable period.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -70,11 +78,20 @@ SMMA is Wilder's smoothed moving average ([`RMA`](/functions/rma.md)): seeded wi
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">✅</span> **Display Shift** <span class="flag-tip" tabindex="0" role="note" aria-label="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted." data-tip="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted.">i</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">✅</span> **Display Shift** <span class="flag-tip" tabindex="0" role="note" aria-label="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted." data-tip="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

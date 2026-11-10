@@ -11,15 +11,19 @@ Wilder-smoothed average of the True Range over a period, measuring price volatil
 
 <ta-chart src="/functions/atr.svg" ratio="720:416" label="ATR over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
-
-Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/atr.csv) · [Chart (SVG)](/functions/atr.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outReal`: `line` · `zero` · `positive`
+
+:::
 
 ## Formula
 
@@ -47,6 +51,8 @@ ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -54,11 +60,20 @@ ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

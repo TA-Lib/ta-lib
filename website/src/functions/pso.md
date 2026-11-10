@@ -11,15 +11,19 @@ Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero and res
 
 <ta-chart src="/functions/pso.svg" ratio="720:416" label="PSO over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line with dashed rules at -0.9, -0.2, 0.2 and 0.9."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line with dashed rules at -0.9, -0.2, 0.2 and 0.9.
-
-Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line, positive, negative, levels -0.9, -0.2, 0.2, 0.9`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/pso.csv) · [Chart (SVG)](/functions/pso.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outReal`: `line` · `zero` · `positive` · `negative` · `levels: -0.9, -0.2, 0.2, 0.9`
+
+:::
 
 ## Formula
 
@@ -60,6 +64,8 @@ PSO = (e^SS - 1) / (e^SS + 1) = tanh(SS / 2)
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which PSO computes internally; tunable via EMA's unstable period.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -67,11 +73,20 @@ PSO = (e^SS - 1) / (e^SS + 1) = tanh(SS / 2)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">✅</span> **Uses Transcendental** <span class="flag-tip" tabindex="0" role="note" aria-label="Calls a transcendental math function (exp, log, log10, trigonometric, inverse trigonometric or hyperbolic), so a value may differ slightly between languages, between a stream and a batch call, and between machines. TA-Lib targets a difference below 1e-9." data-tip="Calls a transcendental math function (exp, log, log10, trigonometric, inverse trigonometric or hyperbolic), so a value may differ slightly between languages, between a stream and a batch call, and between machines. TA-Lib targets a difference below 1e-9.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

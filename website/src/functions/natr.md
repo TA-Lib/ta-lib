@@ -11,15 +11,19 @@ Average True Range expressed as a percentage of the current close, making volati
 
 <ta-chart src="/functions/natr.svg" ratio="720:416" label="NATR over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
-
-Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/natr.csv) · [Chart (SVG)](/functions/natr.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outReal`: `line` · `zero` · `positive`
+
+:::
 
 ## Formula
 
@@ -50,6 +54,8 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -57,11 +63,20 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
+
+</div>
 
 </div>
 

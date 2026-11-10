@@ -13,15 +13,19 @@ Output is bounded [0..100] and is interpreted like RVI: above 50 the highs and l
 
 <ta-chart src="/functions/rvir.svg" ratio="720:416" label="RVIR over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
-
-Metadata flags used: `inPriceHL: high, low` · `outReal: line`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/rvir.csv) · [Chart (SVG)](/functions/rvir.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outReal`: `line` · `zero` · `positive`
+
+:::
 
 ## Formula
 
@@ -53,6 +57,8 @@ Both legs use the same `optInTimePeriod` and `optInStdDevPeriod`, so they warm o
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from RVI, which RVIR computes internally; tunable via RVI's unstable period.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -60,11 +66,20 @@ Both legs use the same `optInTimePeriod` and `optInStdDevPeriod`, so they warm o
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

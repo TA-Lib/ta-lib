@@ -122,10 +122,9 @@ fn load_chart(func: &FuncDef, public_dir: &Path) -> Option<Chart> {
     Some(docs_chart::render(func, &data))
 }
 
-/// The `## Chart` section: the component tag the site inlines the SVG through, then the
-/// sentence and the links, which is all an agent or a no-JS reader sees.
-/// The drawing description and the flags behind it are detail most readers skip, so the
-/// site folds them; the tag, the links and the fold's text are all an agent's twin shows.
+/// The `## Chart` section: the component tag the site inlines the SVG through (its
+/// `alt` carries the drawing sentence), the CSV and SVG links, then a fold listing each
+/// output's flags and levels.
 fn chart_section(func: &FuncDef, chart: &Chart) -> String {
     const TIP: &str = "The chart is drawn automatically from metadata TA-Lib provides. Your app can \
                        get the same through the Abstract API.";
@@ -134,18 +133,29 @@ fn chart_section(func: &FuncDef, chart: &Chart) -> String {
     let (label, alt) = (attr(&chart.label), attr(&chart.sentence));
     format!(
         "## Chart\n\n<ta-chart src=\"/functions/{dir}.svg\" ratio=\"{}:{}\" label=\"{label}\" alt=\"{alt}\"></ta-chart>\n\n\
+         <div class=\"ta-chart-links\">\n\n\
+         [Reference data (CSV)](/functions/{dir}.csv) · [Chart (SVG)](/functions/{dir}.svg)\n\n\
+         </div>\n\n\
          ::: details Chart metadata <span class=\"flag-tip\" tabindex=\"0\" role=\"note\" aria-label=\"{TIP}\" data-tip=\"{TIP}\">i</span>\n\n\
-         {}\n\nMetadata flags used: {}\n\n:::\n\n\
-         [Reference data (CSV)](/functions/{dir}.csv) · [Chart (SVG)](/functions/{dir}.svg)\n",
-        chart.width, chart.height, chart.sentence, flags_used_text(chart)
+         **Outputs**\n\n{}\n\n:::\n",
+        chart.width, chart.height, output_metadata(func)
     )
 }
 
-fn flags_used_text(chart: &Chart) -> String {
-    if chart.flags_used.is_empty() {
-        return "none".to_string();
-    }
-    chart.flags_used.iter().map(|f| format!("`{f}`")).collect::<Vec<_>>().join(" · ")
+/// One bullet per output: its flags as declared, then its levels.
+fn output_metadata(func: &FuncDef) -> String {
+    func.outputs
+        .iter()
+        .map(|o| {
+            let mut items: Vec<String> = o.flags.iter().map(|f| format!("`{f}`")).collect();
+            if !o.levels.is_empty() {
+                let levels: Vec<String> = o.levels.iter().map(|v| format!("{v}")).collect();
+                items.push(format!("`levels: {}`", levels.join(", ")));
+            }
+            if items.is_empty() { format!("- `{}`", o.name) } else { format!("- `{}`: {}", o.name, items.join(" · ")) }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// Insert the Chart section right after `## Summary` (or at the top when there is none).
@@ -601,8 +611,8 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 }
 
 /// Inject the per-function `## Properties` section before `## Implementation` (present
-/// on every page), computed from the raw YAML flags — a stability line followed by a
-/// headerless list of checkboxes, checked cells bold and the rest dimmed:
+/// on every page), computed from the raw YAML flags — a stability line followed by two
+/// side-by-side headerless columns of checkboxes, checked cells bold and the rest dimmed:
 ///
 /// * The **numerical-stability** line — how much the value at a bar depends on the
 ///   past, folded from two disjoint flags into three mutually-exclusive states
@@ -656,6 +666,14 @@ fn inject_flags(
             "A candlestick pattern; its values are listed under Output Values.",
         ),
         (
+            "Display Shift",
+            has("display_shift"),
+            "A chart draws at least one output ahead of or behind the bar that computed it. \
+             The display-shift query gives the number of bars; the values are not shifted.",
+        ),
+    ];
+    let numerical = [
+        (
             "Can Output NaN or ±Inf",
             has("nan_inf_output"),
             "Some inputs have no finite result, so a successful call can return NaN or ±Inf — \
@@ -666,12 +684,6 @@ fn inject_flags(
             has("period1_identity"),
             "A period of 1 performs no smoothing: every output value is a bit-exact copy of \
              its input value.",
-        ),
-        (
-            "Display Shift",
-            has("display_shift"),
-            "A chart draws at least one output ahead of or behind the bar that computed it. \
-             The display-shift query gives the number of bars; the values are not shifted.",
         ),
         (
             "Uses Transcendental",
@@ -699,11 +711,15 @@ fn inject_flags(
     // `overflow-x: auto` on tables so the first row's tooltip is not clipped away
     // (`.vuepress/styles/index.scss`). The blank lines around the table are what keep
     // markdown-it parsing markdown inside the raw HTML block.
-    block.push_str("\n\n<div class=\"flag-table\">\n\n|  |\n| :-- |\n");
-    for (label, on, tip) in display {
-        block.push_str(&format!("| {} |\n", flag_cell(label, on, tip)));
+    block.push_str("\n\n<div class=\"flag-cols\">\n\n");
+    for column in [&display[..], &numerical[..]] {
+        block.push_str("<div class=\"flag-table\">\n\n|  |\n| :-- |\n");
+        for &(label, on, tip) in column {
+            block.push_str(&format!("| {} |\n", flag_cell(label, on, tip)));
+        }
+        block.push_str("\n</div>\n\n");
     }
-    block.push_str("\n</div>\n\n");
+    block.push_str("</div>\n\n");
 
     match body.find("\n## Implementation") {
         Some(pos) => {

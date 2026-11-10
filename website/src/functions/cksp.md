@@ -11,15 +11,20 @@ Chande and Kroll's two-line volatility stop. The highest high is offset down, an
 
 <ta-chart src="/functions/cksp.svg" ratio="720:274" label="CKSP over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles, with outHighStop as a solid line and outLowStop as a solid line.
-
-Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outHighStop: line` · `outLowStop: line`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/cksp.csv) · [Chart (SVG)](/functions/cksp.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outHighStop`: `line`
+- `outLowStop`: `line`
+
+:::
 
 ## Formula
 
@@ -61,6 +66,8 @@ LowStop = MIN(FirstLowStop, StopPeriod)
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from ATR, which CKSP computes internally; tunable via ATR's unstable period.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -68,11 +75,20 @@ LowStop = MIN(FirstLowStop, StopPeriod)
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

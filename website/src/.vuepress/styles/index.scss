@@ -354,3 +354,18 @@ html[data-theme="dark"] {
     height: auto;
   }
 }
+
+// The CSV/SVG links under a function-page chart: small and centred on it.
+.ta-chart-links {
+  margin-top: -0.6rem;
+  text-align: center;
+  font-size: 0.85em;
+}
+
+// The `## Properties` checkboxes as two side-by-side tables; the second wraps
+// below the first on a narrow screen.
+.flag-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 3rem;
+}

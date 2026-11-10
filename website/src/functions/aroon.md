@@ -11,15 +11,20 @@ Aroon reports how recently the highest high and lowest low occurred within a rol
 
 <ta-chart src="/functions/aroon.svg" ratio="720:416" label="AROON over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outAroonDown as a dashed line and outAroonUp as a solid line with dashed rules at 30 and 70."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane showing outAroonDown as a dashed line and outAroonUp as a solid line with dashed rules at 30 and 70.
-
-Metadata flags used: `inPriceHL: high, low` · `outAroonDown: dash_line` · `outAroonUp: line, levels 30, 70`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/aroon.csv) · [Chart (SVG)](/functions/aroon.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outAroonDown`: `dash_line` · `zero` · `positive`
+- `outAroonUp`: `line` · `zero` · `positive` · `levels: 30, 70`
+
+:::
 
 ## Formula
 
@@ -45,6 +50,8 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -52,11 +59,20 @@ Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

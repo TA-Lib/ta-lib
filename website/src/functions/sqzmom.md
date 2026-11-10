@@ -13,15 +13,20 @@ John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014
 
 <ta-chart src="/functions/sqzmom.svg" ratio="720:498" label="SQZMOM over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze.
-
-Metadata flags used: `inPriceHLC: high, low, close` · `outMomentum: histogram, positive, negative` · `outSqueeze: integer`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/sqzmom.csv) · [Chart (SVG)](/functions/sqzmom.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outMomentum`: `histogram` · `zero` · `positive` · `negative`
+- `outSqueeze`: `line`
+
+:::
 
 ## Formula
 
@@ -77,6 +82,8 @@ With `b = optInBBPeriod` and `k = optInKCPeriod`:
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -84,11 +91,20 @@ With `b = optInBBPeriod` and `k = optInKCPeriod`:
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

@@ -11,15 +11,19 @@ Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that ac
 
 <ta-chart src="/functions/sar.svg" ratio="720:274" label="SAR over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outReal as dots."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over candles, with outReal as dots.
-
-Metadata flags used: `overlap` · `inPriceHL: high, low` · `outReal: dot`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/sar.csv) · [Chart (SVG)](/functions/sar.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outReal`: `dot`
+
+:::
 
 ## Formula
 
@@ -47,6 +51,8 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 
 **Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -54,11 +60,20 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

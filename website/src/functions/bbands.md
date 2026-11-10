@@ -11,15 +11,21 @@ Bollinger Bands: a moving-average middle band with upper and lower bands offset 
 
 <ta-chart src="/functions/bbands.svg" ratio="720:274" label="BBANDS over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
-
-Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill.
-
-Metadata flags used: `overlap` · `outRealUpperBand: upper_limit` · `outRealMiddleBand: line` · `outRealLowerBand: lower_limit`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/bbands.csv) · [Chart (SVG)](/functions/bbands.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+- `outRealUpperBand`: `upper_limit`
+- `outRealMiddleBand`: `line`
+- `outRealLowerBand`: `lower_limit`
+
+:::
 
 ## Formula
 
@@ -68,6 +74,8 @@ and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 
 **Numerical Stability:** [Depends on MA Type](/functions/stability.md#depends-on-ma-type) — This function's default, SMA, is start-independent.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -75,11 +83,20 @@ and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 
