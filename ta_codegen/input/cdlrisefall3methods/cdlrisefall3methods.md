@@ -10,7 +10,7 @@ A five-candle continuation pattern: a long candle, three small counter-color can
 - The middle candles need only partially overlap the first candle's range, not be fully contained within it.
 - The prior trend the continuation reading assumes is not verified.
 - Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur ([rising](https://thepatternsite.com/Rising3Methods.html), [falling](https://thepatternsite.com/Falling3Methods.html)), and TA-Lib finds it 12 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur ([rising](https://thepatternsite.com/Rising3Methods.html), [falling](https://thepatternsite.com/Falling3Methods.html)), and it fires 12 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

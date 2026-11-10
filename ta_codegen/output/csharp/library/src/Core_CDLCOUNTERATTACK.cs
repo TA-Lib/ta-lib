@@ -311,7 +311,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<see href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</see>, <see href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</see>, <see href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</see>).</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -398,7 +398,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<see href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</see>, <see href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</see>), and TA-Lib finds none in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur (<see href="https://thepatternsite.com/MeetingLinesBull.html">bullish Meeting Lines</see>, <see href="https://thepatternsite.com/MeetingLinesBear.html">bearish Meeting Lines</see>).</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

@@ -25,7 +25,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 
 - Does not verify the prior trend the continuation signal classically assumes.
 - Bulkowski's data shows the bullish form continues as labeled 66% of the time; the bearish form's 56% continuation rate is "near random", and Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
-- Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/SidebySideWhiteLinesBull.html), [bearish](https://thepatternsite.com/SidebySideWhiteLinesBear.html)). TA-Lib finds it more often in crypto: 18 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/SidebySideWhiteLinesBull.html), [bearish](https://thepatternsite.com/SidebySideWhiteLinesBear.html)). It fires more often in crypto: 18 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

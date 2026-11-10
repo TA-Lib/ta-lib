@@ -8,7 +8,7 @@ A three-candle bearish reversal pattern: a long white candle, then a small black
 
 - The pattern classically assumes a prior uptrend, but this function does not verify any trend.
 - Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 75th of 103 patterns by how often it occurs ([Upside Gap Two Crows](https://thepatternsite.com/UpGapTwoCrows.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 75th of 103 patterns by how often it occurs ([Upside Gap Two Crows](https://thepatternsite.com/UpGapTwoCrows.html)).
 
 ## Inputs
 

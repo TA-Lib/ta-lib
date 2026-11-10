@@ -375,9 +375,7 @@ export function cdlabandonedbabyDisplayShift(outputIdx: number, options?: Cdlaba
  * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
  *   the bullish form 92nd and the bearish 96th of 103 patterns by how often they
  *   occur ([bullish](https://thepatternsite.com/AbandonBabyBull.html),
- *   [bearish](https://thepatternsite.com/AbandonBaby.html)), and TA-Lib finds none
- *   in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
+ *   [bearish](https://thepatternsite.com/AbandonBaby.html)).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

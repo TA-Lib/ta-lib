@@ -28,7 +28,7 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 ## Notes
 
 - A prior trend is not verified, nor that the pattern aligns with it.
-- Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/SeparateLinesBull.html), [bearish](https://thepatternsite.com/SeparateLinesBear.html)). TA-Lib finds it more often in crypto: 120 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/SeparateLinesBull.html), [bearish](https://thepatternsite.com/SeparateLinesBear.html)). It fires more often in crypto: 120 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

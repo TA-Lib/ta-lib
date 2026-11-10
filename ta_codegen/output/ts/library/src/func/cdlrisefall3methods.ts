@@ -366,8 +366,8 @@ export function cdlrisefall3methodsDisplayShift(outputIdx: number, options?: Cdl
  *   Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by
  *   how often they occur
  *   ([rising](https://thepatternsite.com/Rising3Methods.html),
- *   [falling](https://thepatternsite.com/Falling3Methods.html)), and TA-Lib finds
- *   it 12 times in [about 16,000 daily crypto
+ *   [falling](https://thepatternsite.com/Falling3Methods.html)), and it fires 12
+ *   times in [about 16,000 daily crypto
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

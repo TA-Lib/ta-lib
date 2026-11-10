@@ -321,9 +321,7 @@ export function cdlbreakawayDisplayShift(outputIdx: number, options?: Cdlbreakaw
  * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
  *   the bullish form 97th and the bearish 98th of 103 patterns by how often they
  *   occur ([bullish](https://thepatternsite.com/BullBreakaway.html),
- *   [bearish](https://thepatternsite.com/BearBreakaway.html)), and TA-Lib finds
- *   none in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
+ *   [bearish](https://thepatternsite.com/BearBreakaway.html)).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

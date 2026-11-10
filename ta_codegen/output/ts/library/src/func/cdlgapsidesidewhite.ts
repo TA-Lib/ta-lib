@@ -326,8 +326,8 @@ export function cdlgapsidesidewhiteDisplayShift(outputIdx: number, options?: Cdl
  * - Rare in Bulkowski's tests: he ranks the bullish form 73rd and the bearish 86th
  *   of 103 patterns by how often they occur
  *   ([bullish](https://thepatternsite.com/SidebySideWhiteLinesBull.html),
- *   [bearish](https://thepatternsite.com/SidebySideWhiteLinesBear.html)). TA-Lib
- *   finds it more often in crypto: 18 times in [about 16,000 daily
+ *   [bearish](https://thepatternsite.com/SidebySideWhiteLinesBear.html)). It fires
+ *   more often in crypto: 18 times in [about 16,000 daily
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

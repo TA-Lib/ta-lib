@@ -29,12 +29,12 @@ You do not have to hard-code any of this. Through the [Abstract API](/api/abstra
 
 ## How often patterns fire
 
-Many patterns are rare: a few years of one symbol's daily bars may show none, and that is not a bug. The page of each rare pattern says so under **Notes**, with two numbers:
+Many patterns are rare: a few years of one symbol's daily bars may show none, and that is not a bug. The page of each rare pattern says so under **Notes**:
 
 - **Bulkowski's frequency rank.** Thomas Bulkowski ranks the 103 patterns he tested, over about 4.7 million candles, by how often each occurs, 1 being the most frequent. The note links his page for the pattern on [thepatternsite.com](https://thepatternsite.com/CandleEntry.html). His definitions are his own, so TA-Lib can find a pattern more or less often than his rank suggests.
-- **TA-Lib's own count** over about 16,000 daily bars of crypto, May 2021 to November 2026: eight trading pairs on Uniswap v3, Ethereum (WBTC/USDC, WETH/USDC, WETH/USDT, WBTC/WETH, LINK/WETH, UNI/WETH, AAVE/WETH, MKR/WETH), built from the pools' on-chain swaps. Crypto trades around the clock, so a day seldom opens away from the previous close, and a pattern that needs a gap between whole candles almost never fires there.
+- **How often TA-Lib's function fires** over about 16,000 daily bars of crypto, May 2021 to November 2026: eight trading pairs on Uniswap v3, Ethereum (WBTC/USDC, WETH/USDC, WETH/USDT, WBTC/WETH, LINK/WETH, UNI/WETH, AAVE/WETH, MKR/WETH), built from the pools' on-chain swaps. Crypto trades around the clock, so a day seldom opens away from the previous close, and a pattern that needs a gap between whole candles almost never fires there.
 
-A pattern counts as rare when Bulkowski ranks either of its forms 78th to 103rd, or when TA-Lib finds it fewer than 16 times in those bars (1 per 1,000).
+A pattern counts as rare when Bulkowski ranks either of its forms 78th to 103rd, or when its function fires fewer than 16 times in those bars (1 per 1,000).
 
 ## Related pages
 

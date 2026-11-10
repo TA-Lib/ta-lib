@@ -8,7 +8,7 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 - Does not verify the preceding uptrend that the bearish reversal classically assumes.
 - Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.
-- Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs ([Identical Three Crows](https://thepatternsite.com/Identical3Crows.html)). TA-Lib finds it more often in crypto: 180 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it occurs ([Identical Three Crows](https://thepatternsite.com/Identical3Crows.html)). It fires more often in crypto: 180 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

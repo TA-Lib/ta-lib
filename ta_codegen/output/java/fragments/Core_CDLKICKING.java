@@ -286,7 +286,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>).</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -355,7 +355,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time, both "near random". (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>), and TA-Lib finds none in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 100th and the bearish 102nd of 103 patterns by how often they occur (<a href="https://thepatternsite.com/KickingBull.html">bullish</a>, <a href="https://thepatternsite.com/KickingBear.html">bearish</a>).</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

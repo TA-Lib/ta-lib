@@ -8,7 +8,7 @@ Three-candle bearish reversal pattern: a long white candle, then a black candle 
 
 - Does not verify the prior uptrend the pattern classically assumes for significance.
 - Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs ([Two Crows](https://thepatternsite.com/TwoCrows.html)), and TA-Lib finds it once in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs ([Two Crows](https://thepatternsite.com/TwoCrows.html)), and it fires once in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

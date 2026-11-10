@@ -8,7 +8,7 @@ A three-candle bullish reversal pattern of three consecutive black candles that 
 
 - Does not verify the prior downtrend the pattern classically assumes for significance.
 - Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 99th of 103 patterns by how often it occurs ([Three Stars in the South](https://thepatternsite.com/ThreeStarsSouth.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 99th of 103 patterns by how often it occurs ([Three Stars in the South](https://thepatternsite.com/ThreeStarsSouth.html)).
 
 ## Inputs
 

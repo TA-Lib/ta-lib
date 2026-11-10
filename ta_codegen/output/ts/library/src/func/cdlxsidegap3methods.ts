@@ -295,8 +295,8 @@ export function cdlxsidegap3methodsDisplayShift(outputIdx: number, options?: Cdl
  * - Rare in Bulkowski's tests: he ranks the upside form 85th and the downside 84th
  *   of 103 patterns by how often they occur
  *   ([upside](https://thepatternsite.com/UpGap3Methods.html),
- *   [downside](https://thepatternsite.com/DownGap3Methods.html)). TA-Lib finds it
- *   more often in crypto: 204 times in [about 16,000 daily
+ *   [downside](https://thepatternsite.com/DownGap3Methods.html)). It fires more
+ *   often in crypto: 204 times in [about 16,000 daily
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

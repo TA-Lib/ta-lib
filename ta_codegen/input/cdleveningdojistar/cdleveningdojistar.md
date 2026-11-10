@@ -7,7 +7,7 @@ A three-candle bearish reversal pattern: a long white candle, a doji that gaps u
 ## Notes
 
 - Does not verify the preceding uptrend the bearish reversal classically assumes.
-- Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it occurs ([Evening Doji Star](https://thepatternsite.com/EveningDojiStar.html)). TA-Lib finds it more often in crypto: 25 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare in Bulkowski's tests: he ranks it 81st of 103 patterns by how often it occurs ([Evening Doji Star](https://thepatternsite.com/EveningDojiStar.html)). It fires more often in crypto: 25 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

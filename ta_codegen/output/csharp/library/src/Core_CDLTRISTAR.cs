@@ -269,7 +269,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<see href="https://thepatternsite.com/TriStarBull.html">bullish</see>, <see href="https://thepatternsite.com/TriStarBear.html">bearish</see>), and TA-Lib finds it 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<see href="https://thepatternsite.com/TriStarBull.html">bullish</see>, <see href="https://thepatternsite.com/TriStarBear.html">bearish</see>), and it fires 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -356,7 +356,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<see href="https://thepatternsite.com/TriStarBull.html">bullish</see>, <see href="https://thepatternsite.com/TriStarBear.html">bearish</see>), and TA-Lib finds it 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<see href="https://thepatternsite.com/TriStarBull.html">bullish</see>, <see href="https://thepatternsite.com/TriStarBear.html">bearish</see>), and it fires 5 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

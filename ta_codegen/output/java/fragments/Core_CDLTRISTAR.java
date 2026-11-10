@@ -212,7 +212,7 @@
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
     * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and it fires 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -283,7 +283,7 @@
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
     * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance: bullish 60% of the time (rank 28/103 overall) and bearish just 52% of the time (rank 76/103). Despite the "exhaustion signal" framing, it is one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and TA-Lib finds it 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 79th and the bearish 77th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/TriStarBull.html">bullish</a>, <a href="https://thepatternsite.com/TriStarBear.html">bearish</a>), and it fires 5 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

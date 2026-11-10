@@ -25,7 +25,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 
 - Does not verify the prior trend the reversal signal classically assumes.
 - Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur ([bullish Meeting Lines](https://thepatternsite.com/MeetingLinesBull.html), [bearish Meeting Lines](https://thepatternsite.com/MeetingLinesBear.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 72nd and the bearish 63rd of 103 patterns by how often they occur ([bullish Meeting Lines](https://thepatternsite.com/MeetingLinesBull.html), [bearish Meeting Lines](https://thepatternsite.com/MeetingLinesBear.html)).
 
 ## Inputs
 

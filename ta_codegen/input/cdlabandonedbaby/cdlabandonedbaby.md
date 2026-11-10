@@ -8,7 +8,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 - Does not verify the prior trend the pattern classically assumes for significance.
 - Bulkowski found the Abandoned Baby unusually reliable when it does occur: 70% success as a reversal, overall performance rank 9 of 103. ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))
-- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 92nd and the bearish 96th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/AbandonBabyBull.html), [bearish](https://thepatternsite.com/AbandonBaby.html)), and TA-Lib finds none in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks the bullish form 92nd and the bearish 96th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/AbandonBabyBull.html), [bearish](https://thepatternsite.com/AbandonBaby.html)).
 
 ## Inputs
 

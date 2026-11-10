@@ -229,7 +229,7 @@
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
     * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and TA-Lib finds it 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and it fires 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -301,7 +301,7 @@
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
     * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and TA-Lib finds it 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/InNeck.html">In Neck</a>), and it fires 9 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

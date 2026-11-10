@@ -360,8 +360,8 @@ export function cdlidentical3crowsDisplayShift(outputIdx: number, options?: Cdli
  *   to each candle opening at or near the previous candle's close.
  * - Rare in Bulkowski's tests: he ranks it 83rd of 103 patterns by how often it
  *   occurs ([Identical Three
- *   Crows](https://thepatternsite.com/Identical3Crows.html)). TA-Lib finds it more
- *   often in crypto: 180 times in [about 16,000 daily
+ *   Crows](https://thepatternsite.com/Identical3Crows.html)). It fires more often
+ *   in crypto: 180 times in [about 16,000 daily
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

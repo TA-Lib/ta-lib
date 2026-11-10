@@ -375,9 +375,7 @@ export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3st
  *   ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))
  * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
  *   99th of 103 patterns by how often it occurs ([Three Stars in the
- *   South](https://thepatternsite.com/ThreeStarsSouth.html)), and TA-Lib finds
- *   none in [about 16,000 daily crypto
- *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
+ *   South](https://thepatternsite.com/ThreeStarsSouth.html)).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends

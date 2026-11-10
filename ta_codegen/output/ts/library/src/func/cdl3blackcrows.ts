@@ -332,8 +332,8 @@ export function cdl3blackcrowsDisplayShift(outputIdx: number, options?: Cdl3blac
  *   significance.
  * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it
  *   60th of 103 patterns by how often it occurs ([Three Black
- *   Crows](https://thepatternsite.com/ThreeBlackCrows.html)), and TA-Lib finds it
- *   13 times in [about 16,000 daily crypto
+ *   Crows](https://thepatternsite.com/ThreeBlackCrows.html)), and it fires 13
+ *   times in [about 16,000 daily crypto
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

@@ -308,8 +308,8 @@ export function cdltristarDisplayShift(outputIdx: number, options?: CdltristarOp
  * - Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks
  *   the bullish form 79th and the bearish 77th of 103 patterns by how often they
  *   occur ([bullish](https://thepatternsite.com/TriStarBull.html),
- *   [bearish](https://thepatternsite.com/TriStarBear.html)), and TA-Lib finds it 5
- *   times in [about 16,000 daily crypto
+ *   [bearish](https://thepatternsite.com/TriStarBear.html)), and it fires 5 times
+ *   in [about 16,000 daily crypto
  *   bars](https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire).
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as

@@ -298,7 +298,7 @@
     * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
     * <li>The prior trend the continuation reading assumes is not verified.</li>
     * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and TA-Lib finds it 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and it fires 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -372,7 +372,7 @@
     * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
     * <li>The prior trend the continuation reading assumes is not verified.</li>
     * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and TA-Lib finds it 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur (<a href="https://thepatternsite.com/Rising3Methods.html">rising</a>, <a href="https://thepatternsite.com/Falling3Methods.html">falling</a>), and it fires 12 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

@@ -310,7 +310,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior mature uptrend the pattern classically assumes for significance.</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</see>), and TA-Lib finds it 13 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</see>), and it fires 13 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -395,7 +395,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior mature uptrend the pattern classically assumes for significance.</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</see>), and TA-Lib finds it 13 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 60th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/ThreeBlackCrows.html">Three Black Crows</see>), and it fires 13 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

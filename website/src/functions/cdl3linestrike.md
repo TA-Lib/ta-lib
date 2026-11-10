@@ -25,7 +25,7 @@ Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `
 
 - Does not verify the surrounding trend the pattern classically assumes for significance.
 - TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.
-- Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/ThreeLineStrikeBull.html), [bearish](https://thepatternsite.com/ThreeLineStrikeBear.html)). TA-Lib finds it more often in crypto: 67 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
+- Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/ThreeLineStrikeBull.html), [bearish](https://thepatternsite.com/ThreeLineStrikeBear.html)). It fires more often in crypto: 67 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 

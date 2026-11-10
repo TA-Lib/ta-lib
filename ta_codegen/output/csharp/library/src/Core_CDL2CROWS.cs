@@ -261,7 +261,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<see href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/TwoCrows.html">Two Crows</see>), and TA-Lib finds it once in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/TwoCrows.html">Two Crows</see>), and it fires once in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -347,7 +347,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<see href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/TwoCrows.html">Two Crows</see>), and TA-Lib finds it once in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 64th of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/TwoCrows.html">Two Crows</see>), and it fires once in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

@@ -240,7 +240,7 @@
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
     * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
-    * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). TA-Lib finds it more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
+    * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). It fires more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -313,7 +313,7 @@
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
     * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
-    * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). TA-Lib finds it more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
+    * <li>Rare in Bulkowski's tests: he ranks the bullish form 95th and the bearish 94th of 103 patterns by how often they occur (<a href="https://thepatternsite.com/ThreeLineStrikeBull.html">bullish</a>, <a href="https://thepatternsite.com/ThreeLineStrikeBear.html">bearish</a>). It fires more often in crypto: 67 times in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

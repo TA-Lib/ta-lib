@@ -320,7 +320,7 @@
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
     * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and it fires once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -396,7 +396,7 @@
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
     * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
-    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and TA-Lib finds it once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
+    * <li>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 93rd of 103 patterns by how often it occurs (<a href="https://thepatternsite.com/MatHold.html">Mat Hold</a>), and it fires once in <a href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</a>.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

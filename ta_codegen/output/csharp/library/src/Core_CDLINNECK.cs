@@ -286,7 +286,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<see href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/InNeck.html">In Neck</see>), and TA-Lib finds it 9 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/InNeck.html">In Neck</see>), and it fires 9 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -373,7 +373,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<see href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</see>)</description></item>
-   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/InNeck.html">In Neck</see>), and TA-Lib finds it 9 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
+   /// <item><description>Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 62nd of 103 patterns by how often it occurs (<see href="https://thepatternsite.com/InNeck.html">In Neck</see>), and it fires 9 times in <see href="https://ta-lib.org/api/candlestick-outputs/#how-often-patterns-fire">about 16,000 daily crypto bars</see>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
