@@ -42,9 +42,9 @@
 //! a leading one on a line of its own before it. The renderers emit both
 //! inline and [`lay_out`] places them.
 
-use crate::backends::builtins::MathFn;
+use crate::backends::builtins::{MathFn, SpecialBuiltin};
 use crate::helper_registry::{try_inline_expr, HelperRegistry};
-use crate::ir::{BinOp, Expr, FuncDef, LookbackExpr, Output, ParamType, Statement, VarType};
+use crate::ir::{BinOp, CircBuf, Expr, FuncDef, LookbackExpr, Output, ParamType, Statement, VarType};
 use crate::streaming::{rewrite_expr, walk_expr};
 
 pub(crate) const EAGER_AND: &str = "ta_eager_and";
@@ -74,6 +74,21 @@ const PURE_HELPERS: &[&str] = &[
 
 /// Pure, but it divides.
 const DIVIDING_HELPER: &str = "ta_candleaverage";
+
+/// The bar a candle helper's price arguments name, when they are `inOpen`,
+/// `inHigh`, `inLow` and `inClose` at one index: C reads them through a macro
+/// that takes that index alone.
+fn candle_bar(ohlc: &[Expr]) -> Option<&Expr> {
+    let mut at: Option<&Expr> = None;
+    for (a, want) in ohlc.iter().zip(["inOpen", "inHigh", "inLow", "inClose"]) {
+        let Expr::ArrayAccess(n, i) = a else { return None };
+        if n != want || at.is_some_and(|x| !crate::streaming::exprs_equal(x, i)) {
+            return None;
+        }
+        at = Some(i);
+    }
+    (ohlc.len() == 4).then_some(at?)
+}
 
 /// `NOTE<comment>(operand)`: the comment trails the operand.
 const NOTE: &str = "\u{1}note:";
@@ -277,7 +292,7 @@ fn writes_of(body: &[Statement]) -> (Vec<String>, Vec<String>) {
     let (mut written, mut taken) = (Vec::new(), Vec::new());
     each_statement(body, &mut |s| {
         // A declaration starts another variable of that name.
-        if let Statement::Assign { target: Expr::Var(v), .. } | Statement::VarDecl { name: v, .. } = s {
+        if let Statement::Assign { target: Expr::Var(v), .. } | Statement::VarDecl { name: v, .. } | Statement::For { var: v, .. } = s {
             written.push(v.clone());
         }
         for e in exprs_of(s) {
@@ -523,7 +538,10 @@ struct Entry<'a> {
 
 fn pass_of(pass: &[Statement], counter: Option<&String>, entry: &Entry, rules: &Rules) -> Pass {
     let mut leaves = false;
-    each_statement(pass, &mut |s| leaves |= matches!(s, Statement::Break | Statement::Continue | Statement::Return { .. }));
+    each_statement(pass, &mut |s| {
+        leaves |= matches!(s, Statement::Break | Statement::Continue | Statement::Return { .. } | Statement::CircBuf(CircBuf::Init { .. }))
+            || exprs_of(s).iter().any(|e| may_exit(e, rules.helpers));
+    });
     let tested: Vec<Statement> = entry.test.map(|t| Statement::Expr(t.clone())).into_iter().collect();
     let (mut writes, _) = writes_of(&[pass, tested.as_slice()].concat());
     writes.extend(rules.taken.iter().cloned());
@@ -557,7 +575,7 @@ fn pass_of(pass: &[Statement], counter: Option<&String>, entry: &Entry, rules: &
     };
     if !leaves {
         for s in pass {
-            sure_reads(s, &mut |a, i| {
+            sure_reads(s, rules.helpers, &mut |a, i| {
                 if let Some((v, o)) = offset(i).filter(|_| rules.arrays.iter().any(|x| x == a)) {
                     prove(v, Some(o), Some(o));
                 }
@@ -610,24 +628,49 @@ fn offset(i: &Expr) -> Option<(&String, i64)> {
     }
 }
 
+/// Whether `e` calls something whose rendering may return early: a backend
+/// renders a cross-call's failure, or a buffer allocation's, as a return the
+/// IR does not hold.
+fn may_exit(e: &Expr, helpers: &HelperRegistry) -> bool {
+    let mut hit = false;
+    walk_expr(e, &mut |x| {
+        if let Expr::FuncCall(n, _) = x {
+            let known = PURE_HELPERS.contains(&n.as_str()) || n == DIVIDING_HELPER || helpers.get(n).is_some();
+            hit |= !known && MathFn::from_name(n).is_none() && SpecialBuiltin::from_name(n).is_none() && !is_pseudo_call(n);
+        }
+    });
+    hit
+}
+
 /// The array reads a top-level statement of the pass runs whatever the data.
-fn sure_reads(s: &Statement, see: &mut dyn FnMut(&str, &Expr)) {
-    fn expr(e: &Expr, see: &mut dyn FnMut(&str, &Expr)) {
+/// The backends paste a one-expression helper's body in place of its call, so
+/// an argument counts only where that body reads it unconditionally.
+fn sure_reads(s: &Statement, helpers: &HelperRegistry, see: &mut dyn FnMut(&str, &Expr)) {
+    fn expr(e: &Expr, helpers: &HelperRegistry, see: &mut dyn FnMut(&str, &Expr)) {
         match e {
             Expr::ArrayAccess(a, i) => {
                 see(a, i);
-                expr(i, see);
+                expr(i, helpers, see);
             }
-            Expr::BinOp(l, BinOp::And | BinOp::Or, _) | Expr::Ternary(l, _, _) => expr(l, see),
+            Expr::BinOp(l, BinOp::And | BinOp::Or, _) | Expr::Ternary(l, _, _) => expr(l, helpers, see),
             Expr::BinOp(l, _, r) => {
-                expr(l, see);
-                expr(r, see);
+                expr(l, helpers, see);
+                expr(r, helpers, see);
             }
-            // The candle average reads its bar only when the average period is
-            // 0. The candle range reads it for every range type the settings
-            // accept.
-            Expr::FuncCall(n, _) if n == DIVIDING_HELPER => {}
-            Expr::FuncCall(_, args) => args.iter().for_each(|a| expr(a, see)),
+            // Every range type the settings accept reads the bar, but only
+            // where all four prices name one.
+            Expr::FuncCall(n, args) if n == "ta_candlerange" => {
+                if let Some(i) = args.get(1..).and_then(candle_bar) {
+                    see("inClose", i);
+                    expr(i, helpers, see);
+                }
+            }
+            Expr::FuncCall(n, args) if MathFn::from_name(n).is_some() => args.iter().for_each(|a| expr(a, helpers, see)),
+            Expr::FuncCall(n, args) => {
+                if let Some(inlined) = helpers.get(n).and_then(|h| try_inline_expr(h, args)) {
+                    expr(&inlined, helpers, see);
+                }
+            }
             Expr::Cast(_, x)
             | Expr::Not(x)
             | Expr::Neg(x)
@@ -635,19 +678,19 @@ fn sure_reads(s: &Statement, see: &mut dyn FnMut(&str, &Expr)) {
             | Expr::PostIncrement(x)
             | Expr::PostDecrement(x)
             | Expr::PreIncrement(x)
-            | Expr::PreDecrement(x) => expr(x, see),
+            | Expr::PreDecrement(x) => expr(x, helpers, see),
             _ => {}
         }
     }
     match s {
         Statement::Assign { target, value, .. } => {
             if let Expr::ArrayAccess(_, i) = target {
-                expr(i, see);
+                expr(i, helpers, see);
             }
-            expr(value, see);
+            expr(value, helpers, see);
         }
-        Statement::If { condition: e, .. } | Statement::VarDecl { init: Some(e), .. } | Statement::Expr(e) => expr(e, see),
-        Statement::Block { body } => body.iter().for_each(|b| sure_reads(b, see)),
+        Statement::If { condition: e, .. } | Statement::VarDecl { init: Some(e), .. } | Statement::Expr(e) => expr(e, helpers, see),
+        Statement::Block { body } => body.iter().for_each(|b| sure_reads(b, helpers, see)),
         _ => {}
     }
 }
@@ -2132,5 +2175,54 @@ mod tests {
         };
         assert!(j_folds(var("n")));
         assert!(!j_folds(Expr::PostDecrement(Box::new(var("j")))));
+        let reset_by = |counter: &str| {
+            let tree = x_half_and(gt(at("inClose", i_minus(3)), at("inOpen", var("i"))));
+            let lp = Statement::While { condition: bin(var("i"), BinOp::LessEq, var("endIdx")), body: vec![tree, step()] };
+            let counted = Statement::For { var: counter.into(), count: int(5), body: Vec::new() };
+            let out = walk(&[Statement::Comment(vec!["prologue".into()]), assign("i", var("startIdx")), counted, lp], None, true, &r);
+            let Statement::While { body, .. } = &out[3] else { panic!("loop gone") };
+            is_fold(&body[0])
+        };
+        assert!(reset_by("m"));
+        assert!(!reset_by("i"), "the counted loop leaves i at 0");
+    }
+
+    /// Whether a tree reading `inClose[i-3]` folds in a pass that runs `pre`
+    /// first and surely reads `inClose[i]`.
+    fn reads_back_three_after(pre: Statement) -> bool {
+        let tree = x_half_and(gt(at("inClose", i_minus(3)), at("inOpen", var("i"))));
+        let out = run(&[Statement::While { condition: gt(var("n"), int(0)), body: vec![pre, tree, assign("w", at("inClose", var("i"))), step()] }]);
+        let [Statement::While { body, .. }] = out.as_slice() else { panic!("loop gone") };
+        is_fold(&body[1])
+    }
+
+    #[test]
+    fn a_call_proves_only_the_reads_its_rendering_runs_on_every_pass() {
+        assert!(reads_back_three_after(assign("j", at("inOpen", i_minus(3)))));
+        let cast = Expr::Cast(VarType::Integer, Box::new(at("inOpen", i_minus(3))));
+        assert!(!reads_back_three_after(assign("j", call("ta_auto_stabilization_ema", vec![cast, var("i")]))), "read on one arm of the helper's body");
+        let range = |open: Expr, rest: Expr| {
+            let named = |a: &str| at(a, rest.clone());
+            call("ta_candlerange", vec![var("BodyLong_rangeType"), open, named("inHigh"), named("inLow"), named("inClose")])
+        };
+        assert!(reads_back_three_after(assign("e", range(at("inOpen", i_minus(3)), i_minus(3)))));
+        assert!(!reads_back_three_after(assign("e", range(at("inOpen", i_minus(3)), var("i")))), "the high-low range never reads the open");
+    }
+
+    #[test]
+    fn a_call_that_may_return_proves_no_window() {
+        let looped = |extra: Vec<Statement>| {
+            let mut pass = vec![x_half_and(gt(at("inClose", i_minus(3)), at("inOpen", var("i"))))];
+            pass.extend(extra);
+            pass.extend([reads(), step()]);
+            let out = run(&[Statement::While { condition: gt(var("n"), int(0)), body: pass }]);
+            let [Statement::While { body, .. }] = out.as_slice() else { panic!("loop gone") };
+            is_fold(&body[0])
+        };
+        assert!(looped(vec![]));
+        assert!(!looped(vec![assign("t", call("sma", vec![var("i")]))]), "a cross-call's failure returns");
+        let layout = || crate::ir::CircBufLayout::Plain(VarType::Real);
+        assert!(!looped(vec![Statement::CircBuf(CircBuf::Init { id: "b".into(), layout: layout(), size: var("n") })]), "an allocation's failure returns");
+        assert!(looped(vec![Statement::CircBuf(CircBuf::Next { id: "b".into() })]));
     }
 }
