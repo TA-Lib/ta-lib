@@ -1963,7 +1963,9 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
 
 /// Lower bound of `at - var` at steady-loop entry for each `(var, at)`, `None`
 /// where nothing could be proved. `at` may name the cursor, variables paced
-/// with it, and names the loop does not write.
+/// with it, and names nothing writes from the steady loop on: Open captures
+/// state after the code that follows the loop, so a name written there does
+/// not hold its loop-entry value.
 ///
 /// Memoized: every emitter re-analyzes each function. The key covers every
 /// input the proof reads, including the callee lookbacks it resolved.
@@ -2078,7 +2080,8 @@ fn prove(
             let mut names = BTreeSet::new();
             crate::streaming::expr_var_names(at, &mut names);
             let moves_apart = |n: &String| {
-                (per_bar_written.contains(n) || cond_written.contains(n)) && paced(n) != Some(cursor_step)
+                (per_bar_written.contains(n) || cond_written.contains(n) || after.contains(n))
+                    && paced(n) != Some(cursor_step)
             };
             if names.iter().any(moves_apart) {
                 return None;
@@ -2860,18 +2863,24 @@ mod tests {
     /// sends the body to the extrema automaton, whose ring holds only
     /// `[trailingIdx, inIdx]`.
     fn reach(prev: &str) -> FuncDef {
+        reach_then(prev, "")
+    }
+
+    /// [`reach`] with `tail` run after the loop, and a local `k` set to 0
+    /// before it.
+    fn reach_then(prev: &str, tail: &str) -> FuncDef {
         let src = format!(
             "int roc_lookback(int optInTimePeriod)\n{{\n   return optInTimePeriod;\n}}\n\n\
              TA_RetCode roc(int startIdx, int endIdx, const double inReal[], int optInTimePeriod,\n\
              int *outBegIdx, int *outNBElement, double outReal[])\n{{\n\
-             int inIdx, outIdx, trailingIdx, prevIdx;\ndouble sum;\n\
+             int inIdx, outIdx, trailingIdx, prevIdx, k;\ndouble sum;\n\
              if( startIdx > endIdx ) return TA_SUCCESS;\n\
-             outIdx = 0;\nsum = 0.0;\ninIdx = startIdx;\n\
+             outIdx = 0;\nsum = 0.0;\ninIdx = startIdx;\nk = 0;\n\
              trailingIdx = startIdx - optInTimePeriod + 1;\n\
              while( inIdx <= endIdx ) {{\n\
              prevIdx = {prev};\nsum += inReal[inIdx] - inReal[trailingIdx];\n\
              outReal[outIdx++] = sum + inReal[prevIdx];\ninIdx++;\ntrailingIdx++;\n}}\n\
-             *outNBElement = outIdx;\n*outBegIdx = startIdx;\nreturn TA_SUCCESS;\n}}\n"
+             {tail}\n*outNBElement = outIdx;\n*outBegIdx = startIdx;\nreturn TA_SUCCESS;\n}}\n"
         );
         let mut f = crate::parser::yaml::parse_yaml(&base().join("roc/roc.yaml"));
         let parsed = crate::parser::c_source::parse_c_source_str(&src);
@@ -2890,5 +2899,38 @@ mod tests {
         let Err(err) = crate::streaming::analyze(&before) else { panic!("refused") };
         let err = err.to_string();
         assert!(err.contains("prevIdx") && err.contains("trailingIdx"), "{err}");
+    }
+
+    /// Reads older than the window start: through a local moved after it was
+    /// bound, one carried from an earlier pass, a constant lag, an offset off
+    /// a copy of the window start, the window start stepped back within the
+    /// pass, and a bound naming a local written after the loop. A window
+    /// start that does not keep pace with the cursor is refused before them,
+    /// and a step that jumps or switches before that.
+    #[test]
+    fn an_extrema_read_is_bounded_in_the_same_pass() {
+        let at = "inIdx - optInTimePeriod + 1;\n";
+        for (prev, tail, needle, read) in [
+            (format!("{at}prevIdx--"), "", "not proved", "inReal[prevIdx]"),
+            (format!("{at}k = prevIdx--"), "", "not proved", "inReal[prevIdx]"),
+            ("sum > 0.0 ? inIdx : prevIdx".into(), "", "nothing bounds", "inReal[prevIdx]"),
+            (format!("{at}sum += inReal[inIdx - 3]"), "", "not proved", "inReal[inIdx - 3]"),
+            (format!("{at}k = trailingIdx;\nsum += inReal[k - 2]"), "", "not proved", "inReal[k - 2]"),
+            (format!("{at}trailingIdx--;\nsum += inReal[trailingIdx];\ntrailingIdx++"), "", "not proved", "inReal[trailingIdx]"),
+            (format!("{at}if( sum > 0.0 )\ntrailingIdx--"), "", "stays what Open captured", "inIdx - trailingIdx"),
+            (format!("{at}if( sum > 0.0 )\ntrailingIdx++"), "", "stays what Open captured", "inIdx - trailingIdx"),
+            ("trailingIdx + k".into(), "k = -10;", "not proved", "inReal[prevIdx]"),
+            (format!("{at}while( sum > 0.0 )\nbreak"), "", "in the step", "`break`"),
+            (format!("{at}switch( outIdx )\n{{\ncase 0: sum += 1.0;\n}}"), "", "in the step", "`switch`"),
+        ] {
+            let Err(err) = crate::streaming::analyze(&reach_then(&prev, tail)) else {
+                panic!("accepted: {prev} / {tail}")
+            };
+            let err = err.to_string();
+            assert!(err.contains(needle) && err.contains(read), "{prev}: {err}");
+        }
+        let kept = reach_then("trailingIdx + k", "");
+        let m = crate::streaming::analyze(&kept).expect("streams");
+        assert!(m.extrema().is_some(), "k untouched after the loop keeps its 0");
     }
 }

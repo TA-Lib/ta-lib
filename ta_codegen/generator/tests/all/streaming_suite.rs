@@ -4026,3 +4026,35 @@ fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
         assert_eq!(stepped, fused, "{lang}: the step fuses {stepped} sites, batch {fused}");
     }
 }
+
+/// #581: Open captures a composed producer's state after the tail runs, so a
+/// read bounded by a local the tail rewrites is refused.
+#[test]
+fn composed_extrema_read_bound_rewritten_by_the_tail_is_refused() {
+    let base = std::fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../input/stoch/stoch.c"),
+    )
+    .unwrap();
+    let variant = |tail: &str| {
+        let mut src = base.clone();
+        for (from, to) in [
+            ("   int bufferIsAllocated;\n", "   int bufferIsAllocated;\n   int k, j;\n"),
+            ("   while( today <= endIdx )", "   k = 0;\n   while( today <= endIdx )"),
+            ("      trailingIdx++;\n      today++;\n   }", "      j = trailingIdx + k;\n      tmp = inClose[j];\n      trailingIdx++;\n      today++;\n   }"),
+            ("   retCode = ma( 0, outIdx-1,", &format!("{tail}   retCode = ma( 0, outIdx-1,")),
+        ] {
+            assert_eq!(src.matches(from).count(), 1, "{from}");
+            src = src.replace(from, to);
+        }
+        load_with_source("stoch", &src)
+    };
+    let kept = variant("");
+    let plan = streaming::analyze_composed(&kept, lookup()).expect("k untouched after the loop streams");
+    assert!(plan.producer.as_ref().is_some_and(|p| p.extrema().is_some()), "the producer is an extrema automaton");
+    let rewritten = variant("   k = -10;\n");
+    let Err(err) = streaming::analyze_composed(&rewritten, lookup()) else {
+        panic!("accepted a read bounded by a local the tail rewrites")
+    };
+    let err = err.to_string();
+    assert!(err.contains("not proved") && err.contains("inClose[j]"), "{err}");
+}
