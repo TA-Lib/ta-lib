@@ -9,7 +9,7 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 ## Chart
 
-<ta-chart src="/functions/cdlmathold.svg" ratio="720:274" label="CDLMATHOLD over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlmathold.svg" ratio="720:274" label="CDLMATHOLD over WBTC/USDC (Uniswap v3), daily, 2026" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 

@@ -1,4 +1,4 @@
-# label: WBTC/USDC (Uniswap v3), daily
+# label: WBTC/USDC (Uniswap v3), daily, 2022
 # source: Uniswap v3 Swap logs (Ethereum), block-end price, UTC days; pools 0x99ac8ca7087fa4a2a1fb6357269965a2014abc35 0x9a772018fbd77fcd2d25657e5c547baff3fd7d16
 date,open,high,low,close,volume
 2022-06-14,22434.2,23199.6,20558.5,22144.6,6071.2700

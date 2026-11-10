@@ -9,7 +9,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Chart
 
-<ta-chart src="/functions/cdlshootingstar.svg" ratio="720:274" label="CDLSHOOTINGSTAR over LINK/WETH (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlshootingstar.svg" ratio="720:274" label="CDLSHOOTINGSTAR over LINK/WETH (Uniswap v3), daily, 2025" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 

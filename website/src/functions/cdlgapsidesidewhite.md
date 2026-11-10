@@ -9,7 +9,7 @@ A three-candle pattern: a first candle followed by two white candles of similar 
 
 ## Chart
 
-<ta-chart src="/functions/cdlgapsidesidewhite.svg" ratio="720:274" label="CDLGAPSIDESIDEWHITE over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdlgapsidesidewhite.svg" ratio="720:274" label="CDLGAPSIDESIDEWHITE over WBTC/USDC (Uniswap v3), daily, 2022" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 

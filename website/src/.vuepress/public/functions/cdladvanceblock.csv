@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLADVANCEBLOCK
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2022
 # input: wbtc_usdc_2022-06-14.csv; window 2022-06-26..2022-07-23 (28 bars) plus 12 lookback bars before it; flagged bars: 2
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

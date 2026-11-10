@@ -9,7 +9,7 @@ A four-bar pattern: a white candle followed by three consecutive black (down) ca
 
 ## Chart
 
-<ta-chart src="/functions/cdl3blackcrows.svg" ratio="720:274" label="CDL3BLACKCROWS over LINK/WETH (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdl3blackcrows.svg" ratio="720:274" label="CDL3BLACKCROWS over LINK/WETH (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 

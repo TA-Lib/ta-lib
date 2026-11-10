@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLSHOOTINGSTAR
-# series: LINK/WETH (Uniswap v3), daily
+# series: LINK/WETH (Uniswap v3), daily, 2025
 # input: link_weth_2025-01-26.csv; window 2025-02-06..2025-03-06 (29 bars) plus 11 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

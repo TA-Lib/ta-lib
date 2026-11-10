@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLTHRUSTING
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2024
 # input: wbtc_usdc_2024-01-12.csv; window 2024-01-23..2024-02-20 (29 bars) plus 11 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC
