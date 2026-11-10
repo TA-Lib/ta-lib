@@ -56,6 +56,8 @@
  *  102326 MF,CC #554 branch-free zero run, rare reset.
  *  102426 MF,CC #554 zero-run test on the true range itself.
  *  110926 KL    #588 rebuild a total that comes out negative.
+ *  111026 MF,CC #588 only a negative a-total can turn the output negative;
+ *               skip the rebuild while a close below its low keeps it so.
  */
 
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -139,6 +141,7 @@ export function ultoscImpl(
   let tempHT = 0;
   let tempLT = 0;
   let tempCY = 0;
+  let lowest = 0;
   let lookbackTotal = 0;
   let longestPeriod = 0;
   let longestIndex = 0;
@@ -146,6 +149,7 @@ export function ultoscImpl(
   let j = 0;
   let today = 0;
   let outIdx = 0;
+  let negSlot = 0;
   let trailingPos1 = 0;
   let trailingPos2 = 0;
   let nullRun = 0;
@@ -305,6 +309,7 @@ export function ultoscImpl(
   if (trailingPos2 >= optInTimePeriod3) {
     trailingPos2 -= optInTimePeriod3;
   }
+  negSlot = 0;
   while (today <= endIdx) {
     /* Add on today's terms */
     tempLT = inLow[today];
@@ -353,8 +358,22 @@ export function ultoscImpl(
     /* On well-formed bars every term is non-negative, so a total below zero
      * is the residue a term far larger than the rest of its window left
      * when it retired; rebuild all six from the ring, oldest bar first.
+     * Only the a-totals are tested: a negative b-total fails its division
+     * gate below. A close below its low makes an a-term, and so a total,
+     * genuinely negative, and rebuilding it would run on every bar: negSlot
+     * remembers the newest negative term the last rebuild saw, and the
+     * rebuild is skipped while that slot still holds a negative term. The
+     * ring is the longest window, so such an output reads a close below its
+     * low and is outside the guarantee; any other negative total is
+     * rebuilt. Any slot is a valid start: the term it holds is read back.
+     * One compare of the smallest a-total, not three: a chain of three
+     * compiles to straight-line selects in Rust. The windows are nested,
+     * so a1 <= a2 <= a3 and either select stays predictable should a
+     * compiler emit it as a branch.
      */
-    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+    lowest = (a1Total < a2Total) ? a1Total : a2Total;
+    lowest = (a3Total < lowest) ? a3Total : lowest;
+    if ((lowest < 0.0) && term_closeMinusTrueLow[negSlot] >= 0.0) {
       a1Total = 0.0;
       b1Total = 0.0;
       a2Total = 0.0;
@@ -376,6 +395,9 @@ export function ultoscImpl(
         }
         a3Total += term_closeMinusTrueLow[j];
         b3Total += term_trueRange[j];
+        if (term_closeMinusTrueLow[j] < 0.0) {
+          negSlot = j;
+        }
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
@@ -678,6 +700,8 @@ export class UltoscStream {
   /** @internal */
   b3Total: number = 0;
   /** @internal */
+  negSlot: number = 0;
+  /** @internal */
   trailingPos1: number = 0;
   /** @internal */
   trailingPos2: number = 0;
@@ -783,6 +807,7 @@ export class UltoscStream {
     let tempHT = 0;
     let tempLT = 0;
     let tempCY = 0;
+    let lowest = 0;
     let i = 0;
     let j = 0;
     let live = 0;
@@ -793,6 +818,7 @@ export class UltoscStream {
     let b2Total = sp.b2Total;
     let b3Total = sp.b3Total;
     let cur_outReal = 0;
+    let negSlot = sp.negSlot;
     let nullRun = sp.nullRun;
     let term_Idx = sp.term_Idx;
     let trailingPos1 = sp.trailingPos1;
@@ -850,8 +876,22 @@ export class UltoscStream {
     /* On well-formed bars every term is non-negative, so a total below zero
      * is the residue a term far larger than the rest of its window left
      * when it retired; rebuild all six from the ring, oldest bar first.
+     * Only the a-totals are tested: a negative b-total fails its division
+     * gate below. A close below its low makes an a-term, and so a total,
+     * genuinely negative, and rebuilding it would run on every bar: negSlot
+     * remembers the newest negative term the last rebuild saw, and the
+     * rebuild is skipped while that slot still holds a negative term. The
+     * ring is the longest window, so such an output reads a close below its
+     * low and is outside the guarantee; any other negative total is
+     * rebuilt. Any slot is a valid start: the term it holds is read back.
+     * One compare of the smallest a-total, not three: a chain of three
+     * compiles to straight-line selects in Rust. The windows are nested,
+     * so a1 <= a2 <= a3 and either select stays predictable should a
+     * compiler emit it as a branch.
      */
-    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+    lowest = (a1Total < a2Total) ? a1Total : a2Total;
+    lowest = (a3Total < lowest) ? a3Total : lowest;
+    if (lowest < 0.0 && ((negSlot !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[negSlot] : pkVal0) >= 0.0) {
       a1Total = 0.0;
       b1Total = 0.0;
       a2Total = 0.0;
@@ -873,6 +913,9 @@ export class UltoscStream {
         }
         a3Total += (j !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
         b3Total += (j !== pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+        if (((j !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0) < 0.0) {
+          negSlot = j;
+        }
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
@@ -942,6 +985,7 @@ export class UltoscStream {
     c.b1Total = this.b1Total;
     c.b2Total = this.b2Total;
     c.b3Total = this.b3Total;
+    c.negSlot = this.negSlot;
     c.trailingPos1 = this.trailingPos1;
     c.trailingPos2 = this.trailingPos2;
     c.nullRun = this.nullRun;
@@ -967,6 +1011,7 @@ function ultoscStepImpl(sp: UltoscStream, inHigh: number, inLow: number, inClose
   let tempHT = 0;
   let tempLT = 0;
   let tempCY = 0;
+  let lowest = 0;
   let i = 0;
   let j = 0;
   let live = 0;
@@ -1017,8 +1062,22 @@ function ultoscStepImpl(sp: UltoscStream, inHigh: number, inLow: number, inClose
   /* On well-formed bars every term is non-negative, so a total below zero
    * is the residue a term far larger than the rest of its window left
    * when it retired; rebuild all six from the ring, oldest bar first.
+   * Only the a-totals are tested: a negative b-total fails its division
+   * gate below. A close below its low makes an a-term, and so a total,
+   * genuinely negative, and rebuilding it would run on every bar: negSlot
+   * remembers the newest negative term the last rebuild saw, and the
+   * rebuild is skipped while that slot still holds a negative term. The
+   * ring is the longest window, so such an output reads a close below its
+   * low and is outside the guarantee; any other negative total is
+   * rebuilt. Any slot is a valid start: the term it holds is read back.
+   * One compare of the smallest a-total, not three: a chain of three
+   * compiles to straight-line selects in Rust. The windows are nested,
+   * so a1 <= a2 <= a3 and either select stays predictable should a
+   * compiler emit it as a branch.
    */
-  if (sp.a1Total < 0.0 || sp.b1Total < 0.0 || sp.a2Total < 0.0 || sp.b2Total < 0.0 || sp.a3Total < 0.0 || sp.b3Total < 0.0) {
+  lowest = (sp.a1Total < sp.a2Total) ? sp.a1Total : sp.a2Total;
+  lowest = (sp.a3Total < lowest) ? sp.a3Total : lowest;
+  if ((lowest < 0.0) && sp.cb_term_closeMinusTrueLow[sp.negSlot] >= 0.0) {
     sp.a1Total = 0.0;
     sp.b1Total = 0.0;
     sp.a2Total = 0.0;
@@ -1040,6 +1099,9 @@ function ultoscStepImpl(sp: UltoscStream, inHigh: number, inLow: number, inClose
       }
       sp.a3Total += sp.cb_term_closeMinusTrueLow[j];
       sp.b3Total += sp.cb_term_trueRange[j];
+      if (sp.cb_term_closeMinusTrueLow[j] < 0.0) {
+        sp.negSlot = j;
+      }
     }
   }
   /* Calculate the oscillator value for today. Each window contributes only
@@ -1117,6 +1179,7 @@ function ultoscOpenImpl(
   let tempHT = 0;
   let tempLT = 0;
   let tempCY = 0;
+  let lowest = 0;
   let lookbackTotal = 0;
   let longestPeriod = 0;
   let longestIndex = 0;
@@ -1124,6 +1187,7 @@ function ultoscOpenImpl(
   let j = 0;
   let today = 0;
   let outIdx = 0;
+  let negSlot = 0;
   let trailingPos1 = 0;
   let trailingPos2 = 0;
   let nullRun = 0;
@@ -1290,6 +1354,7 @@ function ultoscOpenImpl(
   if (trailingPos2 >= optInTimePeriod3) {
     trailingPos2 -= optInTimePeriod3;
   }
+  negSlot = 0;
   while (today <= endIdx) {
     /* Add on today's terms */
     tempLT = inLow[today];
@@ -1338,8 +1403,22 @@ function ultoscOpenImpl(
     /* On well-formed bars every term is non-negative, so a total below zero
      * is the residue a term far larger than the rest of its window left
      * when it retired; rebuild all six from the ring, oldest bar first.
+     * Only the a-totals are tested: a negative b-total fails its division
+     * gate below. A close below its low makes an a-term, and so a total,
+     * genuinely negative, and rebuilding it would run on every bar: negSlot
+     * remembers the newest negative term the last rebuild saw, and the
+     * rebuild is skipped while that slot still holds a negative term. The
+     * ring is the longest window, so such an output reads a close below its
+     * low and is outside the guarantee; any other negative total is
+     * rebuilt. Any slot is a valid start: the term it holds is read back.
+     * One compare of the smallest a-total, not three: a chain of three
+     * compiles to straight-line selects in Rust. The windows are nested,
+     * so a1 <= a2 <= a3 and either select stays predictable should a
+     * compiler emit it as a branch.
      */
-    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+    lowest = (a1Total < a2Total) ? a1Total : a2Total;
+    lowest = (a3Total < lowest) ? a3Total : lowest;
+    if ((lowest < 0.0) && term_closeMinusTrueLow[negSlot] >= 0.0) {
       a1Total = 0.0;
       b1Total = 0.0;
       a2Total = 0.0;
@@ -1361,6 +1440,9 @@ function ultoscOpenImpl(
         }
         a3Total += term_closeMinusTrueLow[j];
         b3Total += term_trueRange[j];
+        if (term_closeMinusTrueLow[j] < 0.0) {
+          negSlot = j;
+        }
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
@@ -1425,6 +1507,7 @@ function ultoscOpenImpl(
   sp.b1Total = b1Total;
   sp.b2Total = b2Total;
   sp.b3Total = b3Total;
+  sp.negSlot = negSlot;
   sp.trailingPos1 = trailingPos1;
   sp.trailingPos2 = trailingPos2;
   sp.nullRun = nullRun;

@@ -7261,6 +7261,7 @@ static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_
    if( sv_xtier_ne(a->b1Total, b->b1Total, z) ) { *w = "b1Total"; return 1; }
    if( sv_xtier_ne(a->b2Total, b->b2Total, z) ) { *w = "b2Total"; return 1; }
    if( sv_xtier_ne(a->b3Total, b->b3Total, z) ) { *w = "b3Total"; return 1; }
+   if( a->negSlot != b->negSlot ) { *w = "negSlot"; return 1; }
    if( a->trailingPos1 != b->trailingPos1 ) { *w = "trailingPos1"; return 1; }
    if( a->trailingPos2 != b->trailingPos2 ) { *w = "trailingPos2"; return 1; }
    if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }

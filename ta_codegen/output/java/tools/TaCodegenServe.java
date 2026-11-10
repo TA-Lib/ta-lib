@@ -225545,6 +225545,8 @@ class Core {
      *  102326 MF,CC #554 branch-free zero run, rare reset.
      *  102426 MF,CC #554 zero-run test on the true range itself.
      *  110926 KL    #588 rebuild a total that comes out negative.
+     *  111026 MF,CC #588 only a negative a-total can turn the output negative;
+     *               skip the rebuild while a close below its low keeps it so.
      */
 
        /**
@@ -225639,6 +225641,7 @@ class Core {
           double tempHT = 0;
           double tempLT = 0;
           double tempCY = 0;
+          double lowest = 0;
           int lookbackTotal = 0;
           int longestPeriod = 0;
           int longestIndex = 0;
@@ -225646,6 +225649,7 @@ class Core {
           int j = 0;
           int today = 0;
           int outIdx = 0;
+          int negSlot = 0;
           int trailingPos1 = 0;
           int trailingPos2 = 0;
           int nullRun = 0;
@@ -225801,6 +225805,7 @@ class Core {
           if( trailingPos2 >= optInTimePeriod3 ) {
              trailingPos2 -= optInTimePeriod3;
           }
+          negSlot = 0;
           while( today <= endIdx ) {
              /* Add on today's terms */
              tempLT = inLow[today];
@@ -225849,8 +225854,22 @@ class Core {
              /* On well-formed bars every term is non-negative, so a total below zero
               * is the residue a term far larger than the rest of its window left
               * when it retired; rebuild all six from the ring, oldest bar first.
+              * Only the a-totals are tested: a negative b-total fails its division
+              * gate below. A close below its low makes an a-term, and so a total,
+              * genuinely negative, and rebuilding it would run on every bar: negSlot
+              * remembers the newest negative term the last rebuild saw, and the
+              * rebuild is skipped while that slot still holds a negative term. The
+              * ring is the longest window, so such an output reads a close below its
+              * low and is outside the guarantee; any other negative total is
+              * rebuilt. Any slot is a valid start: the term it holds is read back.
+              * One compare of the smallest a-total, not three: a chain of three
+              * compiles to straight-line selects in Rust. The windows are nested,
+              * so a1 <= a2 <= a3 and either select stays predictable should a
+              * compiler emit it as a branch.
               */
-             if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+             lowest = (a1Total < a2Total) ? a1Total : a2Total;
+             lowest = (a3Total < lowest) ? a3Total : lowest;
+             if( (lowest < 0.0) && term_closeMinusTrueLow[negSlot] >= 0.0 ) {
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -225872,6 +225891,9 @@ class Core {
                    }
                    a3Total += term_closeMinusTrueLow[j];
                    b3Total += term_trueRange[j];
+                   if( term_closeMinusTrueLow[j] < 0.0 ) {
+                      negSlot = j;
+                   }
                 }
              }
              /* Calculate the oscillator value for today. Each window contributes only
@@ -225949,6 +225971,7 @@ class Core {
           double tempHT = 0;
           double tempLT = 0;
           double tempCY = 0;
+          double lowest = 0;
           int lookbackTotal = 0;
           int longestPeriod = 0;
           int longestIndex = 0;
@@ -225956,6 +225979,7 @@ class Core {
           int j = 0;
           int today = 0;
           int outIdx = 0;
+          int negSlot = 0;
           int trailingPos1 = 0;
           int trailingPos2 = 0;
           int nullRun = 0;
@@ -226072,6 +226096,7 @@ class Core {
           if( trailingPos2 >= optInTimePeriod3 ) {
              trailingPos2 -= optInTimePeriod3;
           }
+          negSlot = 0;
           while( today <= endIdx ) {
              tempLT = (double)inLow[today];
              tempHT = (double)inHigh[today];
@@ -226110,7 +226135,9 @@ class Core {
                    }
                 }
              }
-             if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+             lowest = (a1Total < a2Total) ? a1Total : a2Total;
+             lowest = (a3Total < lowest) ? a3Total : lowest;
+             if( (lowest < 0.0) && term_closeMinusTrueLow[negSlot] >= 0.0 ) {
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -226132,6 +226159,9 @@ class Core {
                    }
                    a3Total += term_closeMinusTrueLow[j];
                    b3Total += term_trueRange[j];
+                   if( term_closeMinusTrueLow[j] < 0.0 ) {
+                      negSlot = j;
+                   }
                 }
              }
              output = 0.0;
@@ -226348,6 +226378,7 @@ class Core {
           private double b1Total;
           private double b2Total;
           private double b3Total;
+          private int negSlot;
           private int trailingPos1;
           private int trailingPos2;
           private int nullRun;
@@ -226408,6 +226439,7 @@ class Core {
              this.b1Total = other.b1Total;
              this.b2Total = other.b2Total;
              this.b3Total = other.b3Total;
+             this.negSlot = other.negSlot;
              this.trailingPos1 = other.trailingPos1;
              this.trailingPos2 = other.trailingPos2;
              this.nullRun = other.nullRun;
@@ -226470,6 +226502,7 @@ class Core {
              double tempHT = 0.0;
              double tempLT = 0.0;
              double tempCY = 0.0;
+             double lowest = 0.0;
              int i = 0;
              int j = 0;
              int live = 0;
@@ -226480,6 +226513,7 @@ class Core {
              double b2Total = sp.b2Total;
              double b3Total = sp.b3Total;
              double cur_outReal = 0.0;
+             int negSlot = sp.negSlot;
              int nullRun = sp.nullRun;
              int term_Idx = sp.term_Idx;
              int trailingPos1 = sp.trailingPos1;
@@ -226537,8 +226571,22 @@ class Core {
              /* On well-formed bars every term is non-negative, so a total below zero
               * is the residue a term far larger than the rest of its window left
               * when it retired; rebuild all six from the ring, oldest bar first.
+              * Only the a-totals are tested: a negative b-total fails its division
+              * gate below. A close below its low makes an a-term, and so a total,
+              * genuinely negative, and rebuilding it would run on every bar: negSlot
+              * remembers the newest negative term the last rebuild saw, and the
+              * rebuild is skipped while that slot still holds a negative term. The
+              * ring is the longest window, so such an output reads a close below its
+              * low and is outside the guarantee; any other negative total is
+              * rebuilt. Any slot is a valid start: the term it holds is read back.
+              * One compare of the smallest a-total, not three: a chain of three
+              * compiles to straight-line selects in Rust. The windows are nested,
+              * so a1 <= a2 <= a3 and either select stays predictable should a
+              * compiler emit it as a branch.
               */
-             if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+             lowest = (a1Total < a2Total) ? a1Total : a2Total;
+             lowest = (a3Total < lowest) ? a3Total : lowest;
+             if( lowest < 0.0 && ((negSlot != pkSlot0) ? sp.cb_term_closeMinusTrueLow[negSlot] : pkVal0) >= 0.0 ) {
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -226560,6 +226608,9 @@ class Core {
                    }
                    a3Total += (j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
                    b3Total += (j != pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+                   if( ((j != pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0) < 0.0 ) {
+                      negSlot = j;
+                   }
                 }
              }
              /* Calculate the oscillator value for today. Each window contributes only
@@ -226643,6 +226694,7 @@ class Core {
           double tempHT = 0.0;
           double tempLT = 0.0;
           double tempCY = 0.0;
+          double lowest = 0.0;
           int i = 0;
           int j = 0;
           int live = 0;
@@ -226693,8 +226745,22 @@ class Core {
           /* On well-formed bars every term is non-negative, so a total below zero
            * is the residue a term far larger than the rest of its window left
            * when it retired; rebuild all six from the ring, oldest bar first.
+           * Only the a-totals are tested: a negative b-total fails its division
+           * gate below. A close below its low makes an a-term, and so a total,
+           * genuinely negative, and rebuilding it would run on every bar: negSlot
+           * remembers the newest negative term the last rebuild saw, and the
+           * rebuild is skipped while that slot still holds a negative term. The
+           * ring is the longest window, so such an output reads a close below its
+           * low and is outside the guarantee; any other negative total is
+           * rebuilt. Any slot is a valid start: the term it holds is read back.
+           * One compare of the smallest a-total, not three: a chain of three
+           * compiles to straight-line selects in Rust. The windows are nested,
+           * so a1 <= a2 <= a3 and either select stays predictable should a
+           * compiler emit it as a branch.
            */
-          if( sp.a1Total < 0.0 || sp.b1Total < 0.0 || sp.a2Total < 0.0 || sp.b2Total < 0.0 || sp.a3Total < 0.0 || sp.b3Total < 0.0 ) {
+          lowest = (sp.a1Total < sp.a2Total) ? sp.a1Total : sp.a2Total;
+          lowest = (sp.a3Total < lowest) ? sp.a3Total : lowest;
+          if( (lowest < 0.0) && sp.cb_term_closeMinusTrueLow[sp.negSlot] >= 0.0 ) {
              sp.a1Total = 0.0;
              sp.b1Total = 0.0;
              sp.a2Total = 0.0;
@@ -226716,6 +226782,9 @@ class Core {
                 }
                 sp.a3Total += sp.cb_term_closeMinusTrueLow[j];
                 sp.b3Total += sp.cb_term_trueRange[j];
+                if( sp.cb_term_closeMinusTrueLow[j] < 0.0 ) {
+                   sp.negSlot = j;
+                }
              }
           }
           /* Calculate the oscillator value for today. Each window contributes only
@@ -226779,6 +226848,7 @@ class Core {
           double tempHT = 0;
           double tempLT = 0;
           double tempCY = 0;
+          double lowest = 0;
           int lookbackTotal = 0;
           int longestPeriod = 0;
           int longestIndex = 0;
@@ -226786,6 +226856,7 @@ class Core {
           int j = 0;
           int today = 0;
           int outIdx = 0;
+          int negSlot = 0;
           int trailingPos1 = 0;
           int trailingPos2 = 0;
           int nullRun = 0;
@@ -226948,6 +227019,7 @@ class Core {
           if( trailingPos2 >= optInTimePeriod3 ) {
              trailingPos2 -= optInTimePeriod3;
           }
+          negSlot = 0;
           while( today <= endIdx ) {
              /* Add on today's terms */
              tempLT = inLow[today];
@@ -226996,8 +227068,22 @@ class Core {
              /* On well-formed bars every term is non-negative, so a total below zero
               * is the residue a term far larger than the rest of its window left
               * when it retired; rebuild all six from the ring, oldest bar first.
+              * Only the a-totals are tested: a negative b-total fails its division
+              * gate below. A close below its low makes an a-term, and so a total,
+              * genuinely negative, and rebuilding it would run on every bar: negSlot
+              * remembers the newest negative term the last rebuild saw, and the
+              * rebuild is skipped while that slot still holds a negative term. The
+              * ring is the longest window, so such an output reads a close below its
+              * low and is outside the guarantee; any other negative total is
+              * rebuilt. Any slot is a valid start: the term it holds is read back.
+              * One compare of the smallest a-total, not three: a chain of three
+              * compiles to straight-line selects in Rust. The windows are nested,
+              * so a1 <= a2 <= a3 and either select stays predictable should a
+              * compiler emit it as a branch.
               */
-             if( a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0 ) {
+             lowest = (a1Total < a2Total) ? a1Total : a2Total;
+             lowest = (a3Total < lowest) ? a3Total : lowest;
+             if( (lowest < 0.0) && term_closeMinusTrueLow[negSlot] >= 0.0 ) {
                 a1Total = 0.0;
                 b1Total = 0.0;
                 a2Total = 0.0;
@@ -227019,6 +227105,9 @@ class Core {
                    }
                    a3Total += term_closeMinusTrueLow[j];
                    b3Total += term_trueRange[j];
+                   if( term_closeMinusTrueLow[j] < 0.0 ) {
+                      negSlot = j;
+                   }
                 }
              }
              /* Calculate the oscillator value for today. Each window contributes only
@@ -227082,6 +227171,7 @@ class Core {
           sp.b1Total = b1Total;
           sp.b2Total = b2Total;
           sp.b3Total = b3Total;
+          sp.negSlot = negSlot;
           sp.trailingPos1 = trailingPos1;
           sp.trailingPos2 = trailingPos2;
           sp.nullRun = nullRun;
@@ -230252,6 +230342,7 @@ class Core {
      *  102326 MF,CC  #554 branch-free zero run, rare reset.
      *  102426 MF,CC  #554 zero-run test on the true range itself.
      *  110926 KL     #588 rebuild a sum that comes out negative.
+     *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
      */
 
        /**
@@ -230445,9 +230536,13 @@ class Core {
              }
              /* Every term is non-negative, so a sum below zero is the residue a
               * term far larger than the rest of the window left when it retired;
-              * rebuild all three from the window.
+              * rebuild all three from the window. Only the vortex sums are tested:
+              * a negative sTR fails the division gate below and writes 0.0. Keep
+              * two compares rather than a min: the two sums have no order, and gcc
+              * may emit that select as a branch that mispredicts whenever they swap
+              * order.
               */
-             if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+             if( sVMP < 0.0 || sVMM < 0.0 ) {
                 sTR = 0.0;
                 sVMP = 0.0;
                 sVMM = 0.0;
@@ -230635,7 +230730,7 @@ class Core {
                 nullRun = optInTimePeriod;
                 sTR = 0.0;
              }
-             if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+             if( sVMP < 0.0 || sVMM < 0.0 ) {
                 sTR = 0.0;
                 sVMP = 0.0;
                 sVMM = 0.0;
@@ -231089,9 +231184,13 @@ class Core {
              }
              /* Every term is non-negative, so a sum below zero is the residue a
               * term far larger than the rest of the window left when it retired;
-              * rebuild all three from the window.
+              * rebuild all three from the window. Only the vortex sums are tested:
+              * a negative sTR fails the division gate below and writes 0.0. Keep
+              * two compares rather than a min: the two sums have no order, and gcc
+              * may emit that select as a branch that mispredicts whenever they swap
+              * order.
               */
-             if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+             if( sVMP < 0.0 || sVMM < 0.0 ) {
                 sTR = 0.0;
                 sVMP = 0.0;
                 sVMM = 0.0;
@@ -231277,9 +231376,13 @@ class Core {
           }
           /* Every term is non-negative, so a sum below zero is the residue a
            * term far larger than the rest of the window left when it retired;
-           * rebuild all three from the window.
+           * rebuild all three from the window. Only the vortex sums are tested:
+           * a negative sTR fails the division gate below and writes 0.0. Keep
+           * two compares rather than a min: the two sums have no order, and gcc
+           * may emit that select as a branch that mispredicts whenever they swap
+           * order.
            */
-          if( sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
+          if( sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
              sp.sTR = 0.0;
              sp.sVMP = 0.0;
              sp.sVMM = 0.0;
@@ -231505,9 +231608,13 @@ class Core {
              }
              /* Every term is non-negative, so a sum below zero is the residue a
               * term far larger than the rest of the window left when it retired;
-              * rebuild all three from the window.
+              * rebuild all three from the window. Only the vortex sums are tested:
+              * a negative sTR fails the division gate below and writes 0.0. Keep
+              * two compares rather than a min: the two sums have no order, and gcc
+              * may emit that select as a branch that mispredicts whenever they swap
+              * order.
               */
-             if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+             if( sVMP < 0.0 || sVMM < 0.0 ) {
                 sTR = 0.0;
                 sVMP = 0.0;
                 sVMM = 0.0;
@@ -240631,7 +240738,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "287bf47382461406";
+    static final String SPLICED_GENCODE_DIGEST = "22e7e8b5e52fd6e9";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

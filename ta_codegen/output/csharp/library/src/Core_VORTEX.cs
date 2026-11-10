@@ -58,6 +58,7 @@ public partial class Core
     *  102326 MF,CC  #554 branch-free zero run, rare reset.
     *  102426 MF,CC  #554 zero-run test on the true range itself.
     *  110926 KL     #588 rebuild a sum that comes out negative.
+    *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
     */
    /// <summary>
    /// Number of leading input bars <c>Vortex</c> consumes before it can produce
@@ -248,9 +249,13 @@ public partial class Core
          }
          /* Every term is non-negative, so a sum below zero is the residue a
           * term far larger than the rest of the window left when it retired;
-          * rebuild all three from the window.
+          * rebuild all three from the window. Only the vortex sums are tested:
+          * a negative sTR fails the division gate below and writes 0.0. Keep
+          * two compares rather than a min: the two sums have no order, and gcc
+          * may emit that select as a branch that mispredicts whenever they swap
+          * order.
           */
-         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+         if( sVMP < 0.0 || sVMM < 0.0 ) {
             sTR = 0.0;
             sVMP = 0.0;
             sVMM = 0.0;
@@ -427,7 +432,7 @@ public partial class Core
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
-         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+         if( sVMP < 0.0 || sVMM < 0.0 ) {
             sTR = 0.0;
             sVMP = 0.0;
             sVMM = 0.0;
@@ -935,9 +940,13 @@ public partial class Core
          }
          /* Every term is non-negative, so a sum below zero is the residue a
           * term far larger than the rest of the window left when it retired;
-          * rebuild all three from the window.
+          * rebuild all three from the window. Only the vortex sums are tested:
+          * a negative sTR fails the division gate below and writes 0.0. Keep
+          * two compares rather than a min: the two sums have no order, and gcc
+          * may emit that select as a branch that mispredicts whenever they swap
+          * order.
           */
-         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+         if( sVMP < 0.0 || sVMM < 0.0 ) {
             sTR = 0.0;
             sVMP = 0.0;
             sVMM = 0.0;
@@ -1077,9 +1086,13 @@ public partial class Core
       }
       /* Every term is non-negative, so a sum below zero is the residue a
        * term far larger than the rest of the window left when it retired;
-       * rebuild all three from the window.
+       * rebuild all three from the window. Only the vortex sums are tested:
+       * a negative sTR fails the division gate below and writes 0.0. Keep
+       * two compares rather than a min: the two sums have no order, and gcc
+       * may emit that select as a branch that mispredicts whenever they swap
+       * order.
        */
-      if( sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
+      if( sp.sVMP < 0.0 || sp.sVMM < 0.0 ) {
          sp.sTR = 0.0;
          sp.sVMP = 0.0;
          sp.sVMM = 0.0;
@@ -1294,9 +1307,13 @@ public partial class Core
          }
          /* Every term is non-negative, so a sum below zero is the residue a
           * term far larger than the rest of the window left when it retired;
-          * rebuild all three from the window.
+          * rebuild all three from the window. Only the vortex sums are tested:
+          * a negative sTR fails the division gate below and writes 0.0. Keep
+          * two compares rather than a min: the two sums have no order, and gcc
+          * may emit that select as a branch that mispredicts whenever they swap
+          * order.
           */
-         if( sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 ) {
+         if( sVMP < 0.0 || sVMM < 0.0 ) {
             sTR = 0.0;
             sVMP = 0.0;
             sVMM = 0.0;

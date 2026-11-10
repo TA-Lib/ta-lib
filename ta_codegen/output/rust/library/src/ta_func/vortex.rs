@@ -56,6 +56,7 @@
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
  *  102426 MF,CC  #554 zero-run test on the true range itself.
  *  110926 KL     #588 rebuild a sum that comes out negative.
+ *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
  */
 
 // Import types from parent module
@@ -273,8 +274,12 @@ impl Core {
             }
             // Every term is non-negative, so a sum below zero is the residue a
             // term far larger than the rest of the window left when it retired;
-            // rebuild all three from the window.
-            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+            // rebuild all three from the window. Only the vortex sums are tested:
+            // a negative sTR fails the division gate below and writes 0.0. Keep
+            // two compares rather than a min: the two sums have no order, and gcc
+            // may emit that select as a branch that mispredicts whenever they swap
+            // order.
+            if sVMP < 0.0 || sVMM < 0.0 {
                 cold_arm();
                 sTR = 0.0;
                 sVMP = 0.0;
@@ -585,8 +590,12 @@ impl Core {
         }
         // Every term is non-negative, so a sum below zero is the residue a
         // term far larger than the rest of the window left when it retired;
-        // rebuild all three from the window.
-        if sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 {
+        // rebuild all three from the window. Only the vortex sums are tested:
+        // a negative sTR fails the division gate below and writes 0.0. Keep
+        // two compares rather than a min: the two sums have no order, and gcc
+        // may emit that select as a branch that mispredicts whenever they swap
+        // order.
+        if sp.sVMP < 0.0 || sp.sVMM < 0.0 {
             cold_arm();
             sp.sTR = 0.0;
             sp.sVMP = 0.0;
@@ -811,8 +820,12 @@ impl Core {
             }
             // Every term is non-negative, so a sum below zero is the residue a
             // term far larger than the rest of the window left when it retired;
-            // rebuild all three from the window.
-            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+            // rebuild all three from the window. Only the vortex sums are tested:
+            // a negative sTR fails the division gate below and writes 0.0. Keep
+            // two compares rather than a min: the two sums have no order, and gcc
+            // may emit that select as a branch that mispredicts whenever they swap
+            // order.
+            if sVMP < 0.0 || sVMM < 0.0 {
                 cold_arm();
                 sTR = 0.0;
                 sVMP = 0.0;
@@ -1210,8 +1223,12 @@ impl VortexStream {
             }
             // Every term is non-negative, so a sum below zero is the residue a
             // term far larger than the rest of the window left when it retired;
-            // rebuild all three from the window.
-            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+            // rebuild all three from the window. Only the vortex sums are tested:
+            // a negative sTR fails the division gate below and writes 0.0. Keep
+            // two compares rather than a min: the two sums have no order, and gcc
+            // may emit that select as a branch that mispredicts whenever they swap
+            // order.
+            if sVMP < 0.0 || sVMM < 0.0 {
                 sTR = 0.0;
                 sVMP = 0.0;
                 sVMM = 0.0;

@@ -22,6 +22,8 @@
  *  102326 MF,CC #554 branch-free zero run, rare reset.
  *  102426 MF,CC #554 zero-run test on the true range itself.
  *  110926 KL    #588 rebuild a total that comes out negative.
+ *  111026 MF,CC #588 only a negative a-total can turn the output negative;
+ *               skip the rebuild while a close below its low keeps it so.
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -54,10 +56,11 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    double a1Total, a2Total, a3Total;
    double b1Total, b2Total, b3Total;
    double trueLow, trueRange, closeMinusTrueLow;
-   double tempDouble, output, tempHT, tempLT, tempCY;
+   double tempDouble, output, tempHT, tempLT, tempCY, lowest;
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
+   int negSlot;
    int trailingPos1, trailingPos2;
    int nullRun, live;
 
@@ -187,6 +190,7 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 -= optInTimePeriod3;
    trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
    if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 -= optInTimePeriod3;
+   negSlot = 0;
 
    while( today <= endIdx )
    {
@@ -242,32 +246,49 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       /* On well-formed bars every term is non-negative, so a total below zero
        * is the residue a term far larger than the rest of its window left
        * when it retired; rebuild all six from the ring, oldest bar first.
+       * Only the a-totals are tested: a negative b-total fails its division
+       * gate below. A close below its low makes an a-term, and so a total,
+       * genuinely negative, and rebuilding it would run on every bar: negSlot
+       * remembers the newest negative term the last rebuild saw, and the
+       * rebuild is skipped while that slot still holds a negative term. The
+       * ring is the longest window, so such an output reads a close below its
+       * low and is outside the guarantee; any other negative total is
+       * rebuilt. Any slot is a valid start: the term it holds is read back.
+       * One compare of the smallest a-total, not three: a chain of three
+       * compiles to straight-line selects in Rust. The windows are nested,
+       * so a1 <= a2 <= a3 and either select stays predictable should a
+       * compiler emit it as a branch.
        */
-      if( TA_UNLIKELY(a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0
-         || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) )
+      lowest = a1Total < a2Total ? a1Total : a2Total;
+      lowest = a3Total < lowest ? a3Total : lowest;
+      if( TA_UNLIKELY(lowest < 0.0) )
       {
-         a1Total = 0.0;
-         b1Total = 0.0;
-         a2Total = 0.0;
-         b2Total = 0.0;
-         a3Total = 0.0;
-         b3Total = 0.0;
-         for( i = optInTimePeriod3 - 1; i >= 0; i-- )
+         if( term_closeMinusTrueLow[negSlot] >= 0.0 )
          {
-            j = term_Idx - i;
-            if( j < 0 ) j += optInTimePeriod3;
-            if( i < optInTimePeriod1 )
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = optInTimePeriod3 - 1; i >= 0; i-- )
             {
-               a1Total += term_closeMinusTrueLow[j];
-               b1Total += term_trueRange[j];
+               j = term_Idx - i;
+               if( j < 0 ) j += optInTimePeriod3;
+               if( i < optInTimePeriod1 )
+               {
+                  a1Total += term_closeMinusTrueLow[j];
+                  b1Total += term_trueRange[j];
+               }
+               if( i < optInTimePeriod2 )
+               {
+                  a2Total += term_closeMinusTrueLow[j];
+                  b2Total += term_trueRange[j];
+               }
+               a3Total += term_closeMinusTrueLow[j];
+               b3Total += term_trueRange[j];
+               if( term_closeMinusTrueLow[j] < 0.0 ) negSlot = j;
             }
-            if( i < optInTimePeriod2 )
-            {
-               a2Total += term_closeMinusTrueLow[j];
-               b2Total += term_trueRange[j];
-            }
-            a3Total += term_closeMinusTrueLow[j];
-            b3Total += term_trueRange[j];
          }
       }
 
