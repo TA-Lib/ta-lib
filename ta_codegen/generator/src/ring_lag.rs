@@ -1955,10 +1955,19 @@ fn resolve_callees(
 
 /// Lower bound of `cursor - var` at steady-loop entry for each ring variable,
 /// `None` where nothing could be proved.
+pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str]) -> Vec<Option<i64>> {
+    let cursor = Expr::Var(input.cursor.to_string());
+    let queries: Vec<(&str, &Expr)> = vars.iter().map(|v| (*v, &cursor)).collect();
+    reach_lower_bounds(func, input, &queries)
+}
+
+/// Lower bound of `at - var` at steady-loop entry for each `(var, at)`, `None`
+/// where nothing could be proved. `at` may name the cursor, variables paced
+/// with it, and names the loop does not write.
 ///
 /// Memoized: every emitter re-analyzes each function. The key covers every
 /// input the proof reads, including the callee lookbacks it resolved.
-pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str]) -> Vec<Option<i64>> {
+pub fn reach_lower_bounds(func: &FuncDef, input: &LagProofInput, queries: &[(&str, &Expr)]) -> Vec<Option<i64>> {
     use std::hash::{Hash, Hasher};
     type Memo = Mutex<BTreeMap<(String, u64), Vec<Option<i64>>>>;
     static MEMO: OnceLock<Memo> = OnceLock::new();
@@ -1975,7 +1984,7 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
             input.epilogue,
             input.cursor,
             &input.facts,
-            vars,
+            queries,
             &callees,
         )
     )
@@ -1985,7 +1994,7 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
     if let Some(hit) = memo.lock().expect("lag memo").get(&key) {
         return hit.clone();
     }
-    let out = prove(func, input, vars, callees);
+    let out = prove(func, input, queries, callees);
     memo.lock().expect("lag memo").insert(key, out.clone());
     out
 }
@@ -1993,10 +2002,10 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
 fn prove(
     func: &FuncDef,
     input: &LagProofInput,
-    vars: &[&str],
+    queries: &[(&str, &Expr)],
     callees: BTreeMap<String, CalleeLookback>,
 ) -> Vec<Option<i64>> {
-    let none = vec![None; vars.len()];
+    let none = vec![None; queries.len()];
     let mut t = Tracker::new(Ctx::new(func, &input.facts, callees), false);
     let all: Vec<&Statement> = input
         .prologue
@@ -2059,14 +2068,24 @@ fn prove(
         steps.get(v).copied().flatten().filter(|d| *d != 0)
     };
     let Some(cursor_step) = paced(input.cursor) else { return none };
-    let cursor = t.read(input.cursor, &env);
-    vars.iter()
-        .map(|v| {
+    let per_bar_written = written_names(&per_bar);
+    queries
+        .iter()
+        .map(|(v, at)| {
             if paced(v) != Some(cursor_step) {
                 return None;
             }
+            let mut names = BTreeSet::new();
+            crate::streaming::expr_var_names(at, &mut names);
+            let moves_apart = |n: &String| {
+                (per_bar_written.contains(n) || cond_written.contains(n)) && paced(n) != Some(cursor_step)
+            };
+            if names.iter().any(moves_apart) {
+                return None;
+            }
             let var = t.read(v, &env);
-            let d = cursor.plus(&var, -1)?;
+            let at = t.aval(at, &env);
+            let d = at.plus(&var, -1)?;
             if !d.is_param() {
                 return None;
             }
@@ -2834,5 +2853,42 @@ mod tests {
         assert!(w.exec(&[Statement::Break]).is_err());
         assert!(w.reachable());
         assert_eq!(w.value(&var("a")).as_const(), Some(3));
+    }
+
+    /// A rolling sum whose window starts at `trailingIdx`, plus one more read
+    /// through `prevIdx`, recomputed every bar from the cursor. That local
+    /// sends the body to the extrema automaton, whose ring holds only
+    /// `[trailingIdx, inIdx]`.
+    fn reach(prev: &str) -> FuncDef {
+        let src = format!(
+            "int roc_lookback(int optInTimePeriod)\n{{\n   return optInTimePeriod;\n}}\n\n\
+             TA_RetCode roc(int startIdx, int endIdx, const double inReal[], int optInTimePeriod,\n\
+             int *outBegIdx, int *outNBElement, double outReal[])\n{{\n\
+             int inIdx, outIdx, trailingIdx, prevIdx;\ndouble sum;\n\
+             if( startIdx > endIdx ) return TA_SUCCESS;\n\
+             outIdx = 0;\nsum = 0.0;\ninIdx = startIdx;\n\
+             trailingIdx = startIdx - optInTimePeriod + 1;\n\
+             while( inIdx <= endIdx ) {{\n\
+             prevIdx = {prev};\nsum += inReal[inIdx] - inReal[trailingIdx];\n\
+             outReal[outIdx++] = sum + inReal[prevIdx];\ninIdx++;\ntrailingIdx++;\n}}\n\
+             *outNBElement = outIdx;\n*outBegIdx = startIdx;\nreturn TA_SUCCESS;\n}}\n"
+        );
+        let mut f = crate::parser::yaml::parse_yaml(&base().join("roc/roc.yaml"));
+        let parsed = crate::parser::c_source::parse_c_source_str(&src);
+        crate::parser::c_source::wire_parsed_source(&mut f, &parsed);
+        f
+    }
+
+    #[test]
+    fn a_read_older_than_the_window_start_is_refused() {
+        // At the window start: one bar inside what the ring holds.
+        let at = reach("inIdx - optInTimePeriod + 1");
+        let m = crate::streaming::analyze(&at).expect("streams");
+        assert!(m.extrema().is_some(), "the extrema automaton serves it");
+        // One bar before it: the ring has already reused that slot.
+        let before = reach("inIdx - optInTimePeriod");
+        let Err(err) = crate::streaming::analyze(&before) else { panic!("refused") };
+        let err = err.to_string();
+        assert!(err.contains("prevIdx") && err.contains("trailingIdx"), "{err}");
     }
 }

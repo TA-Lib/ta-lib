@@ -1852,7 +1852,7 @@ pub fn analyze_with<'a>(
         }
     }
     let mut model = analyze_region(func, body, outputs)?;
-    prove_ring_lags(&mut model, &[], &[], vec![], lookup);
+    prove_buffers(&mut model, &[], &[], vec![], lookup)?;
     Ok(model)
 }
 
@@ -1885,6 +1885,18 @@ pub fn step_temps(model: &StreamModel, tape: Option<&TapeNames>) -> Vec<(String,
         .filter(|(n, _)| !unused.contains(n))
         .cloned()
         .collect()
+}
+
+/// [`prove_ring_lags`], then [`check_extrema_reach`], over the same body.
+fn prove_buffers(
+    model: &mut StreamModel,
+    prologue: &[Statement],
+    epilogue: &[Statement],
+    facts: Vec<Expr>,
+    lookup: &dyn CalleeLookup,
+) -> Result<(), StreamError> {
+    prove_ring_lags(model, prologue, epilogue, facts.clone(), lookup);
+    check_extrema_reach(model, prologue, epilogue, facts, lookup)
 }
 
 /// Sets [`RingSpec::lag_ge1`] on each `back == 0` ring the body Open
@@ -1932,6 +1944,90 @@ fn prove_ring_lags(
         }
     }
     model.temps.extend(locals);
+}
+
+/// Refuse an extrema body that can read before its window start. Open sizes
+/// the automaton's ring from `cursor - trailing`, so an older read lands on a
+/// slot the ring has reused; rounding the ring up to a power of two hides that
+/// for every window length but the exact powers.
+///
+/// Checked: every integer local assigned, and every input index, computed
+/// from the cursor or the window start and otherwise only from names the loop
+/// does not write. A value built from another index the loop moves
+/// (`j = windowStart`, `++i`) is left to that index's own check and the
+/// batch's loop bounds.
+fn check_extrema_reach(
+    model: &StreamModel,
+    prologue: &[Statement],
+    epilogue: &[Statement],
+    mut facts: Vec<Expr>,
+    lookup: &dyn CalleeLookup,
+) -> Result<(), StreamError> {
+    let Some(ex) = model.extrema() else { return Ok(()) };
+    let (cursor, trailing) = (model.cursor.as_str(), ex.trailing.as_str());
+    let mut types = BTreeMap::new();
+    collect_var_decls(model.func.stream_source(), &mut types);
+    let written = assigned_in(&model.steady_stmts);
+    let mut reads: Vec<(String, Expr)> = Vec::new();
+    let mut consider = |shown: String, e: &Expr| {
+        let e = match e {
+            Expr::PostIncrement(b) | Expr::PostDecrement(b) => b.as_ref(),
+            _ => e,
+        };
+        if matches!(e, Expr::Var(v) if v == cursor || v == trailing) {
+            return;
+        }
+        let mut names = BTreeSet::new();
+        expr_var_names(e, &mut names);
+        let anchored = names.contains(cursor) || names.contains(trailing);
+        let invariant = names
+            .iter()
+            .all(|n| n == cursor || n == trailing || !written.contains(n));
+        if anchored && invariant {
+            reads.push((shown, e.clone()));
+        }
+    };
+    for_each_stmt(&model.steady_stmts, &mut |st| {
+        if let Statement::Assign { target: Expr::Var(v), value, compound: false } = st {
+            if types.get(v) == Some(&VarType::Integer) {
+                consider(format!("`{v}`"), value);
+            }
+        }
+        walk_stmt_exprs(st, &mut |top| {
+            walk_expr(top, &mut |x| {
+                if let Expr::ArrayAccess(arr, idx) = x {
+                    let lag_slot =
+                        matches!(classify_input_index(idx, cursor), InputIndex::Current | InputIndex::Lag(_));
+                    if model.bar_inputs.contains(arr) && !lag_slot {
+                        consider(format!("a read of `{arr}`"), idx);
+                    }
+                }
+            });
+        });
+    });
+    if reads.is_empty() {
+        return Ok(());
+    }
+    if let Some(id) = &model.identity {
+        facts.push(Expr::Not(Box::new(id.condition.clone())));
+    }
+    let input = crate::ring_lag::LagProofInput {
+        prologue,
+        region: model.body,
+        epilogue,
+        cursor,
+        facts,
+        lookup,
+    };
+    let queries: Vec<(&str, &Expr)> = reads.iter().map(|(_, e)| (trailing, e)).collect();
+    let bounds = crate::ring_lag::reach_lower_bounds(model.func, &input, &queries);
+    match reads.iter().zip(bounds).find(|(_, lb)| !lb.is_some_and(|lb| lb >= 0)) {
+        None => Ok(()),
+        Some(((shown, _), _)) => Err(StreamError::UnsupportedAccess(format!(
+            "{shown} is not proved to stay at or after `{trailing}`, the oldest bar \
+             the extrema ring holds"
+        ))),
+    }
 }
 
 /// [`analyze`] over an explicit body region with an outputs override. The
@@ -2323,14 +2419,14 @@ pub fn analyze_dual_mode_with<'a>(
     mode_b.identity = identity;
     mode_a.identity_hoisted = true;
     mode_b.identity_hoisted = true;
-    prove_ring_lags(&mut mode_a, prologue, epilogue, vec![condition.clone()], lookup);
-    prove_ring_lags(
+    prove_buffers(&mut mode_a, prologue, epilogue, vec![condition.clone()], lookup)?;
+    prove_buffers(
         &mut mode_b,
         prologue,
         epilogue,
         vec![Expr::Not(Box::new(condition.clone()))],
         lookup,
-    );
+    )?;
 
     Ok(DualModePlan {
         func,
@@ -2571,6 +2667,7 @@ pub fn analyze_composed<'a>(
         let series = written.into_iter().next().expect("len checked");
         intermediates.push(series.clone());
         let producer = analyze_region(func, region, vec![series.clone()])?;
+        check_extrema_reach(&producer, &[], &[], vec![], lookup)?;
         (Some(producer), Some(series))
     } else {
         // Loopless: the prologue must be pure scalar setup (no array
@@ -6204,9 +6301,9 @@ fn classify_or_extrema(
 /// Build the absolute-index automaton description. The paced variable is
 /// the one advanced exactly once per bar at the loop's top level (the
 /// window start); everything else that indexes the inputs is a free
-/// automaton index. Reads through those indices are trusted to stay inside
-/// `[trailing, cursor]` — the batch automaton guarantees it, and any
-/// violation reads a stale ring slot and fails the bitwise gate loudly.
+/// automaton index. Reads through those indices must stay inside
+/// `[trailing, cursor]`; [`check_extrema_reach`] refuses a body that computes
+/// one before `trailing`.
 fn build_extrema(
     steady_stmts: &[Statement],
     cursor: &str,
