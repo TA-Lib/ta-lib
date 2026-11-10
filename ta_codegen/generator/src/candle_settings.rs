@@ -32,6 +32,12 @@ pub fn is_avg_period(name: &str) -> bool {
     name.strip_suffix("_avgPeriod").is_some_and(|s| CANDLE_SETTINGS.contains(&s))
 }
 
+/// Whether `name` is one of a setting's properties, which every backend
+/// declares at function scope.
+pub fn is_setting_property(name: &str) -> bool {
+    CANDLE_PROPERTIES.iter().any(|p| name.strip_suffix(p).and_then(|s| s.strip_suffix('_')).is_some_and(|s| CANDLE_SETTINGS.contains(&s)))
+}
+
 /// Scan a slice of statements and return the set of candle setting names referenced.
 ///
 /// Walks all expressions recursively looking for `Expr::Var("BodyLong_rangeType")` etc.

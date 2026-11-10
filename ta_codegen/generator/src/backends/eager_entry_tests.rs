@@ -12,7 +12,11 @@ const CLAMP: &str = "   lookbackTotal = f_lookback();\n   if( startIdx < lookbac
 const EXIT: &str = "   if( startIdx > endIdx ) {\n      return TA_SUCCESS;\n   }\n";
 
 fn folds_with(src: &str, declared: &Declared) -> bool {
-    let text = format!("{HEAD}{src}\n   return TA_SUCCESS;\n}}\n");
+    folds_under(HEAD, src, declared)
+}
+
+fn folds_under(head: &str, src: &str, declared: &Declared) -> bool {
+    let text = format!("{head}{src}\n   return TA_SUCCESS;\n}}\n");
     let parsed = crate::parser::c_source::parse_c_source_str(&text);
     let f = parsed.functions.into_iter().find(|f| f.name == "f").expect("parses");
     let outputs = [Output { name: "outInteger".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
@@ -23,6 +27,7 @@ fn folds_with(src: &str, declared: &Declared) -> bool {
 /// A lookback of `max(...) + 2`, taking `params`.
 fn declared(params: &[&str]) -> Declared {
     Declared {
+        inputs: ["inClose", "inOpen", "inHigh", "inLow"].map(String::from).to_vec(),
         arrays: ["inClose", "inOpen", "inHigh", "inLow"].map(String::from).to_vec(),
         reals: ["x", "lim"].map(String::from).to_vec(),
         params: params.iter().map(|p| (*p).to_string()).collect(),
@@ -51,6 +56,12 @@ fn the_canonical_prologue_admits_reads_back_to_the_lookback() {
     assert!(!folds(&format!("{CLAMP}{EXIT}   i = startIdx;\n{}", while_loop(&three))), "past the fixed part");
     assert!(!folds(&format!("   i = startIdx;\n{}", while_loop(TERM))), "no prologue");
     assert!(!folds(&format!("{CLAMP}   i = startIdx;\n{}", while_loop(TERM))), "no early return");
+}
+
+#[test]
+fn an_initialized_lookback_declaration_keeps_the_prologue() {
+    let src = format!("{CLAMP}{EXIT}   i = startIdx;\n{}", while_loop(TERM));
+    assert!(folds_under(&HEAD.replace("lookbackTotal;", "lookbackTotal = 0;"), &src, &declared(&[])));
 }
 
 #[test]
