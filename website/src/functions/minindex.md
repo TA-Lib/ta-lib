@@ -11,7 +11,7 @@ Returns the absolute index of the lowest value within a rolling window of the gi
 
 <ta-chart src="/functions/minindex.svg" ratio="720:416" label="MININDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with close at the bar outInteger names as a solid line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 
 Drawn on the price pane over the close as a line, with close at the bar outInteger names as a solid line; below it, a step pane of its own for the integer output outInteger.
 

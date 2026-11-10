@@ -15,7 +15,7 @@ The two outputs are independent flags rather than one signed value, because an o
 
 <ta-chart src="/functions/fractal.svg" ratio="720:274" label="FRACTAL over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 
 Drawn on the price pane over candles, with outSwingHigh as a diamond above the high of every bar it flags moved 2 bars back and outSwingLow as a diamond above the high of every bar it flags moved 2 bars back.
 

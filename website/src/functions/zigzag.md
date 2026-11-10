@@ -15,7 +15,7 @@ The chart is rebuilt exactly from the outputs and the seed. A pivot is confirmed
 
 <ta-chart src="/functions/zigzag.svg" ratio="720:438" label="ZIGZAG over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outZigZag as a solid line; below it, a step pane of its own for each of outTrend and outPivotIdx."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 
 Drawn on the price pane over candles, with outZigZag as a solid line; below it, a step pane of its own for each of outTrend and outPivotIdx.
 

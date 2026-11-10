@@ -11,7 +11,7 @@ Element-wise hyperbolic cosine of the input series.
 
 <ta-chart src="/functions/cosh.svg" ratio="720:416" label="COSH over a ramp from -5 to 5" alt="Drawn on the price pane over a ramp from -5 to 5 as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
 
 Drawn on the price pane over a ramp from -5 to 5 as a line; below it, a separate indicator pane showing outReal as a solid line.
 
