@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLRISEFALL3METHODS
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2026
 # input: wbtc_usdc_2026-05-28.csv; window 2026-06-11..2026-07-06 (26 bars) plus 14 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

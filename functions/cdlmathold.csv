@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLMATHOLD
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2026
 # input: wbtc_usdc_2026-04-12.csv; window 2026-04-26..2026-05-21 (26 bars) plus 14 lookback bars before it; flagged bars: 1
 # parameters: optInPenetration=0.5 (defaults)
 # inputs: inPriceOHLC=OHLC

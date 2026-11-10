@@ -14,15 +14,19 @@ Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing positi
 
 <ta-chart src="/functions/mfi.svg" ratio="720:484" label="MFI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line with dashed rules at 20 and 80, then a volume pane."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line with dashed rules at 20 and 80, then a volume pane.
-
-Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outReal: line, levels 20, 80`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/mfi.csv) · [Chart (SVG)](/functions/mfi.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outReal`: `line` · `zero` · `positive` · `levels: 20, 80`
+
+:::
 
 ## Formula
 
@@ -54,6 +58,8 @@ TP = (High+Low+Close)/3; MF = TP\*Volume, classed positive if TP>prevTP, negativ
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -61,11 +67,20 @@ TP = (High+Low+Close)/3; MF = TP\*Volume, classed positive if TP>prevTP, negativ
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

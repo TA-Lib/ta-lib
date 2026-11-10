@@ -12,15 +12,21 @@ Keltner Channels: three overlap lines around price. The centre line is an expone
 
 <ta-chart src="/functions/kc.svg" ratio="720:274" label="KC over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill.
-
-Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outRealUpperBand: upper_limit` · `outRealMiddleBand: line` · `outRealLowerBand: lower_limit`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/kc.csv) · [Chart (SVG)](/functions/kc.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outRealUpperBand`: `upper_limit`
+* `outRealMiddleBand`: `line`
+* `outRealLowerBand`: `lower_limit`
+
+:::
 
 ## Formula
 
@@ -61,6 +67,8 @@ Lower = Middle - Deviations \* Band
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from ATR and EMA, which KC computes internally; tunable via ATR and EMA's unstable period.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -68,11 +76,20 @@ Lower = Middle - Deviations \* Band
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

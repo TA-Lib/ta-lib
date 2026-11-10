@@ -51,7 +51,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Unstable Period](https://ta-lib.org/api/unstable-period/index.md): Why recursive indicators such as EMA, RSI and ADX start out unstable, and how TA-Lib discards those bars for you: Auto-Stabilization for every function, or a setting per function, in C, Rust, Java, C#, TypeScript and Python.
 - [Numerical Stability](https://ta-lib.org/functions/stability.md): What it means for an indicator to be start-independent, to carry an initial unstable period, to depend on the MA type selected, or to be path-dependent.
 - [Candlestick Settings](https://ta-lib.org/api/candle-settings/index.md): Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust, Java, C# and TypeScript.
-- [Candlestick Outputs](https://ta-lib.org/api/candlestick-outputs/index.md): What the CDL* candlestick pattern functions return: 0 for no pattern, otherwise +/-100, +/-80 for a weaker form or +/-200 for a confirmation, the sign giving the direction where the pattern has one, and the flags that tell a program which values each function returns.
+- [Candlestick Outputs](https://ta-lib.org/api/candlestick-outputs/index.md): What the CDL* candlestick pattern functions return: 0 for no pattern, otherwise +/-100, +/-80 for a weaker form or +/-200 for a confirmation, the sign giving the direction where the pattern has one, the flags that tell a program which values each function returns, and how often the rare patterns fire.
 
 ### Specification
 

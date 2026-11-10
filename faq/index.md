@@ -23,6 +23,10 @@ Yes. A stream fed bar by bar returns the values the batch function returns over 
 
 0 means no pattern, a positive value a bullish pattern and a negative value a bearish one. The usual values are +/-100. See [Candlestick Outputs](/api/candlestick-outputs/).
 
+## Why does a candlestick pattern never fire on my data?
+
+Many patterns are rare; see [How often patterns fire](/api/candlestick-outputs/#how-often-patterns-fire).
+
 ## Do the Rust, Java, C# and TypeScript libraries need the C library?
 
 No. Each is a native implementation in its own language, with no binding to C.

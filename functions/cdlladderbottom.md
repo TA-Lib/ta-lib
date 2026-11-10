@@ -14,20 +14,25 @@ Five-candle bullish reversal pattern: three consecutively lower black candles, a
 
 <ta-chart src="/functions/cdlladderbottom.svg" ratio="720:274" label="CDLLADDERBOTTOM over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call.
-
-Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: pattern_bull_bear, zero, positive`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/cdlladderbottom.csv) · [Chart (SVG)](/functions/cdlladderbottom.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+
+:::
 
 ## Notes
 
 * Does not verify the preceding downtrend that this bullish reversal classically assumes.
-* Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
+* Bulkowski's testing found this reverses a downtrend only 56% of the time ("near random"), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
+* Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks it 80th of 103 patterns by how often it occurs ([Ladder Bottom](https://thepatternsite.com/LadderBottom.html)), and it fires 3 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 
@@ -53,6 +58,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -60,11 +67,20 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

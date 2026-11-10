@@ -12,24 +12,29 @@ A five-candle continuation pattern: a long candle, three small counter-color can
 
 ## Chart
 
-<ta-chart src="/functions/cdlrisefall3methods.svg" ratio="720:274" label="CDLRISEFALL3METHODS over WBTC/USDC (Uniswap v3), daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdlrisefall3methods.svg" ratio="720:274" label="CDLRISEFALL3METHODS over WBTC/USDC (Uniswap v3), daily, 2026" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one.
-
-Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: pattern_bull_bear, zero, positive, negative`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/cdlrisefall3methods.csv) · [Chart (SVG)](/functions/cdlrisefall3methods.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+
+:::
 
 ## Notes
 
 * Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.
 * The middle candles need only partially overlap the first candle's range, not be fully contained within it.
 * The prior trend the continuation reading assumes is not verified.
-* Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
+* Bulkowski's testing found Rising Three Methods continues 74% of the time and Falling Three Methods 71%, both as classically labeled, but he flags both samples as too thin to trust and left Falling Three Methods out of his book. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
+* Rare: a few years of one symbol's daily bars may show none. Bulkowski ranks Rising Three Methods 88th and Falling Three Methods 91st of 103 patterns by how often they occur ([rising](https://thepatternsite.com/Rising3Methods.html), [falling](https://thepatternsite.com/Falling3Methods.html)), and it fires 12 times in [about 16,000 daily crypto bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 
@@ -56,6 +61,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -63,11 +70,20 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

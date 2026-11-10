@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLHIKKAKEMOD
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2022-2023
 # input: wbtc_usdc_2022-12-15.csv; window 2022-12-25..2023-01-23 (30 bars) plus 10 lookback bars before it; flagged bars: 2
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

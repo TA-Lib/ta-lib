@@ -14,15 +14,19 @@ A two-candle continuation pattern: the second candle opposes the first in color,
 
 <ta-chart src="/functions/cdlseparatinglines.svg" ratio="720:274" label="CDLSEPARATINGLINES over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one.
-
-Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: pattern_bull_bear, zero, positive, negative`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/cdlseparatinglines.csv) · [Chart (SVG)](/functions/cdlseparatinglines.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+
+:::
 
 ## Formula
 
@@ -31,6 +35,7 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 ## Notes
 
 * A prior trend is not verified, nor that the pattern aligns with it.
+* Rare in Bulkowski's tests: he ranks the bullish form 76th and the bearish 82nd of 103 patterns by how often they occur ([bullish](https://thepatternsite.com/SeparateLinesBull.html), [bearish](https://thepatternsite.com/SeparateLinesBear.html)). It fires more often in crypto: 120 times in [about 16,000 daily bars](/api/candlestick-outputs/#how-often-patterns-fire).
 
 ## Inputs
 
@@ -57,6 +62,8 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -64,11 +71,20 @@ What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

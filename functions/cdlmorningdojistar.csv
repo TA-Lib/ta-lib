@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLMORNINGDOJISTAR
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2022
 # input: wbtc_usdc_2022-07-15.csv; window 2022-07-27..2022-08-23 (28 bars) plus 12 lookback bars before it; flagged bars: 1
 # parameters: optInPenetration=0.3 (defaults)
 # inputs: inPriceOHLC=OHLC

@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLTASUKIGAP
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2023
 # input: wbtc_usdc_2023-04-18.csv; window 2023-04-25..2023-05-27 (33 bars) plus 7 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

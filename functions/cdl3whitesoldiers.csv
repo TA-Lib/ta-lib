@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDL3WHITESOLDIERS
-# series: WBTC/USDC (Uniswap v3), daily
+# series: WBTC/USDC (Uniswap v3), daily, 2021
 # input: wbtc_usdc_2021-10-27.csv; window 2021-11-08..2021-12-05 (28 bars) plus 12 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

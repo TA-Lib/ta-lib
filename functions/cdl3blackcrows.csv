@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDL3BLACKCROWS
-# series: LINK/WETH (Uniswap v3), daily
+# series: LINK/WETH (Uniswap v3), daily, 2024
 # input: link_weth_2024-06-02.csv; window 2024-06-15..2024-07-11 (27 bars) plus 13 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

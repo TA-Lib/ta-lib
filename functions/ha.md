@@ -18,15 +18,22 @@ Read the result as a trend filter rather than as price: consecutive candles of o
 
 <ta-chart src="/functions/ha.svg" ratio="720:486" label="HA over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a candle pane of its own for outHAOpen, outHAHigh, outHALow and outHAClose, each candle coloured by outHAClose against outHAOpen."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over candles; below it, a candle pane of its own for outHAOpen, outHAHigh, outHALow and outHAClose, each candle coloured by outHAClose against outHAOpen.
-
-Metadata flags used: `inPriceOHLC: open, high, low, close` · `outHAOpen` · `outHAHigh` · `outHALow` · `outHAClose`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/ha.csv) · [Chart (SVG)](/functions/ha.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outHAOpen`: `line`
+* `outHAHigh`: `line` · `upper_limit`
+* `outHALow`: `line` · `lower_limit`
+* `outHAClose`: `line`
+
+:::
 
 ## Formula
 
@@ -63,6 +70,8 @@ HA_low\[i]   = min( L\[i], HA_open\[i], HA_close\[i] )
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -70,11 +79,20 @@ HA_low\[i]   = min( L\[i], HA_open\[i], HA_close\[i] )
 | <span class="flag-box">✅</span> **Overlap Input** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on the same scale as the input price, so it is drawn over the price chart." data-tip="Output is on the same scale as the input price, so it is drawn over the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

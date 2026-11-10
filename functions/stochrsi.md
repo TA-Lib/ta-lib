@@ -14,15 +14,20 @@ Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead of pric
 
 <ta-chart src="/functions/stochrsi.svg" ratio="720:416" label="STOCHRSI over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outFastK as a solid line with dashed rules at 20 and 80 and outFastD as a dashed line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outFastK as a solid line with dashed rules at 20 and 80 and outFastD as a dashed line.
-
-Metadata flags used: `outFastK: line, levels 20, 80` · `outFastD: dash_line, positive, negative`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/stochrsi.csv) · [Chart (SVG)](/functions/stochrsi.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outFastK`: `line` · `zero` · `positive` · `levels: 20, 80`
+* `outFastD`: `dash_line` · `zero` · `positive` · `negative`
+
+:::
 
 ## Formula
 
@@ -59,6 +64,8 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 
 **Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from RSI, which STOCHRSI computes internally; tunable via RSI's unstable period. The MA type selected may add one of its own.
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -66,11 +73,20 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 

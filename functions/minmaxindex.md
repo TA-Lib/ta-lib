@@ -14,15 +14,20 @@ Returns the absolute input indices of the lowest and highest values within each 
 
 <ta-chart src="/functions/minmaxindex.svg" ratio="720:438" label="MINMAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
-
-Drawn on the price pane over the close as a line, with close at the bar outMinIdx names as a solid line and close at the bar outMaxIdx names as a solid line; below it, a step pane of its own for each of outMinIdx and outMaxIdx.
-
-Metadata flags used: `outMinIdx: integer, bar_index` · `outMaxIdx: integer, bar_index`
-
-:::
+<div class="ta-chart-links">
 
 [Reference data (CSV)](/functions/minmaxindex.csv) · [Chart (SVG)](/functions/minmaxindex.svg)
+
+</div>
+
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API." data-tip="The chart is drawn automatically from metadata TA-Lib provides. Your app can get the same through the Abstract API.">i</span>
+
+**Outputs**
+
+* `outMinIdx`: `line` · `bar_index`
+* `outMaxIdx`: `line` · `bar_index`
+
+:::
 
 ## Formula
 
@@ -52,6 +57,8 @@ outMaxIdx\[i] = index of max(inReal\[i-optInTimePeriod+1 .. i])
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)
 
+<div class="flag-cols">
+
 <div class="flag-table">
 
 |  |
@@ -59,11 +66,20 @@ outMaxIdx\[i] = index of max(inReal\[i-optInTimePeriod+1 .. i])
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+
+</div>
+
+<div class="flag-table">
+
+|  |
+| :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Input Must Be Positive</span> |
+
+</div>
 
 </div>
 
