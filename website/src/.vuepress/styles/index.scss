@@ -82,11 +82,9 @@ body .vp-toc-placeholder {
   }
 }
 
-// The `## Properties` checkbox table (wrapped in `.flag-table` by
-// `backends/docs_site.rs`) has no column header: no one label covers the set
-// (`Identity at Period 1` is not a display hint). Markdown cannot express a table
-// without a header row, so the generator emits an empty header cell and the row it
-// renders as is dropped here.
+// The `## Properties` checkbox tables have no column header. Markdown cannot
+// express a table without a header row, so the generator emits an empty header
+// cell and the row it renders as is dropped here.
 .flag-table thead {
   display: none;
 }

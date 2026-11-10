@@ -621,17 +621,6 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   warm-up), `Path-Dependent` (`path_dependent`; a running accumulation or
 ///   path-dependent state machine that may never converge — the behavior behind
 ///   ta-lib-python issues like #513).
-/// * The **checkbox list** — `Overlap Input` (output shares the input price
-///   scale, drawn over price) and its complement `Independent Y-Axis` (own pane) —
-///   one of the two is always checked — plus `Candlestick` (integer pattern signal),
-///   `Can Output NaN or ±Inf` (`nan_inf_output`; a value the chart has no
-///   point to plot, so the caller has to decide what to draw there — the page's
-///   `## Notes` say which inputs cause it), `Identity at Period 1`
-///   (`period1_identity`), `Display Shift` (`display_shift`, derived from
-///   the output flags), `Uses Transcendental` (`uses_transcendental`) and `Input Must Be Positive`
-///   (`positive_input`). Not all of them are display hints, which is why the
-///   list carries no header: they are per-function properties of one shape — a
-///   checkbox a caller reads off the page.
 ///
 /// `stream` (internal codegen concern) and `volume` (in the ABI but set by no
 /// function) are not surfaced.
@@ -644,11 +633,10 @@ fn inject_flags(
     let has = |w: &str| func.flags.iter().any(|f| f == w);
     let overlap = has("overlap");
 
-    // These stay a table: they are a two-way pick plus markers, and nothing about
-    // them is stated by negation. Tooltips are emitted for checked cells only -- an
-    // unchecked cell carrying its definition puts a sentence describing a property the
-    // function does NOT have into the page text, where a crawler or a language model reads
-    // it as a claim about this function.
+    // Tooltips are emitted for checked cells only -- an unchecked cell carrying its
+    // definition puts a sentence describing a property the function does NOT have into
+    // the page text, where a crawler or a language model reads it as a claim about this
+    // function.
     let display = [
         (
             "Overlap Input",
@@ -704,13 +692,11 @@ fn inject_flags(
 
     let mut block = String::from("## Properties\n\n");
     block.push_str(&stability_line(func, enums, all));
-    // Headerless: no one label covers the set (`Identity at Period 1` is not a display
-    // hint), and a wrong header is worse than none. Markdown cannot express a table
-    // without a header row, so the cell is emitted empty and the row it renders as is
-    // hidden via the `.flag-table` wrapper, which also releases the theme's
-    // `overflow-x: auto` on tables so the first row's tooltip is not clipped away
-    // (`.vuepress/styles/index.scss`). The blank lines around the table are what keep
-    // markdown-it parsing markdown inside the raw HTML block.
+    // Markdown cannot express a table without a header row, so the cell is emitted empty
+    // and the row it renders as is hidden via the `.flag-table` wrapper, which also
+    // releases the theme's `overflow-x: auto` on tables so the first row's tooltip is not
+    // clipped away (`.vuepress/styles/index.scss`). The blank lines around each table are
+    // what keep markdown-it parsing markdown inside the raw HTML block.
     block.push_str("\n\n<div class=\"flag-cols\">\n\n");
     for column in [&display[..], &numerical[..]] {
         block.push_str("<div class=\"flag-table\">\n\n|  |\n| :-- |\n");

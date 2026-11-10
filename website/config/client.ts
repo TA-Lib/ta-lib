@@ -22,9 +22,9 @@ const RELOAD_TARGET = "vp-reload-stale-chunk";
 // own stylesheet picks up the theme's `--vp-c-*` and the page's HTML and JS
 // chunk carry none of it; until then the figure holds the chart's height so
 // nothing below it moves. `<noscript>` holds an `<img>` of the same file for a
-// reader without JS. `label` names the chart for a screen reader; `alt`, the
-// drawing sentence, goes on the `<img>` alone, because the page repeats it in
-// prose right after the chart.
+// reader without JS. `label` names the chart and `alt` is the drawing
+// sentence; the page shows the sentence nowhere else, so a screen reader must
+// get it from the inlined figure as well as from the `<img>`.
 const TaChart = defineComponent({
   name: "TaChart",
   props: {
@@ -57,7 +57,7 @@ const TaChart = defineComponent({
       // the space the chart takes after it, at every viewport width.
       const fig = { class: "ta-chart-fig", style: { aspectRatio: `${w} / ${hgt}` } };
       const box = (child: ReturnType<typeof h>) => h("div", { class: "ta-chart-box" }, child);
-      if (svg.value) return box(h("div", { ...fig, role: "img", "aria-label": props.label, innerHTML: svg.value }));
+      if (svg.value) return box(h("div", { ...fig, role: "img", "aria-label": props.alt ? `${props.label}. ${props.alt}` : props.label, innerHTML: svg.value }));
       if (failed.value) return h("div", { class: "ta-chart-box" }, h("a", { href: url }, "Chart (SVG)"));
       const alt = props.alt.replace(/&/gu, "&amp;").replace(/"/gu, "&quot;");
       return box(h("div", fig, h("noscript", { innerHTML: `<img src="${url}" alt="${alt}">` })));
