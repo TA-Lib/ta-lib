@@ -12150,7 +12150,6 @@ public static class FunctionDescription
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
@@ -12359,7 +12358,6 @@ public static class FunctionDescription
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
@@ -12369,7 +12367,6 @@ public static class FunctionDescription
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>

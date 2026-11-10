@@ -2574,7 +2574,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod3', key: 'timePeriod3', flags: 0x00000000, displayName: 'Third Period', hint: 'Number of bars for 3rd period', defaultValue: 28.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
     '{"outputs":{"outReal":{"levels":[30,70]}}}'),
   FuncInfo.of('VAR', 'Statistic Functions', 'Variance', 0x02000000,
@@ -2620,8 +2620,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', key: 'timePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of bars in the rolling sums', defaultValue: 14.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.REAL, paramName: 'outPlusVI', key: 'outPlusVi', flags: 0x00000701 },
-      { type: OutputType.REAL, paramName: 'outMinusVI', key: 'outMinusVi', flags: 0x00000701 },
+      { type: OutputType.REAL, paramName: 'outPlusVI', key: 'outPlusVi', flags: 0x00000501 },
+      { type: OutputType.REAL, paramName: 'outMinusVI', key: 'outMinusVi', flags: 0x00000501 },
     ],
     '{}'),
   FuncInfo.of('VWAP', 'Volume Indicators', 'Volume Weighted Average Price', 0x23000000,

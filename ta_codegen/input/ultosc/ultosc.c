@@ -5,6 +5,7 @@
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  KL       Kevin Lin
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
@@ -20,6 +21,7 @@
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
  *  102426 MF,CC #554 zero-run test on the true range itself.
+ *  110926 KL    #588 rebuild a total that comes out negative.
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -234,6 +236,38 @@ TA_RetCode ultosc(int startIdx, int endIdx,
                a3Total = 0.0;
                b3Total = 0.0;
             }
+         }
+      }
+
+      /* On well-formed bars every term is non-negative, so a total below zero
+       * is the residue a term far larger than the rest of its window left
+       * when it retired; rebuild all six from the ring, oldest bar first.
+       */
+      if( TA_UNLIKELY(a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0
+         || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) )
+      {
+         a1Total = 0.0;
+         b1Total = 0.0;
+         a2Total = 0.0;
+         b2Total = 0.0;
+         a3Total = 0.0;
+         b3Total = 0.0;
+         for( i = optInTimePeriod3 - 1; i >= 0; i-- )
+         {
+            j = term_Idx - i;
+            if( j < 0 ) j += optInTimePeriod3;
+            if( i < optInTimePeriod1 )
+            {
+               a1Total += term_closeMinusTrueLow[j];
+               b1Total += term_trueRange[j];
+            }
+            if( i < optInTimePeriod2 )
+            {
+               a2Total += term_closeMinusTrueLow[j];
+               b2Total += term_trueRange[j];
+            }
+            a3Total += term_closeMinusTrueLow[j];
+            b3Total += term_trueRange[j];
          }
       }
 

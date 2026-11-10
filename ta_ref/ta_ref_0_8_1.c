@@ -3,7 +3,8 @@
  * Compared from period 1 and over every MAType. The rows cover the value
  * changes made since, each sized at 3x its measured maximum; the waivers cover
  * the flat-start 0/0 (#480), TRIX at a period of 1 (#505), the index named
- * on a tie (#503) and inputs near the domain bound for six of the rows. */
+ * on a tie (#503), inputs near the domain bound for six of the rows, and the
+ * VORTEX/ULTOSC windows whose running sums are now rebuilt (#588). */
 
 #include <math.h>
 #include <stddef.h>
@@ -70,8 +71,9 @@ static const TaRefTol TOL[] = {
 };
 
 /* Each ceiling sits halfway between the largest share measured on one function
- * and 1. */
-enum { W_RSI, W_TRIX1, W_INDEX_TIE, W_DOMAIN_EDGE };
+ * and 1, except the #588 two: their predicate replays the exact sums, so they
+ * sit at about 3x the largest share measured (0.31%). */
+enum { W_RSI, W_TRIX1, W_INDEX_TIE, W_DOMAIN_EDGE, W_REBUILT_EDGE, W_REBUILT };
 static const TaRefWaiver WAIVERS[] = {
    [W_RSI] = { "rsi_flat_480",
                "RSI with no change from the first bar read to the first output, where 0.8.1 answers 0 for 0/0, and STOCHRSI once a move follows (#480)", 0.56 },
@@ -81,6 +83,10 @@ static const TaRefWaiver WAIVERS[] = {
                "MAXINDEX/MININDEX/MINMAXINDEX over a window that holds its extreme on several bars, where 0.8.1 names the oldest or the newest of them by where the call started (#503)", 0.71 },
    [W_DOMAIN_EDGE] = { "domain_edge",
                "VAR/STDDEV/CORREL/TRIX/PPO/EFI reading an input near the domain bound, where 0.8.1's rounding sits further from the current values than the rows sized on ordinary data", 0.55 },
+   [W_REBUILT_EDGE] = { "rebuilt_edge_588",
+               "VORTEX/ULTOSC where a running sum first comes out negative as a bar near the domain bound retires: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
+   [W_REBUILT] = { "rebuilt_588",
+               "VORTEX/ULTOSC where a running sum first comes out negative away from the domain bound, a few units in the last place below an exact zero: the current library rebuilds it from the window, 0.8.1 keeps the residue (#588)", 0.01 },
 };
 
 /* Keeps those rows at their ordinary-data size: a case whose inputs pass
@@ -100,6 +106,121 @@ static int domain_edge( const TaRefCase *c )
       if( fabs( c->close[j] ) > DOMAIN_EDGE || (readsVolume && fabs( c->volume[j] ) > DOMAIN_EDGE) )
          return 1;
    return 0;
+}
+
+/* Replays the running sums the current library keeps over the case's call,
+ * in its order of operations, and reports the first window where one of them
+ * comes out negative: there it rebuilds the sums from the window and 0.8.1
+ * does not, and the two agree on every window before it. The retiring bar and
+ * the one it reads decide which waiver the window takes. */
+static int bar_at_edge( const TaRefCase *c, int j )
+{
+   return fabs( c->high[j] ) > DOMAIN_EDGE || fabs( c->low[j] ) > DOMAIN_EDGE
+       || fabs( c->close[j] ) > DOMAIN_EDGE;
+}
+
+static int rebuilt_window( const TaRefCase *c, int span )
+{
+   int j;
+   for( j = span; j >= 0 && j >= span - 1; j-- )
+      if( bar_at_edge( c, j ) ) return W_REBUILT_EDGE;
+   return W_REBUILT;
+}
+
+static double true_range( const TaRefCase *c, int i )
+{
+   double tr = c->high[i] - c->low[i];
+   double d = fabs( c->close[i-1] - c->high[i] );
+   if( d > tr ) tr = d;
+   d = fabs( c->close[i-1] - c->low[i] );
+   if( d > tr ) tr = d;
+   return tr;
+}
+
+static int vortex_rebuilt( const TaRefCase *c )
+{
+   int n = (int)ta_ref_opt( c, "optInTimePeriod", 0 );
+   int s, t, i, nullRun = 0, live;
+   double sTR = 0.0, sP = 0.0, sM = 0.0, tr;
+
+   if( n < 1 || c->endIdx >= c->n ) return -1;
+   s = c->startIdx > n ? c->startIdx : n;
+   if( s > c->endIdx ) return -1;
+   for( i = s - n + 1; i < s; i++ )
+   {
+      tr = true_range( c, i );
+      sTR += tr;
+      sP  += fabs( c->high[i] - c->low[i-1] );
+      sM  += fabs( c->low[i] - c->high[i-1] );
+      live = tr <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+   }
+   for( t = s; t <= c->endIdx; t++ )
+   {
+      tr = true_range( c, t );
+      sTR += tr;
+      sP  += fabs( c->high[t] - c->low[t-1] );
+      sM  += fabs( c->low[t] - c->high[t-1] );
+      live = tr <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( nullRun >= n ) { nullRun = n; sTR = 0.0; }
+      if( sTR < 0.0 || sP < 0.0 || sM < 0.0 ) return rebuilt_window( c, t - n );
+      i = t - n + 1;
+      sTR -= true_range( c, i );
+      sP  -= fabs( c->high[i] - c->low[i-1] );
+      sM  -= fabs( c->low[i] - c->high[i-1] );
+   }
+   return -1;
+}
+
+static void ultosc_terms( const TaRefCase *c, int i, double *a, double *b )
+{
+   double trueLow = c->low[i] < c->close[i-1] ? c->low[i] : c->close[i-1];
+   *a = c->close[i] - trueLow;
+   *b = true_range( c, i );
+}
+
+static int ultosc_rebuilt( const TaRefCase *c )
+{
+   int p[3], k, m, s, t, i, nullRun = 0, live;
+   double A[3] = { 0.0, 0.0, 0.0 }, B[3] = { 0.0, 0.0, 0.0 }, a, b;
+
+   p[0] = (int)ta_ref_opt( c, "optInTimePeriod1", 0 );
+   p[1] = (int)ta_ref_opt( c, "optInTimePeriod2", 0 );
+   p[2] = (int)ta_ref_opt( c, "optInTimePeriod3", 0 );
+   for( k = 0; k < 2; k++ )
+      for( m = 0; m < 2 - k; m++ )
+         if( p[m] > p[m+1] ) { i = p[m]; p[m] = p[m+1]; p[m+1] = i; }
+   if( p[0] < 1 || c->endIdx >= c->n ) return -1;
+   s = c->startIdx > p[2] ? c->startIdx : p[2];
+   if( s > c->endIdx ) return -1;
+   for( i = s - p[2] + 1; i < s; i++ )
+   {
+      ultosc_terms( c, i, &a, &b );
+      live = b + fabs( a ) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      for( k = 0; k < 3; k++ )
+         if( i >= s - p[k] + 1 ) { A[k] += a; B[k] += b; }
+   }
+   for( t = s; t <= c->endIdx; t++ )
+   {
+      ultosc_terms( c, t, &a, &b );
+      for( k = 0; k < 3; k++ ) A[k] += a;
+      for( k = 0; k < 3; k++ ) B[k] += b;
+      live = b + fabs( a ) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      for( k = 0; k < 3 && nullRun >= p[k]; k++ ) { A[k] = 0.0; B[k] = 0.0; }
+      if( nullRun > p[2] ) nullRun = p[2];
+      for( k = 0; k < 3; k++ )
+         if( A[k] < 0.0 || B[k] < 0.0 ) return rebuilt_window( c, t - p[k] );
+      for( k = 0; k < 3; k++ )
+      {
+         ultosc_terms( c, t - p[k] + 1, &a, &b );
+         A[k] -= a;
+         B[k] -= b;
+      }
+   }
+   return -1;
 }
 
 /* RSI's gain and loss sums are both zero while nothing has moved since the
@@ -126,6 +247,8 @@ static int waive( const TaRefCase *c )
    int first, from, seed;
 
    if( domain_edge( c ) ) return W_DOMAIN_EDGE;
+   if( strcmp( c->func, "VORTEX" ) == 0 ) return vortex_rebuilt( c );
+   if( strcmp( c->func, "ULTOSC" ) == 0 ) return ultosc_rebuilt( c );
    if( strcmp( c->func, "TRIX" ) == 0 )
    {
       if( (int)ta_ref_opt( c, "optInTimePeriod", 0 ) != 1 || c->lookback < 0 ) return -1;

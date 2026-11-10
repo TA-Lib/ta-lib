@@ -763,9 +763,11 @@ static ErrorNumber test_wad_published_vectors( void )
 
 /**** Global functions definitions.   ****/
 
-/* A 2e17 bar among ordinary ones leaves the running sums below zero once it
- * retires, so ULTOSC answers negative on well-formed bars: the sign its
- * metadata declares, which the ride must see somewhere. */
+/* A 2e17 bar among ordinary ones leaves the running totals below zero once it
+ * retires, and a total that comes out negative must be rebuilt from the
+ * window: no output may be negative, every bar the spike has left must match
+ * fresh window totals, and the stream must agree with the batch bit for bit
+ * (#588). */
 static void cancel_bars( double spike, double closeFrac, TA_Real h[], TA_Real l[], TA_Real c[], int n )
 {
    int i;
@@ -783,23 +785,73 @@ static void cancel_bars( double spike, double closeFrac, TA_Real h[], TA_Real l[
 
 static ErrorNumber test_ultosc_cancel( void )
 {
-   TA_Real h[24], l[24], c[24], out[24];
+   static const int periods[3] = { 2, 3, 4 };
+   TA_Real h[24], l[24], c[24], out[24], v;
+   TA_ULTOSC_Stream *stream;
    TA_Integer beg, nb;
-   int i, neg = 0;
+   TA_RetCode rc;
+   int i, j, w;
 
    cancel_bars( 2e17, -0.25, h, l, c, 24 );
-   if( TA_ULTOSC( 0, 23, h, l, c, 2, 3, 4, &beg, &nb, out ) != TA_SUCCESS )
+   if( TA_ULTOSC( 0, 23, h, l, c, periods[0], periods[1], periods[2],
+                  &beg, &nb, out ) != TA_SUCCESS )
    {
       printf( "ULTOSC Fail: the spike call failed\n" );
       return TA_ULTOSC_CANCEL;
    }
    for( i = 0; i < nb; i++ )
-      neg += out[i] < 0.0;
-   if( !neg )
    {
-      printf( "ULTOSC Fail: no output went negative after the 2e17 spike\n" );
+      int bar = beg + i;
+      double want = 0.0;
+      if( out[i] < 0.0 )
+      {
+         printf( "ULTOSC Fail: bar %d is %.17g after the 2e17 spike\n", bar, out[i] );
+         return TA_ULTOSC_CANCEL;
+      }
+      /* Bar 6's terms are the last to read the spike. */
+      if( bar - periods[2] + 1 <= 6 )
+         continue;
+      for( w = 0; w < 3; w++ )
+      {
+         double a = 0.0, b = 0.0;
+         for( j = bar - periods[w] + 1; j <= bar; j++ )
+         {
+            double trueLow  = l[j] < c[j-1] ? l[j] : c[j-1];
+            double trueHigh = h[j] > c[j-1] ? h[j] : c[j-1];
+            a += c[j] - trueLow;
+            b += trueHigh - trueLow;
+         }
+         if( b > 0.0 )
+            want += (w == 0 ? 4.0 : w == 1 ? 2.0 : 1.0) * (a / b);
+      }
+      want = 100.0 * (want / 7.0);
+      if( fabs( out[i] - want ) > 1e-9 )
+      {
+         printf( "ULTOSC Fail: bar %d is %.17g after the 2e17 spike, fresh totals "
+                 "give %.17g\n", bar, out[i], want );
+         return TA_ULTOSC_CANCEL;
+      }
+   }
+
+   rc = TA_ULTOSC_Open( &stream, h, l, c, periods[2] + 1,
+                        periods[0], periods[1], periods[2], &v );
+   for( i = periods[2] + 1; rc == TA_SUCCESS && i < 24; i++ )
+   {
+      rc = TA_ULTOSC_Update( stream, h[i], l[i], c[i], &v );
+      if( rc == TA_SUCCESS && memcmp( &v, &out[i-periods[2]], sizeof(TA_Real) ) != 0 )
+      {
+         printf( "ULTOSC Fail: bar %d: stream %.17g, batch %.17g\n",
+                 i, v, out[i-periods[2]] );
+         TA_ULTOSC_Close( stream );
+         return TA_ULTOSC_CANCEL;
+      }
+   }
+   if( rc != TA_SUCCESS )
+   {
+      printf( "ULTOSC Fail: the spike stream returned %d\n", (int)rc );
       return TA_ULTOSC_CANCEL;
    }
+   TA_ULTOSC_Close( stream );
    return TA_TEST_PASS;
 }
 

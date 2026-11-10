@@ -12095,7 +12095,6 @@
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
@@ -12304,7 +12303,6 @@
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>
@@ -12314,7 +12312,6 @@
 				<Flags>
 					<Flag>Line</Flag>
 					<Flag>Positive</Flag>
-					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
 				</Flags>
 			</OutputArgument>

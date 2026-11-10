@@ -13,6 +13,7 @@
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
  *  102426 MF,CC  #554 zero-run test on the true range itself.
+ *  110926 KL     #588 rebuild a sum that comes out negative.
  */
 
 int vortex_lookback(int optInTimePeriod)
@@ -36,7 +37,8 @@ TA_RetCode vortex(int startIdx, int endIdx,
    double outMinusVI[])
 {
    int outIdx, today, trailingIdx, lookbackTotal, i;
-   int nullRun, live;
+   int nullRun, live, seeded;
+   double prevHigh, prevLow, prevClose;
    double sTR, sVMP, sVMM, curTR, curVMP, curVMM;
    double trueRange, tempDouble, tempLT, tempHT, tempCY;
 
@@ -137,6 +139,39 @@ TA_RetCode vortex(int startIdx, int endIdx,
       {
          nullRun = optInTimePeriod;
          sTR = 0.0;
+      }
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired;
+       * rebuild all three from the window.
+       */
+      if( TA_UNLIKELY(sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0) )
+      {
+         sTR  = 0.0;
+         sVMP = 0.0;
+         sVMM = 0.0;
+         seeded = 0;
+         for( i = today - optInTimePeriod; i <= today; i++ )
+         {
+            if( seeded != 0 )
+            {
+               tempLT = inLow[i];
+               tempHT = inHigh[i];
+               trueRange = tempHT - tempLT;
+               tempDouble = fabs( prevClose - tempHT );
+               if( tempDouble > trueRange )
+                  trueRange = tempDouble;
+               tempDouble = fabs( prevClose - tempLT );
+               if( tempDouble > trueRange )
+                  trueRange = tempDouble;
+               sTR  += trueRange;
+               sVMP += fabs( tempHT - prevLow );
+               sVMM += fabs( tempLT - prevHigh );
+            }
+            prevHigh  = inHigh[i];
+            prevLow   = inLow[i];
+            prevClose = inClose[i];
+            seeded = 1;
+         }
       }
 
       /* Record the current window sums, then retire the trailing bar's

@@ -47,6 +47,7 @@
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
  *  102426 MF,CC  #554 zero-run test on the true range itself.
+ *  110926 KL     #588 rebuild a sum that comes out negative.
  */
 
 import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -105,6 +106,10 @@ export function vortexImpl(
   let i = 0;
   let nullRun = 0;
   let live = 0;
+  let seeded = 0;
+  let prevHigh = 0;
+  let prevLow = 0;
+  let prevClose = 0;
   let sTR = 0;
   let sVMP = 0;
   let sVMM = 0;
@@ -223,6 +228,38 @@ export function vortexImpl(
     if (nullRun >= optInTimePeriod) {
       nullRun = optInTimePeriod;
       sTR = 0.0;
+    }
+    /* Every term is non-negative, so a sum below zero is the residue a
+     * term far larger than the rest of the window left when it retired;
+     * rebuild all three from the window.
+     */
+    if (sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0) {
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for (i = today - optInTimePeriod; i <= today; i += 1) {
+        if (seeded !== 0) {
+          tempLT = inLow[i];
+          tempHT = inHigh[i];
+          trueRange = tempHT - tempLT;
+          tempDouble = Math.abs(prevClose - tempHT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          tempDouble = Math.abs(prevClose - tempLT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          sTR += trueRange;
+          sVMP += Math.abs(tempHT - prevLow);
+          sVMM += Math.abs(tempLT - prevHigh);
+        }
+        prevHigh = inHigh[i];
+        prevLow = inLow[i];
+        prevClose = inClose[i];
+        seeded = 1;
+      }
     }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
@@ -534,6 +571,12 @@ export class VortexStream {
   /** @internal */
   nullRun: number = 0;
   /** @internal */
+  prevHigh: number = 0;
+  /** @internal */
+  prevLow: number = 0;
+  /** @internal */
+  prevClose: number = 0;
+  /** @internal */
   sTR: number = 0;
   /** @internal */
   sVMP: number = 0;
@@ -557,6 +600,16 @@ export class VortexStream {
   ring_trailingIdx_inLow: Float64Array = new Float64Array(2);
   /** @internal */
   ring_trailingIdx_inClose: Float64Array = new Float64Array(2);
+  /** @internal */
+  winPos_i: number = 0;
+  /** @internal */
+  winCap_i: number = 1;
+  /** @internal */
+  win_i_inHigh: Float64Array = new Float64Array(1);
+  /** @internal */
+  win_i_inLow: Float64Array = new Float64Array(1);
+  /** @internal */
+  win_i_inClose: Float64Array = new Float64Array(1);
   /** @internal */
   cur_outPlusVI: number = 0;
   /** @internal */
@@ -655,7 +708,9 @@ export class VortexStream {
     const inHigh = high;
     const inLow = low;
     const inClose = close;
+    let i = 0;
     let live = 0;
+    let seeded = 0;
     let curTR = 0;
     let curVMP = 0;
     let curVMM = 0;
@@ -667,6 +722,9 @@ export class VortexStream {
     let cur_outMinusVI = 0;
     let cur_outPlusVI = 0;
     let nullRun = sp.nullRun;
+    let prevClose = sp.prevClose;
+    let prevHigh = sp.prevHigh;
+    let prevLow = sp.prevLow;
     let sTR = sp.sTR;
     let sVMM = sp.sVMM;
     let sVMP = sp.sVMP;
@@ -676,12 +734,24 @@ export class VortexStream {
     let pkVal1 = 0;
     let pkSlot2 = -1;
     let pkVal2 = 0;
+    let pkSlot3 = -1;
+    let pkVal3 = 0;
+    let pkSlot4 = -1;
+    let pkVal4 = 0;
+    let pkSlot5 = -1;
+    let pkVal5 = 0;
     pkSlot0 = sp.ringPos_trailingIdx;
     pkVal0 = inHigh;
     pkSlot1 = sp.ringPos_trailingIdx;
     pkVal1 = inLow;
     pkSlot2 = sp.ringPos_trailingIdx;
     pkVal2 = inClose;
+    pkSlot3 = sp.winPos_i;
+    pkVal3 = inHigh;
+    pkSlot4 = sp.winPos_i;
+    pkVal4 = inLow;
+    pkSlot5 = sp.winPos_i;
+    pkVal5 = inClose;
     /* Add on today's terms. */
     tempLT = inLow;
     tempHT = inHigh;
@@ -715,6 +785,38 @@ export class VortexStream {
     if (nullRun >= sp.optInTimePeriod) {
       nullRun = sp.optInTimePeriod;
       sTR = 0.0;
+    }
+    /* Every term is non-negative, so a sum below zero is the residue a
+     * term far larger than the rest of the window left when it retired;
+     * rebuild all three from the window.
+     */
+    if (sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0) {
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
+        if (seeded !== 0) {
+          tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+          tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+          trueRange = tempHT - tempLT;
+          tempDouble = Math.abs(prevClose - tempHT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          tempDouble = Math.abs(prevClose - tempLT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          sTR += trueRange;
+          sVMP += Math.abs(tempHT - prevLow);
+          sVMM += Math.abs(tempLT - prevHigh);
+        }
+        prevHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+        prevLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
+        prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot5) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal5;
+        seeded = 1;
+      }
     }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
@@ -803,6 +905,9 @@ export class VortexStream {
     const c = new VortexStream(this.core);
     c.optInTimePeriod = this.optInTimePeriod;
     c.nullRun = this.nullRun;
+    c.prevHigh = this.prevHigh;
+    c.prevLow = this.prevLow;
+    c.prevClose = this.prevClose;
     c.sTR = this.sTR;
     c.sVMP = this.sVMP;
     c.sVMM = this.sVMM;
@@ -815,6 +920,11 @@ export class VortexStream {
     c.ring_trailingIdx_inHigh = this.ring_trailingIdx_inHigh.slice();
     c.ring_trailingIdx_inLow = this.ring_trailingIdx_inLow.slice();
     c.ring_trailingIdx_inClose = this.ring_trailingIdx_inClose.slice();
+    c.winPos_i = this.winPos_i;
+    c.winCap_i = this.winCap_i;
+    c.win_i_inHigh = this.win_i_inHigh.slice();
+    c.win_i_inLow = this.win_i_inLow.slice();
+    c.win_i_inClose = this.win_i_inClose.slice();
     c.cur_outPlusVI = this.cur_outPlusVI;
     c.cur_outMinusVI = this.cur_outMinusVI;
     c.outRangeBegIdx = this.outRangeBegIdx;
@@ -836,7 +946,9 @@ export class VortexOut {
 }
 
 function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose: number): void {
+  let i = 0;
   let live = 0;
+  let seeded = 0;
   let curTR = 0;
   let curVMP = 0;
   let curVMM = 0;
@@ -849,6 +961,9 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
   sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
   sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+  sp.win_i_inHigh[sp.winPos_i] = inHigh;
+  sp.win_i_inLow[sp.winPos_i] = inLow;
+  sp.win_i_inClose[sp.winPos_i] = inClose;
   /* Add on today's terms. */
   tempLT = inLow;
   tempHT = inHigh;
@@ -882,6 +997,38 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   if (sp.nullRun >= sp.optInTimePeriod) {
     sp.nullRun = sp.optInTimePeriod;
     sp.sTR = 0.0;
+  }
+  /* Every term is non-negative, so a sum below zero is the residue a
+   * term far larger than the rest of the window left when it retired;
+   * rebuild all three from the window.
+   */
+  if (sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0) {
+    sp.sTR = 0.0;
+    sp.sVMP = 0.0;
+    sp.sVMM = 0.0;
+    seeded = 0;
+    for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
+      if (seeded !== 0) {
+        tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+        tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+        trueRange = tempHT - tempLT;
+        tempDouble = Math.abs(sp.prevClose - tempHT);
+        if (tempDouble > trueRange) {
+          trueRange = tempDouble;
+        }
+        tempDouble = Math.abs(sp.prevClose - tempLT);
+        if (tempDouble > trueRange) {
+          trueRange = tempDouble;
+        }
+        sp.sTR += trueRange;
+        sp.sVMP += Math.abs(tempHT - sp.prevLow);
+        sp.sVMM += Math.abs(tempLT - sp.prevHigh);
+      }
+      sp.prevHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+      sp.prevLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+      sp.prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+      seeded = 1;
+    }
   }
   /* Record the current window sums, then retire the trailing bar's
    * terms so the sums are ready for the next iteration.
@@ -938,6 +1085,10 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
   ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
   sp.ringPos_trailingIdx = ringPosL_trailingIdx;
+  sp.winPos_i = sp.winPos_i + 1;
+  if (sp.winPos_i >= sp.winCap_i) {
+    sp.winPos_i = 0;
+  }
 }
 
 function vortexOpenImpl(
@@ -961,6 +1112,10 @@ function vortexOpenImpl(
   let i = 0;
   let nullRun = 0;
   let live = 0;
+  let seeded = 0;
+  let prevHigh = 0;
+  let prevLow = 0;
+  let prevClose = 0;
   let sTR = 0;
   let sVMP = 0;
   let sVMM = 0;
@@ -1084,6 +1239,38 @@ function vortexOpenImpl(
       nullRun = optInTimePeriod;
       sTR = 0.0;
     }
+    /* Every term is non-negative, so a sum below zero is the residue a
+     * term far larger than the rest of the window left when it retired;
+     * rebuild all three from the window.
+     */
+    if (sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0) {
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for (i = today - optInTimePeriod; i <= today; i += 1) {
+        if (seeded !== 0) {
+          tempLT = inLow[i];
+          tempHT = inHigh[i];
+          trueRange = tempHT - tempLT;
+          tempDouble = Math.abs(prevClose - tempHT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          tempDouble = Math.abs(prevClose - tempLT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          sTR += trueRange;
+          sVMP += Math.abs(tempHT - prevLow);
+          sVMM += Math.abs(tempLT - prevHigh);
+        }
+        prevHigh = inHigh[i];
+        prevLow = inLow[i];
+        prevClose = inClose[i];
+        seeded = 1;
+      }
+    }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
      */
@@ -1156,8 +1343,18 @@ function vortexOpenImpl(
   for (let fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++) {
     capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
   }
+  const cap_i = optInTimePeriod + 1;
+  if (cap_i < 1 || cap_i > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const capWin_i_inHigh = inHigh.slice(historyLen - cap_i, historyLen);
+  const capWin_i_inLow = inLow.slice(historyLen - cap_i, historyLen);
+  const capWin_i_inClose = inClose.slice(historyLen - cap_i, historyLen);
   sp.optInTimePeriod = optInTimePeriod;
   sp.nullRun = nullRun;
+  sp.prevHigh = prevHigh;
+  sp.prevLow = prevLow;
+  sp.prevClose = prevClose;
   sp.sTR = sTR;
   sp.sVMP = sVMP;
   sp.sVMM = sVMM;
@@ -1170,6 +1367,11 @@ function vortexOpenImpl(
   sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
   sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
   sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+  sp.winPos_i = 0;
+  sp.winCap_i = cap_i;
+  sp.win_i_inHigh = capWin_i_inHigh;
+  sp.win_i_inLow = capWin_i_inLow;
+  sp.win_i_inClose = capWin_i_inClose;
   sp.cur_outPlusVI = outPlusVI[(outNBElement.value - 1) * outStride];
   sp.cur_outMinusVI = outMinusVI[(outNBElement.value - 1) * outStride];
   return RetCode.SUCCESS;

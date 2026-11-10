@@ -55,6 +55,7 @@
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
  *  102426 MF,CC  #554 zero-run test on the true range itself.
+ *  110926 KL     #588 rebuild a sum that comes out negative.
  */
 
 // Import types from parent module
@@ -160,6 +161,10 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
         let mut live: usize = 0_usize;
+        let mut seeded: usize = 0_usize;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
         let mut sTR: f64 = 0.0_f64;
         let mut sVMP: f64 = 0.0_f64;
         let mut sVMM: f64 = 0.0_f64;
@@ -265,6 +270,35 @@ impl Core {
                 cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sTR = 0.0;
+            }
+            // Every term is non-negative, so a sum below zero is the residue a
+            // term far larger than the rest of the window left when it retired;
+            // rebuild all three from the window.
+            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+                cold_arm();
+                sTR = 0.0;
+                sVMP = 0.0;
+                sVMM = 0.0;
+                seeded = 0;
+                for i in (today - ((optInTimePeriod) as usize) as usize)..(today as usize) + 1 {
+                    if seeded != 0 {
+                        tempLT = inLow[i];
+                        tempHT = inHigh[i];
+                        trueRange = tempHT - tempLT;
+                        tempDouble = (prevClose - tempHT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        tempDouble = (prevClose - tempLT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        sTR += trueRange;
+                        sVMP += (tempHT - prevLow).abs();
+                        sVMM += (tempLT - prevHigh).abs();
+                    }
+                    prevHigh = inHigh[i];
+                    prevLow = inLow[i];
+                    prevClose = inClose[i];
+                    seeded = 1;
+                }
+                i = (today as usize) + 1;
             }
             // Record the current window sums, then retire the trailing bar's
             // terms so the sums are ready for the next iteration.
@@ -470,6 +504,9 @@ pub struct VortexStream {
 struct VortexStreamState {
     optInTimePeriod: i32,
     nullRun: usize,
+    prevHigh: f64,
+    prevLow: f64,
+    prevClose: f64,
     sTR: f64,
     sVMP: f64,
     sVMM: f64,
@@ -482,6 +519,11 @@ struct VortexStreamState {
     ring_trailingIdx_inHigh: Vec<f64>,
     ring_trailingIdx_inLow: Vec<f64>,
     ring_trailingIdx_inClose: Vec<f64>,
+    winPos_i: usize,
+    winCap_i: usize,
+    win_i_inHigh: Vec<f64>,
+    win_i_inLow: Vec<f64>,
+    win_i_inClose: Vec<f64>,
     cur_outPlusVI: f64,
     cur_outMinusVI: f64,
 }
@@ -493,7 +535,9 @@ struct VortexStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn vortex_step_impl(sp: &mut VortexStreamState, inHigh: f64, inLow: f64, inClose: f64, outPlusVI: &mut f64, outMinusVI: &mut f64) {
+        let mut i: usize = 0_usize;
         let mut live: usize = 0_usize;
+        let mut seeded: usize = 0_usize;
         let mut curTR: f64 = 0.0_f64;
         let mut curVMP: f64 = 0.0_f64;
         let mut curVMM: f64 = 0.0_f64;
@@ -506,6 +550,9 @@ impl Core {
         sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
         sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
         sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+        sp.win_i_inHigh[sp.winPos_i] = inHigh;
+        sp.win_i_inLow[sp.winPos_i] = inLow;
+        sp.win_i_inClose[sp.winPos_i] = inClose;
         // Add on today's terms.
         tempLT = inLow;
         tempHT = inHigh;
@@ -535,6 +582,38 @@ impl Core {
             cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sTR = 0.0;
+        }
+        // Every term is non-negative, so a sum below zero is the residue a
+        // term far larger than the rest of the window left when it retired;
+        // rebuild all three from the window.
+        if sp.sTR < 0.0 || sp.sVMP < 0.0 || sp.sVMM < 0.0 {
+            cold_arm();
+            sp.sTR = 0.0;
+            sp.sVMP = 0.0;
+            sp.sVMM = 0.0;
+            seeded = 0;
+            // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
+            i = (sp.optInTimePeriod) as usize;
+            loop {
+                if seeded != 0 {
+                    tempLT = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                    tempHT = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                    trueRange = tempHT - tempLT;
+                    tempDouble = (sp.prevClose - tempHT).abs();
+                    trueRange = c_max(tempDouble, trueRange);
+                    tempDouble = (sp.prevClose - tempLT).abs();
+                    trueRange = c_max(tempDouble, trueRange);
+                    sp.sTR += trueRange;
+                    sp.sVMP += (tempHT - sp.prevLow).abs();
+                    sp.sVMM += (tempLT - sp.prevHigh).abs();
+                }
+                sp.prevHigh = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                sp.prevLow = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                sp.prevClose = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                seeded = 1;
+                if i == 0 { break; }
+                i -= 1;
+            }
         }
         // Record the current window sums, then retire the trailing bar's
         // terms so the sums are ready for the next iteration.
@@ -589,6 +668,10 @@ impl Core {
             ringPosL_trailingIdx = 0;
         }
         sp.ringPos_trailingIdx = ringPosL_trailingIdx;
+        sp.winPos_i = sp.winPos_i + 1;
+        if sp.winPos_i >= sp.winCap_i {
+            sp.winPos_i = 0;
+        }
     }
 
     /// The single whole-history transcription behind [`Core::vortex_open_internal`]
@@ -624,6 +707,10 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
         let mut live: usize = 0_usize;
+        let mut seeded: usize = 0_usize;
+        let mut prevHigh: f64 = 0.0_f64;
+        let mut prevLow: f64 = 0.0_f64;
+        let mut prevClose: f64 = 0.0_f64;
         let mut sTR: f64 = 0.0_f64;
         let mut sVMP: f64 = 0.0_f64;
         let mut sVMM: f64 = 0.0_f64;
@@ -722,6 +809,35 @@ impl Core {
                 nullRun = (optInTimePeriod) as usize;
                 sTR = 0.0;
             }
+            // Every term is non-negative, so a sum below zero is the residue a
+            // term far larger than the rest of the window left when it retired;
+            // rebuild all three from the window.
+            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+                cold_arm();
+                sTR = 0.0;
+                sVMP = 0.0;
+                sVMM = 0.0;
+                seeded = 0;
+                for i in (today - ((optInTimePeriod) as usize) as usize)..(today as usize) + 1 {
+                    if seeded != 0 {
+                        tempLT = inLow[i];
+                        tempHT = inHigh[i];
+                        trueRange = tempHT - tempLT;
+                        tempDouble = (prevClose - tempHT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        tempDouble = (prevClose - tempLT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        sTR += trueRange;
+                        sVMP += (tempHT - prevLow).abs();
+                        sVMM += (tempLT - prevHigh).abs();
+                    }
+                    prevHigh = inHigh[i];
+                    prevLow = inLow[i];
+                    prevClose = inClose[i];
+                    seeded = 1;
+                }
+                i = (today as usize) + 1;
+            }
             // Record the current window sums, then retire the trailing bar's
             // terms so the sums are ready for the next iteration.
             curTR = sTR;
@@ -802,9 +918,22 @@ impl Core {
                 fillJ += 1;
             }
         }
+        let cap_i: i64 = (optInTimePeriod + 1) as i64;
+        if cap_i < 1 || cap_i > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut win_i_inHigh: Vec<f64> = vec![0.0_f64; cap_i as usize];
+        win_i_inHigh.copy_from_slice(&inHigh[historyLen - cap_i as usize..]);
+        let mut win_i_inLow: Vec<f64> = vec![0.0_f64; cap_i as usize];
+        win_i_inLow.copy_from_slice(&inLow[historyLen - cap_i as usize..]);
+        let mut win_i_inClose: Vec<f64> = vec![0.0_f64; cap_i as usize];
+        win_i_inClose.copy_from_slice(&inClose[historyLen - cap_i as usize..]);
         let state = VortexStreamState {
             optInTimePeriod,
             nullRun,
+            prevHigh,
+            prevLow,
+            prevClose,
             sTR,
             sVMP,
             sVMM,
@@ -819,6 +948,11 @@ impl Core {
             ring_trailingIdx_inHigh,
             ring_trailingIdx_inLow,
             ring_trailingIdx_inClose,
+            winPos_i: 0_usize,
+            winCap_i: cap_i as usize,
+            win_i_inHigh,
+            win_i_inLow,
+            win_i_inClose,
         };
         Ok(VortexStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -1003,7 +1137,9 @@ impl VortexStream {
             let sp = &self.state;
             let outPlusVI = &mut outPlusVI;
             let outMinusVI = &mut outMinusVI;
+            let mut i: usize = 0_usize;
             let mut live: usize = 0_usize;
+            let mut seeded: usize = 0_usize;
             let mut curTR: f64 = 0.0_f64;
             let mut curVMP: f64 = 0.0_f64;
             let mut curVMM: f64 = 0.0_f64;
@@ -1013,6 +1149,9 @@ impl VortexStream {
             let mut tempHT: f64 = 0.0_f64;
             let mut tempCY: f64 = 0.0_f64;
             let mut nullRun = sp.nullRun;
+            let mut prevClose = sp.prevClose;
+            let mut prevHigh = sp.prevHigh;
+            let mut prevLow = sp.prevLow;
             let mut sTR = sp.sTR;
             let mut sVMM = sp.sVMM;
             let mut sVMP = sp.sVMP;
@@ -1022,12 +1161,24 @@ impl VortexStream {
             let mut pkVal1: f64 = 0.0_f64;
             let mut pkSlot2: usize = usize::MAX;
             let mut pkVal2: f64 = 0.0_f64;
+            let mut pkSlot3: usize = usize::MAX;
+            let mut pkVal3: f64 = 0.0_f64;
+            let mut pkSlot4: usize = usize::MAX;
+            let mut pkVal4: f64 = 0.0_f64;
+            let mut pkSlot5: usize = usize::MAX;
+            let mut pkVal5: f64 = 0.0_f64;
             pkSlot0 = sp.ringPos_trailingIdx as usize;
             pkVal0 = inHigh;
             pkSlot1 = sp.ringPos_trailingIdx as usize;
             pkVal1 = inLow;
             pkSlot2 = sp.ringPos_trailingIdx as usize;
             pkVal2 = inClose;
+            pkSlot3 = sp.winPos_i as usize;
+            pkVal3 = inHigh;
+            pkSlot4 = sp.winPos_i as usize;
+            pkVal4 = inLow;
+            pkSlot5 = sp.winPos_i as usize;
+            pkVal5 = inClose;
             // Add on today's terms.
             tempLT = inLow;
             tempHT = inHigh;
@@ -1056,6 +1207,37 @@ impl VortexStream {
             if nullRun >= ((sp.optInTimePeriod) as usize) {
                 nullRun = (sp.optInTimePeriod) as usize;
                 sTR = 0.0;
+            }
+            // Every term is non-negative, so a sum below zero is the residue a
+            // term far larger than the rest of the window left when it retired;
+            // rebuild all three from the window.
+            if sTR < 0.0 || sVMP < 0.0 || sVMM < 0.0 {
+                sTR = 0.0;
+                sVMP = 0.0;
+                sVMM = 0.0;
+                seeded = 0;
+                // for( i = sp.optInTimePeriod; i >= 0; i -= 1 )
+                i = (sp.optInTimePeriod) as usize;
+                loop {
+                    if seeded != 0 {
+                        tempLT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot4 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal4 });
+                        tempHT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot3 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal3 });
+                        trueRange = tempHT - tempLT;
+                        tempDouble = (prevClose - tempHT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        tempDouble = (prevClose - tempLT).abs();
+                        trueRange = c_max(tempDouble, trueRange);
+                        sTR += trueRange;
+                        sVMP += (tempHT - prevLow).abs();
+                        sVMM += (tempLT - prevHigh).abs();
+                    }
+                    prevHigh = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot3 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal3 });
+                    prevLow = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot4 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal4 });
+                    prevClose = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot5 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal5 });
+                    seeded = 1;
+                    if i == 0 { break; }
+                    i -= 1;
+                }
             }
             // Record the current window sums, then retire the trailing bar's
             // terms so the sums are ready for the next iteration.

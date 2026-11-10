@@ -9,7 +9,7 @@ Ultimate Oscillator: momentum indicator combining buying-pressure/true-range rat
 
 ## Chart
 
-<ta-chart src="/functions/ultosc.svg" ratio="720:416" label="ULTOSC over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line with dashed rules at 30 and 70."></ta-chart>
+<ta-chart src="/functions/ultosc.svg" ratio="720:416" label="ULTOSC over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line with dashed rules at 30 and 70."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -21,7 +21,7 @@ Ultimate Oscillator: momentum indicator combining buying-pressure/true-range rat
 
 **Outputs**
 
-- `outReal`: `line` · `zero` · `positive` · `negative` · `levels: 30, 70`
+- `outReal`: `line` · `zero` · `positive` · `levels: 30, 70`
 
 :::
 

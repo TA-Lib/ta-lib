@@ -39,6 +39,7 @@
  *  DM       Drew McCormack (http://www.trade-strategist.com)
  *  MF       Mario Fortier
  *  DX       Dex Hunter (https://github.com/dexhunter)
+ *  KL       Kevin Lin
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
@@ -54,6 +55,7 @@
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
  *  102426 MF,CC #554 zero-run test on the true range itself.
+ *  110926 KL    #588 rebuild a total that comes out negative.
  */
 
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -346,6 +348,34 @@ export function ultoscImpl(
           a3Total = 0.0;
           b3Total = 0.0;
         }
+      }
+    }
+    /* On well-formed bars every term is non-negative, so a total below zero
+     * is the residue a term far larger than the rest of its window left
+     * when it retired; rebuild all six from the ring, oldest bar first.
+     */
+    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+      a1Total = 0.0;
+      b1Total = 0.0;
+      a2Total = 0.0;
+      b2Total = 0.0;
+      a3Total = 0.0;
+      b3Total = 0.0;
+      for (i = optInTimePeriod3 - 1; i >= 0; i -= 1) {
+        j = term_Idx - i;
+        if (j < 0) {
+          j += optInTimePeriod3;
+        }
+        if (i < optInTimePeriod1) {
+          a1Total += term_closeMinusTrueLow[j];
+          b1Total += term_trueRange[j];
+        }
+        if (i < optInTimePeriod2) {
+          a2Total += term_closeMinusTrueLow[j];
+          b2Total += term_trueRange[j];
+        }
+        a3Total += term_closeMinusTrueLow[j];
+        b3Total += term_trueRange[j];
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
@@ -753,6 +783,8 @@ export class UltoscStream {
     let tempHT = 0;
     let tempLT = 0;
     let tempCY = 0;
+    let i = 0;
+    let j = 0;
     let live = 0;
     let a1Total = sp.a1Total;
     let a2Total = sp.a2Total;
@@ -813,6 +845,34 @@ export class UltoscStream {
           a3Total = 0.0;
           b3Total = 0.0;
         }
+      }
+    }
+    /* On well-formed bars every term is non-negative, so a total below zero
+     * is the residue a term far larger than the rest of its window left
+     * when it retired; rebuild all six from the ring, oldest bar first.
+     */
+    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+      a1Total = 0.0;
+      b1Total = 0.0;
+      a2Total = 0.0;
+      b2Total = 0.0;
+      a3Total = 0.0;
+      b3Total = 0.0;
+      for (i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1) {
+        j = term_Idx - i;
+        if (j < 0) {
+          j += sp.optInTimePeriod3;
+        }
+        if (i < sp.optInTimePeriod1) {
+          a1Total += (j !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+          b1Total += (j !== pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+        }
+        if (i < sp.optInTimePeriod2) {
+          a2Total += (j !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+          b2Total += (j !== pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
+        }
+        a3Total += (j !== pkSlot0) ? sp.cb_term_closeMinusTrueLow[j] : pkVal0;
+        b3Total += (j !== pkSlot1) ? sp.cb_term_trueRange[j] : pkVal1;
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
@@ -907,6 +967,8 @@ function ultoscStepImpl(sp: UltoscStream, inHigh: number, inLow: number, inClose
   let tempHT = 0;
   let tempLT = 0;
   let tempCY = 0;
+  let i = 0;
+  let j = 0;
   let live = 0;
   /* Add on today's terms */
   tempLT = inLow;
@@ -950,6 +1012,34 @@ function ultoscStepImpl(sp: UltoscStream, inHigh: number, inLow: number, inClose
         sp.a3Total = 0.0;
         sp.b3Total = 0.0;
       }
+    }
+  }
+  /* On well-formed bars every term is non-negative, so a total below zero
+   * is the residue a term far larger than the rest of its window left
+   * when it retired; rebuild all six from the ring, oldest bar first.
+   */
+  if (sp.a1Total < 0.0 || sp.b1Total < 0.0 || sp.a2Total < 0.0 || sp.b2Total < 0.0 || sp.a3Total < 0.0 || sp.b3Total < 0.0) {
+    sp.a1Total = 0.0;
+    sp.b1Total = 0.0;
+    sp.a2Total = 0.0;
+    sp.b2Total = 0.0;
+    sp.a3Total = 0.0;
+    sp.b3Total = 0.0;
+    for (i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1) {
+      j = sp.term_Idx - i;
+      if (j < 0) {
+        j += sp.optInTimePeriod3;
+      }
+      if (i < sp.optInTimePeriod1) {
+        sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
+        sp.b1Total += sp.cb_term_trueRange[j];
+      }
+      if (i < sp.optInTimePeriod2) {
+        sp.a2Total += sp.cb_term_closeMinusTrueLow[j];
+        sp.b2Total += sp.cb_term_trueRange[j];
+      }
+      sp.a3Total += sp.cb_term_closeMinusTrueLow[j];
+      sp.b3Total += sp.cb_term_trueRange[j];
     }
   }
   /* Calculate the oscillator value for today. Each window contributes only
@@ -1243,6 +1333,34 @@ function ultoscOpenImpl(
           a3Total = 0.0;
           b3Total = 0.0;
         }
+      }
+    }
+    /* On well-formed bars every term is non-negative, so a total below zero
+     * is the residue a term far larger than the rest of its window left
+     * when it retired; rebuild all six from the ring, oldest bar first.
+     */
+    if (a1Total < 0.0 || b1Total < 0.0 || a2Total < 0.0 || b2Total < 0.0 || a3Total < 0.0 || b3Total < 0.0) {
+      a1Total = 0.0;
+      b1Total = 0.0;
+      a2Total = 0.0;
+      b2Total = 0.0;
+      a3Total = 0.0;
+      b3Total = 0.0;
+      for (i = optInTimePeriod3 - 1; i >= 0; i -= 1) {
+        j = term_Idx - i;
+        if (j < 0) {
+          j += optInTimePeriod3;
+        }
+        if (i < optInTimePeriod1) {
+          a1Total += term_closeMinusTrueLow[j];
+          b1Total += term_trueRange[j];
+        }
+        if (i < optInTimePeriod2) {
+          a2Total += term_closeMinusTrueLow[j];
+          b2Total += term_trueRange[j];
+        }
+        a3Total += term_closeMinusTrueLow[j];
+        b3Total += term_trueRange[j];
       }
     }
     /* Calculate the oscillator value for today. Each window contributes only
