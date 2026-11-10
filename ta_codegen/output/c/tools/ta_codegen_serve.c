@@ -529,22 +529,6 @@ static double g_refVolume[MAX_ARRAY_SIZE];
 static double g_refOI[MAX_ARRAY_SIZE];
 static int g_refN = 0; /* number of pre-loaded points */
 
-static void preload_to_working(int nInputs, int isPriceInput) {
-    if( isPriceInput ) {
-        /* OHLCV — map into g_inBuf0..4 in OHLCV order */
-        memcpy(g_inBuf0, g_refOpen,   g_refN * sizeof(double));
-        memcpy(g_inBuf1, g_refHigh,   g_refN * sizeof(double));
-        memcpy(g_inBuf2, g_refLow,    g_refN * sizeof(double));
-        memcpy(g_inBuf3, g_refClose,  g_refN * sizeof(double));
-        memcpy(g_inBuf4, g_refVolume, g_refN * sizeof(double));
-        memcpy(g_inBuf5, g_refOI,     g_refN * sizeof(double));
-    } else {
-        /* Single/dual real input — use close (and high for 2nd) */
-        memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
-        if( nInputs > 1 ) memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
-    }
-}
-
 #include "ta_abstract_serve.c"
 
 #ifndef TA_REF_SERVE
@@ -106887,7 +106871,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -106907,7 +106892,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -106983,7 +106969,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107002,7 +106990,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107085,7 +107075,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -107101,7 +107091,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107168,7 +107158,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107187,7 +107180,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107263,7 +107259,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107280,7 +107277,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107350,7 +107348,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107371,7 +107372,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107451,7 +107455,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107469,7 +107474,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107541,7 +107547,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107561,7 +107569,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107636,7 +107646,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107655,7 +107667,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107730,7 +107744,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107753,7 +107768,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107843,7 +107859,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -107862,7 +107878,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -107935,7 +107951,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -107954,7 +107971,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108028,7 +108046,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108047,7 +108065,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108120,7 +108138,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -108138,7 +108157,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108214,7 +108234,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -108232,7 +108253,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108304,7 +108326,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -108324,7 +108349,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108402,7 +108430,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108418,7 +108446,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108485,7 +108513,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108501,7 +108529,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108568,7 +108596,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -108588,7 +108618,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108663,7 +108695,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108680,7 +108712,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108749,7 +108781,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -108768,7 +108803,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108844,7 +108882,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108864,7 +108902,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -108947,7 +108985,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -108967,7 +109005,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109042,7 +109080,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109060,7 +109099,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109132,7 +109172,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109151,7 +109194,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109227,7 +109273,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109246,7 +109294,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109321,7 +109371,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109340,7 +109393,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109416,7 +109472,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109435,7 +109494,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109511,7 +109573,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109530,7 +109595,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109606,7 +109674,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109625,7 +109696,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109701,7 +109775,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109720,7 +109797,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109796,7 +109876,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109815,7 +109898,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109891,7 +109977,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -109910,7 +109999,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -109986,7 +110078,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110006,7 +110101,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110084,7 +110182,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110103,7 +110204,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110179,7 +110283,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110198,7 +110305,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110274,7 +110384,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110293,7 +110406,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110369,7 +110485,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110388,7 +110507,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110464,7 +110586,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110483,7 +110608,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110559,7 +110687,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110578,7 +110709,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110654,7 +110788,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110674,7 +110811,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110752,7 +110892,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110771,7 +110914,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110847,7 +110993,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110866,7 +111015,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -110942,7 +111094,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -110961,7 +111116,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111037,7 +111195,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111056,7 +111217,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111132,7 +111296,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111152,7 +111319,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111230,7 +111400,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111250,7 +111423,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111328,7 +111504,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111347,7 +111526,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111423,7 +111605,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111442,7 +111627,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111518,7 +111706,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111537,7 +111728,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111613,7 +111807,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111632,7 +111829,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111708,7 +111908,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111727,7 +111930,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111803,7 +112009,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111822,7 +112031,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111898,7 +112110,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -111917,7 +112132,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -111993,7 +112211,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112012,7 +112233,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112088,7 +112312,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112107,7 +112334,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112183,7 +112413,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112202,7 +112435,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112278,7 +112514,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112297,7 +112536,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112373,7 +112615,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112392,7 +112637,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112468,7 +112716,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112487,7 +112738,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112563,7 +112817,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112582,7 +112839,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112658,7 +112918,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112677,7 +112940,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112753,7 +113019,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112772,7 +113041,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112848,7 +113120,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112867,7 +113142,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -112943,7 +113221,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -112962,7 +113243,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113038,7 +113322,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113057,7 +113344,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113133,7 +113423,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113152,7 +113445,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113228,7 +113524,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113248,7 +113547,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113326,7 +113628,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113346,7 +113651,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113424,7 +113732,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113444,7 +113755,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113522,7 +113836,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113541,7 +113858,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113617,7 +113937,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113636,7 +113959,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113712,7 +114038,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113731,7 +114060,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113807,7 +114139,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113826,7 +114161,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113902,7 +114240,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -113921,7 +114262,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -113997,7 +114341,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114016,7 +114363,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114092,7 +114442,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114111,7 +114464,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114187,7 +114543,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114206,7 +114565,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114282,7 +114644,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114301,7 +114666,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114377,7 +114745,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114396,7 +114767,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114472,7 +114846,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114491,7 +114868,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114567,7 +114947,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114586,7 +114969,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114662,7 +115048,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114681,7 +115070,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114757,7 +115149,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114776,7 +115171,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114852,7 +115250,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114871,7 +115272,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -114947,7 +115351,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -114966,7 +115373,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115042,7 +115452,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115061,7 +115474,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115137,7 +115553,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115157,7 +115575,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115238,7 +115658,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -115254,7 +115674,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115321,7 +115741,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -115338,7 +115758,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115407,7 +115827,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115426,7 +115848,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115501,7 +115925,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115520,7 +115946,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115595,7 +116023,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115616,7 +116046,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115699,7 +116131,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -115719,7 +116154,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115797,7 +116235,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -115815,7 +116253,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115884,7 +116322,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -115901,7 +116339,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -115970,7 +116408,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -115989,7 +116427,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116062,7 +116500,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -116080,7 +116519,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116152,7 +116592,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116168,7 +116608,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116235,7 +116675,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116251,7 +116691,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116318,7 +116758,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116337,7 +116777,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116410,7 +116850,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116427,7 +116867,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116496,7 +116936,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116512,7 +116952,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116579,7 +117019,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -116598,7 +117039,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116672,7 +117114,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116689,7 +117131,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116758,7 +117200,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -116775,7 +117218,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116845,7 +117289,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -116863,7 +117308,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -116943,7 +117389,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -116963,7 +117409,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117038,7 +117484,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117055,7 +117501,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117124,7 +117570,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -117144,7 +117592,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117219,7 +117669,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inClose", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -117237,7 +117688,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117309,7 +117761,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117327,7 +117779,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117396,7 +117848,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -117416,7 +117870,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117493,7 +117949,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117510,7 +117966,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117579,7 +118035,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -117598,7 +118056,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117677,7 +118137,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117693,7 +118153,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117760,7 +118220,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -117779,7 +118240,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117855,7 +118317,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117871,7 +118333,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -117938,7 +118400,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -117955,7 +118417,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118024,7 +118486,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -118043,7 +118506,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118121,7 +118585,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -118140,7 +118605,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118212,7 +118678,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -118235,7 +118702,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118321,7 +118789,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -118341,7 +118812,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118429,7 +118903,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118446,7 +118920,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118515,7 +118989,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118532,7 +119006,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118599,7 +119073,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118616,7 +119090,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118683,7 +119157,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118700,7 +119174,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118771,7 +119245,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118788,7 +119262,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118859,7 +119333,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118876,7 +119350,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -118943,7 +119417,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -118960,7 +119434,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119027,7 +119501,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119045,7 +119521,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119118,7 +119596,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119138,7 +119617,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119226,7 +119706,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inClose", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119244,7 +119725,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119316,7 +119798,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -119334,7 +119816,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119403,7 +119885,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119424,7 +119908,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119511,7 +119997,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119534,7 +120022,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119625,7 +120115,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -119650,7 +120140,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119739,7 +120229,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -119766,7 +120256,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119859,7 +120349,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -119876,7 +120366,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -119945,7 +120435,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -119967,7 +120460,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120053,7 +120549,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120070,7 +120566,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120139,7 +120635,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120156,7 +120652,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120225,7 +120721,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120242,7 +120738,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120311,7 +120807,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120328,7 +120824,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120397,7 +120893,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120413,7 +120909,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120480,7 +120976,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120496,7 +120992,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120563,7 +121059,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120581,7 +121077,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120652,7 +121148,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120671,7 +121167,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120752,7 +121248,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120774,7 +121270,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120861,7 +121357,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -120878,7 +121374,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -120955,7 +121451,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -120976,7 +121474,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121063,7 +121563,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121082,7 +121582,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121157,7 +121657,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121175,7 +121677,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121248,7 +121752,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121267,7 +121772,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121341,7 +121847,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121361,7 +121868,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121437,7 +121945,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121454,7 +121962,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121523,7 +122031,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121540,7 +122048,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121609,7 +122117,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121627,7 +122135,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121696,7 +122204,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121713,7 +122221,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121782,7 +122290,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121799,7 +122308,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121869,7 +122379,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -121889,7 +122402,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -121967,7 +122483,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -121984,7 +122500,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122053,7 +122569,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122071,7 +122588,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122143,7 +122661,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -122160,7 +122678,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122229,7 +122747,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -122246,7 +122764,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122315,7 +122833,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -122332,7 +122850,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122405,7 +122923,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -122422,7 +122940,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122495,7 +123013,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122515,7 +123035,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122590,7 +123112,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122609,7 +123132,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122681,7 +123205,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -122698,7 +123222,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122767,7 +123291,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122784,7 +123309,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122854,7 +123380,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122874,7 +123402,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -122949,7 +123479,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inClose", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -122966,7 +123497,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123036,7 +123568,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123053,7 +123586,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123123,7 +123657,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -123143,7 +123677,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123218,7 +123752,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -123236,7 +123770,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123307,7 +123841,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -123324,7 +123858,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123393,7 +123927,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123413,7 +123949,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123488,7 +124026,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123507,7 +124046,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123579,7 +124119,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -123598,7 +124138,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123671,7 +124211,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123691,7 +124233,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123768,7 +124312,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inClose", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123785,7 +124330,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123855,7 +124401,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 1);
+            memcpy(g_inBuf0, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inVolume", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -123874,7 +124420,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 1);
+            memcpy(g_inBuf0, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -123947,7 +124493,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inClose", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -123964,7 +124511,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124034,7 +124582,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inClose", g_inBuf1, MAX_ARRAY_SIZE);
@@ -124052,7 +124601,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124124,7 +124674,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124142,7 +124692,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124211,7 +124761,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124228,7 +124778,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124297,7 +124847,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124314,7 +124864,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124383,7 +124933,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124400,7 +124950,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124469,7 +125019,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124486,7 +125036,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124555,7 +125105,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -124576,7 +125129,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124656,7 +125212,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124674,7 +125230,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124743,7 +125299,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124762,7 +125318,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124833,7 +125389,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -124852,7 +125409,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -124926,7 +125484,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 1);
+            memcpy(g_inBuf0, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inVolume", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -124943,7 +125501,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 1);
+            memcpy(g_inBuf0, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125012,7 +125570,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -125031,7 +125590,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125105,7 +125665,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -125130,7 +125691,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125216,7 +125778,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125235,7 +125797,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125308,7 +125870,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
@@ -125328,7 +125893,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refOpen, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125406,7 +125974,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125422,7 +125990,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125489,7 +126057,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125505,7 +126073,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125572,7 +126140,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125589,7 +126157,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125658,7 +126226,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125675,7 +126243,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125744,7 +126312,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -125766,7 +126336,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125851,7 +126423,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125870,7 +126442,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -125943,7 +126515,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -125959,7 +126531,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126026,7 +126598,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -126050,7 +126624,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126139,7 +126715,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -126159,7 +126735,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126232,7 +126808,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -126250,7 +126826,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126321,7 +126897,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -126344,7 +126922,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126431,7 +127011,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -126452,7 +127034,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126535,7 +127119,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -126555,7 +127139,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126634,7 +127218,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal0", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inReal1", g_inBuf1, MAX_ARRAY_SIZE);
@@ -126651,7 +127236,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126721,7 +127307,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -126738,7 +127324,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126807,7 +127393,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -126827,7 +127415,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126908,7 +127498,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -126926,7 +127516,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -126995,7 +127585,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127014,7 +127604,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127085,7 +127675,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127103,7 +127693,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127172,7 +127762,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127190,7 +127780,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127259,7 +127849,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127277,7 +127867,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127346,7 +127936,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127365,7 +127955,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127436,7 +128026,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127452,7 +128042,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127519,7 +128109,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127535,7 +128125,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127602,7 +128192,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127619,7 +128209,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127688,7 +128278,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -127706,7 +128298,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127779,7 +128373,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127796,7 +128390,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127865,7 +128459,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127882,7 +128476,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -127951,7 +128545,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -127968,7 +128562,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128037,7 +128631,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -128055,7 +128649,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128126,7 +128720,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128144,7 +128740,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128217,7 +128815,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128238,7 +128838,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128317,7 +128919,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -128335,7 +128937,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128406,7 +129008,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -128423,7 +129025,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128492,7 +129094,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -128511,7 +129113,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128582,7 +129184,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128601,7 +129205,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128680,7 +129286,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128699,7 +129308,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(4, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf3, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128775,7 +129387,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inVolume", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128793,7 +129406,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refVolume, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128865,7 +129479,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128883,7 +129499,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -128956,7 +129574,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -128977,7 +129597,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -129060,7 +129682,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -129078,7 +129702,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -129151,7 +129777,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -129170,7 +129798,9 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(3, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
+            memcpy(g_inBuf2, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -129245,7 +129875,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -129262,7 +129892,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -129331,7 +129961,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
             json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
@@ -129350,7 +129981,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(2, 1);
+            memcpy(g_inBuf0, g_refHigh, g_refN * sizeof(double));
+            memcpy(g_inBuf1, g_refLow, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
@@ -129432,7 +130064,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int endIdx = json_find_int(json, "endIdx");
         int use_preloaded = json_find_int(json, "use_preloaded");
         if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         } else {
             json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
         }
@@ -129449,7 +130081,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
 #endif /* TA_REF_SERVE */
         TA_RetCode rc = 0;
         if( use_preloaded ) {
-            preload_to_working(1, 0);
+            memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));
         }
         long _t0 = 0;
         for( int _bi = 0; _bi <= bench_iters; _bi++ ) {

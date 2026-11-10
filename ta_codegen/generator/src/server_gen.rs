@@ -124,7 +124,6 @@ pub(crate) fn expand_input_names(inputs: &[Input]) -> Vec<String> {
 
 /// Map a price-component input name to its reference array name prefix.
 /// Returns None for non-price input names.
-/// Used by Java and C# servers (e.g., "inHigh" -> "refHigh").
 fn price_input_to_ref(name: &str) -> Option<&'static str> {
     match name {
         "inOpen" => Some("refOpen"),
@@ -701,22 +700,17 @@ fn generate_c_global_buffers(funcs: &[FuncDef]) -> String {
     s.push_str("static double g_refOI[MAX_ARRAY_SIZE];\n");
     s.push_str("static int g_refN = 0; /* number of pre-loaded points */\n\n");
 
-    // Helper: copy pre-loaded data into working input buffers based on input type
-    s.push_str("static void preload_to_working(int nInputs, int isPriceInput) {\n");
-    s.push_str("    if( isPriceInput ) {\n");
-    s.push_str("        /* OHLCV — map into g_inBuf0..4 in OHLCV order */\n");
-    s.push_str("        memcpy(g_inBuf0, g_refOpen,   g_refN * sizeof(double));\n");
-    s.push_str("        memcpy(g_inBuf1, g_refHigh,   g_refN * sizeof(double));\n");
-    s.push_str("        memcpy(g_inBuf2, g_refLow,    g_refN * sizeof(double));\n");
-    s.push_str("        memcpy(g_inBuf3, g_refClose,  g_refN * sizeof(double));\n");
-    s.push_str("        memcpy(g_inBuf4, g_refVolume, g_refN * sizeof(double));\n");
-    s.push_str("        memcpy(g_inBuf5, g_refOI,     g_refN * sizeof(double));\n");
-    s.push_str("    } else {\n");
-    s.push_str("        /* Single/dual real input — use close (and high for 2nd) */\n");
-    s.push_str("        memcpy(g_inBuf0, g_refClose, g_refN * sizeof(double));\n");
-    s.push_str("        if( nInputs > 1 ) memcpy(g_inBuf1, g_refHigh, g_refN * sizeof(double));\n");
-    s.push_str("    }\n");
-    s.push_str("}\n\n");
+    s
+}
+
+/// Keep in step with the other servers' preload arms. Map by input name, never
+/// by position: a wrong series still times, silently.
+fn c_preload_copies(input_names: &[String]) -> String {
+    let mut s = String::new();
+    for (j, name) in input_names.iter().enumerate() {
+        let src = price_input_to_ref(name).unwrap_or(if j == 0 { "refClose" } else { "refHigh" });
+        let _ = writeln!(s, "            memcpy(g_inBuf{j}, g_{src}, g_refN * sizeof(double));");
+    }
     s
 }
 
@@ -889,20 +883,9 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Extract input arrays — either from pre-loaded reference data or inline JSON.
         let input_names = expand_input_names(&func.inputs);
-        let is_price_input = input_names.iter().any(|n| {
-            matches!(
-                n.as_str(),
-                "inOpen" | "inHigh" | "inLow" | "inClose" | "inVolume" | "inOpenInterest"
-            )
-        });
-        let n_inputs = input_names.len();
-
         s.push_str("        int use_preloaded = json_find_int(json, \"use_preloaded\");\n");
         s.push_str("        if( use_preloaded && g_refN > 0 ) {\n");
-        s.push_str(&format!(
-            "            preload_to_working({n_inputs}, {});\n",
-            i32::from(is_price_input)
-        ));
+        s.push_str(&c_preload_copies(&input_names));
         s.push_str("        } else {\n");
         for (j, name) in input_names.iter().enumerate() {
             let buf = format!("g_inBuf{j}");
@@ -968,10 +951,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Copy once before timing
         s.push_str("        if( use_preloaded ) {\n");
-        s.push_str(&format!(
-            "            preload_to_working({n_inputs}, {});\n",
-            i32::from(is_price_input)
-        ));
+        s.push_str(&c_preload_copies(&input_names));
         s.push_str("        }\n");
 
         // Single timing block around ALL iterations — amortizes timer overhead.
