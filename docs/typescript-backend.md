@@ -4,15 +4,15 @@
 
 ## 1. Scope
 
-- **What ships.** An npm package that `ta_codegen` generates as it generates the Java and C# libraries: for every function the batch tier, lookback, display shift and streaming tier, plus the metadata (abstract) API. Pure TypeScript compiled to standard ES modules, no runtime dependencies, for Node and any runtime that loads standard ESM.
+- **What ships.** An npm package that `ta_codegen` generates as it generates the Java and C# libraries: for every function the batch tier, lookback, display shift and streaming tier, plus the metadata (abstract) API. Pure TypeScript compiled to standard ES modules, no runtime dependencies, for Node and any runtime that loads standard ESM. It is the `ta-lib/js` entry of the package and the fallback of its default entry, whose WASM engine is [wasm-backend.md](wasm-backend.md).
 - **How it is gated.** As the other managed backends: a generated JSON-RPC server, driven by `ta_regtest --codegen` and `--xlang-hash`, matches the C library bit for bit on every call except one that reaches a transcendental function (D11).
-- **What does not ship:** WASM, a native addon, a browser-specific bundle (standard ESM is the browser story), a CommonJS build, a single-precision (`TA_S_`) surface.
+- **What does not ship:** a native addon, a browser-specific bundle (standard ESM is the browser story), a CommonJS build, a single-precision (`TA_S_`) surface.
 
 ## 2. Decisions
 
 | # | Decision | Choice | Why | Status |
 |---|---|---|---|---|
-| D1 | Implementation | Pure TypeScript compiled to JS. No WASM, no native addon | One artifact for every JS runtime, emitted by the managed-backend machinery | Ruled (owner, 2026-11-01) |
+| D1 | Implementation | Pure TypeScript compiled to JS, no native addon. The package's default entry puts a WASM engine in front of it ([wasm-backend.md](wasm-backend.md) W1, W2) | One artifact for every JS runtime, emitted by the managed-backend machinery | Ruled (owner, 2026-11-01); WASM engine ruled (owner, 2026-11-11) |
 | D2 | npm name | `ta-lib`, one constant in the TS scaffolding emitter | Matches the Python and Rust package names | Ruled (owner, 2026-11-01) |
 | D3 | Module format, min Node | ESM only, with no top-level await and no `node:` imports in the library. `exports` has `"."` and `"./metadata"`, each with `"types"` first and `"default"` last, and `"./package.json"`; `typesVersions` maps `metadata` for older resolvers. `"sideEffects": false`. `engines.node` is `>=22.12.0`; CI runs 22, 24 and 26, plus exactly the `engines` floor | Every supported Node line can `require()` an ESM-only package; the PR gate loads both entry points through `require` after compiling them, the nightly's tarball run does the same. One artifact means no dual-package hazard breaking `instanceof TALibError` | Adopted |
 | D4 | TS compile target | `target` and `lib` ES2022, plus `strict`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`, `declaration` and `stripInternal`. No `enum` or `namespace` (use `as const` objects). `noUncheckedIndexedAccess` off. `types: []` in the library tsconfig. `module` and `moduleResolution` `nodenext`; relative imports are spelled `./x.ts` with `rewriteRelativeImportExtensions`, so tsc emits `.js` and `node --test` runs the sources unchanged | ES2022 runs on every supported runtime. Erasable syntax lets Node run the sources by type stripping. No option TS 6.0 deprecates, so 7.x compiles it. The declarations spell typed arrays with their buffer type (D6), which TypeScript reads from 5.7 on: the consumer's floor | Adopted |
