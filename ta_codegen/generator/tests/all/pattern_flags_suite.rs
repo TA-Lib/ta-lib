@@ -48,8 +48,8 @@ fn bool_excludes_bull_bear() {
 }
 
 #[test]
-fn a_pattern_output_takes_no_display_style() {
-    one_complaint(&fixture(CDL, ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]), "takes no display style such as `line`");
+fn a_pattern_output_takes_no_drawing_style() {
+    one_complaint(&fixture(CDL, ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]), "takes no drawing style such as `line`");
 }
 
 #[test]

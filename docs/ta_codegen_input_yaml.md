@@ -275,7 +275,7 @@ anything else:
 - `pattern_bull_bear, zero` and `positive`, `negative` or both;
 - `pattern_color, zero` and `positive`, `negative` or both.
 
-A pattern output takes no display hint. `pattern_weak` goes on a bull/bear or color output, `pattern_confirm` on a
+A pattern output takes no drawing style (`line`, `dot_line`, `dash_line`, `dot`, `histogram`). `pattern_weak` goes on a bull/bear or color output, `pattern_confirm` on a
 bull/bear output. Every integer output of a `candlestick` function is a pattern
 output, and only an integer output takes a pattern flag. A pattern output's
 `## Output Values` table lists exactly the values its flags declare
