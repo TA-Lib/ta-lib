@@ -1358,19 +1358,33 @@ fn gen_guarded_func(
             out.push_str(&reslice);
         }
         let mut past_reslice = at_entry;
-        for stmt in &func.body {
-            if matches!(stmt, Statement::VarDecl { .. }) {
-                continue;
+        let mut render_top = |stmts: &[Statement], indent: usize, out: &mut String| {
+            for stmt in stmts {
+                if matches!(stmt, Statement::VarDecl { .. }) {
+                    continue;
+                }
+                let ctx = if past_reslice { &resliced } else { &g_ctx };
+                out.push_str(&render_statement(
+                    stmt, indent, ctx, &g_for_loop_vars, &g_var_inits,
+                    &g_output_names, &g_opt_real_params, enums, registry, helpers, &g_inline_counter,
+                ));
+                if !past_reslice && is_empty_range_exit(stmt) {
+                    out.push_str(&reslice);
+                    past_reslice = true;
+                }
             }
-            let ctx = if past_reslice { &resliced } else { &g_ctx };
-            out.push_str(&render_statement(
-                stmt, 8, ctx, &g_for_loop_vars, &g_var_inits,
-                &g_output_names, &g_opt_real_params, enums, registry, helpers, &g_inline_counter,
-            ));
-            if !past_reslice && is_empty_range_exit(stmt) {
-                out.push_str(&reslice);
-                past_reslice = true;
+        };
+        if let Some(copies) = range_type_copies(&func.body, func) {
+            render_top(&copies.head, 8, &mut out);
+            let count = g_inline_counter.get();
+            for (k, arm) in copies.arms.iter().enumerate() {
+                g_inline_counter.set(count);
+                out.push_str(&open_range_type_arm(k, arm, "        "));
+                render_top(&arm.body, 12, &mut out);
             }
+            out.push_str("        }\n");
+        } else {
+            render_top(&func.body, 8, &mut out);
         }
     }
     out.push_str("    }\n");
@@ -5301,12 +5315,6 @@ fn decompose_rust_array_ref(
     }
 }
 
-// NOTE: Candle range types (rangeType 0=RealBody, 1=HighLow, 2=Shadows)
-// are configurable at runtime via candle settings, so we cannot
-// constant-propagate them at code-generation time. The codegen emits
-// runtime method calls (`self.ta_candlerange` / `self.ta_candleaverage`)
-// which dispatch on the actual rangeType value.
-
 /// Helpers rendered by [`render_func_call`] rather than hoisted from their C
 /// body: the C divides `ta_candleaverage` by a selected 2.0 or 1.0, which LLVM
 /// keeps as a DIVSD, where the inline rendering multiplies.
@@ -5329,6 +5337,34 @@ pub(crate) const KEPT_INLINE: &[&str] = &["ta_candleaverage"];
 fn candle_range_arms(open: &str, high: &str, low: &str, close: &str) -> String {
     let [real_body, high_low, shadows] = candle_range_arm_exprs(open, high, low, close);
     format!("0 => {real_body}, 1 => {high_low}, 2 => {shadows}, _ => 0.0")
+}
+
+/// The value [`candle_range_arms`] keys `t` on.
+fn range_type_code(t: super::range_type_copy::RangeType) -> i64 {
+    use super::range_type_copy::RangeType;
+    match t {
+        RangeType::RealBody => 0,
+        RangeType::HighLow => 1,
+        RangeType::Shadows => 2,
+    }
+}
+
+/// `body`'s range-type copies, each folded type a literal so the `match` on it
+/// resolves at compile time.
+pub(crate) fn range_type_copies(body: &[Statement], func: &FuncDef) -> Option<super::range_type_copy::Copies> {
+    super::range_type_copy::split(body, &func.opt_outs, &|t| Expr::IntLiteral(range_type_code(t)))
+}
+
+/// The line that opens arm `k` at `pad`, closing the one before; the caller
+/// closes the last with `{pad}}`.
+pub(crate) fn open_range_type_arm(k: usize, arm: &super::range_type_copy::Arm, pad: &str) -> String {
+    let Some(guard) = &arm.guard else { return format!("{pad}}} else {{\n") };
+    let cond: Vec<String> = guard
+        .iter()
+        .map(|(s, t)| format!("{} == {}", super::range_type_copy::range_type_var(s), range_type_code(*t)))
+        .collect();
+    let close = if k == 0 { "" } else { "} else " };
+    format!("{pad}{close}if {} {{\n", cond.join(" && "))
 }
 
 /// The RealBody, HighLow and Shadows arms of [`candle_range_arms`].
