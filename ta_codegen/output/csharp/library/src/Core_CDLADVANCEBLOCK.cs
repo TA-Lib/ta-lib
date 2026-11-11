@@ -1111,14 +1111,14 @@ public partial class Core
       }
       sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
       ringPosL_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
-      sp.ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ((ShadowLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+      sp.ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ShadowLongPeriodTotalRange0;
       ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
       if( ringPosL_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
          ringPosL_ShadowLongTrailingIdx = 0;
       }
       sp.ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
       ringPosL_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx;
-      sp.ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ((ShadowShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+      sp.ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ShadowShortPeriodTotalRange0;
       ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx + 1;
       if( ringPosL_ShadowShortTrailingIdx >= sp.ringCap_ShadowShortTrailingIdx ) {
          ringPosL_ShadowShortTrailingIdx = 0;

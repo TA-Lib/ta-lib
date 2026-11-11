@@ -477,7 +477,7 @@ static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp,
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
    ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
-   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
    ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
    if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {

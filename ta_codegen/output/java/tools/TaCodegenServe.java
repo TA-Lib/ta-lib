@@ -1042,13 +1042,13 @@ class Core {
           sp.cur_outReal = tempReal;
           ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
           ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
-          sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+          sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
           ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
           ringPosL_trailingFastIdx = ringPosL_trailingFastIdx & (ringPosL_trailingFastIdx - ringCapL_trailingFastIdx >> 31);
           sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
           ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
           ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
-          sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+          sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice;
           ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
           ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx & (ringPosL_trailingSlowIdx - ringCapL_trailingSlowIdx >> 31);
           sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
@@ -10333,13 +10333,13 @@ class Core {
           sp.cur_outReal = tempReal;
           ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
           ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
-          sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+          sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
           ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
           ringPosL_trailingFastIdx = ringPosL_trailingFastIdx & (ringPosL_trailingFastIdx - ringCapL_trailingFastIdx >> 31);
           sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
           ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
           ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
-          sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+          sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice;
           ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
           ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx & (ringPosL_trailingSlowIdx - ringCapL_trailingSlowIdx >> 31);
           sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
@@ -24320,7 +24320,7 @@ class Core {
           sp.lag2_inClose = sp.lag1_inClose;
           sp.lag1_inClose = inClose;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = range0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -27711,7 +27711,7 @@ class Core {
           ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx & (ringPosL_ShadowLongTrailingIdx - sp.ringCap_ShadowLongTrailingIdx >> 31);
           sp.ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -28924,7 +28924,7 @@ class Core {
           ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
           sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -31295,12 +31295,12 @@ class Core {
           ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx & (ringPosL_NearTrailingIdx - sp.ringCap_NearTrailingIdx >> 31);
           sp.ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
           ringPosL_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
-          sp.ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ShadowLongPeriodTotalRange0;
           ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
           ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx & (ringPosL_ShadowLongTrailingIdx - sp.ringCap_ShadowLongTrailingIdx >> 31);
           sp.ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
           ringPosL_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx;
-          sp.ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ShadowShortPeriodTotalRange0;
           ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx + 1;
           ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx & (ringPosL_ShadowShortTrailingIdx - sp.ringCap_ShadowShortTrailingIdx >> 31);
           sp.ringPos_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx;
@@ -35628,7 +35628,7 @@ class Core {
           sp.lag1_inLow = inLow;
           sp.lag1_inClose = inClose;
           ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
           sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
@@ -50897,7 +50897,7 @@ class Core {
           ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx & (ringPosL_EqualTrailingIdx - sp.ringCap_EqualTrailingIdx >> 31);
           sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -53559,12 +53559,12 @@ class Core {
           sp.lag1_inLow = inLow;
           sp.lag1_inClose = inClose;
           ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
           sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -54500,12 +54500,12 @@ class Core {
           sp.lag1_inLow = inLow;
           sp.lag1_inClose = inClose;
           ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
           ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
           sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
           ringPosL_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+          sp.ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
           ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx & (ringPosL_ShadowVeryShortTrailingIdx - sp.ringCap_ShadowVeryShortTrailingIdx >> 31);
           sp.ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
@@ -240701,7 +240701,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "35bf2ad75d30a931";
+    static final String SPLICED_GENCODE_DIGEST = "d94cdbdacd086dd3";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

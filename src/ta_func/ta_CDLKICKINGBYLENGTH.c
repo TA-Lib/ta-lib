@@ -570,7 +570,7 @@ static void TA_CDLKICKINGBYLENGTH_StepImpl( struct TA_CDLKICKINGBYLENGTH_Stream 
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
    ringPosL_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
-   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   sp->ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
    ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
    if( ringPosL_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
@@ -578,7 +578,7 @@ static void TA_CDLKICKINGBYLENGTH_StepImpl( struct TA_CDLKICKINGBYLENGTH_Stream 
    }
    sp->ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
    ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
-   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
    ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
    if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {

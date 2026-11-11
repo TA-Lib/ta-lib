@@ -130,7 +130,9 @@ BATCH_WRITE = re.compile(
 
 # The derived ring's own per-bar push -- what the ring actually holds.
 RING_PUSH = re.compile(
-    r"sp->ring_(\w+)_derived\[sp->ringPos_\1\]\s*=\s*TA_STREAM_CANDLERANGE\(\s*(\w+)\s*,")
+    r"sp->ring_(\w+)_derived\[sp->ringPos_\1\]\s*=\s*TA_STREAM_CANDLERANGE\(\s*(\w+)\s*,"
+    r"\s*inOpen\b")
+RING_STORE = re.compile(r"sp->ring_(\w+)_derived\[sp->ringPos_\1\]\s*=\s*(\w+)\s*;")
 
 # `sp->TOT[k] += TA_STREAM_CANDLERANGE(Set,[sp->lagL_]inOpen,...) - sp->ring_TR_derived[slot];`
 # Update frames only: a peek stops at its last output store and this write is
@@ -262,6 +264,33 @@ def fold_ring_locals(src):
             pos = st.end()
         out.append(src[pos:])
         src = re.sub(r"\bint\s+ringPosL_%s\s*;" % name, "", "".join(out))
+    return src
+
+
+def inline_ring_pushes(src):
+    """A step may push a scalar it already computed for the current bar. Spell
+    the push as that scalar's definition, but only when the definition is the
+    scalar's last assignment before the push, in the same step and at its top
+    level; any other push is left as written and names no setting."""
+    for flo, fhi in reversed(_functions(src)):
+        if not _STEP.search(src, src.rfind("\n", 0, flo - 1), flo):
+            continue
+        body = src[flo:fhi]
+        out, pos = [], 0
+        for st in RING_STORE.finditer(body):
+            sets = [a for a in ASSIGN.finditer(body, 0, st.start())
+                    if a.group(1) == st.group(2)]
+            if not sets or _guarded(body, 1, sets[-1].start()):
+                continue
+            stmt = body[sets[-1].start():body.find(";", sets[-1].end()) + 1]
+            if not STREAM_DEF.fullmatch(stmt):
+                continue
+            rhs = " ".join(stmt[stmt.index("=") + 1:].split())
+            out.append(body[pos:st.start(2)])
+            out.append(rhs[:-1])
+            pos = st.end(2)
+        out.append(body[pos:])
+        src = src[:flo] + "".join(out) + src[fhi:]
     return src
 
 
@@ -978,8 +1007,8 @@ def main():
 
     for path in files:
         name = os.path.basename(path)
-        src = unfold_range_types(fold_ring_locals(_blank_comments(
-            open(path, encoding="utf-8").read())))
+        src = unfold_range_types(inline_ring_pushes(fold_ring_locals(_blank_comments(
+            open(path, encoding="utf-8").read()))))
         reads, problems, read_sets, read_offs = scan(src)
         if not reads:
             continue

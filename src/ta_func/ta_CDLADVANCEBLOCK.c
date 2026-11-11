@@ -957,7 +957,7 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
    }
    sp->ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
    ringPosL_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx;
-   sp->ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
+   sp->ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = ShadowLongPeriodTotalRange0;
    ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
    if( ringPosL_ShadowLongTrailingIdx >= sp->ringCap_ShadowLongTrailingIdx )
    {
@@ -965,7 +965,7 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
    }
    sp->ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
    ringPosL_ShadowShortTrailingIdx = sp->ringPos_ShadowShortTrailingIdx;
-   sp->ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
+   sp->ring_ShadowShortTrailingIdx_derived[ringPosL_ShadowShortTrailingIdx] = ShadowShortPeriodTotalRange0;
    ringPosL_ShadowShortTrailingIdx = ringPosL_ShadowShortTrailingIdx + 1;
    if( ringPosL_ShadowShortTrailingIdx >= sp->ringCap_ShadowShortTrailingIdx )
    {

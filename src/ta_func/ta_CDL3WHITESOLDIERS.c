@@ -840,7 +840,7 @@ static void TA_CDL3WHITESOLDIERS_StepImpl( struct TA_CDL3WHITESOLDIERS_Stream *s
    }
    sp->ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
    ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
-   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
    ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
    if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {
