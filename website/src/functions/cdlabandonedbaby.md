@@ -21,7 +21,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

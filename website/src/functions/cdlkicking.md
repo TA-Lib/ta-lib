@@ -21,7 +21,7 @@ Two-candle pattern of two opposite-color marubozu (long bodies with very short s
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

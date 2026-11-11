@@ -21,7 +21,7 @@ A four-bar pattern: a white candle followed by three consecutive black (down) ca
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

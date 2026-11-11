@@ -69,7 +69,7 @@ DEF_FUNCTION_ATTRIBUTES( CCI,
 
 /* CDL2CROWS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL2CROWS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDL2CROWS_Inputs[]    =
 {
@@ -95,7 +95,7 @@ DEF_FUNCTION( CDL2CROWS,
 
 /* CDL3BLACKCROWS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3BLACKCROWS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3BLACKCROWS_Inputs[]    =
 {
@@ -121,7 +121,7 @@ DEF_FUNCTION( CDL3BLACKCROWS,
 
 /* CDL3INSIDE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3INSIDE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3INSIDE_Inputs[]    =
 {
@@ -147,7 +147,7 @@ DEF_FUNCTION( CDL3INSIDE,
 
 /* CDL3LINESTRIKE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3LINESTRIKE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3LINESTRIKE_Inputs[]    =
 {
@@ -173,7 +173,7 @@ DEF_FUNCTION( CDL3LINESTRIKE,
 
 /* CDL3OUTSIDE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3OUTSIDE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3OUTSIDE_Inputs[]    =
 {
@@ -199,7 +199,7 @@ DEF_FUNCTION( CDL3OUTSIDE,
 
 /* CDL3STARSINSOUTH BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3STARSINSOUTH_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3STARSINSOUTH_Inputs[]    =
 {
@@ -225,7 +225,7 @@ DEF_FUNCTION( CDL3STARSINSOUTH,
 
 /* CDL3WHITESOLDIERS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDL3WHITESOLDIERS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDL3WHITESOLDIERS_Inputs[]    =
 {
@@ -251,7 +251,7 @@ DEF_FUNCTION( CDL3WHITESOLDIERS,
 
 /* CDLABANDONEDBABY BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLABANDONEDBABY_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLABANDONEDBABY_Inputs[]    =
 {
@@ -279,7 +279,7 @@ DEF_FUNCTION( CDLABANDONEDBABY,
 
 /* CDLADVANCEBLOCK BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLADVANCEBLOCK_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLADVANCEBLOCK_Inputs[]    =
 {
@@ -305,7 +305,7 @@ DEF_FUNCTION( CDLADVANCEBLOCK,
 
 /* CDLBELTHOLD BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLBELTHOLD_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLBELTHOLD_Inputs[]    =
 {
@@ -331,7 +331,7 @@ DEF_FUNCTION( CDLBELTHOLD,
 
 /* CDLBREAKAWAY BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLBREAKAWAY_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLBREAKAWAY_Inputs[]    =
 {
@@ -357,7 +357,7 @@ DEF_FUNCTION( CDLBREAKAWAY,
 
 /* CDLCLOSINGMARUBOZU BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCLOSINGMARUBOZU_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLCLOSINGMARUBOZU_Inputs[]    =
 {
@@ -383,7 +383,7 @@ DEF_FUNCTION( CDLCLOSINGMARUBOZU,
 
 /* CDLCONCEALBABYSWALL BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCONCEALBABYSWALL_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLCONCEALBABYSWALL_Inputs[]    =
 {
@@ -409,7 +409,7 @@ DEF_FUNCTION( CDLCONCEALBABYSWALL,
 
 /* CDLCOUNTERATTACK BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLCOUNTERATTACK_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLCOUNTERATTACK_Inputs[]    =
 {
@@ -435,7 +435,7 @@ DEF_FUNCTION( CDLCOUNTERATTACK,
 
 /* CDLDARKCLOUDCOVER BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDARKCLOUDCOVER_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLDARKCLOUDCOVER_Inputs[]    =
 {
@@ -463,7 +463,7 @@ DEF_FUNCTION( CDLDARKCLOUDCOVER,
 
 /* CDLDOJI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDOJI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLDOJI_Inputs[]    =
 {
@@ -489,7 +489,7 @@ DEF_FUNCTION( CDLDOJI,
 
 /* CDLDOJISTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDOJISTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLDOJISTAR_Inputs[]    =
 {
@@ -515,7 +515,7 @@ DEF_FUNCTION( CDLDOJISTAR,
 
 /* CDLDRAGONFLYDOJI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLDRAGONFLYDOJI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLDRAGONFLYDOJI_Inputs[]    =
 {
@@ -541,7 +541,7 @@ DEF_FUNCTION( CDLDRAGONFLYDOJI,
 
 /* CDLENGULFING BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLENGULFING_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
 
 static const TA_InputParameterInfo    *TA_CDLENGULFING_Inputs[]    =
 {
@@ -567,7 +567,7 @@ DEF_FUNCTION( CDLENGULFING,
 
 /* CDLEVENINGDOJISTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLEVENINGDOJISTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLEVENINGDOJISTAR_Inputs[]    =
 {
@@ -595,7 +595,7 @@ DEF_FUNCTION( CDLEVENINGDOJISTAR,
 
 /* CDLEVENINGSTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLEVENINGSTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLEVENINGSTAR_Inputs[]    =
 {
@@ -623,7 +623,7 @@ DEF_FUNCTION( CDLEVENINGSTAR,
 
 /* CDLGAPSIDESIDEWHITE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLGAPSIDESIDEWHITE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLGAPSIDESIDEWHITE_Inputs[]    =
 {
@@ -649,7 +649,7 @@ DEF_FUNCTION( CDLGAPSIDESIDEWHITE,
 
 /* CDLGRAVESTONEDOJI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLGRAVESTONEDOJI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLGRAVESTONEDOJI_Inputs[]    =
 {
@@ -675,7 +675,7 @@ DEF_FUNCTION( CDLGRAVESTONEDOJI,
 
 /* CDLHAMMER BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHAMMER_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLHAMMER_Inputs[]    =
 {
@@ -701,7 +701,7 @@ DEF_FUNCTION( CDLHAMMER,
 
 /* CDLHANGINGMAN BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHANGINGMAN_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLHANGINGMAN_Inputs[]    =
 {
@@ -727,7 +727,7 @@ DEF_FUNCTION( CDLHANGINGMAN,
 
 /* CDLHARAMI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHARAMI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
 
 static const TA_InputParameterInfo    *TA_CDLHARAMI_Inputs[]    =
 {
@@ -753,7 +753,7 @@ DEF_FUNCTION( CDLHARAMI,
 
 /* CDLHARAMICROSS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHARAMICROSS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_WEAK };
 
 static const TA_InputParameterInfo    *TA_CDLHARAMICROSS_Inputs[]    =
 {
@@ -779,7 +779,7 @@ DEF_FUNCTION( CDLHARAMICROSS,
 
 /* CDLHIGHWAVE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIGHWAVE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 {
@@ -805,7 +805,7 @@ DEF_FUNCTION( CDLHIGHWAVE,
 
 /* CDLHIKKAKE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIKKAKE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
 
 static const TA_InputParameterInfo    *TA_CDLHIKKAKE_Inputs[]    =
 {
@@ -831,7 +831,7 @@ DEF_FUNCTION( CDLHIKKAKE,
 
 /* CDLHIKKAKEMOD BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIKKAKEMOD_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_PATTERN_CONFIRM };
 
 static const TA_InputParameterInfo    *TA_CDLHIKKAKEMOD_Inputs[]    =
 {
@@ -857,7 +857,7 @@ DEF_FUNCTION( CDLHIKKAKEMOD,
 
 /* CDLHOMINGPIGEON BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHOMINGPIGEON_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLHOMINGPIGEON_Inputs[]    =
 {
@@ -883,7 +883,7 @@ DEF_FUNCTION( CDLHOMINGPIGEON,
 
 /* CDLIDENTICAL3CROWS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLIDENTICAL3CROWS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLIDENTICAL3CROWS_Inputs[]    =
 {
@@ -909,7 +909,7 @@ DEF_FUNCTION( CDLIDENTICAL3CROWS,
 
 /* CDLINNECK BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLINNECK_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLINNECK_Inputs[]    =
 {
@@ -935,7 +935,7 @@ DEF_FUNCTION( CDLINNECK,
 
 /* CDLINVERTEDHAMMER BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLINVERTEDHAMMER_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLINVERTEDHAMMER_Inputs[]    =
 {
@@ -961,7 +961,7 @@ DEF_FUNCTION( CDLINVERTEDHAMMER,
 
 /* CDLKICKING BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLKICKING_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLKICKING_Inputs[]    =
 {
@@ -987,7 +987,7 @@ DEF_FUNCTION( CDLKICKING,
 
 /* CDLKICKINGBYLENGTH BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLKICKINGBYLENGTH_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLKICKINGBYLENGTH_Inputs[]    =
 {
@@ -1013,7 +1013,7 @@ DEF_FUNCTION( CDLKICKINGBYLENGTH,
 
 /* CDLLADDERBOTTOM BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLADDERBOTTOM_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLLADDERBOTTOM_Inputs[]    =
 {
@@ -1039,7 +1039,7 @@ DEF_FUNCTION( CDLLADDERBOTTOM,
 
 /* CDLLONGLEGGEDDOJI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLONGLEGGEDDOJI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLLONGLEGGEDDOJI_Inputs[]    =
 {
@@ -1065,7 +1065,7 @@ DEF_FUNCTION( CDLLONGLEGGEDDOJI,
 
 /* CDLLONGLINE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLLONGLINE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLLONGLINE_Inputs[]    =
 {
@@ -1091,7 +1091,7 @@ DEF_FUNCTION( CDLLONGLINE,
 
 /* CDLMARUBOZU BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMARUBOZU_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLMARUBOZU_Inputs[]    =
 {
@@ -1117,7 +1117,7 @@ DEF_FUNCTION( CDLMARUBOZU,
 
 /* CDLMATCHINGLOW BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMATCHINGLOW_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLMATCHINGLOW_Inputs[]    =
 {
@@ -1143,7 +1143,7 @@ DEF_FUNCTION( CDLMATCHINGLOW,
 
 /* CDLMATHOLD BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMATHOLD_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLMATHOLD_Inputs[]    =
 {
@@ -1171,7 +1171,7 @@ DEF_FUNCTION( CDLMATHOLD,
 
 /* CDLMORNINGDOJISTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMORNINGDOJISTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLMORNINGDOJISTAR_Inputs[]    =
 {
@@ -1199,7 +1199,7 @@ DEF_FUNCTION( CDLMORNINGDOJISTAR,
 
 /* CDLMORNINGSTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLMORNINGSTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLMORNINGSTAR_Inputs[]    =
 {
@@ -1227,7 +1227,7 @@ DEF_FUNCTION( CDLMORNINGSTAR,
 
 /* CDLONNECK BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLONNECK_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLONNECK_Inputs[]    =
 {
@@ -1253,7 +1253,7 @@ DEF_FUNCTION( CDLONNECK,
 
 /* CDLPIERCING BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLPIERCING_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLPIERCING_Inputs[]    =
 {
@@ -1279,7 +1279,7 @@ DEF_FUNCTION( CDLPIERCING,
 
 /* CDLRICKSHAWMAN BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLRICKSHAWMAN_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLRICKSHAWMAN_Inputs[]    =
 {
@@ -1305,7 +1305,7 @@ DEF_FUNCTION( CDLRICKSHAWMAN,
 
 /* CDLRISEFALL3METHODS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLRISEFALL3METHODS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLRISEFALL3METHODS_Inputs[]    =
 {
@@ -1331,7 +1331,7 @@ DEF_FUNCTION( CDLRISEFALL3METHODS,
 
 /* CDLSEPARATINGLINES BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSEPARATINGLINES_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSEPARATINGLINES_Inputs[]    =
 {
@@ -1357,7 +1357,7 @@ DEF_FUNCTION( CDLSEPARATINGLINES,
 
 /* CDLSHOOTINGSTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSHOOTINGSTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSHOOTINGSTAR_Inputs[]    =
 {
@@ -1383,7 +1383,7 @@ DEF_FUNCTION( CDLSHOOTINGSTAR,
 
 /* CDLSHORTLINE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSHORTLINE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
 {
@@ -1409,7 +1409,7 @@ DEF_FUNCTION( CDLSHORTLINE,
 
 /* CDLSPINNINGTOP BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSPINNINGTOP_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSPINNINGTOP_Inputs[]    =
 {
@@ -1435,7 +1435,7 @@ DEF_FUNCTION( CDLSPINNINGTOP,
 
 /* CDLSTALLEDPATTERN BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSTALLEDPATTERN_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSTALLEDPATTERN_Inputs[]    =
 {
@@ -1461,7 +1461,7 @@ DEF_FUNCTION( CDLSTALLEDPATTERN,
 
 /* CDLSTICKSANDWICH BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSTICKSANDWICH_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSTICKSANDWICH_Inputs[]    =
 {
@@ -1487,7 +1487,7 @@ DEF_FUNCTION( CDLSTICKSANDWICH,
 
 /* CDLTAKURI BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTAKURI_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLTAKURI_Inputs[]    =
 {
@@ -1513,7 +1513,7 @@ DEF_FUNCTION( CDLTAKURI,
 
 /* CDLTASUKIGAP BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTASUKIGAP_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLTASUKIGAP_Inputs[]    =
 {
@@ -1539,7 +1539,7 @@ DEF_FUNCTION( CDLTASUKIGAP,
 
 /* CDLTHRUSTING BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTHRUSTING_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLTHRUSTING_Inputs[]    =
 {
@@ -1565,7 +1565,7 @@ DEF_FUNCTION( CDLTHRUSTING,
 
 /* CDLTRISTAR BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLTRISTAR_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLTRISTAR_Inputs[]    =
 {
@@ -1591,7 +1591,7 @@ DEF_FUNCTION( CDLTRISTAR,
 
 /* CDLUNIQUE3RIVER BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLUNIQUE3RIVER_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_CDLUNIQUE3RIVER_Inputs[]    =
 {
@@ -1617,7 +1617,7 @@ DEF_FUNCTION( CDLUNIQUE3RIVER,
 
 /* CDLUPSIDEGAP2CROWS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLUPSIDEGAP2CROWS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLUPSIDEGAP2CROWS_Inputs[]    =
 {
@@ -1643,7 +1643,7 @@ DEF_FUNCTION( CDLUPSIDEGAP2CROWS,
 
 /* CDLXSIDEGAP3METHODS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLXSIDEGAP3METHODS_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_PATTERN_BULL_BEAR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLXSIDEGAP3METHODS_Inputs[]    =
 {

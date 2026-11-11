@@ -21,7 +21,7 @@ A two-candle continuation pattern: the second candle opposes the first in color,
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

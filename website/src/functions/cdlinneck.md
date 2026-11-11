@@ -21,7 +21,7 @@ A two-candle in-neck pattern: a long black candle followed by a white candle tha
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

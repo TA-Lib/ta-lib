@@ -21,7 +21,7 @@ Single-candle pattern: a small real body at the top of the range with a long low
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

@@ -21,7 +21,7 @@ A three-candle pattern of three white candles with consecutively higher closes w
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

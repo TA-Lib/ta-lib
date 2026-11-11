@@ -21,7 +21,7 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

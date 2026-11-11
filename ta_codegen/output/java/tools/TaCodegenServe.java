@@ -241033,247 +241033,247 @@ public class TaCodegenServe {
         ABSTRACT.put("CDL2CROWS", new AbsFunc("CDL2CROWS", "Pattern Recognition", "Two Crows", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDL3BLACKCROWS", new AbsFunc("CDL3BLACKCROWS", "Pattern Recognition", "Three Black Crows", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDL3INSIDE", new AbsFunc("CDL3INSIDE", "Pattern Recognition", "Three Inside Up/Down", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDL3LINESTRIKE", new AbsFunc("CDL3LINESTRIKE", "Pattern Recognition", "Three-Line Strike", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDL3OUTSIDE", new AbsFunc("CDL3OUTSIDE", "Pattern Recognition", "Three Outside Up/Down", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDL3STARSINSOUTH", new AbsFunc("CDL3STARSINSOUTH", "Pattern Recognition", "Three Stars In The South", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDL3WHITESOLDIERS", new AbsFunc("CDL3WHITESOLDIERS", "Pattern Recognition", "Three Advancing White Soldiers", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLABANDONEDBABY", new AbsFunc("CDLABANDONEDBABY", "Pattern Recognition", "Abandoned Baby", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLADVANCEBLOCK", new AbsFunc("CDLADVANCEBLOCK", "Pattern Recognition", "Advance Block", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLBELTHOLD", new AbsFunc("CDLBELTHOLD", "Pattern Recognition", "Belt-hold", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLBREAKAWAY", new AbsFunc("CDLBREAKAWAY", "Pattern Recognition", "Breakaway", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLCLOSINGMARUBOZU", new AbsFunc("CDLCLOSINGMARUBOZU", "Pattern Recognition", "Closing Marubozu", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLCONCEALBABYSWALL", new AbsFunc("CDLCONCEALBABYSWALL", "Pattern Recognition", "Concealing Baby Swallow", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLCOUNTERATTACK", new AbsFunc("CDLCOUNTERATTACK", "Pattern Recognition", "Counterattack", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLDARKCLOUDCOVER", new AbsFunc("CDLDARKCLOUDCOVER", "Pattern Recognition", "Dark Cloud Cover", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLDOJI", new AbsFunc("CDLDOJI", "Pattern Recognition", "Doji", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLDOJISTAR", new AbsFunc("CDLDOJISTAR", "Pattern Recognition", "Doji Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLDRAGONFLYDOJI", new AbsFunc("CDLDRAGONFLYDOJI", "Pattern Recognition", "Dragonfly Doji", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLENGULFING", new AbsFunc("CDLENGULFING", "Pattern Recognition", "Engulfing Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",34625) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",34624) }));
         ABSTRACT.put("CDLEVENINGDOJISTAR", new AbsFunc("CDLEVENINGDOJISTAR", "Pattern Recognition", "Evening Doji Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLEVENINGSTAR", new AbsFunc("CDLEVENINGSTAR", "Pattern Recognition", "Evening Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLGAPSIDESIDEWHITE", new AbsFunc("CDLGAPSIDESIDEWHITE", "Pattern Recognition", "Up/Down-gap side-by-side white lines", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLGRAVESTONEDOJI", new AbsFunc("CDLGRAVESTONEDOJI", "Pattern Recognition", "Gravestone Doji", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLHAMMER", new AbsFunc("CDLHAMMER", "Pattern Recognition", "Hammer", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLHANGINGMAN", new AbsFunc("CDLHANGINGMAN", "Pattern Recognition", "Hanging Man", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLHARAMI", new AbsFunc("CDLHARAMI", "Pattern Recognition", "Harami Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",34625) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",34624) }));
         ABSTRACT.put("CDLHARAMICROSS", new AbsFunc("CDLHARAMICROSS", "Pattern Recognition", "Harami Cross Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",34625) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",34624) }));
         ABSTRACT.put("CDLHIGHWAVE", new AbsFunc("CDLHIGHWAVE", "Pattern Recognition", "High-Wave Candle", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263936) }));
         ABSTRACT.put("CDLHIKKAKE", new AbsFunc("CDLHIKKAKE", "Pattern Recognition", "Hikkake Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1985) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1984) }));
         ABSTRACT.put("CDLHIKKAKEMOD", new AbsFunc("CDLHIKKAKEMOD", "Pattern Recognition", "Modified Hikkake Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1985) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1984) }));
         ABSTRACT.put("CDLHOMINGPIGEON", new AbsFunc("CDLHOMINGPIGEON", "Pattern Recognition", "Homing Pigeon", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLIDENTICAL3CROWS", new AbsFunc("CDLIDENTICAL3CROWS", "Pattern Recognition", "Identical Three Crows", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLINNECK", new AbsFunc("CDLINNECK", "Pattern Recognition", "In-Neck Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLINVERTEDHAMMER", new AbsFunc("CDLINVERTEDHAMMER", "Pattern Recognition", "Inverted Hammer", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLKICKING", new AbsFunc("CDLKICKING", "Pattern Recognition", "Kicking", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLKICKINGBYLENGTH", new AbsFunc("CDLKICKINGBYLENGTH", "Pattern Recognition", "Kicking - bull/bear determined by the longer marubozu", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLLADDERBOTTOM", new AbsFunc("CDLLADDERBOTTOM", "Pattern Recognition", "Ladder Bottom", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLLONGLEGGEDDOJI", new AbsFunc("CDLLONGLEGGEDDOJI", "Pattern Recognition", "Long Legged Doji", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLLONGLINE", new AbsFunc("CDLLONGLINE", "Pattern Recognition", "Long Line Candle", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLMARUBOZU", new AbsFunc("CDLMARUBOZU", "Pattern Recognition", "Marubozu", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLMATCHINGLOW", new AbsFunc("CDLMATCHINGLOW", "Pattern Recognition", "Matching Low", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLMATHOLD", new AbsFunc("CDLMATHOLD", "Pattern Recognition", "Mat Hold", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.5, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLMORNINGDOJISTAR", new AbsFunc("CDLMORNINGDOJISTAR", "Pattern Recognition", "Morning Doji Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLMORNINGSTAR", new AbsFunc("CDLMORNINGSTAR", "Pattern Recognition", "Morning Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInPenetration",0,"Penetration","Percentage of penetration of a candle within another candle",0.3, 0.0,3e37,0,0.0,0.0,0.0, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLONNECK", new AbsFunc("CDLONNECK", "Pattern Recognition", "On-Neck Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLPIERCING", new AbsFunc("CDLPIERCING", "Pattern Recognition", "Piercing Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLRICKSHAWMAN", new AbsFunc("CDLRICKSHAWMAN", "Pattern Recognition", "Rickshaw Man", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLRISEFALL3METHODS", new AbsFunc("CDLRISEFALL3METHODS", "Pattern Recognition", "Rising/Falling Three Methods", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLSEPARATINGLINES", new AbsFunc("CDLSEPARATINGLINES", "Pattern Recognition", "Separating Lines", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLSHOOTINGSTAR", new AbsFunc("CDLSHOOTINGSTAR", "Pattern Recognition", "Shooting Star", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLSHORTLINE", new AbsFunc("CDLSHORTLINE", "Pattern Recognition", "Short Line Candle", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263936) }));
         ABSTRACT.put("CDLSPINNINGTOP", new AbsFunc("CDLSPINNINGTOP", "Pattern Recognition", "Spinning Top", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263936) }));
         ABSTRACT.put("CDLSTALLEDPATTERN", new AbsFunc("CDLSTALLEDPATTERN", "Pattern Recognition", "Stalled Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLSTICKSANDWICH", new AbsFunc("CDLSTICKSANDWICH", "Pattern Recognition", "Stick Sandwich", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLTAKURI", new AbsFunc("CDLTAKURI", "Pattern Recognition", "Takuri (Dragonfly Doji with very long lower shadow)", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1313) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1312) }));
         ABSTRACT.put("CDLTASUKIGAP", new AbsFunc("CDLTASUKIGAP", "Pattern Recognition", "Tasuki Gap", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLTHRUSTING", new AbsFunc("CDLTHRUSTING", "Pattern Recognition", "Thrusting Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLTRISTAR", new AbsFunc("CDLTRISTAR", "Pattern Recognition", "Tristar Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CDLUNIQUE3RIVER", new AbsFunc("CDLUNIQUE3RIVER", "Pattern Recognition", "Unique 3 River", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1345) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1344) }));
         ABSTRACT.put("CDLUPSIDEGAP2CROWS", new AbsFunc("CDLUPSIDEGAP2CROWS", "Pattern Recognition", "Upside Gap Two Crows", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1601) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1600) }));
         ABSTRACT.put("CDLXSIDEGAP3METHODS", new AbsFunc("CDLXSIDEGAP3METHODS", "Pattern Recognition", "Upside/Downside Gap Three Methods", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1857) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",1856) }));
         ABSTRACT.put("CE", new AbsFunc("CE", "Overlap Studies", "Chandelier Exit", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","ATR and extreme window",22.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInMultiplier",0,"Multiplier","ATR multiplier",3.0, 0.0,3e37,2,1.0,5.0,0.5, 0,0,0,0,0, null) },
@@ -241405,7 +241405,7 @@ public class TaCodegenServe {
         ABSTRACT.put("FRACTAL", new AbsFunc("FRACTAL", "Momentum Indicators", "Williams Fractal", 33554434,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInLeftBars",0,"Left Bars","Number of bars required to be lower/higher before the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null), new AbsOpt(2,"optInRightBars",0,"Right Bars","Number of bars required to be lower/higher after the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null) },
-            new AbsOut[]{ new AbsOut(1,"outSwingHigh",17697), new AbsOut(1,"outSwingLow",17697) }));
+            new AbsOut[]{ new AbsOut(1,"outSwingHigh",17696), new AbsOut(1,"outSwingLow",17696) }));
         ABSTRACT.put("FRAMA", new AbsFunc("FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 184549380,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars",16.0, 0,0,0,0,0,0, 2,100000,4,200,2, null) },

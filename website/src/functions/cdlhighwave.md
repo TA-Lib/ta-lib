@@ -21,7 +21,7 @@ Single-candle pattern: a short real body with both a very long upper and a very 
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_color` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_color` · `zero` · `positive` · `negative`
 
 :::
 

@@ -21,7 +21,7 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
 
 :::
 

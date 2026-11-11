@@ -9,4 +9,4 @@ inputs:
 outputs:
   - name: outInteger
     type: integer
-    flags: [line, pattern_color, zero, positive, negative]
+    flags: [pattern_color, zero, positive, negative]

@@ -21,7 +21,7 @@ A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

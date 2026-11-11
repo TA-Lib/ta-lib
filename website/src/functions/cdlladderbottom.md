@@ -21,7 +21,7 @@ Five-candle bullish reversal pattern: three consecutively lower black candles, a
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

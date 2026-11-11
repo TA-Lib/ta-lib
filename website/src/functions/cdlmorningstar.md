@@ -21,7 +21,7 @@ A three-candle bottom-reversal pattern: a long black candle, a small-bodied star
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

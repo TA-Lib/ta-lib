@@ -21,7 +21,7 @@ A three-candle bullish reversal pattern of three consecutive black candles that 
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

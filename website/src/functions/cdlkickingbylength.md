@@ -21,7 +21,7 @@ A two-candle pattern of two opposite-color marubozu (long body, very short shado
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

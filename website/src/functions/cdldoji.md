@@ -21,7 +21,7 @@ Single-candle Doji recognizer: fires when the real body (|close-open|) is at or 
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+- `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

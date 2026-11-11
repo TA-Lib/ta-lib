@@ -21,7 +21,7 @@ Single-candle pattern with a long real body that opens at (or near) its extreme.
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

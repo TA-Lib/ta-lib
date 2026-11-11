@@ -21,7 +21,7 @@ A three-candle pattern: a real-body-gapping candle followed by an opposite-color
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

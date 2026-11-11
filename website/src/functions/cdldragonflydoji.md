@@ -21,7 +21,7 @@ Single-candle pattern: a doji (open and close nearly equal) sitting at the top o
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+- `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

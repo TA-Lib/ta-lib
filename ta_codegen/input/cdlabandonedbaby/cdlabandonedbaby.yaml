@@ -17,4 +17,4 @@ optional_inputs:
 outputs:
   - name: outInteger
     type: integer
-    flags: [line, pattern_bull_bear, zero, positive, negative]
+    flags: [pattern_bull_bear, zero, positive, negative]

@@ -21,7 +21,7 @@ Single-candle doji (open ~ close) with at least one long shadow. Signals market 
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+- `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

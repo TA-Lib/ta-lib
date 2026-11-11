@@ -21,7 +21,7 @@ A three-candle bearish reversal pattern: a long white candle, a doji that gaps u
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

@@ -21,7 +21,7 @@ A two-candle reversal pattern where the second candle's real body engulfs the fi
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
 
 :::
 

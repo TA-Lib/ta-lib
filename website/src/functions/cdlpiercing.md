@@ -21,7 +21,7 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

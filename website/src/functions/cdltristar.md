@@ -21,7 +21,7 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

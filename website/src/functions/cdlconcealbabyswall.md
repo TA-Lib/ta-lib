@@ -21,7 +21,7 @@ A four-candle pattern: two black marubozus, then a black candle that gaps down b
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

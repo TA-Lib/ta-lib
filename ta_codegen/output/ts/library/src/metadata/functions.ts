@@ -344,7 +344,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDL3BLACKCROWS', 'Pattern Recognition', 'Three Black Crows', 0x12000000,
@@ -353,7 +353,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDL3INSIDE', 'Pattern Recognition', 'Three Inside Up/Down', 0x12000000,
@@ -362,7 +362,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDL3LINESTRIKE', 'Pattern Recognition', 'Three-Line Strike', 0x12000000,
@@ -371,7 +371,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDL3OUTSIDE', 'Pattern Recognition', 'Three Outside Up/Down', 0x12000000,
@@ -380,7 +380,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDL3STARSINSOUTH', 'Pattern Recognition', 'Three Stars In The South', 0x12000000,
@@ -389,7 +389,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDL3WHITESOLDIERS', 'Pattern Recognition', 'Three Advancing White Soldiers', 0x12000000,
@@ -398,7 +398,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLABANDONEDBABY', 'Pattern Recognition', 'Abandoned Baby', 0x12000000,
@@ -409,7 +409,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.3, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLADVANCEBLOCK', 'Pattern Recognition', 'Advance Block', 0x12000000,
@@ -418,7 +418,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLBELTHOLD', 'Pattern Recognition', 'Belt-hold', 0x12000000,
@@ -427,7 +427,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLBREAKAWAY', 'Pattern Recognition', 'Breakaway', 0x12000000,
@@ -436,7 +436,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLCLOSINGMARUBOZU', 'Pattern Recognition', 'Closing Marubozu', 0x12000000,
@@ -445,7 +445,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLCONCEALBABYSWALL', 'Pattern Recognition', 'Concealing Baby Swallow', 0x12000000,
@@ -454,7 +454,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLCOUNTERATTACK', 'Pattern Recognition', 'Counterattack', 0x12000000,
@@ -463,7 +463,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLDARKCLOUDCOVER', 'Pattern Recognition', 'Dark Cloud Cover', 0x12000000,
@@ -474,7 +474,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.5, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLDOJI', 'Pattern Recognition', 'Doji', 0x12000000,
@@ -483,7 +483,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLDOJISTAR', 'Pattern Recognition', 'Doji Star', 0x12000000,
@@ -492,7 +492,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLDRAGONFLYDOJI', 'Pattern Recognition', 'Dragonfly Doji', 0x12000000,
@@ -501,7 +501,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLENGULFING', 'Pattern Recognition', 'Engulfing Pattern', 0x12000000,
@@ -510,7 +510,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008740 },
     ],
     '{}'),
   FuncInfo.of('CDLEVENINGDOJISTAR', 'Pattern Recognition', 'Evening Doji Star', 0x12000000,
@@ -521,7 +521,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.3, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLEVENINGSTAR', 'Pattern Recognition', 'Evening Star', 0x12000000,
@@ -532,7 +532,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.3, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLGAPSIDESIDEWHITE', 'Pattern Recognition', 'Up/Down-gap side-by-side white lines', 0x12000000,
@@ -541,7 +541,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLGRAVESTONEDOJI', 'Pattern Recognition', 'Gravestone Doji', 0x12000000,
@@ -550,7 +550,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLHAMMER', 'Pattern Recognition', 'Hammer', 0x12000000,
@@ -559,7 +559,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLHANGINGMAN', 'Pattern Recognition', 'Hanging Man', 0x12000000,
@@ -568,7 +568,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLHARAMI', 'Pattern Recognition', 'Harami Pattern', 0x12000000,
@@ -577,7 +577,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008740 },
     ],
     '{}'),
   FuncInfo.of('CDLHARAMICROSS', 'Pattern Recognition', 'Harami Cross Pattern', 0x12000000,
@@ -586,7 +586,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00008740 },
     ],
     '{}'),
   FuncInfo.of('CDLHIGHWAVE', 'Pattern Recognition', 'High-Wave Candle', 0x12000000,
@@ -595,7 +595,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040700 },
     ],
     '{}'),
   FuncInfo.of('CDLHIKKAKE', 'Pattern Recognition', 'Hikkake Pattern', 0x12000000,
@@ -604,7 +604,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x000007C1 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x000007C0 },
     ],
     '{}'),
   FuncInfo.of('CDLHIKKAKEMOD', 'Pattern Recognition', 'Modified Hikkake Pattern', 0x12000000,
@@ -613,7 +613,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x000007C1 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x000007C0 },
     ],
     '{}'),
   FuncInfo.of('CDLHOMINGPIGEON', 'Pattern Recognition', 'Homing Pigeon', 0x12000000,
@@ -622,7 +622,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLIDENTICAL3CROWS', 'Pattern Recognition', 'Identical Three Crows', 0x12000000,
@@ -631,7 +631,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLINNECK', 'Pattern Recognition', 'In-Neck Pattern', 0x12000000,
@@ -640,7 +640,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLINVERTEDHAMMER', 'Pattern Recognition', 'Inverted Hammer', 0x12000000,
@@ -649,7 +649,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLKICKING', 'Pattern Recognition', 'Kicking', 0x12000000,
@@ -658,7 +658,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLKICKINGBYLENGTH', 'Pattern Recognition', 'Kicking - bull/bear determined by the longer marubozu', 0x12000000,
@@ -667,7 +667,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLLADDERBOTTOM', 'Pattern Recognition', 'Ladder Bottom', 0x12000000,
@@ -676,7 +676,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLLONGLEGGEDDOJI', 'Pattern Recognition', 'Long Legged Doji', 0x12000000,
@@ -685,7 +685,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLLONGLINE', 'Pattern Recognition', 'Long Line Candle', 0x12000000,
@@ -694,7 +694,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLMARUBOZU', 'Pattern Recognition', 'Marubozu', 0x12000000,
@@ -703,7 +703,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLMATCHINGLOW', 'Pattern Recognition', 'Matching Low', 0x12000000,
@@ -712,7 +712,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLMATHOLD', 'Pattern Recognition', 'Mat Hold', 0x12000000,
@@ -723,7 +723,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.5, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLMORNINGDOJISTAR', 'Pattern Recognition', 'Morning Doji Star', 0x12000000,
@@ -734,7 +734,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.3, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLMORNINGSTAR', 'Pattern Recognition', 'Morning Star', 0x12000000,
@@ -745,7 +745,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.REAL_RANGE, paramName: 'optInPenetration', key: 'penetration', flags: 0x00000000, displayName: 'Penetration', hint: 'Percentage of penetration of a candle within another candle', defaultValue: 0.3, min: 0.0, max: 3e37, precision: 0, suggestedStart: 0.0, suggestedEnd: 0.0, suggestedIncrement: 0.0 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLONNECK', 'Pattern Recognition', 'On-Neck Pattern', 0x12000000,
@@ -754,7 +754,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLPIERCING', 'Pattern Recognition', 'Piercing Pattern', 0x12000000,
@@ -763,7 +763,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLRICKSHAWMAN', 'Pattern Recognition', 'Rickshaw Man', 0x12000000,
@@ -772,7 +772,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLRISEFALL3METHODS', 'Pattern Recognition', 'Rising/Falling Three Methods', 0x12000000,
@@ -781,7 +781,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLSEPARATINGLINES', 'Pattern Recognition', 'Separating Lines', 0x12000000,
@@ -790,7 +790,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLSHOOTINGSTAR', 'Pattern Recognition', 'Shooting Star', 0x12000000,
@@ -799,7 +799,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLSHORTLINE', 'Pattern Recognition', 'Short Line Candle', 0x12000000,
@@ -808,7 +808,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040700 },
     ],
     '{}'),
   FuncInfo.of('CDLSPINNINGTOP', 'Pattern Recognition', 'Spinning Top', 0x12000000,
@@ -817,7 +817,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040700 },
     ],
     '{}'),
   FuncInfo.of('CDLSTALLEDPATTERN', 'Pattern Recognition', 'Stalled Pattern', 0x12000000,
@@ -826,7 +826,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLSTICKSANDWICH', 'Pattern Recognition', 'Stick Sandwich', 0x12000000,
@@ -835,7 +835,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLTAKURI', 'Pattern Recognition', 'Takuri (Dragonfly Doji with very long lower shadow)', 0x12000000,
@@ -844,7 +844,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000521 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000520 },
     ],
     '{}'),
   FuncInfo.of('CDLTASUKIGAP', 'Pattern Recognition', 'Tasuki Gap', 0x12000000,
@@ -853,7 +853,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLTHRUSTING', 'Pattern Recognition', 'Thrusting Pattern', 0x12000000,
@@ -862,7 +862,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLTRISTAR', 'Pattern Recognition', 'Tristar Pattern', 0x12000000,
@@ -871,7 +871,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CDLUNIQUE3RIVER', 'Pattern Recognition', 'Unique 3 River', 0x12000000,
@@ -880,7 +880,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000541 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000540 },
     ],
     '{}'),
   FuncInfo.of('CDLUPSIDEGAP2CROWS', 'Pattern Recognition', 'Upside Gap Two Crows', 0x12000000,
@@ -889,7 +889,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000641 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000640 },
     ],
     '{}'),
   FuncInfo.of('CDLXSIDEGAP3METHODS', 'Pattern Recognition', 'Upside/Downside Gap Three Methods', 0x12000000,
@@ -898,7 +898,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000741 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000740 },
     ],
     '{}'),
   FuncInfo.of('CE', 'Overlap Studies', 'Chandelier Exit', 0x03000000,
@@ -1268,8 +1268,8 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OptInputType.INTEGER_RANGE, paramName: 'optInRightBars', key: 'rightBars', flags: 0x00000000, displayName: 'Right Bars', hint: 'Number of bars required to be lower/higher after the pivot', defaultValue: 2.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 10, suggestedIncrement: 1 },
     ],
     [
-      { type: OutputType.INTEGER, paramName: 'outSwingHigh', key: 'outSwingHigh', flags: 0x00004521 },
-      { type: OutputType.INTEGER, paramName: 'outSwingLow', key: 'outSwingLow', flags: 0x00004521 },
+      { type: OutputType.INTEGER, paramName: 'outSwingHigh', key: 'outSwingHigh', flags: 0x00004520 },
+      { type: OutputType.INTEGER, paramName: 'outSwingLow', key: 'outSwingLow', flags: 0x00004520 },
     ],
     '{}'),
   FuncInfo.of('FRAMA', 'Overlap Studies', 'Fractal Adaptive Moving Average', 0x0B000004,

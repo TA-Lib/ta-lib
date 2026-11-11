@@ -21,7 +21,7 @@ A four-candle pattern: three same-color candles with consecutively higher (or lo
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

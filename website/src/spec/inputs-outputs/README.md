@@ -54,7 +54,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Pattern outputs {#patterns}
 
-<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL`, `TA_OUT_PATTERN_BULL_BEAR` or `TA_OUT_PATTERN_COLOR`, exactly one of them. Every integer output of a `TA_FUNC_FLG_CANDLESTICK` function is one. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL`, `TA_OUT_PATTERN_BULL_BEAR` or `TA_OUT_PATTERN_COLOR`, exactly one of them, and no display hint such as `TA_OUT_LINE`: a chart marks the bars it flags. Every integer output of a `TA_FUNC_FLG_CANDLESTICK` function is one. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
 - **The values.** The flags list every value the output can write, and it writes no other:
   - Its levels are 100 always, 80 too if it carries `TA_OUT_PATTERN_WEAK`, and 200 too if it carries `TA_OUT_PATTERN_CONFIRM`.

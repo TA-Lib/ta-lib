@@ -21,7 +21,7 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

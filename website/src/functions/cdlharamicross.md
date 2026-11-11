@@ -21,7 +21,7 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_weak`
 
 :::
 

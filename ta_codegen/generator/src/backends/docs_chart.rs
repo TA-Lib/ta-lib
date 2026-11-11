@@ -2070,9 +2070,9 @@ mod tests {
     /// declare: a bearish-only pattern never mentions a bullish marker.
     #[test]
     fn the_pattern_sentence_follows_the_outputs_sign_flags() {
-        let both = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive", "negative"]);
-        let bear = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "negative"]);
-        let bull = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]);
+        let both = out("outInteger", ParamType::Integer, &["pattern_bull_bear", "zero", "positive", "negative"]);
+        let bear = out("outInteger", ParamType::Integer, &["pattern_bull_bear", "zero", "negative"]);
+        let bull = out("outInteger", ParamType::Integer, &["pattern_bull_bear", "zero", "positive"]);
         let d = candle_csv("; flagged bars: 1", "outInteger (shift 0)", &["0", "0", "-100", "0", "0"]);
         let s = render(&func("CDLX", &["candlestick"], vec![], vec![both]), &d).sentence;
         assert!(s.contains("outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one"), "{s}");
@@ -2088,7 +2088,7 @@ mod tests {
     /// never a bull/bear arrow and never a step pane.
     #[test]
     fn a_candle_sign_output_marks_the_candles() {
-        let f = func("CDLX", &["candlestick"], vec![], vec![out("outInteger", ParamType::Integer, &["line", "pattern_color", "zero", "positive", "negative"])]);
+        let f = func("CDLX", &["candlestick"], vec![], vec![out("outInteger", ParamType::Integer, &["pattern_color", "zero", "positive", "negative"])]);
         let d = candle_csv("; flagged bars: 2", "outInteger (shift 0)", &["0", "100", "0", "-100", "0"]);
         let chart = render(&f, &d);
         assert!(!chart.svg.contains("<polyline class=\"line s1\""), "{}", chart.svg);

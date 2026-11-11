@@ -21,7 +21,7 @@ A two-candle pattern of two long, opposite-colored real bodies whose closing pri
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

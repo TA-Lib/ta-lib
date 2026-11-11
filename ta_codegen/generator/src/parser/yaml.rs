@@ -233,6 +233,11 @@ pub fn check_flags(func: &FuncDef) -> Result<(), Vec<String>> {
             }
         }
         let sign = o.pattern_sign();
+        if sign.is_some() {
+            for style in ["line", "dot_line", "dash_line", "dot", "histogram"].iter().filter(|s| has(s)) {
+                errs.push(format!("{name}: output `{out}`: a pattern output takes no display style such as `{style}`"));
+            }
+        }
         if has("pattern_weak") && !matches!(sign, Some(PatternSign::Call | PatternSign::Color)) {
             errs.push(format!("{name}: output `{out}`: `pattern_weak` needs `pattern_bull_bear` or `pattern_color`"));
         }

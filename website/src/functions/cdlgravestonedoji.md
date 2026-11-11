@@ -21,7 +21,7 @@ Single-candle doji whose open and close sit at the low of the day, leaving a lon
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+- `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

@@ -21,7 +21,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
 
 :::
 

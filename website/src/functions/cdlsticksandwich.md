@@ -21,7 +21,7 @@ A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwic
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

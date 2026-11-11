@@ -21,7 +21,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

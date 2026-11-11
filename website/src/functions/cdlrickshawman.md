@@ -21,7 +21,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+- `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

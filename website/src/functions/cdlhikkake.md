@@ -21,7 +21,7 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
 
 :::
 

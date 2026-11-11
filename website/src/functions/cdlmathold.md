@@ -21,7 +21,7 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

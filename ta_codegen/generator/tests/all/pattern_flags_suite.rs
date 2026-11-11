@@ -21,7 +21,7 @@ fn yaml(func_flags: &str, out_type: &str, out_flags: &str) -> String {
 /// A valid candlestick fixture, then the flags under test set directly, so the
 /// fixture reaches `check_flags` instead of `parse_yaml_str`'s panic.
 fn fixture(func_flags: &[&str], out_type: ParamType, out_flags: &[&str]) -> FuncDef {
-    let mut f = parse_yaml_str(&yaml("candlestick", "integer", "line, pattern_bool, zero, positive"), Path::new(PATH));
+    let mut f = parse_yaml_str(&yaml("candlestick", "integer", "pattern_bool, zero, positive"), Path::new(PATH));
     f.flags = func_flags.iter().map(|s| (*s).to_string()).collect();
     f.outputs[0].param_type = out_type;
     f.outputs[0].flags = out_flags.iter().map(|s| (*s).to_string()).collect();
@@ -45,6 +45,11 @@ fn bool_takes_exactly_zero_and_positive() {
 #[test]
 fn bool_excludes_bull_bear() {
     one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_bool", "pattern_bull_bear", "zero", "positive"]), "exclude each other");
+}
+
+#[test]
+fn a_pattern_output_takes_no_display_style() {
+    one_complaint(&fixture(CDL, ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]), "takes no display style such as `line`");
 }
 
 #[test]
@@ -108,12 +113,12 @@ fn an_unknown_function_flag_is_rejected() {
 
 #[test]
 fn an_unknown_output_flag_is_rejected() {
-    one_complaint(&fixture(CDL, ParamType::Integer, &["line", "pattern_bool", "zero", "positive", "lin"]), "unknown output flag `lin`");
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_bool", "zero", "positive", "lin"]), "unknown output flag `lin`");
 }
 
 #[test]
 fn an_unknown_optional_input_flag_is_rejected() {
-    let mut f = fixture(CDL, ParamType::Integer, &["line", "pattern_bool", "zero", "positive"]);
+    let mut f = fixture(CDL, ParamType::Integer, &["pattern_bool", "zero", "positive"]);
     f.optional_inputs[0].flags = vec!["percnt".to_string()];
     one_complaint(&f, "unknown flag `percnt`");
 }

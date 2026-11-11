@@ -21,7 +21,7 @@ Single candle with a small real body, a long lower shadow, and little/no upper s
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

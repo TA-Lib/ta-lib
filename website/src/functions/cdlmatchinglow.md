@@ -21,7 +21,7 @@ A two-candle pattern of two consecutive black (bearish) candles with equal close
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+- `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

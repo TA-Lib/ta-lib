@@ -21,7 +21,7 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 **Outputs**
 
-- `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+- `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 
