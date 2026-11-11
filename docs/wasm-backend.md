@@ -18,14 +18,13 @@
 | W4 | Load checks | The module compiles, and one multiply-add whose fused and unfused results differ returns the fused one. A failure of either leaves the TypeScript path in place and throws nothing. `getRuntimeInfo` ([D18](typescript-backend.md)) reports the engine in use and, for TypeScript, which check failed | Compilation fails where relaxed SIMD is missing and where a Content-Security-Policy forbids WASM; there is no way to ask without trying. A missing `.wasm` asset or a non-FMA CPU would otherwise be a silent slow path | Adopted |
 | W5 | API | Unchanged and synchronous: no top-level await ([D3](typescript-backend.md)), no call that must be awaited first | The fallback is what makes this possible in a browser, which compiles a module of this size only asynchronously | Adopted |
 | W6 | Settings | `Core` stays the JavaScript object of [D12](typescript-backend.md) and the only owner of unstable periods and candle settings. The engine keeps none: a call passes what it reads | One source of truth whichever engine answers, and for any number of WASM modules | Adopted |
-| W7 | Loading | Node, Deno and Bun compile at import, synchronously. Browsers: Open | A server runtime needs no network and no await | Adopted; browsers Open (W-O2) |
+| W7 | Loading | Node, Deno and Bun compile at import, synchronously. A browser loads the engine only when the caller awaits `ready()`; before that, and without it, every call runs TypeScript. `ready()` takes engine-loading arguments only (where the binary is); settings stay on `Core` (W6) | A server runtime needs no network and no await. In a browser an explicit call fetches the binary only for a caller who asked, and a page whose Content-Security-Policy forbids WASM logs no violation unless it called | Ruled (owner, 2026-11-11) |
 
 ## 3. Open
 
 | # | Question | Settled by |
 |---|---|---|
 | W-O1 | What compiles to WASM: the generated Rust crate, the generated C, or an emitter of its own | Batch, open and update timings of the same functions built each way, and what each needs from the gates |
-| W-O2 | Browser loading: WASM only after an explicit `await ready()`, or a background load started at import. The background load fetches the whole binary for a caller who imported one function, and a forbidding Content-Security-Policy logs a violation for the failed attempt | Owner |
 | W-O3 | Transcendental functions. The engine must return what the TypeScript body returns ([D11](typescript-backend.md): the JS engine's `Math.*`), so it either imports `Math.*` or leaves those functions to TypeScript. A libm compiled into the module breaks W2's equivalence in the last bit, silently | Timing of an imported `Math.*` call from WASM |
 | W-O4 | Stream handles: one `<N>Stream` class over either engine, or one class per engine. A WASM handle owns linear memory and [D15](typescript-backend.md) has no `close()` | Per-bar `update` timing of both shapes; a call site that sees two shapes or two WASM targets slows several-fold |
 | W-O5 | One module or a few | The whole library's binary size, raw and compressed |
