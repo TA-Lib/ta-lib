@@ -2,3 +2,4 @@
 TALib.Metadata.FuncInfo.Attributes.get -> string!
 TALib.Metadata.OutputFlags.BarIndex = 65536 -> TALib.Metadata.OutputFlags
 TALib.Metadata.OutputFlags.Segmented = 131072 -> TALib.Metadata.OutputFlags
+TALib.Metadata.OutputFlags.PatternColor = 262144 -> TALib.Metadata.OutputFlags

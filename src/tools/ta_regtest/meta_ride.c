@@ -31,8 +31,7 @@
 /* What a flag permits and a call did: TA_OUT_DISPLAY_SHIFT. */
 #define C_SHIFTED   0x1000u
 
-#define PATTERN_FLAGS (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)
-#define SIGN_FLAGS    (TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_ZERO)
+#define PATTERN_FLAGS (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR | TA_OUT_PATTERN_COLOR)
 
 /* A product of four inputs this large is still finite. Past it a non-finite
  * output is overflow, which TA_FUNC_FLG_NAN_INF_OUT does not describe. */
@@ -81,13 +80,9 @@ static int report( const Site *s )
    return 1;
 }
 
-static int is_pattern( const TA_FuncInfo *func, const TA_OutputParameterInfo *o )
+static int is_pattern( const TA_OutputParameterInfo *o )
 {
-   if( o->type != TA_Output_Integer )
-      return 0;
-   return (o->flags & PATTERN_FLAGS) ||
-          ((func->flags & TA_FUNC_FLG_CANDLESTICK) &&
-           (o->flags & SIGN_FLAGS) == SIGN_FLAGS);
+   return o->type == TA_Output_Integer && (o->flags & PATTERN_FLAGS);
 }
 
 static unsigned int declared_classes( const TA_OutputParameterInfo *o, int pattern )
@@ -153,7 +148,7 @@ static void resolve( void )
       for( o = 0; o < s->info->nbOutput; o++ )
       {
          TA_GetOutputParameterInfo( handle, o, &s->out[o] );
-         s->pattern[o] = is_pattern( s->info, s->out[o] );
+         s->pattern[o] = is_pattern( s->out[o] );
          s->declared[o] = declared_classes( s->out[o], s->pattern[o] );
          s->required[o] = s->declared[o] & (C_OTHER - 1);
          if( s->out[o]->flags & TA_OUT_DISPLAY_SHIFT ) s->required[o] |= C_SHIFTED;

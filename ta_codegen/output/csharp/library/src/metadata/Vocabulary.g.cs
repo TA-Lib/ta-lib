@@ -245,6 +245,9 @@ public enum OutputFlags : uint
     /// <summary>A line whose segments restart wherever the function's integer output changes value: never connect across a change.</summary>
     Segmented = 0x00020000,
 
+    /// <summary>The sign is the color of the bar the value is for: positive when close >= open, negative otherwise.</summary>
+    PatternColor = 0x00040000,
+
     /// <summary>Never set: every output is required.</summary>
     [Obsolete("Never set: every output is required.")]
     Nullable = 0x00002000,

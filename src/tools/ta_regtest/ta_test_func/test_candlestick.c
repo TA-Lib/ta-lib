@@ -11766,8 +11766,7 @@ static void cvs_one_function( const TA_FuncInfo *funcInfo, void *opaque )
    }
    TA_GetOutputParameterInfo( funcInfo->handle, 0, &outInfo );
    f = outInfo->flags;
-   color = !(f & (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)) &&
-           (f & TA_OUT_ZERO) && (f & TA_OUT_POSITIVE) && (f & TA_OUT_NEGATIVE);
+   color = (f & TA_OUT_PATTERN_COLOR) != 0;
    {
       int p;
       for( p = 0; p < pbNbConfirmProven && strcmp( pbConfirmProven[p], funcInfo->name ) != 0; p++ ) { }

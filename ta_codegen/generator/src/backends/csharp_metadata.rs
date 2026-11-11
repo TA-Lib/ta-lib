@@ -420,6 +420,7 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "Segmented",
         "A line whose segments restart wherever the function's integer output changes value: never connect across a change.",
     ),
+    ("pattern_color", "PatternColor", "The sign is the color of the bar the value is for: positive when close >= open, negative otherwise."),
 ];
 
 /// Output members kept for compatibility: the C value stays defined, no output sets it.

@@ -261,6 +261,7 @@ An unrecognised flag string in any of the three lists fails `generate`.
 | `zero` | 0 occurs | `TA_OUT_ZERO` |
 | `pattern_bool` | Pattern output with two states, 0 or non-zero | `TA_OUT_PATTERN_BOOL` |
 | `pattern_bull_bear` | Pattern output whose sign is a call | `TA_OUT_PATTERN_BULL_BEAR` |
+| `pattern_color` | Pattern output whose sign is the candle's color | `TA_OUT_PATTERN_COLOR` |
 | `pattern_weak` | Level 80 occurs too | `TA_OUT_PATTERN_WEAK` |
 | `pattern_confirm` | Level 200 occurs too | `TA_OUT_PATTERN_CONFIRM` |
 | `bar_index` | The value is an absolute index into the input arrays. Integer outputs only | `TA_OUT_BAR_INDEX` |
@@ -272,8 +273,7 @@ anything else:
 
 - `pattern_bool, zero, positive`;
 - `pattern_bull_bear, zero` and `positive`, `negative` or both;
-- on a `candlestick` function, `zero, positive, negative` with neither: the sign
-  is the candle's color.
+- `pattern_color, zero` and `positive`, `negative` or both.
 
 `pattern_weak` goes on a bull/bear or color output, `pattern_confirm` on a
 bull/bear output. Every integer output of a `candlestick` function is a pattern

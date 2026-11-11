@@ -241140,7 +241140,7 @@ public class TaCodegenServe {
         ABSTRACT.put("CDLHIGHWAVE", new AbsFunc("CDLHIGHWAVE", "Pattern Recognition", "High-Wave Candle", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1793) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
         ABSTRACT.put("CDLHIKKAKE", new AbsFunc("CDLHIKKAKE", "Pattern Recognition", "Hikkake Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
@@ -241232,11 +241232,11 @@ public class TaCodegenServe {
         ABSTRACT.put("CDLSHORTLINE", new AbsFunc("CDLSHORTLINE", "Pattern Recognition", "Short Line Candle", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1793) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
         ABSTRACT.put("CDLSPINNINGTOP", new AbsFunc("CDLSPINNINGTOP", "Pattern Recognition", "Spinning Top", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },
-            new AbsOut[]{ new AbsOut(1,"outInteger",1793) }));
+            new AbsOut[]{ new AbsOut(1,"outInteger",263937) }));
         ABSTRACT.put("CDLSTALLEDPATTERN", new AbsFunc("CDLSTALLEDPATTERN", "Pattern Recognition", "Stalled Pattern", 301989888,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{  },

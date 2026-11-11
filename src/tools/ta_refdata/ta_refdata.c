@@ -380,7 +380,7 @@ static void run_alloc(Run *r, const TA_FuncInfo *fi, int rowsCap)
         TA_GetOutputParameterInfo(fi->handle, i, &oo);
         r->isInt[i] = oo->type == TA_Output_Integer;
         r->isPattern[i] = (oo->flags & (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR |
-                                        TA_OUT_PATTERN_CONFIRM | TA_OUT_PATTERN_WEAK)) != 0;
+                                        TA_OUT_PATTERN_COLOR)) != 0;
         if (r->isInt[i]) {
             r->iout[i] = xmalloc(sizeof(int) * (size_t)rowsCap);
             TA_SetOutputParamIntegerPtr(r->h, i, r->iout[i]);
@@ -495,7 +495,6 @@ static TA_RetCode run_call(Run *r, const Series *s, const Table *fromFile)
 static int run_is_pattern(const Run *r)
 {
     unsigned i;
-    if (r->fi->flags & TA_FUNC_FLG_CANDLESTICK) return 1;
     for (i = 0; i < r->fi->nbOutput; i++) if (r->isPattern[i]) return 1;
     return 0;
 }
@@ -507,7 +506,7 @@ static int run_flagged(const Run *r, int b)
     int k = b - r->beg;
     if (k < 0 || k >= r->nb) return 0;
     for (i = 0; i < r->fi->nbOutput; i++) {
-        if (!r->isPattern[i] && !(r->fi->flags & TA_FUNC_FLG_CANDLESTICK)) continue;
+        if (!r->isPattern[i]) continue;
         if (r->isInt[i] ? r->iout[i][k] != 0 : r->rout[i][k] != 0.0) return 1;
     }
     return 0;

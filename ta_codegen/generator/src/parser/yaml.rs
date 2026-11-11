@@ -216,21 +216,25 @@ pub fn check_flags(func: &FuncDef) -> Result<(), Vec<String>> {
         if !integer && o.flags.iter().any(|f| f.starts_with("pattern_")) {
             errs.push(format!("{name}: output `{out}`: a pattern flag needs an integer output"));
         }
-        if has("pattern_bool") && (has("pattern_bull_bear") || has("negative") || !has("zero") || !has("positive")) {
+        let kinds = ["pattern_bool", "pattern_bull_bear", "pattern_color"].iter().filter(|k| has(k)).count();
+        if kinds > 1 {
             errs.push(format!(
-                "{name}: output `{out}`: `pattern_bool` takes the sign flags `zero, positive` and no `pattern_bull_bear`"
+                "{name}: output `{out}`: `pattern_bool`, `pattern_bull_bear` and `pattern_color` exclude each other"
             ));
         }
-        if has("pattern_bull_bear") && !(has("zero") && (has("positive") || has("negative"))) {
-            errs.push(format!(
-                "{name}: output `{out}`: `pattern_bull_bear` needs `zero` and at least one of `positive` / `negative`"
-            ));
+        if has("pattern_bool") && (has("negative") || !has("zero") || !has("positive")) {
+            errs.push(format!("{name}: output `{out}`: `pattern_bool` takes the sign flags `zero, positive`"));
         }
-        let sign = o.pattern_sign(candlestick);
+        for kind in ["pattern_bull_bear", "pattern_color"] {
+            if has(kind) && !(has("zero") && (has("positive") || has("negative"))) {
+                errs.push(format!(
+                    "{name}: output `{out}`: `{kind}` needs `zero` and at least one of `positive` / `negative`"
+                ));
+            }
+        }
+        let sign = o.pattern_sign();
         if has("pattern_weak") && !matches!(sign, Some(PatternSign::Call | PatternSign::Color)) {
-            errs.push(format!(
-                "{name}: output `{out}`: `pattern_weak` needs `pattern_bull_bear` or a candlestick color output"
-            ));
+            errs.push(format!("{name}: output `{out}`: `pattern_weak` needs `pattern_bull_bear` or `pattern_color`"));
         }
         if has("pattern_confirm") && !has("pattern_bull_bear") {
             errs.push(format!("{name}: output `{out}`: `pattern_confirm` needs `pattern_bull_bear`"));
@@ -249,7 +253,7 @@ pub fn check_flags(func: &FuncDef) -> Result<(), Vec<String>> {
         if candlestick && integer && sign.is_none() {
             errs.push(format!(
                 "{name}: output `{out}`: an integer output of a candlestick function is a pattern output: \
-                 `pattern_bool`, `pattern_bull_bear`, or color (`zero, positive, negative`)"
+                 `pattern_bool`, `pattern_bull_bear` or `pattern_color`"
             ));
         }
     }

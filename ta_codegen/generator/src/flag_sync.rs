@@ -103,6 +103,7 @@ mod tests {
             "TA_OUT_PATTERN_WEAK" => "pattern_weak",
             "TA_OUT_BAR_INDEX" => "bar_index",
             "TA_OUT_SEGMENTED" => "segmented",
+            "TA_OUT_PATTERN_COLOR" => "pattern_color",
             _ => return None,
         }))
     }

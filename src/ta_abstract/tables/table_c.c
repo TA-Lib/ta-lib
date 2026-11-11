@@ -779,7 +779,7 @@ DEF_FUNCTION( CDLHARAMICROSS,
 
 /* CDLHIGHWAVE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLHIGHWAVE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLHIGHWAVE_Inputs[]    =
 {
@@ -1383,7 +1383,7 @@ DEF_FUNCTION( CDLSHOOTINGSTAR,
 
 /* CDLSHORTLINE BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSHORTLINE_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSHORTLINE_Inputs[]    =
 {
@@ -1409,7 +1409,7 @@ DEF_FUNCTION( CDLSHORTLINE,
 
 /* CDLSPINNINGTOP BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_CDLSPINNINGTOP_Default =
-                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
+                               { TA_Output_Integer, "outInteger", TA_OUT_LINE | TA_OUT_PATTERN_COLOR | TA_OUT_ZERO | TA_OUT_POSITIVE | TA_OUT_NEGATIVE };
 
 static const TA_InputParameterInfo    *TA_CDLSPINNINGTOP_Inputs[]    =
 {

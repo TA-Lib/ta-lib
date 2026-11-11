@@ -714,8 +714,7 @@ pub enum PatternSign {
     Presence,
     /// `pattern_bull_bear`: + bullish, - bearish.
     Call,
-    /// A candlestick output with all three sign flags and neither of the
-    /// above: the color of the bar the value is written on.
+    /// `pattern_color`: the color of the bar the value is written on.
     Color,
 }
 
@@ -724,10 +723,9 @@ impl Output {
         self.flags.iter().any(|f| f == flag)
     }
 
-    /// `None` when this is not a pattern output. `candlestick` is the
-    /// function's own flag, the only context in which color exists.
+    /// `None` when this is not a pattern output.
     #[must_use]
-    pub fn pattern_sign(&self, candlestick: bool) -> Option<PatternSign> {
+    pub fn pattern_sign(&self) -> Option<PatternSign> {
         if self.param_type != ParamType::Integer {
             return None;
         }
@@ -735,7 +733,7 @@ impl Output {
             Some(PatternSign::Presence)
         } else if self.has_flag("pattern_bull_bear") {
             Some(PatternSign::Call)
-        } else if candlestick && ["zero", "positive", "negative"].iter().all(|f| self.has_flag(f)) {
+        } else if self.has_flag("pattern_color") {
             Some(PatternSign::Color)
         } else {
             None
@@ -745,8 +743,8 @@ impl Output {
     /// Every value a pattern output writes, ascending; `None` when this is not
     /// a pattern output.
     #[must_use]
-    pub fn pattern_values(&self, candlestick: bool) -> Option<Vec<i32>> {
-        self.pattern_sign(candlestick)?;
+    pub fn pattern_values(&self) -> Option<Vec<i32>> {
+        self.pattern_sign()?;
         let mut levels = vec![100];
         if self.has_flag("pattern_weak") {
             levels.push(80);

@@ -181,6 +181,7 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "SEGMENTED",
         "A line whose segments restart wherever the function's integer output changes value: never connect across a change.",
     ),
+    ("pattern_color", "PATTERN_COLOR", "The sign is the color of the bar the value is for: positive when close >= open, negative otherwise."),
 ];
 
 const PRICE_COMPONENTS: &[(PriceComponent, &str, &str)] = &[

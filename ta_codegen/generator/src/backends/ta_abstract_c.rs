@@ -1505,6 +1505,7 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "pattern_weak" => Some("TA_OUT_PATTERN_WEAK"),
         "bar_index" => Some("TA_OUT_BAR_INDEX"),
         "segmented" => Some("TA_OUT_SEGMENTED"),
+        "pattern_color" => Some("TA_OUT_PATTERN_COLOR"),
         _ => None,
     }
 }

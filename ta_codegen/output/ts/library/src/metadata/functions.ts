@@ -595,7 +595,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
     ],
     '{}'),
   FuncInfo.of('CDLHIKKAKE', 'Pattern Recognition', 'Hikkake Pattern', 0x12000000,
@@ -808,7 +808,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
     ],
     '{}'),
   FuncInfo.of('CDLSPINNINGTOP', 'Pattern Recognition', 'Spinning Top', 0x12000000,
@@ -817,7 +817,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     ],
     [],
     [
-      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00000701 },
+      { type: OutputType.INTEGER, paramName: 'outInteger', key: 'values', flags: 0x00040701 },
     ],
     '{}'),
   FuncInfo.of('CDLSTALLEDPATTERN', 'Pattern Recognition', 'Stalled Pattern', 0x12000000,

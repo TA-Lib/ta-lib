@@ -54,7 +54,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Pattern outputs {#patterns}
 
-<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL` or `TA_OUT_PATTERN_BULL_BEAR`, or any integer output of a `TA_FUNC_FLG_CANDLESTICK` function. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL`, `TA_OUT_PATTERN_BULL_BEAR` or `TA_OUT_PATTERN_COLOR`, exactly one of them. Every integer output of a `TA_FUNC_FLG_CANDLESTICK` function is one. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
 - **The values.** The flags list every value the output can write, and it writes no other:
   - Its levels are 100 always, 80 too if it carries `TA_OUT_PATTERN_WEAK`, and 200 too if it carries `TA_OUT_PATTERN_CONFIRM`.
@@ -71,5 +71,5 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 - **The sign.**
   - With `TA_OUT_PATTERN_BOOL` the output has two states, 0 for no pattern and non-zero for the pattern.
   - With `TA_OUT_PATTERN_BULL_BEAR` it is the pattern's call: + bullish, - bearish.
-  - With neither, it is the color of the bar the value is for: + when close >= open, - otherwise.
+  - With `TA_OUT_PATTERN_COLOR` it is the color of the bar the value is for: + when close >= open, - otherwise. It is never a call.
 - **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 is not a new pattern: it confirms the output's live pattern, which has the same sign. The live pattern is the output's most recent value of level 100 or 80, provided no 200 came after it: a pattern is confirmed at most once. The live pattern can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on.

@@ -96,6 +96,9 @@ public final class OutputFlags {
    /** A line whose segments restart wherever the function's integer output changes value: never connect across a change. */
    public static final int SEGMENTED = 0x00020000;
 
+   /** The sign is the color of the bar the value is for: positive when close >= open, negative otherwise. */
+   public static final int PATTERN_COLOR = 0x00040000;
+
    /** @deprecated Never set: every output is required. */
    @Deprecated(forRemoval = true)
    public static final int NULLABLE = 0x00002000;

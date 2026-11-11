@@ -632,6 +632,7 @@ pub fn output_flag_bits(flags: &[String]) -> u32 {
             "pattern_weak" => b |= 0x0000_8000,
             "bar_index" => b |= 0x0001_0000,
             "segmented" => b |= 0x0002_0000,
+            "pattern_color" => b |= 0x0004_0000,
             _ => {}
         }
     }

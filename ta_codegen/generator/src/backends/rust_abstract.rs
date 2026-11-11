@@ -1801,6 +1801,9 @@ flag_newtype!(
     /// A line whose segments restart wherever the function's integer output
     /// changes value: never connect across a change.
     SEGMENTED = 0x0002_0000,
+    /// The sign is the color of the bar the value is for: positive when
+    /// close >= open, negative otherwise.
+    PATTERN_COLOR = 0x0004_0000,
 });
 
 /// A required input parameter.

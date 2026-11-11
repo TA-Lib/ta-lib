@@ -332,6 +332,7 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("pattern_weak", "Pattern Weak"),
     ("bar_index", "Bar Index"),
     ("segmented", "Segmented"),
+    ("pattern_color", "Pattern Color"),
 ];
 
 fn write_outputs(out: &mut String, func: &FuncDef) {

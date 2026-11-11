@@ -44,7 +44,31 @@ fn bool_takes_exactly_zero_and_positive() {
 
 #[test]
 fn bool_excludes_bull_bear() {
-    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_bool", "pattern_bull_bear", "zero", "positive"]), "`pattern_bool` takes");
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_bool", "pattern_bull_bear", "zero", "positive"]), "exclude each other");
+}
+
+#[test]
+fn color_excludes_bull_bear() {
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_color", "pattern_bull_bear", "zero", "positive"]), "exclude each other");
+}
+
+#[test]
+fn color_needs_zero() {
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_color", "positive", "negative"]), "`pattern_color` needs");
+}
+
+#[test]
+fn color_needs_a_sign() {
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_color", "zero"]), "`pattern_color` needs");
+}
+
+#[test]
+fn color_takes_any_sign_set() {
+    for signs in [&["positive"][..], &["negative"], &["positive", "negative"]] {
+        let mut flags = vec!["pattern_color", "zero", "pattern_weak"];
+        flags.extend_from_slice(signs);
+        assert!(check_flags(&fixture(CDL, ParamType::Integer, &flags)).is_ok(), "{flags:?}");
+    }
 }
 
 #[test]
@@ -69,7 +93,7 @@ fn weak_needs_a_call_or_color() {
 
 #[test]
 fn confirm_needs_bull_bear() {
-    one_complaint(&fixture(CDL, ParamType::Integer, &["zero", "positive", "negative", "pattern_confirm"]), "`pattern_confirm` needs");
+    one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_color", "zero", "positive", "negative", "pattern_confirm"]), "`pattern_confirm` needs");
 }
 
 #[test]

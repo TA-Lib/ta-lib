@@ -540,6 +540,12 @@ fn output_flags_class() -> String {
                 "A line whose segments restart wherever the function's integer output changes \
                  value: never connect across a change.",
             ),
+            (
+                "PATTERN_COLOR",
+                0x0004_0000,
+                "The sign is the color of the bar the value is for: positive when close >= open, \
+                 negative otherwise.",
+            ),
         ],
         &[("NULLABLE", 0x0000_2000)],
         &[("PATTERN_STRENGTH", "PATTERN_CONFIRM")],

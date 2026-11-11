@@ -2761,6 +2761,7 @@ public static class FunctionDescription
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -3785,6 +3786,7 @@ public static class FunctionDescription
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -3827,6 +3829,7 @@ public static class FunctionDescription
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

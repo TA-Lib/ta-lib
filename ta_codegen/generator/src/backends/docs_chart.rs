@@ -6,9 +6,8 @@
 //! outputs named `…Open`, `…High`, `…Low`, `…Close` are a candle pane of their
 //! own; each integer output that is not a pattern gets a step pane of its own,
 //! and a `bar_index` one also draws, on the price pane, the function's one real
-//! input read at the bar it names; `pattern_*` outputs, and a `candlestick`
-//! function's plain integer output (its sign is the candle's colour), become
-//! markers on the candles; the inputs' price components pick candles or a close
+//! input read at the bar it names; `pattern_*` outputs become markers on the
+//! candles; the inputs' price components pick candles or a close
 //! line and add a volume pane. Output flags pick the stroke (`line`, `dash_line`,
 //! `dot`, `histogram`, `upper_limit`/`lower_limit` band, `segmented` broken and
 //! coloured by the integer output's sign), and `display_shift` moves the series
@@ -873,7 +872,7 @@ struct Plan<'a> {
     ind_outs: Vec<&'a Output>,
     int_outs: Vec<&'a Output>,
     pattern_outs: Vec<&'a Output>,
-    /// A candlestick function's plain integer output: its sign is the candle's colour.
+    /// `pattern_color` outputs: the sign is the candle's colour.
     sign_outs: Vec<&'a Output>,
     /// Real outputs named `…Open`, `…High`, `…Low`, `…Close`, in that order: a
     /// candle series in a pane of its own.
@@ -935,10 +934,10 @@ fn plan<'a>(func: &'a FuncDef, data: &RefData) -> Plan<'a> {
         if candle_outs.is_some_and(|c| c.iter().any(|k| k.name == o.name)) {
             continue;
         }
-        if o.flags.iter().any(|f| f.starts_with("pattern_")) {
-            p.pattern_outs.push(o);
-        } else if o.param_type == ParamType::Integer && is_candle {
+        if has(&o.flags, "pattern_color") {
             p.sign_outs.push(o);
+        } else if o.flags.iter().any(|f| f.starts_with("pattern_")) {
+            p.pattern_outs.push(o);
         } else if o.param_type == ParamType::Integer {
             if index_input.is_some() && has(&o.flags, "bar_index") {
                 p.index_outs.push(o);
@@ -1325,7 +1324,7 @@ fn occurrence_text(name: &str, hits: u32, none: bool) -> String {
     }
 }
 
-/// A candlestick function's plain integer output as neutral arrows: its sign is
+/// `pattern_color` outputs as neutral arrows: its sign is
 /// the candle's colour, not a call, so a bull or bear arrow would misread it.
 fn draw_sign_markers<'p>(
     cv: &mut Canvas<'_>,
@@ -2085,11 +2084,11 @@ mod tests {
         assert!(!s.contains('\u{25BC}') && !s.contains("bearish"), "{s}");
     }
 
-    /// A candlestick function's plain integer output is a neutral arrow onto the
-    /// low whatever its sign, never a bull/bear arrow and never a step pane.
+    /// A `pattern_color` output is a neutral arrow onto the low whatever its sign,
+    /// never a bull/bear arrow and never a step pane.
     #[test]
     fn a_candle_sign_output_marks_the_candles() {
-        let f = func("CDLX", &["candlestick"], vec![], vec![out("outInteger", ParamType::Integer, &["line", "zero", "positive", "negative"])]);
+        let f = func("CDLX", &["candlestick"], vec![], vec![out("outInteger", ParamType::Integer, &["line", "pattern_color", "zero", "positive", "negative"])]);
         let d = candle_csv("; flagged bars: 2", "outInteger (shift 0)", &["0", "100", "0", "-100", "0"]);
         let chart = render(&f, &d);
         assert!(!chart.svg.contains("<polyline class=\"line s1\""), "{}", chart.svg);

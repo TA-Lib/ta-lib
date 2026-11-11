@@ -1288,7 +1288,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00040701)
          ));
    }
 
@@ -1582,7 +1582,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00040701)
          ));
    }
 
@@ -1594,7 +1594,7 @@ public final class Functions {
          ),
          List.of(),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000701)
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00040701)
          ));
    }
 

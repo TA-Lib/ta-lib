@@ -685,7 +685,7 @@ pub(crate) enum IntClaim {
 /// here because `input_synth/`'s fixtures carry an integer output too, and a
 /// fixture's example ships nowhere.
 pub(crate) fn integer_claim(func: &FuncDef, output: &Output) -> Option<IntClaim> {
-    if let Some(values) = output.pattern_values(func.is_candlestick()) {
+    if let Some(values) = output.pattern_values() {
         return Some(IntClaim::Pattern(values));
     }
     Some(match (func.name.to_uppercase().as_str(), output.name.as_str()) {

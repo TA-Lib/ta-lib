@@ -2706,6 +2706,7 @@
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -3730,6 +3731,7 @@
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -3772,6 +3774,7 @@
 					<Flag>Positive</Flag>
 					<Flag>Negative</Flag>
 					<Flag>Zero</Flag>
+					<Flag>Pattern Color</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

@@ -486,6 +486,8 @@ typedef int TA_OutputFlags;
 #define TA_OUT_SEGMENTED         0x00020000 /* A line whose segments restart wherever the function's
                                              * integer output changes value: never connect across
                                              * a change. */
+#define TA_OUT_PATTERN_COLOR     0x00040000 /* The sign is the color of the bar the value is for:
+                                             * + when close >= open, - otherwise. Never a call. */
 
 
 /* The following 3 structures will exist for each input, optional

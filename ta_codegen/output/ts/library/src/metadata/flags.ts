@@ -160,5 +160,7 @@ export const OutputFlags = Object.freeze({
   BAR_INDEX: 0x00010000,
   /** A line whose segments restart wherever the function's integer output changes value: never connect across a change. */
   SEGMENTED: 0x00020000,
+  /** The sign is the color of the bar the value is for: positive when close >= open, negative otherwise. */
+  PATTERN_COLOR: 0x00040000,
 } as const);
 
