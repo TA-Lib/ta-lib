@@ -1912,12 +1912,13 @@ fn emit_open_body(
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
     emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
     emit_open_region(
-        o, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
-    );
-    let cur_source = CurSource::StridedArray;
-    emit_capture(
-        o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
-        Some(cur_source), "",
+        o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
+        &mut |o: &mut String| {
+            emit_capture(
+                o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
+                Some(CurSource::StridedArray), "",
+            );
+        },
     );
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
@@ -2154,10 +2155,12 @@ fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> 
 }
 
 /// Render the transcribed open region: VarDecl initializations then the
-/// statements, with tier inserts (composed sub-opens) spliced by index.
+/// statements, with tier inserts (composed sub-opens) spliced by index, then
+/// `tail`: once inside each range-type copy.
 #[allow(clippy::too_many_arguments)]
 fn emit_open_region(
     o: &mut String,
+    func: &FuncDef,
     open_body: &[Statement],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -2166,6 +2169,7 @@ fn emit_open_region(
     stream_fma: &FmaVarSets,
     inserts: &[(usize, String)],
     replaced: &HashSet<usize>,
+    tail: &mut dyn FnMut(&mut String),
 ) {
     let address_of_vars = collect_address_of_vars(open_body);
     let double_address_of_vars = collect_double_address_of_vars(open_body, &address_of_vars);
@@ -2203,6 +2207,33 @@ fn emit_open_region(
         }
     }
 
+    let copies = if inserts.is_empty() && replaced.is_empty() {
+        super::csharp::range_type_copies(open_body, func)
+    } else {
+        None
+    };
+    if let Some(copies) = copies {
+        let render = |o: &mut String, stmts: &[Statement]| {
+            for stmt in stmts {
+                if !matches!(stmt, Statement::VarDecl { .. }) {
+                    o.push_str(&render_statement_ctx(stmt, 6, &ctx, enums, registry, helpers));
+                }
+            }
+        };
+        render(o, &copies.head);
+        let count = counter.get();
+        for (k, arm) in copies.arms.iter().enumerate() {
+            counter.set(count);
+            o.push_str(&super::csharp::open_range_type_arm(k, arm, "      "));
+            let mut a = String::new();
+            render(&mut a, &arm.body);
+            tail(&mut a);
+            o.push_str(&indent_block(&a, 3));
+        }
+        let _ = writeln!(o, "      }}");
+        return;
+    }
+
     for (i, stmt) in open_body.iter().enumerate() {
         // Composed tier: sub-stream opens splice in IMMEDIATELY before the batch
         // call that consumes their series (order is the contract — in-place
@@ -2223,6 +2254,7 @@ fn emit_open_region(
             o.push_str(text);
         }
     }
+    tail(o);
 }
 
 /// The param==1 identity fast path in the open head (mirrors C/Rust/Java).
@@ -3150,7 +3182,7 @@ fn dual_complement_capture(own: &[Field], other: &[Field]) -> String {
     s
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_dual_mode(
     o: &mut String,
     func: &FuncDef,
@@ -3286,15 +3318,17 @@ fn emit_dual_mode(
             let mut s = String::new();
             emit_body_decls(&mut s, func, &open_body);
             emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
-            emit_open_region(
-                &mut s, &open_body, enums, registry, helpers, counter, stream_fma, &[],
-                &HashSet::new(),
-            );
             let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
             let complement = dual_complement_capture(own, other);
-            emit_capture(
-                &mut s, func, arm, &union_scalars, &step_settings, registry, helpers, stream_fma,
-                counter, Some(CurSource::StridedArray), &complement,
+            emit_open_region(
+                &mut s, func, &open_body, enums, registry, helpers, counter, stream_fma, &[],
+                &HashSet::new(),
+                &mut |s: &mut String| {
+                    emit_capture(
+                        s, func, arm, &union_scalars, &step_settings, registry, helpers, stream_fma,
+                        counter, Some(CurSource::StridedArray), &complement,
+                    );
+                },
             );
             let _ = writeln!(s, "      return RetCode.Success;");
             o.push_str(&indent_block(&s, 3));
@@ -4855,7 +4889,8 @@ fn emit_composed_open(
     let inserts = streaming::order_lag_inserts(inserts);
 
     emit_open_region(
-        o, &combined, enums, registry, helpers, counter, stream_fma, &inserts, &replaced,
+        o, func, &combined, enums, registry, helpers, counter, stream_fma, &inserts, &replaced,
+        &mut |_: &mut String| {},
     );
 
     // --- capture ------------------------------------------------------------
