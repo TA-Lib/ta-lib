@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	a088d86030e7cd8ccfa1aebbae672a3281f53c18
-#generated	2026-11-09T13:30:42Z
+#commit	0e5192ae12a052cd71a7418ec692be4e17a4d404
+#generated	2026-11-12T01:18:31Z
 AC	batch	0	703438
 AC	open	0	624330
 AC	openfill	0	692624
@@ -1158,11 +1158,11 @@ TYPPRICE	open	0	174
 TYPPRICE	openfill	0	100149
 TYPPRICE	peek	0	45069
 TYPPRICE	update	0	54285
-ULTOSC	batch	0	1580640
-ULTOSC	open	0	1620551
-ULTOSC	openfill	0	1581149
-ULTOSC	peek	0	107534
-ULTOSC	update	0	177057
+ULTOSC	batch	0	1840050
+ULTOSC	open	0	1820876
+ULTOSC	openfill	0	1840828
+ULTOSC	peek	0	110606
+ULTOSC	update	0	185357
 VAR	batch	0	692193
 VAR	open	0	673524
 VAR	openfill	0	693517
@@ -1178,11 +1178,11 @@ VIDYA	open	0	820353
 VIDYA	openfill	0	860360
 VIDYA	peek	0	68624
 VIDYA	update	0	107533
-VORTEX	batch	0	1219680
-VORTEX	open	0	1230619
-VORTEX	openfill	0	1200540
+VORTEX	batch	0	1319610
+VORTEX	open	0	1260824
+VORTEX	openfill	0	1300785
 VORTEX	peek	0	89101
-VORTEX	update	0	173069
+VORTEX	update	0	182289
 VWAP	batch	0	480091
 VWAP	open	0	460179
 VWAP	openfill	0	480180
