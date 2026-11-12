@@ -337,11 +337,184 @@ fn rust_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
 
 #[test]
 fn rust_output_writes_are_stride_scaled() {
-    let s = rust_stream_section("cdlhammer");
+    let s = rust_stream_section("cdlhikkake");
+    assert!(!s.contains("fn cdlhikkake_open_sink_frame("), "the pin needs an opener that keeps one body");
     assert!(
         s.contains("outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = "),
         "per-bar output writes scale by the stride"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Split candlestick openers: one never-inlined frame per stride
+// ---------------------------------------------------------------------------
+
+/// Every streaming candlestick, with its stream section.
+fn candlestick_sections() -> Vec<(String, String)> {
+    streaming_indicators()
+        .into_iter()
+        .filter(|name| load_indicator(name).0.is_candlestick())
+        .map(|name| {
+            let s = rust_stream_section(&name);
+            (name, s)
+        })
+        .collect()
+}
+
+/// The body a frame's numerics sit in: its `_scalar` when FMA-dispatched.
+fn frame_body(s: &str, verb: &str) -> String {
+    let scalar = format!("    fn {verb}_scalar(");
+    body_of(s, &if s.contains(&scalar) { scalar } else { format!("    fn {verb}(") })
+}
+
+/// Each loop over the bars before the last, and what follows it up to the
+/// region's end: `(loop, after)`.
+fn history_loops(sink: &str) -> Vec<(String, String)> {
+    let lines: Vec<&str> = sink.lines().collect();
+    let mut out = Vec::new();
+    let mut k = 0;
+    while k < lines.len() {
+        let t = lines[k].trim_start();
+        if (t.starts_with("if ") || t.starts_with("while ")) && t.ends_with(" < endIdx {") {
+            let pad = &lines[k][..lines[k].len() - t.len()];
+            let close = (k + 1..lines.len()).find(|&j| lines[j] == format!("{pad}}}")).expect("a loop closes");
+            let end = (close..lines.len()).find(|&j| lines[j].contains("// All done.")).expect("a region ends");
+            out.push((lines[k..=close].join("\n"), lines[close + 1..end].join("\n")));
+            k = end;
+        }
+        k += 1;
+    }
+    out
+}
+
+/// Output stores nested in a loop of `code`; a carried loop of the last bar
+/// holds none.
+fn stores_in_a_loop(code: &str) -> usize {
+    let mut open: Vec<bool> = Vec::new();
+    let mut found = 0;
+    for line in code.lines() {
+        let t = line.split("//").next().unwrap_or("").trim();
+        if t.contains("outInteger[") && open.iter().any(|&is_loop| is_loop) {
+            found += 1;
+        }
+        let is_loop = t.starts_with("while ") || t.starts_with("for ") || t == "loop {";
+        let net = t.matches('{').count().cast_signed() - t.matches('}').count().cast_signed();
+        for _ in 0..net.max(0) {
+            open.push(is_loop);
+        }
+        for _ in 0..(-net).max(0) {
+            open.pop();
+        }
+    }
+    found
+}
+
+#[test]
+fn a_candlestick_open_branches_to_one_frame_per_stride() {
+    let (mut framed, mut single) = (0usize, 0usize);
+    for (name, s) in candlestick_sections() {
+        let sink = format!("fn {name}_open_sink_frame(");
+        let fill = format!("fn {name}_open_fill_frame(");
+        if !s.contains(&sink) {
+            assert!(!s.contains(&fill), "{name}: a fill frame without its sink frame");
+            assert!(
+                body_of(&s, &format!("fn {name}_open_impl")).contains("* outStride) as usize] = "),
+                "{name}: an opener without frames keeps its strided body"
+            );
+            single += 1;
+            continue;
+        }
+        framed += 1;
+        let open = body_of(&s, &format!("pub(crate) fn {name}_open_impl("));
+        for needle in [
+            "if startIdx >= historyLen {".to_string(),
+            "if outStride == 0 {".to_string(),
+            format!("self.{name}_open_sink_frame("),
+            format!("self.{name}_open_fill_frame("),
+        ] {
+            assert!(open.contains(&needle), "{name}_open_impl lacks `{needle}`:\n{open}");
+        }
+        assert!(
+            open.find("if startIdx >= historyLen {") < open.find("if outStride == 0 {"),
+            "{name}: the anchor guard belongs ahead of both frames"
+        );
+        assert!(
+            !open.lines().map(str::trim_start).any(|l| l.starts_with("while ") || l.starts_with("for ") || l == "loop {"),
+            "{name}_open_impl transcribes the body instead of branching:\n{open}"
+        );
+        for verb in ["sink", "fill"] {
+            let sig = format!("    #[inline(never)]\n    fn {name}_open_{verb}_frame(");
+            assert!(s.contains(&sig), "{name}: the {verb} frame must stay out of line");
+            assert!(
+                !frame_body(&s, &format!("{name}_open_{verb}_frame")).contains("outStride"),
+                "{name}: the {verb} frame has its stride built in"
+            );
+        }
+    }
+    // The misfits by construction: their decisions assign pattern state.
+    assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
+    assert!(framed >= 50, "only {framed} candlestick openers split");
+}
+
+/// The fill frame's loops are the batch body's: windowed where batch's are.
+#[test]
+fn a_fill_frame_windows_its_loops_where_batch_does() {
+    let (mut framed, mut windows) = (0usize, 0usize);
+    let mut drifted = Vec::new();
+    for (name, s) in candlestick_sections() {
+        if !s.contains(&format!("fn {name}_open_sink_frame(")) {
+            continue;
+        }
+        framed += 1;
+        let (func, enums) = load_indicator(&name);
+        let full = backends::rust_lang::generate(&func, &enums, common::make_registry(), common::make_helpers());
+        let scalar = format!("    fn {name}_impl_scalar(");
+        let batch = body_of(&full, &if full.contains(&scalar) { scalar } else { format!("    pub(crate) fn {name}_impl(") });
+        let fill = frame_body(&s, &format!("{name}_open_fill_frame"));
+        let lowered = |b: &str| b.matches("for _wk in ").count();
+        if lowered(&fill) != lowered(&batch) {
+            drifted.push(format!("{name}: fill frame windows {} loops, batch {}", lowered(&fill), lowered(&batch)));
+        }
+        windows += lowered(&fill);
+    }
+    assert!(drifted.is_empty(), "fill frame and batch body lower differently:\n{}", drifted.join("\n"));
+    assert!(framed >= 50 && windows >= framed, "{framed} fill frames, {windows} windowed loops");
+}
+
+#[test]
+fn a_sink_frame_decides_only_the_last_bar() {
+    let (mut framed, mut loops, mut windowed) = (0usize, 0usize, 0usize);
+    for (name, s) in candlestick_sections() {
+        if !s.contains(&format!("fn {name}_open_sink_frame(")) {
+            continue;
+        }
+        framed += 1;
+        let sink = frame_body(&s, &format!("{name}_open_sink_frame"));
+        let found = history_loops(&sink);
+        assert_eq!(
+            found.len(),
+            sink.matches("// All done.").count(),
+            "{name}: one loop over the history per region:\n{sink}"
+        );
+        for (history, after) in &found {
+            loops += 1;
+            windowed += usize::from(history.contains("for _wk in 0.._wn {"));
+            assert!(
+                !history.contains("outInteger["),
+                "{name}: the history loop decides a bar:\n{history}"
+            );
+            assert!(history.contains("outIdx += 1;"), "{name}: the history loop drops the output count:\n{history}");
+            assert_eq!(stores_in_a_loop(after), 0, "{name}: the last bar is decided in a loop:\n{after}");
+            let stores = after.matches("outInteger[").count();
+            assert!(
+                stores > 0 && stores == after.matches("outInteger[0] = ").count(),
+                "{name}: the last bar must be decided once, into slot 0:\n{after}"
+            );
+        }
+        assert!(sink.contains("cur_outInteger: outInteger[0],"), "{name}: the capture reads the sink");
+    }
+    assert!(framed >= 50 && loops >= framed, "{framed} sink frames, {loops} history loops");
+    assert!(windowed > 0, "no history loop is windowed");
 }
 
 #[test]
@@ -798,15 +971,27 @@ fn a_transcribed_open_selects_where_its_batch_body_does() {
             let scalar = format!("    fn {name}_{tier}_scalar(");
             body_of(&full, &if full.contains(&scalar) { scalar } else { format!("    pub(crate) fn {name}_{tier}(") })
         };
-        let (batch, open) = (body("impl"), body("open_impl"));
+        let batch = body("impl");
         let picks = "= std::hint::select_unpredictable(";
-        if batch.contains(picks) != open.contains(picks) {
-            drifted.push(format!("{name}: batch selects={}, open selects={}", batch.contains(picks), open.contains(picks)));
+        // A split opener's frames each have their stride built in: the fill
+        // stores where batch does, windowed or not, the sink into slot 0.
+        let opens: Vec<(String, &[&str])> = if full.contains(&format!("fn {name}_open_sink_frame(")) {
+            vec![
+                (frame_body(&full, &format!("{name}_open_fill_frame")), &["outIdx] = ", "[_wk] = "]),
+                (frame_body(&full, &format!("{name}_open_sink_frame")), &["[0] = "]),
+            ]
+        } else {
+            vec![(body("open_impl"), &["* outStride) as usize] = "])]
+        };
+        for (open, stores) in &opens {
+            if batch.contains(picks) != open.contains(picks) {
+                drifted.push(format!("{name}: batch selects={}, open selects={}", batch.contains(picks), open.contains(picks)));
+            }
+            if let Some(line) = open.lines().find(|l| l.contains(picks) && !stores.iter().any(|st| l.contains(st))) {
+                drifted.push(format!("{name}: an open select is not stored through {stores:?}: {}", line.trim()));
+            }
         }
-        if let Some(line) = open.lines().find(|l| l.contains(picks) && !l.contains("* outStride) as usize] = ")) {
-            drifted.push(format!("{name}: an open select is not stored through the stride: {}", line.trim()));
-        }
-        selecting += usize::from(open.contains(picks));
+        selecting += usize::from(opens[0].0.contains(picks));
     }
     assert!(drifted.is_empty(), "open and batch decide differently:\n{}", drifted.join("\n"));
     assert!(transcribed >= 150, "only {transcribed} transcribed opens: the plan match moved");
@@ -826,17 +1011,27 @@ fn a_fused_stream_update_is_fma_dispatched() {
     let (mut opens, mut fused_opens) = (0usize, 0usize);
     let (mut one_path_maps, mut one_path_named) = (0usize, 0usize);
     let mut drifted: Vec<String> = Vec::new();
+    let mut fused_frames = 0usize;
     for name in streaming_indicators() {
         let s = rust_stream_section(&name);
-        let open = format!("fn {name}_open_impl");
-        if s.contains(&format!("{open}(")) {
+        // A split opener dispatches each frame; `_open_impl` only branches.
+        let verbs: Vec<String> = if s.contains(&format!("fn {name}_open_sink_frame(")) {
+            vec![format!("{name}_open_sink_frame"), format!("{name}_open_fill_frame")]
+        } else {
+            vec![format!("{name}_open_impl")]
+        };
+        for verb in &verbs {
+            let open = format!("fn {verb}");
+            if !s.contains(&format!("{open}(")) {
+                continue;
+            }
             opens += 1;
             let fused = s.contains(&format!(
-                "    #[target_feature(enable = \"fma\")]\n    fn {name}_open_impl_fma("
+                "    #[target_feature(enable = \"fma\")]\n    fn {verb}_fma("
             ));
             let body = if fused { format!("{open}_scalar(") } else { format!("{open}(") };
             let fuses = body_of(&s, &body).contains("fmadd!(");
-            let routed = s.contains(&format!("dispatch_fma!(self, {name}_open_impl_fma, {name}_open_impl_scalar,"))
+            let routed = s.contains(&format!("dispatch_fma!(self, {verb}_fma, {verb}_scalar,"))
                 && s.contains(&format!("    #[inline(always)]\n    {open}_scalar("));
             let (func, _) = load_indicator(&name);
             let func = func.resolved_for(ir::Lang::Rust);
@@ -848,8 +1043,12 @@ fn a_fused_stream_update_is_fma_dispatched() {
             one_path_named += usize::from(fuses && kept && !is_map);
             let fuses = fuses && !kept;
             fused_opens += usize::from(fuses);
+            fused_frames += usize::from(fuses && verbs.len() == 2);
             if fuses != fused || fuses != routed {
-                drifted.push(format!("{name} open: fuses={fuses}, clone={fused}, dispatched={routed}"));
+                drifted.push(format!("{verb}: fuses={fuses}, clone={fused}, dispatched={routed}"));
+            }
+            if verbs.len() == 2 && fused && !s.contains(&format!("    #[inline(never)]\n    fn {verb}(")) {
+                drifted.push(format!("{verb}: the dispatcher of a frame must stay out of line"));
             }
         }
         let step_sig = format!("    fn {name}_step_impl(");
@@ -871,6 +1070,7 @@ fn a_fused_stream_update_is_fma_dispatched() {
     assert!(drifted.is_empty(), "stream FMA dispatch drifted:\n{}", drifted.join("\n"));
     assert!(opens >= 150, "only {opens} `open_impl` rendered: the signature moved");
     assert!(fused_opens > 0, "no `open_impl` fuses, so this proved nothing about the open tier");
+    assert!(fused_frames >= 8, "only {fused_frames} fused opener frames: a split opener's fused frames went undispatched");
     assert!(one_path_maps > 0, "no fused stateless map keeps one path: that exemption admits nothing");
     assert!(one_path_named > 0, "no fused open keeps one path by name: that exemption admits nothing");
     assert!(dispatched > 0, "no update dispatched: the rule admits nothing");

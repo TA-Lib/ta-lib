@@ -380,8 +380,9 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// The single whole-history transcription behind [`Core::cdlxsidegap3methods_open_internal`]
+    /// The checks behind [`Core::cdlxsidegap3methods_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cdlxsidegap3methods_open_and_fill`] (stride 1, caller slices).
+    /// Each stride then runs in a frame of its own.
     pub(crate) fn cdlxsidegap3methods_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<Cdlxsidegap3methodsStream, RetCode> {
@@ -397,6 +398,19 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        if outStride == 0 {
+            self.cdlxsidegap3methods_open_sink_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        } else {
+            self.cdlxsidegap3methods_open_fill_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        }
+    }
+
+    /// Every bar but the last carries the state alone; the last is decided once.
+    #[inline(never)]
+    fn cdlxsidegap3methods_open_sink_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<Cdlxsidegap3methodsStream, RetCode> {
+        let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
@@ -428,20 +442,113 @@ impl Core {
         // - upside (downside) gap between the first and the second real bodies
         // - third candle: black (white) candle that opens within the second real body and closes within the first real body
         outIdx = 0;
-        loop {
-            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) & // 1st and 2nd of same color
-                ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & // 3rd opposite color
-                (((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & // 3rd opens within 2nd rb
-                ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])) & (((inClose[i] < inClose[i - 2]) | (inClose[i] < inOpen[i - 2]))) & // 3rd closes within 1st rb
-                ((inClose[i] > inClose[i - 2]) | (inClose[i] > inOpen[i - 2])) & (((inClose[i - 2] >= inOpen[i - 2]) & // when 1st is white
-                (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) | // upside gap
-                ((!(inClose[i - 2] >= inOpen[i - 2])) & // when 1st is black
-                (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))))), // downside gap
-                ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32, 0);
+        while i < endIdx {
+            outIdx += 1;
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
             i += 1;
-            if !(i <= endIdx) { break; }
+        }
+        outInteger[0] = std::hint::select_unpredictable((((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) & // 1st and 2nd of same color
+            ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & // 3rd opposite color
+            (((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & // 3rd opens within 2nd rb
+            ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])) & (((inClose[i] < inClose[i - 2]) | (inClose[i] < inOpen[i - 2]))) & // 3rd closes within 1st rb
+            ((inClose[i] > inClose[i - 2]) | (inClose[i] > inOpen[i - 2])) & (((inClose[i - 2] >= inOpen[i - 2]) & // when 1st is white
+            (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) | // upside gap
+            ((!(inClose[i - 2] >= inOpen[i - 2])) & // when 1st is black
+            (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))))), // downside gap
+            ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32, 0);
+        outIdx += 1;
+        // add the current range and subtract the first range: this is done after the pattern recognition
+        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        i += 1;
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = Cdlxsidegap3methodsStreamState {
+            cur_outInteger: outInteger[0],
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag2_inOpen: inOpen[historyLen - 2],
+            lag1_inClose: inClose[historyLen - 1],
+            lag2_inClose: inClose[historyLen - 2],
+        };
+        Ok(Cdlxsidegap3methodsStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+    }
+
+    #[inline(never)]
+    fn cdlxsidegap3methods_open_fill_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<Cdlxsidegap3methodsStream, RetCode> {
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlxsidegap3methods_lookback()?;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first candle: white (black) candle
+        // - second candle: white (black) candle
+        // - upside (downside) gap between the first and the second real bodies
+        // - third candle: black (white) candle that opens within the second real body and closes within the first real body
+        outIdx = 0;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i - 2..][.._wn + 2];
+            let _w1 = &inOpen[i - 2..][.._wn + 2];
+            let _w2 = &mut outInteger[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w2[_wk] = std::hint::select_unpredictable((((_w0[_wk] >= _w1[_wk]) == (_w0[_wk + 1] >= _w1[_wk + 1])) & // 1st and 2nd of same color
+                    ((_w0[_wk + 1] >= _w1[_wk + 1]) != (_w0[_wk + 2] >= _w1[_wk + 2])) & // 3rd opposite color
+                    (((_w1[_wk + 2] < _w0[_wk + 1]) | (_w1[_wk + 2] < _w1[_wk + 1]))) & // 3rd opens within 2nd rb
+                    ((_w1[_wk + 2] > _w0[_wk + 1]) | (_w1[_wk + 2] > _w1[_wk + 1])) & (((_w0[_wk + 2] < _w0[_wk]) | (_w0[_wk + 2] < _w1[_wk]))) & // 3rd closes within 1st rb
+                    ((_w0[_wk + 2] > _w0[_wk]) | (_w0[_wk + 2] > _w1[_wk])) & (((_w0[_wk] >= _w1[_wk]) & // when 1st is white
+                    (((_w1[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] > _w1[_wk]) & (_w0[_wk + 1] > _w0[_wk])))) | // upside gap
+                    ((!(_w0[_wk] >= _w1[_wk])) & // when 1st is black
+                    (((_w1[_wk + 1] < _w1[_wk]) & (_w1[_wk + 1] < _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk]) & (_w0[_wk + 1] < _w0[_wk])))))), // downside gap
+                    ((if _w0[_wk] >= _w1[_wk] { 1 } else { -1 }) * 100) as i32, 0);
+                outIdx += 1;
+                // add the current range and subtract the first range: this is done after the pattern recognition
+                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                i += 1;
+            }
+        } else {
+            loop {
+                outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) & // 1st and 2nd of same color
+                    ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & // 3rd opposite color
+                    (((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & // 3rd opens within 2nd rb
+                    ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])) & (((inClose[i] < inClose[i - 2]) | (inClose[i] < inOpen[i - 2]))) & // 3rd closes within 1st rb
+                    ((inClose[i] > inClose[i - 2]) | (inClose[i] > inOpen[i - 2])) & (((inClose[i - 2] >= inOpen[i - 2]) & // when 1st is white
+                    (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) | // upside gap
+                    ((!(inClose[i - 2] >= inOpen[i - 2])) & // when 1st is black
+                    (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))))), // downside gap
+                    ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32, 0);
+                outIdx += 1;
+                // add the current range and subtract the first range: this is done after the pattern recognition
+                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                i += 1;
+                if !(i <= endIdx) { break; }
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
@@ -449,7 +556,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = Cdlxsidegap3methodsStreamState {
-            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+            cur_outInteger: outInteger[*outNBElement - 1],
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],

@@ -862,8 +862,9 @@ impl Core {
         sp.ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
     }
 
-    /// The single whole-history transcription behind [`Core::cdlmatchinglow_open_internal`]
+    /// The checks behind [`Core::cdlmatchinglow_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cdlmatchinglow_open_and_fill`] (stride 1, caller slices).
+    /// Each stride then runs in a frame of its own.
     pub(crate) fn cdlmatchinglow_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlmatchinglowStream, RetCode> {
@@ -879,6 +880,19 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        if outStride == 0 {
+            self.cdlmatchinglow_open_sink_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        } else {
+            self.cdlmatchinglow_open_fill_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        }
+    }
+
+    /// Every bar but the last carries the state alone; the last is decided once.
+    #[inline(never)]
+    fn cdlmatchinglow_open_sink_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlmatchinglowStream, RetCode> {
+        let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
@@ -914,24 +928,53 @@ impl Core {
             EqualPeriodTotal = 0.0;
             EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
             i = EqualTrailingIdx;
-            while i < startIdx {
-                let mut _candlerange_2: f64;
-                match 0 {
-                    0 => {
-                        _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_2: f64;
+                        match 0 {
+                            0 => {
+                                _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_2 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_2 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_2 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_2;
+                        i += 1;
                     }
-                    1 => {
-                        _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
-                    }
-                    2 => {
-                        _candlerange_2 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
-                    }
-                    _ => {
-                        _candlerange_2 = 0.0;
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_3: f64;
+                        match 0 {
+                            0 => {
+                                _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_3 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_3 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_3;
+                        i += 1;
                     }
                 }
-                EqualPeriodTotal += _candlerange_2;
-                i += 1;
             }
             i = startIdx;
             // Proceed with the calculation for the requested range.
@@ -940,18 +983,46 @@ impl Core {
             // - second candle: black candle with the close equal to the previous close
             // The meaning of "equal" is specified with TA_SetCandleSettings
             outIdx = 0;
-            loop {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
-                    (!(inClose[i] >= inOpen[i])) & // second black
-                    (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
-                    (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), 100, 0);
-                // add the current range and subtract the first range: this is done after the pattern recognition
-                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                EqualPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
-                i += 1;
-                EqualTrailingIdx += 1;
-                if !(i <= endIdx) { break; }
+            if i < endIdx {
+                let _wn: usize = endIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn];
+                    for _wk in 0.._wn {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 0 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    while i < endIdx {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                }
             }
+            outInteger[0] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                (!(inClose[i] >= inOpen[i])) & // second black
+                (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+            outIdx += 1;
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            EqualPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+            i += 1;
+            EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
             (*outNBElement) = outIdx;
             (*outBegIdx) = startIdx;
@@ -973,7 +1044,7 @@ impl Core {
             }
             let state = CdlmatchinglowStreamState {
                 EqualPeriodTotal,
-                cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+                cur_outInteger: outInteger[0],
                 lag1_inOpen: inOpen[historyLen - 1],
                 lag1_inHigh: inHigh[historyLen - 1],
                 lag1_inLow: inLow[historyLen - 1],
@@ -990,24 +1061,53 @@ impl Core {
             EqualPeriodTotal = 0.0;
             EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
             i = EqualTrailingIdx;
-            while i < startIdx {
-                let mut _candlerange_2: f64;
-                match 1 {
-                    0 => {
-                        _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_2: f64;
+                        match 1 {
+                            0 => {
+                                _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_2 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_2 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_2 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_2;
+                        i += 1;
                     }
-                    1 => {
-                        _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
-                    }
-                    2 => {
-                        _candlerange_2 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
-                    }
-                    _ => {
-                        _candlerange_2 = 0.0;
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_3: f64;
+                        match 1 {
+                            0 => {
+                                _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_3 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_3 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_3;
+                        i += 1;
                     }
                 }
-                EqualPeriodTotal += _candlerange_2;
-                i += 1;
             }
             i = startIdx;
             // Proceed with the calculation for the requested range.
@@ -1016,18 +1116,46 @@ impl Core {
             // - second candle: black candle with the close equal to the previous close
             // The meaning of "equal" is specified with TA_SetCandleSettings
             outIdx = 0;
-            loop {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
-                    (!(inClose[i] >= inOpen[i])) & // second black
-                    (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
-                    (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), 100, 0);
-                // add the current range and subtract the first range: this is done after the pattern recognition
-                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                EqualPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
-                i += 1;
-                EqualTrailingIdx += 1;
-                if !(i <= endIdx) { break; }
+            if i < endIdx {
+                let _wn: usize = endIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn];
+                    for _wk in 0.._wn {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 1 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    while i < endIdx {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                }
             }
+            outInteger[0] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                (!(inClose[i] >= inOpen[i])) & // second black
+                (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+            outIdx += 1;
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            EqualPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+            i += 1;
+            EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
             (*outNBElement) = outIdx;
             (*outBegIdx) = startIdx;
@@ -1049,7 +1177,7 @@ impl Core {
             }
             let state = CdlmatchinglowStreamState {
                 EqualPeriodTotal,
-                cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+                cur_outInteger: outInteger[0],
                 lag1_inOpen: inOpen[historyLen - 1],
                 lag1_inHigh: inHigh[historyLen - 1],
                 lag1_inLow: inLow[historyLen - 1],
@@ -1066,24 +1194,53 @@ impl Core {
             EqualPeriodTotal = 0.0;
             EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
             i = EqualTrailingIdx;
-            while i < startIdx {
-                let mut _candlerange_2: f64;
-                match 2 {
-                    0 => {
-                        _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_2: f64;
+                        match 2 {
+                            0 => {
+                                _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_2 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_2 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_2 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_2;
+                        i += 1;
                     }
-                    1 => {
-                        _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
-                    }
-                    2 => {
-                        _candlerange_2 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
-                    }
-                    _ => {
-                        _candlerange_2 = 0.0;
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_3: f64;
+                        match 2 {
+                            0 => {
+                                _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_3 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_3 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_3;
+                        i += 1;
                     }
                 }
-                EqualPeriodTotal += _candlerange_2;
-                i += 1;
             }
             i = startIdx;
             // Proceed with the calculation for the requested range.
@@ -1092,18 +1249,46 @@ impl Core {
             // - second candle: black candle with the close equal to the previous close
             // The meaning of "equal" is specified with TA_SetCandleSettings
             outIdx = 0;
-            loop {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
-                    (!(inClose[i] >= inOpen[i])) & // second black
-                    (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
-                    (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), 100, 0);
-                // add the current range and subtract the first range: this is done after the pattern recognition
-                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                EqualPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
-                i += 1;
-                EqualTrailingIdx += 1;
-                if !(i <= endIdx) { break; }
+            if i < endIdx {
+                let _wn: usize = endIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn];
+                    for _wk in 0.._wn {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 2 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    while i < endIdx {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                }
             }
+            outInteger[0] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                (!(inClose[i] >= inOpen[i])) & // second black
+                (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+            outIdx += 1;
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            EqualPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+            i += 1;
+            EqualTrailingIdx += 1;
             // All done. Indicate the output limits and return.
             (*outNBElement) = outIdx;
             (*outBegIdx) = startIdx;
@@ -1125,7 +1310,7 @@ impl Core {
             }
             let state = CdlmatchinglowStreamState {
                 EqualPeriodTotal,
-                cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+                cur_outInteger: outInteger[0],
                 lag1_inOpen: inOpen[historyLen - 1],
                 lag1_inHigh: inHigh[historyLen - 1],
                 lag1_inLow: inLow[historyLen - 1],
@@ -1142,24 +1327,53 @@ impl Core {
             EqualPeriodTotal = 0.0;
             EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
             i = EqualTrailingIdx;
-            while i < startIdx {
-                let mut _candlerange_2: f64;
-                match Equal_rangeType {
-                    0 => {
-                        _candlerange_2 = (inClose[i - 1] - inOpen[i - 1]).abs();
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_2: f64;
+                        match Equal_rangeType {
+                            0 => {
+                                _candlerange_2 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_2 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_2 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_2 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_2;
+                        i += 1;
                     }
-                    1 => {
-                        _candlerange_2 = inHigh[i - 1] - inLow[i - 1];
-                    }
-                    2 => {
-                        _candlerange_2 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
-                    }
-                    _ => {
-                        _candlerange_2 = 0.0;
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_3: f64;
+                        match Equal_rangeType {
+                            0 => {
+                                _candlerange_3 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_3 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_3 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_3 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_3;
+                        i += 1;
                     }
                 }
-                EqualPeriodTotal += _candlerange_2;
-                i += 1;
             }
             i = startIdx;
             // Proceed with the calculation for the requested range.
@@ -1168,17 +1382,229 @@ impl Core {
             // - second candle: black candle with the close equal to the previous close
             // The meaning of "equal" is specified with TA_SetCandleSettings
             outIdx = 0;
-            loop {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
-                    (!(inClose[i] >= inOpen[i])) & // second black
-                    (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
-                    (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 })))), 100, 0);
-                // add the current range and subtract the first range: this is done after the pattern recognition
-                // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-                EqualPeriodTotal += (match Equal_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
-                i += 1;
-                EqualTrailingIdx += 1;
-                if !(i <= endIdx) { break; }
+            if i < endIdx {
+                let _wn: usize = endIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn];
+                    for _wk in 0.._wn {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match Equal_rangeType { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    while i < endIdx {
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match Equal_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                }
+            }
+            outInteger[0] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                (!(inClose[i] >= inOpen[i])) & // second black
+                (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+            outIdx += 1;
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            EqualPeriodTotal += (match Equal_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+            i += 1;
+            EqualTrailingIdx += 1;
+            // All done. Indicate the output limits and return.
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
+
+            // Capture the live batch state into the handle.
+            let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
+            let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 2;
+            if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
+            let mut ring_EqualTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
+            {
+                let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
+                while fillJ < historyLen {
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = (match Equal_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    fillJ += 1;
+                }
+            }
+            let state = CdlmatchinglowStreamState {
+                EqualPeriodTotal,
+                cur_outInteger: outInteger[0],
+                lag1_inOpen: inOpen[historyLen - 1],
+                lag1_inHigh: inHigh[historyLen - 1],
+                lag1_inLow: inLow[historyLen - 1],
+                lag1_inClose: inClose[historyLen - 1],
+                ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
+                ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
+                ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
+                ring_EqualTrailingIdx_derived,
+            };
+            Ok(CdlmatchinglowStream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        }
+    }
+
+    #[inline(never)]
+    fn cdlmatchinglow_open_fill_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlmatchinglowStream, RetCode> {
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut EqualPeriodTotal: f64 = 0.0_f64;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut EqualTrailingIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        #[allow(non_snake_case)]
+        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
+        #[allow(non_snake_case)]
+        let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
+        #[allow(non_snake_case)]
+        let Equal_factor: f64 = self.candle_settings.equal.factor;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlmatchinglow_lookback()?;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
+        if Equal_rangeType == 0 {
+            // Do the calculation using tight loops.
+            // Add-up the initial period, except for the last value.
+            EqualPeriodTotal = 0.0;
+            EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
+            i = EqualTrailingIdx;
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_4: f64;
+                        match 0 {
+                            0 => {
+                                _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_4 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_4 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_4 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_4;
+                        i += 1;
+                    }
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_5: f64;
+                        match 0 {
+                            0 => {
+                                _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_5 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_5 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_5;
+                        i += 1;
+                    }
+                }
+            }
+            i = startIdx;
+            // Proceed with the calculation for the requested range.
+            // Must have:
+            // - first candle: black candle
+            // - second candle: black candle with the close equal to the previous close
+            // The meaning of "equal" is specified with TA_SetCandleSettings
+            outIdx = 0;
+            if i <= endIdx {
+                let _wn: usize = endIdx - i + 1;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7), Some(_w8)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), outInteger.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn + 1];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn + 1];
+                    let _w8 = &mut _w8[.._wn];
+                    for _wk in 0.._wn {
+                        _w8[_wk] = std::hint::select_unpredictable(((!(_w1[_wk] >= _w7[_wk])) & // first black
+                            (!(_w1[_wk + 1] >= _w7[_wk + 1])) & // second black
+                            (_w1[_wk + 1] <= _w1[_wk] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (_w1[_wk + 1] >= _w1[_wk] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 0 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    loop {
+                        outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                            (!(inClose[i] >= inOpen[i])) & // second black
+                            (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                        if !(i <= endIdx) { break; }
+                    }
+                }
+            } else {
+                loop {
+                    outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                        (!(inClose[i] >= inOpen[i])) & // second black
+                        (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                        (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    outIdx += 1;
+                    // add the current range and subtract the first range: this is done after the pattern recognition
+                    // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                    EqualPeriodTotal += (match 0 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                    i += 1;
+                    EqualTrailingIdx += 1;
+                    if !(i <= endIdx) { break; }
+                }
             }
             // All done. Indicate the output limits and return.
             (*outNBElement) = outIdx;
@@ -1201,7 +1627,448 @@ impl Core {
             }
             let state = CdlmatchinglowStreamState {
                 EqualPeriodTotal,
-                cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+                cur_outInteger: outInteger[*outNBElement - 1],
+                lag1_inOpen: inOpen[historyLen - 1],
+                lag1_inHigh: inHigh[historyLen - 1],
+                lag1_inLow: inLow[historyLen - 1],
+                lag1_inClose: inClose[historyLen - 1],
+                ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
+                ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
+                ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
+                ring_EqualTrailingIdx_derived,
+            };
+            Ok(CdlmatchinglowStream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        } else if Equal_rangeType == 1 {
+            // Do the calculation using tight loops.
+            // Add-up the initial period, except for the last value.
+            EqualPeriodTotal = 0.0;
+            EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
+            i = EqualTrailingIdx;
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_4: f64;
+                        match 1 {
+                            0 => {
+                                _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_4 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_4 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_4 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_4;
+                        i += 1;
+                    }
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_5: f64;
+                        match 1 {
+                            0 => {
+                                _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_5 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_5 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_5;
+                        i += 1;
+                    }
+                }
+            }
+            i = startIdx;
+            // Proceed with the calculation for the requested range.
+            // Must have:
+            // - first candle: black candle
+            // - second candle: black candle with the close equal to the previous close
+            // The meaning of "equal" is specified with TA_SetCandleSettings
+            outIdx = 0;
+            if i <= endIdx {
+                let _wn: usize = endIdx - i + 1;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7), Some(_w8)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), outInteger.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn + 1];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn + 1];
+                    let _w8 = &mut _w8[.._wn];
+                    for _wk in 0.._wn {
+                        _w8[_wk] = std::hint::select_unpredictable(((!(_w1[_wk] >= _w7[_wk])) & // first black
+                            (!(_w1[_wk + 1] >= _w7[_wk + 1])) & // second black
+                            (_w1[_wk + 1] <= _w1[_wk] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (_w1[_wk + 1] >= _w1[_wk] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 1 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    loop {
+                        outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                            (!(inClose[i] >= inOpen[i])) & // second black
+                            (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                        if !(i <= endIdx) { break; }
+                    }
+                }
+            } else {
+                loop {
+                    outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                        (!(inClose[i] >= inOpen[i])) & // second black
+                        (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                        (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    outIdx += 1;
+                    // add the current range and subtract the first range: this is done after the pattern recognition
+                    // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                    EqualPeriodTotal += (match 1 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                    i += 1;
+                    EqualTrailingIdx += 1;
+                    if !(i <= endIdx) { break; }
+                }
+            }
+            // All done. Indicate the output limits and return.
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
+
+            // Capture the live batch state into the handle.
+            let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
+            let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 2;
+            if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
+            let mut ring_EqualTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
+            {
+                let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
+                while fillJ < historyLen {
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = (match Equal_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    fillJ += 1;
+                }
+            }
+            let state = CdlmatchinglowStreamState {
+                EqualPeriodTotal,
+                cur_outInteger: outInteger[*outNBElement - 1],
+                lag1_inOpen: inOpen[historyLen - 1],
+                lag1_inHigh: inHigh[historyLen - 1],
+                lag1_inLow: inLow[historyLen - 1],
+                lag1_inClose: inClose[historyLen - 1],
+                ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
+                ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
+                ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
+                ring_EqualTrailingIdx_derived,
+            };
+            Ok(CdlmatchinglowStream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        } else if Equal_rangeType == 2 {
+            // Do the calculation using tight loops.
+            // Add-up the initial period, except for the last value.
+            EqualPeriodTotal = 0.0;
+            EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
+            i = EqualTrailingIdx;
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_4: f64;
+                        match 2 {
+                            0 => {
+                                _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_4 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_4 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_4 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_4;
+                        i += 1;
+                    }
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_5: f64;
+                        match 2 {
+                            0 => {
+                                _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_5 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_5 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_5;
+                        i += 1;
+                    }
+                }
+            }
+            i = startIdx;
+            // Proceed with the calculation for the requested range.
+            // Must have:
+            // - first candle: black candle
+            // - second candle: black candle with the close equal to the previous close
+            // The meaning of "equal" is specified with TA_SetCandleSettings
+            outIdx = 0;
+            if i <= endIdx {
+                let _wn: usize = endIdx - i + 1;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7), Some(_w8)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), outInteger.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn + 1];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn + 1];
+                    let _w8 = &mut _w8[.._wn];
+                    for _wk in 0.._wn {
+                        _w8[_wk] = std::hint::select_unpredictable(((!(_w1[_wk] >= _w7[_wk])) & // first black
+                            (!(_w1[_wk + 1] >= _w7[_wk + 1])) & // second black
+                            (_w1[_wk + 1] <= _w1[_wk] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (_w1[_wk + 1] >= _w1[_wk] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 2 { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    loop {
+                        outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                            (!(inClose[i] >= inOpen[i])) & // second black
+                            (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                        if !(i <= endIdx) { break; }
+                    }
+                }
+            } else {
+                loop {
+                    outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                        (!(inClose[i] >= inOpen[i])) & // second black
+                        (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                        (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    outIdx += 1;
+                    // add the current range and subtract the first range: this is done after the pattern recognition
+                    // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                    EqualPeriodTotal += (match 2 { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                    i += 1;
+                    EqualTrailingIdx += 1;
+                    if !(i <= endIdx) { break; }
+                }
+            }
+            // All done. Indicate the output limits and return.
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
+
+            // Capture the live batch state into the handle.
+            let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
+            let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 2;
+            if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
+            let mut ring_EqualTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
+            {
+                let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
+                while fillJ < historyLen {
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = (match Equal_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    fillJ += 1;
+                }
+            }
+            let state = CdlmatchinglowStreamState {
+                EqualPeriodTotal,
+                cur_outInteger: outInteger[*outNBElement - 1],
+                lag1_inOpen: inOpen[historyLen - 1],
+                lag1_inHigh: inHigh[historyLen - 1],
+                lag1_inLow: inLow[historyLen - 1],
+                lag1_inClose: inClose[historyLen - 1],
+                ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
+                ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
+                ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
+                ring_EqualTrailingIdx_derived,
+            };
+            Ok(CdlmatchinglowStream { cs_equal: self.candle_settings.equal, state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        } else {
+            // Do the calculation using tight loops.
+            // Add-up the initial period, except for the last value.
+            EqualPeriodTotal = 0.0;
+            EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
+            i = EqualTrailingIdx;
+            if i < startIdx {
+                let _wn: usize = startIdx - i;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    for _wk in 0.._wn {
+                        let mut _candlerange_4: f64;
+                        match Equal_rangeType {
+                            0 => {
+                                _candlerange_4 = (_w0[_wk] - _w3[_wk]).abs();
+                            }
+                            1 => {
+                                _candlerange_4 = _w1[_wk] - _w2[_wk];
+                            }
+                            2 => {
+                                _candlerange_4 = (_w1[_wk] - (if _w0[_wk] >= _w3[_wk] { _w0[_wk] } else { _w3[_wk] })) + ((if _w0[_wk] >= _w3[_wk] { _w3[_wk] } else { _w0[_wk] }) - _w2[_wk]);
+                            }
+                            _ => {
+                                _candlerange_4 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_4;
+                        i += 1;
+                    }
+                } else {
+                    while i < startIdx {
+                        let mut _candlerange_5: f64;
+                        match Equal_rangeType {
+                            0 => {
+                                _candlerange_5 = (inClose[i - 1] - inOpen[i - 1]).abs();
+                            }
+                            1 => {
+                                _candlerange_5 = inHigh[i - 1] - inLow[i - 1];
+                            }
+                            2 => {
+                                _candlerange_5 = (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) + ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]);
+                            }
+                            _ => {
+                                _candlerange_5 = 0.0;
+                            }
+                        }
+                        EqualPeriodTotal += _candlerange_5;
+                        i += 1;
+                    }
+                }
+            }
+            i = startIdx;
+            // Proceed with the calculation for the requested range.
+            // Must have:
+            // - first candle: black candle
+            // - second candle: black candle with the close equal to the previous close
+            // The meaning of "equal" is specified with TA_SetCandleSettings
+            outIdx = 0;
+            if i <= endIdx {
+                let _wn: usize = endIdx - i + 1;
+                if let (Some(_w0), Some(_w1), Some(_w2), Some(_w3), Some(_w4), Some(_w5), Some(_w6), Some(_w7), Some(_w8)) = (inClose.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), inHigh.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inHigh.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inLow.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(EqualTrailingIdx.wrapping_sub(1)..).and_then(|w| w.get(.._wn)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), outInteger.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+                    let _w0 = &_w0[.._wn];
+                    let _w1 = &_w1[.._wn + 1];
+                    let _w2 = &_w2[.._wn];
+                    let _w3 = &_w3[.._wn];
+                    let _w4 = &_w4[.._wn];
+                    let _w5 = &_w5[.._wn];
+                    let _w6 = &_w6[.._wn];
+                    let _w7 = &_w7[.._wn + 1];
+                    let _w8 = &mut _w8[.._wn];
+                    for _wk in 0.._wn {
+                        _w8[_wk] = std::hint::select_unpredictable(((!(_w1[_wk] >= _w7[_wk])) & // first black
+                            (!(_w1[_wk + 1] >= _w7[_wk + 1])) & // second black
+                            (_w1[_wk + 1] <= _w1[_wk] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (_w1[_wk + 1] >= _w1[_wk] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((_w1[_wk]) - (_w7[_wk])).abs(), 1 => (_w3[_wk]) - (_w5[_wk]), 2 => ((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match Equal_rangeType { 0 => (((_w1[_wk]) - (_w7[_wk])).abs()) - (((_w0[_wk]) - (_w6[_wk])).abs()), 1 => ((_w3[_wk]) - (_w5[_wk])) - ((_w2[_wk]) - (_w4[_wk])), 2 => (((_w3[_wk]) - (if (_w1[_wk]) >= (_w7[_wk]) { (_w1[_wk]) } else { (_w7[_wk]) })) + ((if (_w1[_wk]) >= (_w7[_wk]) { (_w7[_wk]) } else { (_w1[_wk]) }) - (_w5[_wk]))) - (((_w2[_wk]) - (if (_w0[_wk]) >= (_w6[_wk]) { (_w0[_wk]) } else { (_w6[_wk]) })) + ((if (_w0[_wk]) >= (_w6[_wk]) { (_w6[_wk]) } else { (_w0[_wk]) }) - (_w4[_wk]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                    }
+                } else {
+                    loop {
+                        outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                            (!(inClose[i] >= inOpen[i])) & // second black
+                            (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                            (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                        outIdx += 1;
+                        // add the current range and subtract the first range: this is done after the pattern recognition
+                        // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                        EqualPeriodTotal += (match Equal_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                        i += 1;
+                        EqualTrailingIdx += 1;
+                        if !(i <= endIdx) { break; }
+                    }
+                }
+            } else {
+                loop {
+                    outInteger[outIdx] = std::hint::select_unpredictable(((!(inClose[i - 1] >= inOpen[i - 1])) & // first black
+                        (!(inClose[i] >= inOpen[i])) & // second black
+                        (inClose[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st and 2nd same close
+                        (inClose[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (Equal_rangeType) == 2 { 0.5 } else { 1.0 })))), 100, 0);
+                    outIdx += 1;
+                    // add the current range and subtract the first range: this is done after the pattern recognition
+                    // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+                    EqualPeriodTotal += (match Equal_rangeType { 0 => (((inClose[i - 1]) - (inOpen[i - 1])).abs()) - (((inClose[EqualTrailingIdx - 1]) - (inOpen[EqualTrailingIdx - 1])).abs()), 1 => ((inHigh[i - 1]) - (inLow[i - 1])) - ((inHigh[EqualTrailingIdx - 1]) - (inLow[EqualTrailingIdx - 1])), 2 => (((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1]))) - (((inHigh[EqualTrailingIdx - 1]) - (if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inClose[EqualTrailingIdx - 1]) } else { (inOpen[EqualTrailingIdx - 1]) })) + ((if (inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1]) { (inOpen[EqualTrailingIdx - 1]) } else { (inClose[EqualTrailingIdx - 1]) }) - (inLow[EqualTrailingIdx - 1]))), _ => 0.0 });
+                    i += 1;
+                    EqualTrailingIdx += 1;
+                    if !(i <= endIdx) { break; }
+                }
+            }
+            // All done. Indicate the output limits and return.
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
+
+            // Capture the live batch state into the handle.
+            let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
+            let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 2;
+            if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
+                return Err(RetCode::InternalError);
+            }
+            let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
+            let mut ring_EqualTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
+            {
+                let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
+                while fillJ < historyLen {
+                    ring_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx as usize] = (match Equal_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                    fillJ += 1;
+                }
+            }
+            let state = CdlmatchinglowStreamState {
+                EqualPeriodTotal,
+                cur_outInteger: outInteger[*outNBElement - 1],
                 lag1_inOpen: inOpen[historyLen - 1],
                 lag1_inHigh: inHigh[historyLen - 1],
                 lag1_inLow: inLow[historyLen - 1],

@@ -7040,7 +7040,7 @@ fn gen_footer() -> String {
         .to_string()
 }
 
-fn int_param_names(func: &FuncDef) -> std::collections::HashSet<String> {
+pub(crate) fn int_param_names(func: &FuncDef) -> std::collections::HashSet<String> {
     func.optional_inputs
         .iter()
         .filter(|o| o.param_type == ParamType::Integer)
