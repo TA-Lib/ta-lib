@@ -524,11 +524,6 @@ struct VortexStreamState {
     ring_trailingIdx_inHigh: Vec<f64>,
     ring_trailingIdx_inLow: Vec<f64>,
     ring_trailingIdx_inClose: Vec<f64>,
-    winPos_i: usize,
-    winCap_i: usize,
-    win_i_inHigh: Vec<f64>,
-    win_i_inLow: Vec<f64>,
-    win_i_inClose: Vec<f64>,
     cur_outPlusVI: f64,
     cur_outMinusVI: f64,
 }
@@ -555,9 +550,6 @@ impl Core {
         sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
         sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
         sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
-        sp.win_i_inHigh[sp.winPos_i] = inHigh;
-        sp.win_i_inLow[sp.winPos_i] = inLow;
-        sp.win_i_inClose[sp.winPos_i] = inClose;
         // Add on today's terms.
         tempLT = inLow;
         tempHT = inHigh;
@@ -605,8 +597,8 @@ impl Core {
             i = (sp.optInTimePeriod) as usize;
             loop {
                 if seeded != 0 {
-                    tempLT = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-                    tempHT = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                    tempLT = sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
+                    tempHT = sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
                     trueRange = tempHT - tempLT;
                     tempDouble = (sp.prevClose - tempHT).abs();
                     trueRange = c_max(tempDouble, trueRange);
@@ -616,9 +608,9 @@ impl Core {
                     sp.sVMP += (tempHT - sp.prevLow).abs();
                     sp.sVMM += (tempLT - sp.prevHigh).abs();
                 }
-                sp.prevHigh = sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-                sp.prevLow = sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-                sp.prevClose = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+                sp.prevHigh = sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
+                sp.prevLow = sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
+                sp.prevClose = sp.ring_trailingIdx_inClose[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize];
                 seeded = 1;
                 if i == 0 { break; }
                 i -= 1;
@@ -677,10 +669,6 @@ impl Core {
             ringPosL_trailingIdx = 0;
         }
         sp.ringPos_trailingIdx = ringPosL_trailingIdx;
-        sp.winPos_i = sp.winPos_i + 1;
-        if sp.winPos_i >= sp.winCap_i {
-            sp.winPos_i = 0;
-        }
     }
 
     /// The single whole-history transcription behind [`Core::vortex_open_internal`]
@@ -906,6 +894,9 @@ impl Core {
         if capLag_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
+        if cap_trailingIdx < (optInTimePeriod + 1) as i64 {
+            return Err(RetCode::InternalError);
+        }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
         let mut ring_trailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         {
@@ -931,16 +922,6 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let cap_i: i64 = (optInTimePeriod + 1) as i64;
-        if cap_i < 1 || cap_i > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut win_i_inHigh: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inHigh.copy_from_slice(&inHigh[historyLen - cap_i as usize..]);
-        let mut win_i_inLow: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inLow.copy_from_slice(&inLow[historyLen - cap_i as usize..]);
-        let mut win_i_inClose: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inClose.copy_from_slice(&inClose[historyLen - cap_i as usize..]);
         let state = VortexStreamState {
             optInTimePeriod,
             nullRun,
@@ -961,11 +942,6 @@ impl Core {
             ring_trailingIdx_inHigh,
             ring_trailingIdx_inLow,
             ring_trailingIdx_inClose,
-            winPos_i: 0_usize,
-            winCap_i: cap_i as usize,
-            win_i_inHigh,
-            win_i_inLow,
-            win_i_inClose,
         };
         Ok(VortexStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -1174,24 +1150,12 @@ impl VortexStream {
             let mut pkVal1: f64 = 0.0_f64;
             let mut pkSlot2: usize = usize::MAX;
             let mut pkVal2: f64 = 0.0_f64;
-            let mut pkSlot3: usize = usize::MAX;
-            let mut pkVal3: f64 = 0.0_f64;
-            let mut pkSlot4: usize = usize::MAX;
-            let mut pkVal4: f64 = 0.0_f64;
-            let mut pkSlot5: usize = usize::MAX;
-            let mut pkVal5: f64 = 0.0_f64;
             pkSlot0 = sp.ringPos_trailingIdx as usize;
             pkVal0 = inHigh;
             pkSlot1 = sp.ringPos_trailingIdx as usize;
             pkVal1 = inLow;
             pkSlot2 = sp.ringPos_trailingIdx as usize;
             pkVal2 = inClose;
-            pkSlot3 = sp.winPos_i as usize;
-            pkVal3 = inHigh;
-            pkSlot4 = sp.winPos_i as usize;
-            pkVal4 = inLow;
-            pkSlot5 = sp.winPos_i as usize;
-            pkVal5 = inClose;
             // Add on today's terms.
             tempLT = inLow;
             tempHT = inHigh;
@@ -1237,8 +1201,8 @@ impl VortexStream {
                 i = (sp.optInTimePeriod) as usize;
                 loop {
                     if seeded != 0 {
-                        tempLT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot4 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal4 });
-                        tempHT = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot3 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal3 });
+                        tempLT = (if ((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize] } else { pkVal1 });
+                        tempHT = (if ((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize] } else { pkVal0 });
                         trueRange = tempHT - tempLT;
                         tempDouble = (prevClose - tempHT).abs();
                         trueRange = c_max(tempDouble, trueRange);
@@ -1248,9 +1212,9 @@ impl VortexStream {
                         sVMP += (tempHT - prevLow).abs();
                         sVMM += (tempLT - prevHigh).abs();
                     }
-                    prevHigh = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot3 { sp.win_i_inHigh[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal3 });
-                    prevLow = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot4 { sp.win_i_inLow[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal4 });
-                    prevClose = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot5 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal5 });
+                    prevHigh = (if ((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize] } else { pkVal0 });
+                    prevLow = (if ((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize] } else { pkVal1 });
+                    prevClose = (if ((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i }) as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[((if sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx } else { sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i })) as usize] } else { pkVal2 });
                     seeded = 1;
                     if i == 0 { break; }
                     i -= 1;

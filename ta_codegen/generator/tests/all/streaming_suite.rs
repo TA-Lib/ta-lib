@@ -382,6 +382,36 @@ fn cdl3blackcrows_window_folds_into_its_ring() {
 }
 
 #[test]
+fn vortex_window_is_served_by_its_trailing_ring() {
+    // VORTEX's rebuild rescans raw columns its retire ring already stores, at a
+    // depth the ring is proved to hold: the window keeps no buffer, and its reads
+    // must land in that ring rather than vanish.
+    let f = load("vortex");
+    let m = streaming::analyze(&f).expect("VORTEX analyzes");
+    assert!(m.windows().is_empty(), "window served, got {:?}", m.windows().iter().map(|w| &w.var).collect::<Vec<_>>());
+    let ring = m.rings().iter().find(|r| r.var == "trailingIdx").expect("retire ring");
+    assert_eq!(ring.served.iter().map(|w| w.var.as_str()).collect::<Vec<_>>(), ["i"]);
+}
+
+#[test]
+fn a_window_deeper_than_its_ring_keeps_its_buffer() {
+    // The control: one bar less lag and the ring no longer holds the window's
+    // oldest bar, so the depth proof fails and the window keeps its buffer.
+    let dir = input_dir().join("vortex");
+    let mut func = parser::yaml::parse_yaml(&dir.join("vortex.yaml"));
+    let src = std::fs::read_to_string(dir.join("vortex.c")).expect("vortex.c");
+    let shallow = src.replace(
+        "trailingIdx = startIdx - optInTimePeriod + 1;",
+        "trailingIdx = startIdx - optInTimePeriod + 2;",
+    );
+    assert_ne!(shallow, src, "the fixture edit applied");
+    parser::c_source::wire_parsed_source(&mut func, &parser::c_source::parse_c_source_str(&shallow));
+    let m = streaming::analyze(&func).expect("shallow VORTEX analyzes");
+    assert_eq!(m.windows().len(), 1, "unproved depth keeps the window");
+    assert!(m.rings().iter().all(|r| r.served.is_empty()));
+}
+
+#[test]
 fn avgdev_window_keeps_its_buffer() {
     // The control for the fold above, over the real corpus. Two guards would
     // each hold it on their own and it is the FIRST that fires: AVGDEV's window
@@ -395,7 +425,7 @@ fn avgdev_window_keeps_its_buffer() {
     assert_eq!(
         m.windows().len(),
         1,
-        "raw rescan reads keep their own buffer"
+        "raw rescan reads with no ring to serve them keep their own buffer"
     );
     assert!(
         read_arrays(&m).contains("inReal"),

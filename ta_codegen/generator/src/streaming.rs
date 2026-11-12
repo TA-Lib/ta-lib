@@ -210,6 +210,9 @@ pub struct RingSpec {
     /// transition ([`crate::ring_lag`]): it never holds the current bar, so it
     /// takes no zero-capacity guard, and Open rejects a capacity below 1.
     pub lag_ge1: bool,
+    /// Rescan windows whose raw reads this ring serves instead of a buffer of
+    /// their own ([`serve_windows_from_rings`]).
+    pub served: Vec<WindowSpec>,
 }
 
 /// One trailing index collapsed to a single derived scalar per bar.
@@ -259,7 +262,7 @@ pub struct WindowFold {
 /// `WindowSpec` is built — which is why the 14 candlesticks that carried
 /// `win_totIdx_in{Open,High,Low,Close}` carry nothing now, and AVGDEV / IMI /
 /// HT_TRENDLINE / HT_TRENDMODE, whose reads are raw columns, still do.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WindowSpec {
     /// The inner-loop counter variable (stays a live local in the transition).
     pub var: String,
@@ -1897,7 +1900,66 @@ fn prove_buffers(
     lookup: &dyn CalleeLookup,
 ) -> Result<(), StreamError> {
     prove_ring_lags(model, prologue, epilogue, facts.clone(), lookup);
+    serve_windows_from_rings(model, prologue, epilogue, facts.clone(), lookup);
     check_extrema_reach(model, prologue, epilogue, facts, lookup)
+}
+
+/// Moves each rescan window whose raw columns a raw `back > 0` ring already
+/// stores into that ring's [`RingSpec::served`], so the stream keeps one
+/// buffer, not two. Such a ring holds bars `[cursor - lag - back, cursor]`
+/// with the current bar written before the body, so it covers the window's
+/// `[cursor - cap + 1, cursor]` exactly when `cursor - cap + back + 1 - var`
+/// is proved non-negative; Open re-checks the capacity. Unproved, the window
+/// keeps its buffer.
+fn serve_windows_from_rings(
+    model: &mut StreamModel,
+    prologue: &[Statement],
+    epilogue: &[Statement],
+    mut facts: Vec<Expr>,
+    lookup: &dyn CalleeLookup,
+) {
+    if model.windows().is_empty() {
+        return;
+    }
+    if let Some(id) = &model.identity {
+        facts.push(Expr::Not(Box::new(id.condition.clone())));
+    }
+    let input = crate::ring_lag::LagProofInput {
+        prologue,
+        region: model.body,
+        epilogue,
+        cursor: &model.cursor,
+        facts,
+        lookup,
+    };
+    let mut picks: Vec<(usize, usize)> = Vec::new();
+    for (wi, win) in model.windows().iter().enumerate() {
+        let pick = model.rings().iter().position(|r| {
+            if r.derived.is_some() || r.back <= 0 || !win.arrays.iter().all(|a| r.arrays.contains(a)) {
+                return false;
+            }
+            let at = Expr::BinOp(
+                Box::new(Expr::BinOp(
+                    Box::new(Expr::Var(model.cursor.clone())),
+                    BinOp::Sub,
+                    Box::new(win.cap.clone()),
+                )),
+                BinOp::Add,
+                Box::new(Expr::IntLiteral(r.back + 1)),
+            );
+            crate::ring_lag::reach_lower_bounds(model.func, &input, &[(r.var.as_str(), &at)])[0]
+                .is_some_and(|lb| lb >= 0)
+        });
+        if let Some(ri) = pick {
+            picks.push((wi, ri));
+        }
+    }
+    if let Steady::Batch { rings, windows, .. } = &mut model.steady {
+        for &(wi, ri) in picks.iter().rev() {
+            let win = windows.remove(wi);
+            rings[ri].served.push(win);
+        }
+    }
 }
 
 /// Sets [`RingSpec::lag_ge1`] on each `back == 0` ring the body Open
@@ -7119,6 +7181,7 @@ fn assemble_rings(
         .map(|(var, arrs)| RingSpec {
             derived: None,
             lag_ge1: false,
+            served: Vec::new(),
             back: ring_back
                 .get(&var)
                 .copied()
@@ -8790,7 +8853,7 @@ fn ring_offset_read(
 /// resolves a RESCAN-WINDOW offset (#229) rather than a trailing one: slot
 /// `pos` holds the CURRENT bar, stored by the transition prologue, which is
 /// why the election refuses any ring with `back == 0` (those store after the
-/// body). `off` is in `[0, winCap - 1]` and `winCap <= back + 1 <= cap`, so
+/// body). `off` is in `[0, winCap - 1]` and `winCap <= cap`, so
 /// `pos + cap - off` is in `[1, 2*cap)` and one conditional subtract is the
 /// exact modulo -- the same form the window buffer read used, so the fold
 /// changes the buffer and nothing about the per-element cost.
@@ -8853,6 +8916,20 @@ fn window_buf_read(
         names.win_buf(&win.var, array),
         Box::new(idx),
     ))
+}
+
+/// The ring serving rescan window `w0`'s column `array`, if any. The offset var
+/// may already be state-mapped, as in [`window_buf_read`].
+fn served_window_ring<'a>(
+    model: &'a StreamModel,
+    w0: &str,
+    array: &str,
+    names: &dyn NameMap,
+) -> Option<&'a RingSpec> {
+    model.rings().iter().find(|r| {
+        r.arrays.iter().any(|a| a == array)
+            && r.served.iter().any(|w| w.var == w0 || names.state(&w.var) == w0)
+    })
 }
 
 /// The ring a folded window read (#229) names, if any.
@@ -9122,6 +9199,10 @@ fn rewrite_expr_for_transition(
                             .any(|w| w.var == w0 || names.state(&w.var) == w0) =>
                 {
                     tape.unwrap().read(Expr::Var(w0))
+                }
+                InputIndex::WindowVar(w0) if served_window_ring(model, &w0, &n, names).is_some() => {
+                    let ring = served_window_ring(model, &w0, &n, names).unwrap();
+                    ring_cursor_read(ring, &n, Expr::Var(w0), names)
                 }
                 InputIndex::WindowVar(w0) => match window_buf_read(model, &n, &w0, names) {
                     Some(read) => read,
@@ -12240,6 +12321,7 @@ mod tests {
             back,
             fwd: 0,
             lag_ge1: false,
+            served: Vec::new(),
             derived: Some(DerivedRing {
                 slot: "derived".into(),
                 expr: hlr(trail_minus("w")),
@@ -12358,6 +12440,7 @@ mod tests {
                 back: 2,
                 fwd: 0,
                 lag_ge1: false,
+                served: Vec::new(),
                 derived: Some(DerivedRing {
                     slot: "derived".into(),
                     expr: outer(trail_minus("w"), trail_minus("w")),

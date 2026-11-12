@@ -734,11 +734,6 @@ public partial class Core
       internal double[] ring_trailingIdx_inHigh = [];
       internal double[] ring_trailingIdx_inLow = [];
       internal double[] ring_trailingIdx_inClose = [];
-      internal int winPos_i;
-      internal int winCap_i;
-      internal double[] win_i_inHigh = [];
-      internal double[] win_i_inLow = [];
-      internal double[] win_i_inClose = [];
       internal double cur_outPlusVI;
       internal double cur_outMinusVI;
       internal int outRangeBegIdx;
@@ -802,14 +797,6 @@ public partial class Core
          Array.Copy( other.ring_trailingIdx_inLow, this.ring_trailingIdx_inLow, other.ring_trailingIdx_inLow.Length );
          this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
          Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         this.win_i_inHigh = new double[other.win_i_inHigh.Length];
-         Array.Copy( other.win_i_inHigh, this.win_i_inHigh, other.win_i_inHigh.Length );
-         this.win_i_inLow = new double[other.win_i_inLow.Length];
-         Array.Copy( other.win_i_inLow, this.win_i_inLow, other.win_i_inLow.Length );
-         this.win_i_inClose = new double[other.win_i_inClose.Length];
-         Array.Copy( other.win_i_inClose, this.win_i_inClose, other.win_i_inClose.Length );
          this.cur_outPlusVI = other.cur_outPlusVI;
          this.cur_outMinusVI = other.cur_outMinusVI;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -890,24 +877,12 @@ public partial class Core
          double pkVal1 = 0.0;
          int pkSlot2 = -1;
          double pkVal2 = 0.0;
-         int pkSlot3 = -1;
-         double pkVal3 = 0.0;
-         int pkSlot4 = -1;
-         double pkVal4 = 0.0;
-         int pkSlot5 = -1;
-         double pkVal5 = 0.0;
          pkSlot0 = sp.ringPos_trailingIdx;
          pkVal0 = inHigh;
          pkSlot1 = sp.ringPos_trailingIdx;
          pkVal1 = inLow;
          pkSlot2 = sp.ringPos_trailingIdx;
          pkVal2 = inClose;
-         pkSlot3 = sp.winPos_i;
-         pkVal3 = inHigh;
-         pkSlot4 = sp.winPos_i;
-         pkVal4 = inLow;
-         pkSlot5 = sp.winPos_i;
-         pkVal5 = inClose;
          /* Add on today's terms. */
          tempLT = inLow;
          tempHT = inHigh;
@@ -953,8 +928,8 @@ public partial class Core
             seeded = 0;
             for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
                if( seeded != 0 ) {
-                  tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
-                  tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+                  tempLT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
+                  tempHT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
                   trueRange = tempHT - tempLT;
                   tempDouble = Math.Abs(prevClose - tempHT);
                   trueRange = MaxGt(tempDouble, trueRange);
@@ -964,9 +939,9 @@ public partial class Core
                   sVMP += Math.Abs(tempHT - prevLow);
                   sVMM += Math.Abs(tempLT - prevHigh);
                }
-               prevHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
-               prevLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
-               prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot5) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal5;
+               prevHigh = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
+               prevLow = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
+               prevClose = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) != pkSlot2) ? sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal2;
                seeded = 1;
             }
          }
@@ -1051,9 +1026,6 @@ public partial class Core
       sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
       sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
       sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
-      sp.win_i_inHigh[sp.winPos_i] = inHigh;
-      sp.win_i_inLow[sp.winPos_i] = inLow;
-      sp.win_i_inClose[sp.winPos_i] = inClose;
       /* Add on today's terms. */
       tempLT = inLow;
       tempHT = inHigh;
@@ -1099,8 +1071,8 @@ public partial class Core
          seeded = 0;
          for( i = sp.optInTimePeriod; i >= 0; i -= 1 ) {
             if( seeded != 0 ) {
-               tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-               tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+               tempLT = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+               tempHT = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
                trueRange = tempHT - tempLT;
                tempDouble = Math.Abs(sp.prevClose - tempHT);
                trueRange = MaxGt(tempDouble, trueRange);
@@ -1110,9 +1082,9 @@ public partial class Core
                sp.sVMP += Math.Abs(tempHT - sp.prevLow);
                sp.sVMM += Math.Abs(tempLT - sp.prevHigh);
             }
-            sp.prevHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-            sp.prevLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-            sp.prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+            sp.prevHigh = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+            sp.prevLow = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+            sp.prevClose = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
             seeded = 1;
          }
       }
@@ -1169,10 +1141,6 @@ public partial class Core
          ringPosL_trailingIdx = 0;
       }
       sp.ringPos_trailingIdx = ringPosL_trailingIdx;
-      sp.winPos_i = sp.winPos_i + 1;
-      if( sp.winPos_i >= sp.winCap_i ) {
-         sp.winPos_i = 0;
-      }
    }
 
    private RetCode VortexOpenImpl( VortexStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outPlusVI, Span<double> outMinusVI, int outStride )
@@ -1393,6 +1361,9 @@ public partial class Core
       if( capLag_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
+      if( cap_trailingIdx < (int)(optInTimePeriod + 1) ) {
+         return RetCode.InternalError;
+      }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
       for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
@@ -1406,16 +1377,6 @@ public partial class Core
       for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
          capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
       }
-      int cap_i = (int)(optInTimePeriod + 1);
-      if( cap_i < 1 || cap_i > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capWin_i_inHigh = new double[cap_i];
-      inHigh.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inHigh);
-      double[] capWin_i_inLow = new double[cap_i];
-      inLow.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inLow);
-      double[] capWin_i_inClose = new double[cap_i];
-      inClose.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inClose);
       sp.optInTimePeriod = optInTimePeriod;
       sp.nullRun = nullRun;
       sp.prevHigh = prevHigh;
@@ -1433,11 +1394,6 @@ public partial class Core
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
       sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
       sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
-      sp.winPos_i = 0;
-      sp.winCap_i = cap_i;
-      sp.win_i_inHigh = capWin_i_inHigh;
-      sp.win_i_inLow = capWin_i_inLow;
-      sp.win_i_inClose = capWin_i_inClose;
       sp.cur_outPlusVI = outPlusVI[(outNBElement - 1) * outStride];
       sp.cur_outMinusVI = outMinusVI[(outNBElement - 1) * outStride];
       return RetCode.Success;

@@ -7381,28 +7381,6 @@ static int sv_steq_TA_VORTEX( const struct TA_VORTEX_Stream *a, const struct TA_
       ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
       if( sv_xtier_ne(a->ring_trailingIdx_inClose[ia], b->ring_trailingIdx_inClose[ib], z) ) { *w = "ring_trailingIdx_inClose"; return 1; }
    }
-   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
-   if( (a->win_i_inHigh == NULL) != (b->win_i_inHigh == NULL) ) { *w = "win_i_inHigh"; return 1; }
-   if( a->win_i_inHigh ) for( k = 0; k < a->winCap_i; k++ )
-   {
-      ia = (a->winPos_i + k) % a->winCap_i;
-      ib = (b->winPos_i + k) % b->winCap_i;
-      if( sv_xtier_ne(a->win_i_inHigh[ia], b->win_i_inHigh[ib], z) ) { *w = "win_i_inHigh"; return 1; }
-   }
-   if( (a->win_i_inLow == NULL) != (b->win_i_inLow == NULL) ) { *w = "win_i_inLow"; return 1; }
-   if( a->win_i_inLow ) for( k = 0; k < a->winCap_i; k++ )
-   {
-      ia = (a->winPos_i + k) % a->winCap_i;
-      ib = (b->winPos_i + k) % b->winCap_i;
-      if( sv_xtier_ne(a->win_i_inLow[ia], b->win_i_inLow[ib], z) ) { *w = "win_i_inLow"; return 1; }
-   }
-   if( (a->win_i_inClose == NULL) != (b->win_i_inClose == NULL) ) { *w = "win_i_inClose"; return 1; }
-   if( a->win_i_inClose ) for( k = 0; k < a->winCap_i; k++ )
-   {
-      ia = (a->winPos_i + k) % a->winCap_i;
-      ib = (b->winPos_i + k) % b->winCap_i;
-      if( sv_xtier_ne(a->win_i_inClose[ia], b->win_i_inClose[ib], z) ) { *w = "win_i_inClose"; return 1; }
-   }
    return 0;
 }
 

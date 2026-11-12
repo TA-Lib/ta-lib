@@ -5605,6 +5605,14 @@ fn alloc_and_capture(
                     fwd = ring.fwd,
                     eid = crate::internal_error_ids::site(&format!("ringlag.{v}"))
                 );
+                for win in &ring.served {
+                    let cap = render_expression(&win.cap, registry, helpers, counter);
+                    let _ = writeln!(
+                        s,
+                        "{pad}if( sp->ringCap_{v} < (int)({cap}) ) {{ {pre}{sp_fail}TA_{n}_ReleaseImpl( sp ); return TA_INTERNAL_ERROR({eid}); }}",
+                        eid = crate::internal_error_ids::site(&format!("winring.{}", win.var))
+                    );
+                }
             } else {
                 let _ = writeln!(s, "{pad}sp->ringCap_{v} = (int)({} - {v});", model.cursor);
                 let _ = writeln!(

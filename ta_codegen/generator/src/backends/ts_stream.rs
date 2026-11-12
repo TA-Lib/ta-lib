@@ -1395,7 +1395,11 @@ fn emit_capture_buffers(o: &mut String, model: &StreamModel, ctx: &TsCtx) {
         if back > 0 {
             let _ = writeln!(o, "  const capLag_{v} = {c} - {v};");
             let _ = writeln!(o, "  const cap_{v} = capLag_{v} + {};", back + 1);
-            let _ = writeln!(o, "  if (capLag_{v} < {} || cap_{v} > historyLen) {{", ring.fwd);
+            let mut served = String::new();
+            for w in &ring.served {
+                let _ = write!(served, " || cap_{v} < {}", ctx.value_for(CType::Int32, &w.cap));
+            }
+            let _ = writeln!(o, "  if (capLag_{v} < {} || cap_{v} > historyLen{served}) {{", ring.fwd);
         } else {
             let _ = writeln!(o, "  const cap_{v} = {c} - {v};");
             let _ = writeln!(o, "  if (cap_{v} < {} || cap_{v} > historyLen) {{", i32::from(ring.lag_ge1));

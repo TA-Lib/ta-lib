@@ -606,16 +606,6 @@ export class VortexStream {
   /** @internal */
   ring_trailingIdx_inClose: Float64Array = new Float64Array(2);
   /** @internal */
-  winPos_i: number = 0;
-  /** @internal */
-  winCap_i: number = 1;
-  /** @internal */
-  win_i_inHigh: Float64Array = new Float64Array(1);
-  /** @internal */
-  win_i_inLow: Float64Array = new Float64Array(1);
-  /** @internal */
-  win_i_inClose: Float64Array = new Float64Array(1);
-  /** @internal */
   cur_outPlusVI: number = 0;
   /** @internal */
   cur_outMinusVI: number = 0;
@@ -739,24 +729,12 @@ export class VortexStream {
     let pkVal1 = 0;
     let pkSlot2 = -1;
     let pkVal2 = 0;
-    let pkSlot3 = -1;
-    let pkVal3 = 0;
-    let pkSlot4 = -1;
-    let pkVal4 = 0;
-    let pkSlot5 = -1;
-    let pkVal5 = 0;
     pkSlot0 = sp.ringPos_trailingIdx;
     pkVal0 = inHigh;
     pkSlot1 = sp.ringPos_trailingIdx;
     pkVal1 = inLow;
     pkSlot2 = sp.ringPos_trailingIdx;
     pkVal2 = inClose;
-    pkSlot3 = sp.winPos_i;
-    pkVal3 = inHigh;
-    pkSlot4 = sp.winPos_i;
-    pkVal4 = inLow;
-    pkSlot5 = sp.winPos_i;
-    pkVal5 = inClose;
     /* Add on today's terms. */
     tempLT = inLow;
     tempHT = inHigh;
@@ -806,8 +784,8 @@ export class VortexStream {
       seeded = 0;
       for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
         if (seeded !== 0) {
-          tempLT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
-          tempHT = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
+          tempLT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
+          tempHT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
           trueRange = tempHT - tempLT;
           tempDouble = Math.abs(prevClose - tempHT);
           if (tempDouble > trueRange) {
@@ -821,9 +799,9 @@ export class VortexStream {
           sVMP += Math.abs(tempHT - prevLow);
           sVMM += Math.abs(tempLT - prevHigh);
         }
-        prevHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot3) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal3;
-        prevLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot4) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal4;
-        prevClose = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) !== pkSlot5) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal5;
+        prevHigh = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
+        prevLow = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
+        prevClose = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot2) ? sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal2;
         seeded = 1;
       }
     }
@@ -929,11 +907,6 @@ export class VortexStream {
     c.ring_trailingIdx_inHigh = this.ring_trailingIdx_inHigh.slice();
     c.ring_trailingIdx_inLow = this.ring_trailingIdx_inLow.slice();
     c.ring_trailingIdx_inClose = this.ring_trailingIdx_inClose.slice();
-    c.winPos_i = this.winPos_i;
-    c.winCap_i = this.winCap_i;
-    c.win_i_inHigh = this.win_i_inHigh.slice();
-    c.win_i_inLow = this.win_i_inLow.slice();
-    c.win_i_inClose = this.win_i_inClose.slice();
     c.cur_outPlusVI = this.cur_outPlusVI;
     c.cur_outMinusVI = this.cur_outMinusVI;
     c.outRangeBegIdx = this.outRangeBegIdx;
@@ -970,9 +943,6 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
   sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
   sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
-  sp.win_i_inHigh[sp.winPos_i] = inHigh;
-  sp.win_i_inLow[sp.winPos_i] = inLow;
-  sp.win_i_inClose[sp.winPos_i] = inClose;
   /* Add on today's terms. */
   tempLT = inLow;
   tempHT = inHigh;
@@ -1022,8 +992,8 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
     seeded = 0;
     for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
       if (seeded !== 0) {
-        tempLT = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-        tempHT = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+        tempLT = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+        tempHT = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
         trueRange = tempHT - tempLT;
         tempDouble = Math.abs(sp.prevClose - tempHT);
         if (tempDouble > trueRange) {
@@ -1037,9 +1007,9 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
         sp.sVMP += Math.abs(tempHT - sp.prevLow);
         sp.sVMM += Math.abs(tempLT - sp.prevHigh);
       }
-      sp.prevHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-      sp.prevLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-      sp.prevClose = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+      sp.prevHigh = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+      sp.prevLow = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+      sp.prevClose = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
       seeded = 1;
     }
   }
@@ -1098,10 +1068,6 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
   ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
   ringPosL_trailingIdx = ringPosL_trailingIdx & (ringPosL_trailingIdx - sp.ringCap_trailingIdx >> 31);
   sp.ringPos_trailingIdx = ringPosL_trailingIdx;
-  sp.winPos_i = sp.winPos_i + 1;
-  if (sp.winPos_i >= sp.winCap_i) {
-    sp.winPos_i = 0;
-  }
 }
 
 function vortexOpenImpl(
@@ -1344,7 +1310,7 @@ function vortexOpenImpl(
   outNBElement.value = outIdx;
   const capLag_trailingIdx = today - trailingIdx;
   const cap_trailingIdx = capLag_trailingIdx + 2;
-  if (capLag_trailingIdx < 0 || cap_trailingIdx > historyLen) {
+  if (capLag_trailingIdx < 0 || cap_trailingIdx > historyLen || cap_trailingIdx < optInTimePeriod + 1) {
     return RetCode.INTERNAL_ERROR;
   }
   const allocN_trailingIdx = cap_trailingIdx > 0 ? cap_trailingIdx : 1;
@@ -1360,13 +1326,6 @@ function vortexOpenImpl(
   for (let fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++) {
     capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
   }
-  const cap_i = optInTimePeriod + 1;
-  if (cap_i < 1 || cap_i > historyLen) {
-    return RetCode.INTERNAL_ERROR;
-  }
-  const capWin_i_inHigh = inHigh.slice(historyLen - cap_i, historyLen);
-  const capWin_i_inLow = inLow.slice(historyLen - cap_i, historyLen);
-  const capWin_i_inClose = inClose.slice(historyLen - cap_i, historyLen);
   sp.optInTimePeriod = optInTimePeriod;
   sp.nullRun = nullRun;
   sp.prevHigh = prevHigh;
@@ -1384,11 +1343,6 @@ function vortexOpenImpl(
   sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
   sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
   sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
-  sp.winPos_i = 0;
-  sp.winCap_i = cap_i;
-  sp.win_i_inHigh = capWin_i_inHigh;
-  sp.win_i_inLow = capWin_i_inLow;
-  sp.win_i_inClose = capWin_i_inClose;
   sp.cur_outPlusVI = outPlusVI[(outNBElement.value - 1) * outStride];
   sp.cur_outMinusVI = outMinusVI[(outNBElement.value - 1) * outStride];
   return RetCode.SUCCESS;

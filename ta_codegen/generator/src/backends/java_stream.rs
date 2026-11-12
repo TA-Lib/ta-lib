@@ -2276,6 +2276,26 @@ fn derived_fill_expr_java(
     render_expr(&streaming::derived_fill_value(dr, idx_var), ctx, registry, helpers)
 }
 
+/// Open re-checks that the ring still covers each window it serves.
+fn emit_served_recheck(
+    o: &mut String,
+    ring: &streaming::RingSpec,
+    counter: &Cell<usize>,
+    stream_fma: &FmaVarSets,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) {
+    let v = &ring.var;
+    for win in &ring.served {
+        let empty = HashSet::new();
+        let ctx = stream_ctx(&empty, counter, stream_fma);
+        let cap = render_expr(&win.cap, &ctx, registry, helpers);
+        let _ = writeln!(o, "      if( cap_{v} < (int)({cap}) ) {{");
+        let _ = writeln!(o, "         return RetCode.INTERNAL_ERROR;");
+        let _ = writeln!(o, "      }}");
+    }
+}
+
 /// The capture epilogue: compute ring/window/extrema capacities NUMERICALLY
 /// from the still-live batch locals (int arithmetic — C's int, no widening
 /// needed in Java), build the buffers, then store every handle field.
@@ -2311,6 +2331,7 @@ fn emit_capture(
             );
             let _ = writeln!(o, "         return RetCode.INTERNAL_ERROR;");
             let _ = writeln!(o, "      }}");
+            emit_served_recheck(o, ring, counter, stream_fma, registry, helpers);
         } else {
             let _ = writeln!(o, "      int cap_{v} = {c} - {v};");
             let _ = writeln!(

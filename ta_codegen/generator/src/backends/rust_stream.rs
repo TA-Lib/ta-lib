@@ -2655,6 +2655,19 @@ fn emit_capture(
                 "        if capLag_{v} < {fwd} || cap_{v} > historyLen as i64 {{\n            return Err(RetCode::InternalError);\n        }}",
                 fwd = ring.fwd
             );
+            for win in &ring.served {
+                let opt_real_params: Vec<String> = func
+                    .optional_inputs
+                    .iter()
+                    .filter(|p| p.param_type == ParamType::Real)
+                    .map(|p| p.name.clone())
+                    .collect();
+                let cap = render_expr(&win.cap, &typing.ctx, &opt_real_params, registry, helpers);
+                let _ = writeln!(
+                    o,
+                    "        if cap_{v} < ({cap}) as i64 {{\n            return Err(RetCode::InternalError);\n        }}"
+                );
+            }
         } else {
             let _ = writeln!(
                 o,

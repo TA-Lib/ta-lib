@@ -568,11 +568,6 @@ struct TA_VORTEX_Stream {
    double *ring_trailingIdx_inHigh;
    double *ring_trailingIdx_inLow;
    double *ring_trailingIdx_inClose;
-   int winPos_i;
-   int winCap_i;
-   double *win_i_inHigh;
-   double *win_i_inLow;
-   double *win_i_inClose;
 };
 
 /* Private function, not in public API. */
@@ -582,9 +577,6 @@ static void TA_VORTEX_ReleaseImpl( struct TA_VORTEX_Stream *sp )
    if( sp->ring_trailingIdx_inHigh ) TA_Free( sp->ring_trailingIdx_inHigh );
    if( sp->ring_trailingIdx_inLow ) TA_Free( sp->ring_trailingIdx_inLow );
    if( sp->ring_trailingIdx_inClose ) TA_Free( sp->ring_trailingIdx_inClose );
-   if( sp->win_i_inHigh ) TA_Free( sp->win_i_inHigh );
-   if( sp->win_i_inLow ) TA_Free( sp->win_i_inLow );
-   if( sp->win_i_inClose ) TA_Free( sp->win_i_inClose );
    TA_Free( sp );
 }
 
@@ -607,9 +599,6 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
    sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] = inHigh;
    sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] = inLow;
    sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] = inClose;
-   sp->win_i_inHigh[sp->winPos_i] = inHigh;
-   sp->win_i_inLow[sp->winPos_i] = inLow;
-   sp->win_i_inClose[sp->winPos_i] = inClose;
    /* Add on today's terms. */
    tempLT = inLow;
    tempHT = inHigh;
@@ -665,8 +654,8 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       {
          if( seeded != 0 )
          {
-            tempLT = sp->win_i_inLow[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-            tempHT = sp->win_i_inHigh[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
+            tempLT = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+            tempHT = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
             trueRange = tempHT - tempLT;
             tempDouble = fabs(sp->prevClose - tempHT);
             if( tempDouble > trueRange )
@@ -682,9 +671,9 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
             sp->sVMP += fabs(tempHT - sp->prevLow);
             sp->sVMM += fabs(tempLT - sp->prevHigh);
          }
-         sp->prevHigh = sp->win_i_inHigh[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-         sp->prevLow = sp->win_i_inLow[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-         sp->prevClose = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
+         sp->prevHigh = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+         sp->prevLow = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+         sp->prevClose = sp->ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
          seeded = 1;
       }
    }
@@ -752,11 +741,6 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       ringPosL_trailingIdx = 0;
    }
    sp->ringPos_trailingIdx = ringPosL_trailingIdx;
-   sp->winPos_i = sp->winPos_i + 1;
-   if( sp->winPos_i >= sp->winCap_i )
-   {
-      sp->winPos_i = 0;
-   }
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
@@ -1007,6 +991,7 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
       sp->ringLag_trailingIdx = (int)(today - trailingIdx);
       sp->ringCap_trailingIdx = sp->ringLag_trailingIdx + 2;
       if( sp->ringLag_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VORTEX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(424); }
+      if( sp->ringCap_trailingIdx < (int)(optInTimePeriod + 1) ) { TA_VORTEX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(552); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inHigh ) { TA_VORTEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -1028,18 +1013,6 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
         }
       }
       sp->ringPos_trailingIdx = historyLen % sp->ringCap_trailingIdx;
-      sp->winCap_i = (int)(optInTimePeriod + 1);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_VORTEX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(551); }
-      sp->win_i_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inHigh ) { TA_VORTEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_i_inHigh, inHigh + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
-      sp->win_i_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inLow ) { TA_VORTEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_i_inLow, inLow + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
-      sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inClose ) { TA_VORTEX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
-      sp->winPos_i = 0;
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];
       sp->lag1_inClose = inClose[historyLen - 1];
@@ -1168,21 +1141,12 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    double *ring_trailingIdx_inClose;
    double *ring_trailingIdx_inHigh;
    double *ring_trailingIdx_inLow;
-   double *win_i_inClose;
-   double *win_i_inHigh;
-   double *win_i_inLow;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
    double pkVal1 = 0.0;
    int pkSlot2 = -1;
    double pkVal2 = 0.0;
-   int pkSlot3 = -1;
-   double pkVal3 = 0.0;
-   int pkSlot4 = -1;
-   double pkVal4 = 0.0;
-   int pkSlot5 = -1;
-   double pkVal5 = 0.0;
 
    if( !stream || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
@@ -1196,21 +1160,12 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    ring_trailingIdx_inClose = sp->ring_trailingIdx_inClose;
    ring_trailingIdx_inHigh = sp->ring_trailingIdx_inHigh;
    ring_trailingIdx_inLow = sp->ring_trailingIdx_inLow;
-   win_i_inClose = sp->win_i_inClose;
-   win_i_inHigh = sp->win_i_inHigh;
-   win_i_inLow = sp->win_i_inLow;
    pkSlot0 = sp->ringPos_trailingIdx;
    pkVal0 = inHigh;
    pkSlot1 = sp->ringPos_trailingIdx;
    pkVal1 = inLow;
    pkSlot2 = sp->ringPos_trailingIdx;
    pkVal2 = inClose;
-   pkSlot3 = sp->winPos_i;
-   pkVal3 = inHigh;
-   pkSlot4 = sp->winPos_i;
-   pkVal4 = inLow;
-   pkSlot5 = sp->winPos_i;
-   pkVal5 = inClose;
    /* Add on today's terms. */
    tempLT = inLow;
    tempHT = inHigh;
@@ -1266,8 +1221,8 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
       {
          if( seeded != 0 )
          {
-            tempLT = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot4) ? win_i_inLow[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal4;
-            tempHT = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot3) ? win_i_inHigh[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal3;
+            tempLT = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot1) ? ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal1;
+            tempHT = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot0) ? ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal0;
             trueRange = tempHT - tempLT;
             tempDouble = fabs(prevClose - tempHT);
             if( tempDouble > trueRange )
@@ -1283,9 +1238,9 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
             sVMP += fabs(tempHT - prevLow);
             sVMM += fabs(tempLT - prevHigh);
          }
-         prevHigh = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot3) ? win_i_inHigh[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal3;
-         prevLow = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot4) ? win_i_inLow[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal4;
-         prevClose = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot5) ? win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal5;
+         prevHigh = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot0) ? ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal0;
+         prevLow = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot1) ? ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal1;
+         prevClose = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot2) ? ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal2;
          seeded = 1;
       }
    }
@@ -1388,9 +1343,6 @@ TA_LIB_API TA_RetCode TA_VORTEX_Clone( const TA_VORTEX_Stream *stream, TA_VORTEX
    sp->ring_trailingIdx_inHigh = NULL;
    sp->ring_trailingIdx_inLow = NULL;
    sp->ring_trailingIdx_inClose = NULL;
-   sp->win_i_inHigh = NULL;
-   sp->win_i_inLow = NULL;
-   sp->win_i_inClose = NULL;
    if( stream->ring_trailingIdx_inHigh )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
@@ -1406,21 +1358,6 @@ TA_LIB_API TA_RetCode TA_VORTEX_Clone( const TA_VORTEX_Stream *stream, TA_VORTEX
      sp->ring_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inClose ) { TA_VORTEX_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdx_inClose, stream->ring_trailingIdx_inClose, sizeof(double) * copyN ); }
-   if( stream->win_i_inHigh )
-   { size_t copyN = (size_t)(sp->winCap_i);
-     sp->win_i_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->win_i_inHigh ) { TA_VORTEX_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->win_i_inHigh, stream->win_i_inHigh, sizeof(double) * copyN ); }
-   if( stream->win_i_inLow )
-   { size_t copyN = (size_t)(sp->winCap_i);
-     sp->win_i_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->win_i_inLow ) { TA_VORTEX_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->win_i_inLow, stream->win_i_inLow, sizeof(double) * copyN ); }
-   if( stream->win_i_inClose )
-   { size_t copyN = (size_t)(sp->winCap_i);
-     sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
-     if( !sp->win_i_inClose ) { TA_VORTEX_Close( sp ); return TA_ALLOC_ERR; }
-     memcpy( sp->win_i_inClose, stream->win_i_inClose, sizeof(double) * copyN ); }
    *clone = sp;
    return TA_SUCCESS;
 }
