@@ -231,8 +231,7 @@ int main( int argc, char **argv )
       int engineFailures = codegen_engine_report();
       if( engineFailures > 0 && rideRet == TA_TEST_PASS )
       {
-         printf( "\nFAILED: %d WASM-engine failure(s) -- a call did not run in WASM for a "
-                 "reason the engine's contract does not give (the ENGINE lines above).\n",
+         printf( "\nFAILED: %d WASM-engine failure(s); the ENGINE lines above name them.\n",
                  engineFailures );
          rideRet = TA_CODEGEN_ENGINE_FALL_THROUGH;
       }

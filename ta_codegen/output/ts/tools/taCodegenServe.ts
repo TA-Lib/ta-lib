@@ -489,13 +489,8 @@ function coreIsDefault(c: Core): boolean {
   return true;
 }
 
-// The one list of fall-throughs that are the engine's contract: the label a
-// fall-through is expected under, or null when it is a defect. A reason is
-// expected only where this call's own facts explain it; the engine's load
-// states ('not-loaded', 'compile', 'instantiate', 'fma', 'unavailable'), a trap
-// and a throw in the glue never are. This server passes no output buffer, so
-// 'options' under the default Core is a defect unless ta-lib/js rejects the
-// call too.
+// This server passes no output buffer, so 'options' under the default Core is a
+// defect unless ta-lib/js rejects the call too.
 function expectedFallThrough(
   reason: string, exported: boolean, declined: boolean, lengthsDiffer: boolean, coreDefault: boolean, rejected: boolean,
   bytes: number,

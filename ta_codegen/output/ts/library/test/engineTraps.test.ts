@@ -46,8 +46,8 @@
  */
 
 // The engine's failure paths, over modules built here byte by byte: each has
-// the exports the loader requires, and `sma_batch` traps, is missing or is
-// never reached.
+// the exports the loader requires, and `sma_batch` counts its entry and traps,
+// is missing or is never reached.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -90,16 +90,18 @@ function engineBytes(fused: boolean, withBatch = true): string {
     [...name('memory'), 2, 0],
     [...name('scratch'), 0, 0],
     [...name('out_range'), 0, 1],
-    [...name('batch_calls'), 0, 1],
+    [...name('batch_calls'), 0, 4],
     [...name('fma_probe'), 0, 2],
     ...(withBatch ? [[...name('sma_batch'), 0, 3]] : []),
   ]);
-  const code = vec([body([0x41, ...leb(1024)]), body([0x41, 0]), body(probe), body([0x00])]);
+  const enterAndTrap = [0x23, 0, 0x41, 1, 0x6a, 0x24, 0, 0x00];
+  const code = vec([body([0x41, ...leb(1024)]), body([0x41, 0]), body(probe), body(enterAndTrap), body([0x23, 0])]);
   const module = [
     ...[0x00, 0x61, 0x73, 0x6d, 1, 0, 0, 0],
     ...section(1, types),
-    ...section(3, vec([[0], [1], [2], [3]])),
+    ...section(3, vec([[0], [1], [2], [3], [1]])),
     ...section(5, vec([[0, 2]])),
+    ...section(6, vec([[0x7f, 1, 0x41, 0, 0x0b]])),
     ...section(7, exports),
     ...section(10, code),
   ];
@@ -138,20 +140,29 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
   hooks.provideWasmBytes(engineBytes(true));
   hooks.resetFallThroughs();
   hooks.setEngineMode('force');
+  let entered = hooks.moduleCalls();
+  const countsTheTrappedCall = (where: string): void => {
+    const now = hooks.moduleCalls();
+    assert.equal(now, entered + 1, `${where}: moduleCalls() went from ${entered} to ${now} across a trapped call`);
+    entered = now;
+  };
   try {
     answersAsJs('first trap');
     trappedInWasm('first trap');
+    countsTheTrappedCall('first trap');
     assert.equal(instances, 1);
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     let calls = 1;
     while (hooks.engineStatus().engine === 'wasm' && calls < hooks.MAX_TRAPS) {
       answersAsJs(`trap ${++calls}`);
       trappedInWasm(`trap ${calls}`);
+      countsTheTrappedCall(`trap ${calls}`);
       assert.equal(instances, calls, 'a call after a trap did not instantiate the engine again');
     }
     assert.equal(calls, hooks.MAX_TRAPS);
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'trap' });
     answersAsJs('given up');
+    assert.equal(hooks.moduleCalls(), entered, 'a call after the engine was given up moved moduleCalls()');
     assert.equal(instances, calls);
     assert.equal(hooks.fallThroughCount(), calls + 1);
   } finally {

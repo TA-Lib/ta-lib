@@ -26,7 +26,8 @@ pub extern "C" fn out_range() -> *const u32 {
 static BATCH_CALLS: AtomicU32 = AtomicU32::new(0);
 
 /// The `<name>_batch` calls this instance has entered. Only the exports
-/// advance it, so a caller that sees it move by one knows the call ran here.
+/// advance it, so a move by one proves an export was entered: not that it
+/// returned, nor that the arrays the caller got back came from it.
 #[no_mangle]
 pub extern "C" fn batch_calls() -> u32 {
     BATCH_CALLS.load(Ordering::Relaxed)

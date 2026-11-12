@@ -185,10 +185,18 @@ export class WasmEngine {
   /** Linear memory never shrinks: an instance past the high-water mark is dropped once its results are copied out. */
   done(): void {
     if (live === this && this.memory.buffer.byteLength > highWater) {
-      retired += this.x.batch_calls() >>> 0;
-      live = null;
+      retire(this);
     }
   }
+}
+
+function retire(engine: WasmEngine): void {
+  try {
+    retired += engine.x.batch_calls() >>> 0;
+  } catch {
+    // A half-dead instance may not answer; its count is then lost.
+  }
+  live = null;
 }
 
 /**
@@ -506,7 +514,7 @@ export function wasmFrame(bytes: number): WasmEngine | null {
  */
 export function trapped(engine: WasmEngine, error: unknown): null {
   if (live === engine) {
-    live = null;
+    retire(engine);
   }
   lastThrown = error;
   traps++;

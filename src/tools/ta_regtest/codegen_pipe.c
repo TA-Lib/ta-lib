@@ -580,6 +580,8 @@ void codegen_pipe_close(CodegenPipe *cp)
         }
         if( result == 0 )
         {
+            printf("  ENGINE NOTE: the WASM-engine server (pid %d) had not exited after %d ms; "
+                   "sent SIGTERM, so its exit status proves nothing\n", cp->child_pid, waited);
             kill(cp->child_pid, SIGTERM);
             killed = 1;
             result = waitpid(cp->child_pid, &status, 0);
