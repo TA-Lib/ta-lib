@@ -1,0 +1,20 @@
+[package]
+name = "ta-lib-wasm"
+version = "0.8.4"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+ta-lib = { path = "../rust/library" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[workspace]

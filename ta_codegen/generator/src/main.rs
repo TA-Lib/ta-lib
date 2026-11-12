@@ -683,6 +683,11 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::rust_phantom_io::generate(all_funcs, &enums, &out_base);
     }
 
+    // Whole-corpus, like the probe above: a `--func=X` run must not shrink it.
+    if backends_to_run.contains(&"rust") {
+        backends::wasm::generate(all_funcs, &enums, &root);
+    }
+
     // Generate Makefile.am and copy C library files when C is one of the backends
     if backends_to_run.contains(&"c") {
         backends::makefile_am::generate(all_funcs, &root.join("src/ta_func/Makefile.am"));

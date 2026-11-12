@@ -16,6 +16,7 @@
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
 #   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript libraries (cargo)
+#   scripts/build.py wasm           Build bin/ta_lib.wasm and check its instructions (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -162,6 +163,11 @@ def show_help():
                         the .NET SDK and/or Node with npm, narrowed by
                         --language. --node=22,24,26 (or all) runs the
                         TypeScript suite once per pinned Node major instead.
+    wasm                Build bin/ta_lib.wasm from the committed ta_codegen/output/wasm
+                        crate for wasm32-unknown-unknown, then fail unless it
+                        imports nothing and its only relaxed-SIMD instruction
+                        is f64x2.relaxed_madd. Generates nothing; needs the
+                        pinned toolchain's wasm32-unknown-unknown target.
     format              Re-indent the ta_codegen/input/ C source of truth
     format-check        Verify inputs are formatted (fails if not); writes nothing
     clippy              Lint both Rust crates as the dev nightly does
@@ -363,6 +369,39 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
         return 1
     return 0
     return 0
+
+WASM_TARGET = 'wasm32-unknown-unknown'
+# no-vectorize is load-bearing: with relaxed-simd on, LLVM turns vectorised
+# float selects into relaxed min/max, whose NaN and signed-zero answers vary by
+# engine. check_wasm_module.py fails the build if one appears.
+WASM_RUSTFLAGS = ('-C target-feature=+simd128,+relaxed-simd '
+                  '-C no-vectorize-loops -C no-vectorize-slp')
+
+def build_wasm(root_dir: str) -> int:
+    """Builds bin/ta_lib.wasm from the committed crate and checks it."""
+    sysroot = subprocess.run(['rustc', '--print', 'sysroot'], cwd=root_dir,
+                             capture_output=True, text=True)
+    if sysroot.returncode != 0 or not os.path.isdir(
+            os.path.join(sysroot.stdout.strip(), 'lib', 'rustlib', WASM_TARGET, 'lib')):
+        print(f"Error: the Rust target {WASM_TARGET} is not installed for the toolchain "
+              f"rust-toolchain.toml pins. Install it with 'rustup target add {WASM_TARGET}' "
+              f"from the repository root.", flush=True)
+        return 1
+    crate = os.path.join(root_dir, 'ta_codegen', 'output', 'wasm')
+    env = dict(JOBS.env, RUSTFLAGS=WASM_RUSTFLAGS)
+    try:
+        subprocess.run(['cargo', 'build', '--release', '--target', WASM_TARGET,
+                        '--manifest-path', os.path.join(crate, 'Cargo.toml')],
+                       env=env, pass_fds=JOBS.fds, check=True, cwd=root_dir)
+    except subprocess.CalledProcessError:
+        return 1
+    built = os.path.join(crate, 'target', WASM_TARGET, 'release', 'ta_lib_wasm.wasm')
+    out = os.path.join(root_dir, 'bin', 'ta_lib.wasm')
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    shutil.copyfile(built, out)
+    print(f"  {os.path.relpath(out, root_dir)}: {os.path.getsize(out)} bytes", flush=True)
+    return subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'check_wasm_module.py'),
+                           out]).returncode
 
 def build_ref(root_dir: str, build_dir: str, jobs: int, versions, build_only: bool) -> int:
     """Builds the serve of every selected member of ta_ref/ (all by default),
@@ -673,6 +712,8 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/rust/library/src/ta_func/sma.rs',
     'ta_codegen/output/csharp/library/src/Core_SMA.cs',
     'ta_codegen/output/ts/library/src/func/sma.ts',
+    'ta_codegen/output/wasm/src/lib.rs',
+    'ta_codegen/output/wasm/exports.json',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',
     'ta_codegen/output/java/tools/TaCodegenServe.java',
     'ta_codegen/output/csharp/tools/TaCodegenServe.cs',
@@ -851,7 +892,7 @@ def regen_check(root_dir: str) -> int:
 
 # Rust targets run cargo directly (no CMake).
 CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
-                 'regen-check', 'libraries'}
+                 'regen-check', 'libraries', 'wasm'}
 
 # C targets map to a cmake target.
 #
@@ -891,6 +932,7 @@ TARGET_PREREQS = {
     # Cargo only, deliberately: the point of this gate is that anyone can run
     # it. It builds nothing C, so cmake is not a prerequisite either.
     'regen-check':  [PREREQS_CARGO],
+    'wasm':         [PREREQS_CARGO],
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
     'clippy':       PREREQS_BUILD_CODEGEN,
@@ -1039,6 +1081,8 @@ def main():
             sys.exit(build_libraries(root_dir, args.language, args.node))
         elif args.target == 'regen-check':
             sys.exit(regen_check(root_dir))
+        elif args.target == 'wasm':
+            sys.exit(build_wasm(root_dir))
         return
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)

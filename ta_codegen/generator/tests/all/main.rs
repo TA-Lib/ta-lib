@@ -47,6 +47,7 @@ mod ts_doc_suite;
 mod ts_int_semantics_suite;
 mod ts_render_statement_suite;
 mod ts_stream_suite;
+mod wasm_suite;
 mod xml_metadata_suite;
 
 #[test]

@@ -67,6 +67,7 @@ pub mod ts_stream;
 pub mod ts_metadata;
 pub mod meta_frame;
 pub mod variant_frame;
+pub mod wasm;
 
 use crate::helper_registry::HelperRegistry;
 use crate::ir::{EnumDef, FuncDef};

@@ -107,6 +107,9 @@ scripts/java_consumer_check/target/
 # Git worktrees
 .worktrees/
 ta_codegen/output/rust/target/
+ta_codegen/output/wasm/target/
+# Only path dependencies, so a lock pins nothing and would churn at every VERSION bump.
+ta_codegen/output/wasm/Cargo.lock
 .claude/worktrees
 
 # Local working notes — never commit (see to_be_deleted/ contents before deleting)
