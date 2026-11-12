@@ -31,7 +31,8 @@ read -r -a pin <<< "${PIN:-}"
 read -r -a extra <<< "${BENCH_ARGS:-}"
 
 meta=$(node -e 'const p=require("path"),f=require("fs");const d=process.argv[1];const m=JSON.parse(f.readFileSync(p.join(d,"package.json"),"utf8"));console.log(require("url").pathToFileURL(p.join(d,m.exports["./metadata"].default)).href)' "$pkg")
-mapfile -t funcs < <(node --input-type=module -e "const m = await import(process.argv[1]); for (const f of m.Functions.all().map((f) => f.name).sort()) console.log(f);" "$meta")
+funcs=()
+while IFS= read -r f; do funcs+=("$f"); done < <(node --input-type=module -e "const m = await import(process.argv[1]); for (const f of m.Functions.all().map((f) => f.name).sort()) console.log(f);" "$meta")
 [ "${#funcs[@]}" -gt 0 ] || { echo "no functions listed from $pkg" >&2; exit 1; }
 
 case "$(uname -s)" in

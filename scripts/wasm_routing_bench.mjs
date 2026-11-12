@@ -63,7 +63,8 @@ const hooks = await import(new URL('../runtime/wasm.js', nodeEntry).href);
 const info = meta.Functions.byName(FUNC);
 if (info === undefined) usage(`${FUNC}: not a function of this package`);
 const want = FUNC.replace(/_/g, '').toLowerCase();
-const fname = Object.keys(js).find((k) => typeof js[k] === 'function' && k.toLowerCase() === want);
+// A reserved word is exported with a trailing underscore (`var_`); the lookback keeps the bare stem.
+const fname = Object.keys(js).find((k) => typeof js[k] === 'function' && k.replace(/_$/, '').toLowerCase() === want);
 if (fname === undefined) usage(`${FUNC}: no batch function in ta-lib/js`);
 const jsFn = js[fname];
 const wasmFn = engine[fname];
@@ -74,7 +75,7 @@ if (wasmFn === jsFn) {
   process.exit(0);
 }
 
-const lookback = js[fname + 'Lookback']({});
+const lookback = js[fname.replace(/_$/, '') + 'Lookback']({});
 const outKey = info.outputs[0].key;
 
 // --- input series ---
