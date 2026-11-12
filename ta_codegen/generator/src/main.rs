@@ -743,6 +743,8 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
         backends::meta_frame::generate(all_funcs, &root);
 
+        backends::runtime_info::generate_regtest_header(&root);
+
         // Take over gen_code's two remaining C-side scalar generators:
         //   - the FuncUnstId enum (GENCODE SECTION 1) in the public header ta_defs.h
         //   - the TA_SetRetCodeInfo table in ta_common/ta_retcode.c (from the csv)

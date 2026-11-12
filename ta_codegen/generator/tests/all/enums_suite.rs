@@ -1083,11 +1083,13 @@ fn every_backend_retcode_member_carries_c_s_number() {
 
 // ---------------------------------------------------------------------------
 
-/// A key C answers and a managed backend rejects fails on no platform's values:
-/// only a caller probing that key in that language sees it.
+/// A common key C answers and a managed backend rejects fails on no platform's
+/// values: only a caller probing that key in that language sees it. A backend's
+/// own key answered elsewhere is the same defect the other way round.
 #[test]
 fn runtime_info_keys_are_c_s() {
     use std::collections::BTreeSet;
+    use ta_codegen_lib::backends::runtime_info::{self as ri, Scope, KEYS};
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/ta_common/ta_global.c");
     let global = std::fs::read_to_string(&path).expect("ta_global.c");
     let (_, rest) = global
@@ -1099,25 +1101,71 @@ fn runtime_info_keys_are_c_s() {
         .skip(1)
         .map(|s| s.split('"').next().expect("a closing quote"))
         .collect();
-    let ours: BTreeSet<&str> =
-        ta_codegen_lib::backends::runtime_info::KEYS.iter().copied().collect();
+    let common: BTreeSet<&str> = ri::common().collect();
+    assert!(common.len() < KEYS.len(), "no backend-specific key: the scope split below checks nothing");
     assert_eq!(body.matches("strcmp(").count(), in_c.len(), "a key compare this test cannot read");
-    assert_eq!(in_c, ours, "the keys TA_GetRuntimeInfo answers in C are not the managed backends'");
+    assert_eq!(in_c, common, "the keys TA_GetRuntimeInfo answers in C are not the common keys");
+
+    // Each rendering answers exactly the keys its backend owns: every quoted key
+    // it names, against the declaration.
+    let named = |text: &str, quote: char| -> BTreeSet<&'static str> {
+        KEYS.iter().map(|k| k.name).filter(|k| text.contains(&format!("{quote}{k}{quote}"))).collect()
+    };
+    let ts_keys: BTreeSet<&str> = KEYS
+        .iter()
+        .filter(|k| matches!(k.scope, Scope::Common | Scope::TypeScript { .. }))
+        .map(|k| k.name)
+        .collect();
+    assert_eq!(named(&ri::rust_fn(), '"'), common, "Rust's get_runtime_info");
+    assert_eq!(named(&ri::java_class(), '"'), common, "Java's RuntimeInfo");
+    assert_eq!(named(&ri::csharp_class("TALib.Metadata"), '"'), common, "C#'s RuntimeInfo");
+    let ts = ri::ts_fn();
+    assert_eq!(named(&ts, '\''), ts_keys, "TypeScript's getRuntimeInfo");
+    for k in KEYS {
+        if let Scope::TypeScript { answer, .. } = k.scope {
+            assert!(
+                ts.contains(&format!("case '{}':\n      return {answer};", k.name)),
+                "TypeScript's getRuntimeInfo does not answer {} with its own expression",
+                k.name
+            );
+        }
+    }
+    let header = ri::regtest_header();
+    for k in KEYS {
+        let backend = if k.scope == Scope::Common { "" } else { "ts" };
+        assert!(
+            header.contains(&format!("{{ \"{}\", \"{backend}\", ", k.name)),
+            "ta_runtime_info_keys.h does not give {} to backend \"{backend}\"",
+            k.name
+        );
+    }
 
     let page = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../website/src/spec/abstract/README.md");
     let page = std::fs::read_to_string(&page).expect("the spec's abstract page");
     let (_, section) = page.split_once("{#runtime-info}").expect("the page has #runtime-info");
     let section = &section[..section.find("\n## ").expect("a section follows")];
-    let in_spec: BTreeSet<&str> = section
+    let rows: Vec<(&str, &str)> = section
         .lines()
         .filter(|l| l.starts_with('|') && !l.starts_with("|---") && !l.starts_with("| Key"))
         .map(|l| {
             let cell = l.split('|').nth(1).expect("a first cell").trim();
-            cell.strip_prefix('`')
+            let key = cell
+                .strip_prefix('`')
                 .and_then(|c| c.strip_suffix('`'))
-                .unwrap_or_else(|| panic!("a row whose first cell is not one `key`: {l}"))
+                .unwrap_or_else(|| panic!("a row whose first cell is not one `key`: {l}"));
+            (key, l)
         })
         .collect();
+    let in_spec: BTreeSet<&str> = rows.iter().map(|(k, _)| *k).collect();
+    let ours: BTreeSet<&str> = KEYS.iter().map(|k| k.name).collect();
     assert_eq!(in_spec, ours, "the spec's run-time information table does not list the keys");
+    for (key, row) in rows {
+        let common_row = common.contains(key);
+        assert_eq!(
+            !row.contains("TypeScript only"),
+            common_row,
+            "the spec row of {key} must say \"TypeScript only\" exactly when the key is TypeScript's: {row}"
+        );
+    }
 }

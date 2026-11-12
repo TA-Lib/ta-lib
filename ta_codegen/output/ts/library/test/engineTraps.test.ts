@@ -54,6 +54,7 @@ import { test } from 'node:test';
 
 import { sma } from 'ta-lib';
 import * as js from 'ta-lib/js';
+import { getRuntimeInfo } from 'ta-lib/metadata';
 import { hooks } from './engineHooks.ts';
 
 const close = Float64Array.from({ length: 50 }, (_, i) => Math.round((20 + 3 * Math.sin(i / 4)) * 100) / 100);
@@ -111,6 +112,11 @@ function engineBytes(fused: boolean, withBatch = true): string {
 type Ctor = new (...args: unknown[]) => object;
 const wasm = (globalThis as unknown as { WebAssembly: { Instance: Ctor; RuntimeError: new () => Error } }).WebAssembly;
 
+/** `wasm.engine` and `wasm.reason`, which must agree with the engine's own status. */
+function info(): [number, number] {
+  return [getRuntimeInfo('wasm.engine'), getRuntimeInfo('wasm.reason')];
+}
+
 function bits(a: Float64Array): string {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('hex');
 }
@@ -138,6 +144,8 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
   });
   hooks.resetEngine();
   hooks.provideWasmBytes(engineBytes(true));
+  assert.deepEqual(info(), [0, 1], 'asking instantiated the engine');
+  assert.equal(instances, 0, 'asking instantiated the engine');
   hooks.resetFallThroughs();
   hooks.setEngineMode('force');
   let entered = hooks.moduleCalls();
@@ -152,6 +160,7 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
     countsTheTrappedCall('first trap');
     assert.equal(instances, 1);
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
+    assert.deepEqual(info(), [1, 0]);
     let calls = 1;
     while (hooks.engineStatus().engine === 'wasm' && calls < hooks.MAX_TRAPS) {
       answersAsJs(`trap ${++calls}`);
@@ -161,6 +170,7 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
     }
     assert.equal(calls, hooks.MAX_TRAPS);
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'trap' });
+    assert.deepEqual(info(), [0, 6]);
     answersAsJs('given up');
     assert.equal(hooks.moduleCalls(), entered, 'a call after the engine was given up moved moduleCalls()');
     assert.equal(instances, calls);
@@ -196,6 +206,7 @@ test('a module whose fma_probe does not fuse is refused, and calls answer from t
   try {
     answersAsJs('unfused probe');
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'fma' });
+    assert.deepEqual(info(), [0, 5]);
     answersAsJs('after the refusal');
     assert.equal(hooks.fallThroughCount(), 2);
   } finally {
