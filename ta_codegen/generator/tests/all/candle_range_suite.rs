@@ -110,13 +110,13 @@ fn shadows_and_default(block: &str) -> (String, String) {
     (block[a2..d].to_string(), block[d..].to_string())
 }
 
-/// `upper + lower` is the only spelling with the two `close >= open` selects and
-/// no `abs`; the #217 form is the exact opposite on both counts. Index-agnostic,
-/// so it holds at `i`, `i - 3`, `sp.lag2_inClose`, ... alike, and it reads the
-/// same for the inline and the hoisted statement rendering.
+/// `upper + lower` is the only spelling with two colour bounds and no `abs`;
+/// the #217 form is the exact opposite on both counts. Index-agnostic, so it
+/// holds at `i`, `i - 3`, `sp.lag2_inClose`, ... alike, and it reads the same
+/// for the inline and the hoisted statement rendering.
 fn assert_shadows_arm_is_upper_plus_lower(arm: &str, ctx: &str) {
     assert!(
-        arm.contains(">="),
+        colour_helper_calls(arm) + colour_selects(arm) + branchy_colour_bounds(arm) >= 2,
         "{ctx}: Shadows arm has no max/min select, so it cannot be upper + lower \
          -- this is the #217 spelling: {arm}"
     );
@@ -238,4 +238,138 @@ fn the_ts_stream_step_spells_shadows_as_upper_plus_lower() {
         stream.contains("((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)"),
         "ts stream: lower shadow must be min(close, open) - low — see #217"
     );
+}
+
+/// Every `if A >= B { T } else { E }` in `s` whose arms are its own operands,
+/// parentheses ignored.
+fn branchy_colour_bounds(s: &str) -> usize {
+    let bare = |x: &str| x.replace(['(', ')'], "").trim().to_string();
+    let mut n = 0;
+    let mut from = 0;
+    while let Some(hit) = s[from..].find("if ") {
+        let at = from + hit + 3;
+        from = at;
+        let Some((cond, rest)) = s[at..].split_once(" { ") else { break };
+        let Some((t, rest)) = rest.split_once(" } else { ") else { continue };
+        let Some((e, _)) = rest.split_once(" }") else { continue };
+        if [cond, t, e].iter().any(|x| x.contains(['{', '}'])) {
+            continue;
+        }
+        let Some((a, b)) = cond.split_once(" >= ") else { continue };
+        let (a, b, t, e) = (bare(a), bare(b), bare(t), bare(e));
+        n += usize::from((t == a && e == b) || (t == b && e == a));
+    }
+    n
+}
+
+/// Every `select_unpredictable(A > B, A, B)` / `(A < B, A, B)` in `s`.
+fn colour_selects(s: &str) -> usize {
+    let mut n = 0;
+    for (at, _) in s.match_indices("select_unpredictable(") {
+        let (mut depth, mut args, mut cur) = (0i32, Vec::new(), String::new());
+        for ch in s[at + "select_unpredictable(".len()..].chars() {
+            match ch {
+                '(' | '[' => depth += 1,
+                ')' | ']' if depth == 0 => break,
+                ')' | ']' => depth -= 1,
+                ',' if depth == 0 => {
+                    args.push(std::mem::take(&mut cur).trim().to_string());
+                    continue;
+                }
+                _ => {}
+            }
+            cur.push(ch);
+        }
+        args.push(cur.trim().to_string());
+        if let [cond, t, e] = args.as_slice() {
+            n += usize::from([" > ", " < "].iter().any(|op| *cond == format!("{t}{op}{e}")));
+        }
+    }
+    n
+}
+
+/// The source of `fn <name>(`, up to the next `fn`.
+fn fn_body<'s>(s: &'s str, name: &str) -> &'s str {
+    let start = s.find(&format!("fn {name}(")).unwrap_or_else(|| panic!("no fn {name}"));
+    let rest = &s[start + 3..];
+    &rest[..rest.find(" fn ").unwrap_or(rest.len())]
+}
+
+/// Invocations of `c_color_max!(` / `c_color_min!(` in `s`, at an identifier
+/// boundary.
+fn colour_helper_calls(s: &str) -> usize {
+    ["c_color_max!(", "c_color_min!("]
+        .iter()
+        .map(|h| s.match_indices(h).filter(|(i, _)| !s[..*i].ends_with(|c: char| c.is_alphanumeric() || c == '_')).count())
+        .sum()
+}
+
+/// A candle's colour is a coin flip on real bars: the batch and open bodies
+/// take each colour bound through the crate's macros, C's TA_COLOR_MAX/MIN,
+/// and the stream step keeps the `if` form.
+#[test]
+fn no_rust_batch_or_open_candle_body_branches_on_the_colour() {
+    let (mut bodies, mut calls, mut steps, mut step_ifs) = (0usize, 0usize, 0usize, 0usize);
+    let mut scalars = 0usize;
+    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
+        let dir = entry.expect("dir entry").path();
+        let name = dir.file_name().expect("name").to_string_lossy().to_string();
+        if !name.starts_with("cdl") || !dir.join(format!("{name}.yaml")).exists() {
+            continue;
+        }
+        let s = rust_source(&name);
+        let framed = s.contains(&format!("fn {name}_open_sink_frame("));
+        let mut tiers = vec![format!("{name}_impl")];
+        if framed {
+            tiers.extend([format!("{name}_open_sink_frame"), format!("{name}_open_fill_frame")]);
+        } else {
+            tiers.push(format!("{name}_open_impl"));
+        }
+        for tier in tiers {
+            // An FMA-dispatched tier's code sits in its `_scalar` body.
+            let scalar = format!("{tier}_scalar");
+            let fused = s.contains(&format!("fn {scalar}("));
+            scalars += usize::from(fused);
+            let body = fn_body(&s, if fused { &scalar } else { &tier });
+            assert_eq!(branchy_colour_bounds(body), 0, "{tier} branches on the colour: {body}");
+            assert_eq!(colour_selects(body), 0, "{tier} spells the colour select inline: {body}");
+            calls += colour_helper_calls(body);
+            bodies += 1;
+        }
+        for tier in [format!("{name}_step_impl"), "update".to_string(), "peek".to_string()] {
+            let body = fn_body(&s, &tier);
+            assert_eq!(colour_helper_calls(body), 0, "{name}: {tier} calls a colour helper: {body}");
+            assert_eq!(colour_selects(body), 0, "{name}: {tier} selects the colour bound: {body}");
+            step_ifs += branchy_colour_bounds(body);
+            steps += 1;
+        }
+    }
+    assert!(bodies >= 110, "expected the batch and open tiers of the candlestick corpus, saw {bodies}");
+    assert!(scalars >= 15, "expected the FMA-dispatched candlesticks' `_scalar` bodies, saw {scalars}");
+    assert!(calls >= bodies, "expected colour helpers in every body, saw {calls} in {bodies}");
+    assert!(steps >= 165 && step_ifs >= steps, "expected the `if` bound in the steps, saw {step_ifs} in {steps}");
+    assert_eq!(branchy_colour_bounds("x = (if (c) >= (o) { (o) } else { (c) });"), 1);
+    assert_eq!(colour_helper_calls("x = c_color_min!((c), (o)) + my_c_color_max!(c, o) + c_color_max(c, o);"), 1);
+}
+
+/// x86-64 takes C's SSE2 operand order through a select; every other target
+/// keeps the `if`, which already compiles without a branch there. Each arm is
+/// the exact inline text, so a bound compiles as if spelled at its site.
+#[test]
+fn rust_colour_macros_select_on_x86_64_only() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("templates/rust/c_math.rs");
+    let src = collapse(&std::fs::read_to_string(&path).expect("c_math.rs"));
+    for (name, select, branch) in [
+        ("c_color_max", "std::hint::select_unpredictable($o > $c, $o, $c)", "if $c >= $o { $c } else { $o }"),
+        ("c_color_min", "std::hint::select_unpredictable($c < $o, $c, $o)", "if $c >= $o { $o } else { $c }"),
+    ] {
+        let arm = |cfg: &str, text: &str| {
+            format!("#[cfg({cfg})] macro_rules! {name} {{ ($c:expr, $o:expr) => {{ {text} }}; }}")
+        };
+        for want in [arm("target_arch = \"x86_64\"", select), arm("not(target_arch = \"x86_64\")", branch)] {
+            assert!(src.contains(&want), "{name} must be exactly: {want}");
+        }
+        assert!(src.contains(&format!("pub(crate) use {name};")), "{name} is not exported to the bodies");
+        assert_eq!(src.matches(&format!("macro_rules! {name} ")).count(), 2, "{name}: one arm per cfg");
+    }
 }

@@ -363,6 +363,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
             circbuf_len_of: HashMap::new(),
+            stream_step: false,
         },
         extrema_i32,
         stride: Stride::Param,
@@ -642,8 +643,9 @@ fn fma_dispatch_stream(o: &mut String, func: &FuncDef, open_keeps_one_path: bool
     o.replace_range(line..end, &trio);
 }
 
-/// FMA runtime dispatch for `<n>_open_impl`: it runs the whole history per
-/// call, so the one call that cannot inline is paid once per open.
+/// FMA runtime dispatch for the body that runs an open's whole history:
+/// `<n>_open_impl`, or each stride's frame when the opener is split. An open
+/// enters one such body, so it pays the dispatch once.
 fn fma_dispatch_open(o: &mut String, func: &FuncDef) {
     let sn = snake(func);
     let sink = format!("{sn}_open_sink_frame");
@@ -1393,6 +1395,7 @@ fn mentions(text: &str, ident: &str) -> bool {
 /// both arms for the dual-mode step (their field sets may differ — HMA).
 fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> RustRenderCtx {
     let mut ctx = typing.ctx.clone();
+    ctx.stream_step = true;
     for bar in streaming::input_array_names(func) {
         ctx.real_vars.insert(bar);
     }
@@ -4093,6 +4096,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
         circbuf_len_of: HashMap::new(),
+        stream_step: false,
     }
 }
 
@@ -5136,6 +5140,7 @@ fn composed_step_ctx(
         build_step_ctx(func, &[model], typing)
     } else {
         let mut c = typing.ctx.clone();
+        c.stream_step = true;
         for p in &func.optional_inputs {
             if p.param_type == ParamType::Real {
                 c.real_vars.insert(format!("sp.{}", p.name));
