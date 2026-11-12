@@ -5,7 +5,7 @@
 ## 1. Scope
 
 - **What ships.** One package, two entries. `ta-lib` runs each call in WASM when the runtime passes the load checks (W4) and in the TypeScript body otherwise. `ta-lib/js` is the TypeScript library alone and never loads WASM.
-- **Same values.** The two engines are bit-identical on every call, so which one answers changes speed only. That is what lets the default entry choose by itself.
+- **Same values.** The two engines are bit-identical on every call except one that reaches a transcendental function, where they agree as the TypeScript library agrees with C ([D11](typescript-backend.md)). So which one answers changes speed only, and the default entry chooses by itself.
 - **What does not ship:** a WASM-only entry, an API that must be awaited before its first call, one WASM module per function.
 
 ## 2. Decisions
@@ -21,7 +21,8 @@
 | W7 | Loading | Node, Deno and Bun compile at import, synchronously. A browser loads the engine only when the caller awaits `ready()`; before that, and without it, every call runs TypeScript. `ready()` takes engine-loading arguments only (where the binary is); settings stay on `Core` (W6) | A server runtime needs no network and no await. In a browser an explicit call fetches the binary only for a caller who asked, and a page whose Content-Security-Policy forbids WASM logs no violation unless it called | Ruled (owner, 2026-11-11) |
 | W8 | Source | The module is the generated Rust crate built for `wasm32-unknown-unknown`, behind generated `extern "C"` exports | The crate builds for that target as it is, with its own allocator, and a bad index traps where C would corrupt linear memory. The generated C built for wasm32 is no faster (level in batch, slower in `update` on most functions measured) and needs a hand-written runtime | Adopted |
 | W9 | Modules | One, holding every function's batch and streaming tiers | A function taking an MA type at run time carries every moving average, so a split would repeat that code in each part | Adopted |
-| W10 | Transcendental calls | A call that can reach a transcendental function ([D11](typescript-backend.md)'s predicate: the function carries `uses_transcendental`, or an MA-type parameter selects MAMA or ALMA) runs in TypeScript. The module imports nothing | A libm inside the module differs from the JS engine's `Math.*` in the last bit, silently, and a recursive filter amplifies it. Importing `Math.*` restores the bits but gains nothing in batch | Adopted |
+| W10 | Transcendental calls | The module imports the JS engine's `Math.*` for every transcendental function, so such a call returns the TypeScript body's bits. Whether a function runs in WASM is the routing table's choice (W12), not a correctness rule | A libm inside the module differs from `Math.*` in the last bit and is no faster. [D11](typescript-backend.md) already allows that difference, so the import is for one behaviour across engines, not a requirement | Adopted |
+| W12 | Routing | A generated table says, per function and tier (batch, stream), which engine answers when WASM is loaded. A tier goes to WASM only where it was measured faster on intel-1 and amd-1 | The copy into and out of linear memory, and the call per bar, outweigh the gain on some cheap functions with no fused site | Adopted |
 | W11 | Stream class | One `<N>Stream` per indicator in the default entry, holding a WASM handle or the `./js` stream, each method choosing by that | A call site sees one class whichever engine answers. Timed against a class per engine and a closure, no shape costs more than a few ns per bar | Adopted |
 
 ## 3. Open
