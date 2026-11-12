@@ -335,6 +335,9 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
         print(f"Error: --language={lang_filter} selects no backend with a publishable "
               f"library (valid: {', '.join(LIBRARY_PREREQS)}).", flush=True)
         return 2
+    # The npm package carries bin/ta_lib.wasm, and its build refuses a stale one.
+    if 'ts' in picked and build_wasm(root_dir) != 0:
+        return 1
     if not node:
         run_codegen(root_dir, 'run', '--release', '--', 'build-libraries',
                     f'--backend={",".join(picked)}')
@@ -712,6 +715,7 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/rust/library/src/ta_func/sma.rs',
     'ta_codegen/output/csharp/library/src/Core_SMA.cs',
     'ta_codegen/output/ts/library/src/func/sma.ts',
+    'ta_codegen/output/ts/library/src/engine/func/sma.ts',
     'ta_codegen/output/wasm/src/lib.rs',
     'ta_codegen/output/wasm/exports.json',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',

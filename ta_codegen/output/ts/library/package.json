@@ -15,9 +15,27 @@
   ],
   "homepage": "https://ta-lib.org",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/engine/node.js"
+  ],
   "exports": {
     ".": {
+      "types": "./dist/engine/index.d.ts",
+      "node": {
+        "types": "./dist/engine/node.d.ts",
+        "default": "./dist/engine/node.js"
+      },
+      "bun": {
+        "types": "./dist/engine/node.d.ts",
+        "default": "./dist/engine/node.js"
+      },
+      "deno": {
+        "types": "./dist/engine/node.d.ts",
+        "default": "./dist/engine/node.js"
+      },
+      "default": "./dist/engine/index.js"
+    },
+    "./js": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
@@ -27,9 +45,12 @@
     },
     "./package.json": "./package.json"
   },
-  "types": "./dist/index.d.ts",
+  "types": "./dist/engine/index.d.ts",
   "typesVersions": {
     "*": {
+      "js": [
+        "./dist/index.d.ts"
+      ],
       "metadata": [
         "./dist/metadata/index.d.ts"
       ]

@@ -824,6 +824,8 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::ts::generate_package_files(all_funcs, &root, &ts_lib);
         backends::ts_metadata::generate(all_funcs, &enums, &ts_lib.join("src/metadata"));
         backends::ts_doc::write_example_tests(all_funcs, &enums, &ts_lib.join("test/gen"));
+        backends::ts_engine::generate(all_funcs, &enums, &registry, &root, &ts_lib);
+        backends::ts_engine::generate_parity_test(all_funcs, &enums, &ts_lib.join("test"));
     }
 
     // Whole-corpus, like the Rust probe above: a `--func=X` run must not shrink it.
@@ -1718,6 +1720,14 @@ fn build_ts_library(root: &Path, bin_dir: &Path) -> bool {
         std::process::Command::new(&tsc).arg("-p").arg(&lib_dir).arg("--emitDeclarationOnly"),
     );
     if !report(&declare, false) {
+        return false;
+    }
+    let bytes = run_build_step(
+        "Writing the WASM engine's bytes module into dist/ from bin/ta_lib.wasm",
+        "node",
+        std::process::Command::new("node").arg(root.join("scripts/ts_wasm_bytes.mjs")).arg(&lib_dir),
+    );
+    if !report(&bytes, true) {
         return false;
     }
     if !check_dist_comments(&lib_dir.join("dist")) {

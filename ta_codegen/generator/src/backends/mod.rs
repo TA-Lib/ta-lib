@@ -60,6 +60,7 @@ pub mod ta_defs;
 pub mod ctype;
 pub mod ts;
 pub mod ts_doc;
+pub mod ts_engine;
 pub mod ts_enums;
 pub mod ts_phantom_io;
 pub mod ts_prune;

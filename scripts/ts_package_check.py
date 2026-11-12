@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """Package gate for the TypeScript library: pack it, check what ships, then consume it.
 
-  1. Pack. `npm ci` in the tooling root when its lock stamp is stale, two `tsc`
-     emits into an emptied library/dist (the JavaScript with removeComments, so
-     only the /*! licence block stays; the declarations apart, with their
-     TSDoc), then `npm pack`. Without --allow-dirty
+  1. Pack. `scripts/build.py wasm` (cargo rebuilds bin/ta_lib.wasm only when
+     its crate changed), `npm ci` in the tooling root when its lock stamp is
+     stale, two `tsc` emits into an emptied library/dist (the JavaScript with
+     removeComments, so only the /*! licence block stays; the declarations
+     apart, with their TSDoc), scripts/ts_wasm_bytes.mjs for the engine's bytes
+     module, then `npm pack`. Without --allow-dirty
      the library directory (test/ and dist/ aside) must match HEAD: a stray .ts
      under src/ compiles into dist/ and ships.
 
   2. Contents. The tarball holds exactly package.json, README.md, LICENSE and
-     one .js plus one .d.ts per src/ module; every packed .js opens with the
+     one .js plus one .d.ts per src/ module, a hand-written src/ .d.ts standing
+     for a module the build writes; every packed .js opens with the
      licence and holds no other comment, and every function's .d.ts keeps its
      TSDoc; LICENSE and README are
      byte-identical to their sources; the version is VERSION; every code
-     `exports` subpath lists "types" first and "default" last and each
-     non-root one has a typesVersions entry naming its types; a file subpath
+     `exports` subpath, and each condition nested in one, lists "types" first
+     and "default" last, and each non-root one has a typesVersions entry naming
+     its types; a file subpath
      ("./package.json") ships; every target ships.
      No name tagged @internal in src/ appears in a packed .d.ts, as a member of
      its class's declaration, or among any subpath's runtime exports. When
@@ -26,7 +30,9 @@
      project, type-checks a TypeScript caller against the packed declarations
      (skipLibCheck off), and loads every subpath by import and by require(),
      which fails on a top-level await anywhere in the graph. Both must export
-     the same names and compute the same SMA.
+     the same names and compute the same SMA. Then engine.mjs: in strict mode a
+     call through the default entry must run in WASM, with the bits of
+     ta-lib/js.
 
 Run:  python3 scripts/ts_package_check.py [--allow-dirty] [--output DIR]
       python3 scripts/ts_package_check.py --write-api-snapshot
@@ -90,14 +96,15 @@ def version():
         return f.read().strip()
 
 
-def src_modules():
-    """Every src/ module, as its path relative to src/ without the .ts."""
+def src_modules(suffix=".ts"):
+    """Every src/ module, as its path relative to src/ without the suffix: the
+    .ts sources, or with ".d.ts" the declarations of modules the build writes."""
     found = []
     for dirpath, _dirs, files in os.walk(SRC_DIR):
         for name in files:
-            if name.endswith(".ts"):
+            if name.endswith(suffix) and (suffix != ".ts" or not name.endswith(".d.ts")):
                 rel = os.path.relpath(os.path.join(dirpath, name), SRC_DIR)
-                found.append(rel[:-3].replace(os.sep, "/"))
+                found.append(rel[:-len(suffix)].replace(os.sep, "/"))
     return sorted(found)
 
 
@@ -128,6 +135,8 @@ def pack(out_dir, allow_dirty):
         if stray:
             return ["the library directory differs from HEAD, and what differs would pack "
                     "(pass --allow-dirty to pack it anyway): %s" % ", ".join(stray[:10])]
+    if run([sys.executable, os.path.join(ROOT, "scripts", "build.py"), "wasm"]).returncode:
+        return ["scripts/build.py wasm failed, and the package ships bin/ta_lib.wasm; see its output above"]
     if not ensure_tooling():
         return ["npm ci failed in %s; see its output above" % TS_REL]
     shutil.rmtree(os.path.join(LIB_DIR, "dist"), ignore_errors=True)
@@ -137,6 +146,8 @@ def pack(out_dir, allow_dirty):
         return ["tsc failed on the library's JavaScript; see its output above"]
     if run([TSC, "-p", LIB_DIR, "--emitDeclarationOnly"]).returncode:
         return ["tsc failed on the library's declarations; see its output above"]
+    if run(["node", os.path.join(ROOT, "scripts", "ts_wasm_bytes.mjs"), LIB_DIR]).returncode:
+        return ["the WASM engine's bytes module was not written; see its output above"]
     if run([NPM, "pack", "--pack-destination", out_dir], cwd=LIB_DIR).returncode:
         return ["npm pack failed; see its output above"]
     return []
@@ -257,7 +268,7 @@ def check_package(out_dir, ver, diff_snapshot):
 
     failures = []
     expected = {"package/package.json", *PACKED_FROM}
-    for module in src_modules():
+    for module in src_modules() + src_modules(".d.ts"):
         expected |= {"package/dist/%s.js" % module, "package/dist/%s.d.ts" % module}
     missing = sorted(expected - set(entries))
     extra = sorted(set(entries) - expected)
@@ -288,13 +299,18 @@ def check_package(out_dir, ver, diff_snapshot):
             elif "package/package.json" not in entries:
                 failures.append("exports %r points at %s, which is not packed" % (subpath, conditions))
             continue
-        keys = list(conditions) if isinstance(conditions, dict) else []
-        if not keys or keys[0] != "types" or keys[-1] != "default":
-            failures.append("exports %r lists %s; \"types\" must come first and \"default\" last"
-                            % (subpath, keys))
-        for target in (conditions.values() if isinstance(conditions, dict) else []):
-            if "package/" + target.removeprefix("./") not in entries:
-                failures.append("exports %r points at %s, which is not packed" % (subpath, target))
+        branches = [(subpath, conditions)]
+        while branches:
+            where, branch = branches.pop(0)
+            keys = list(branch) if isinstance(branch, dict) else []
+            if not keys or keys[0] != "types" or keys[-1] != "default":
+                failures.append("exports %r lists %s; \"types\" must come first and \"default\" last"
+                                % (where, keys))
+            for condition, target in (branch.items() if isinstance(branch, dict) else []):
+                if isinstance(target, dict):
+                    branches.append(("%s.%s" % (where, condition), target))
+                elif "package/" + target.removeprefix("./") not in entries:
+                    failures.append("exports %r points at %s, which is not packed" % (where, target))
     types = manifest.get("types")
     if not types or "package/" + types.removeprefix("./") not in entries:
         failures.append("the packed package.json \"types\" (%r) is not packed" % types)
@@ -382,6 +398,11 @@ def consume(out_dir, manifest, tops):
         if results["import.mjs"] != results["require.cjs"]:
             return ["import and require() disagree: %r vs %r"
                     % (results["import.mjs"], results["require.cjs"])]
+        r = run(["node", "engine.mjs"], cwd=work, capture=True)
+        if r.returncode:
+            return ["engine.mjs: a strict-mode call through the default entry did not run in WASM "
+                    "with the bits of ta-lib/js:\n%s%s" % (r.stdout, r.stderr.strip())]
+        print("--- %s" % r.stdout.strip().splitlines()[-1])
         got = results["import.mjs"]
         failures = []
         for s in files:

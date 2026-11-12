@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
-struct TsSpelling;
+pub(super) struct TsSpelling;
 
 impl VectorSpelling for TsSpelling {
     fn default(&self, opt: &OptInput) -> String {

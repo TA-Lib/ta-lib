@@ -1,0 +1,5 @@
+# Per function, the bar count from which the npm package's default entry sends
+# the batch call to the WASM engine; a function not listed never goes. Set an
+# entry only from timings of the public call where WASM is faster on every
+# timed host.
+batch: {}

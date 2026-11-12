@@ -1,5 +1,7 @@
-import { Core, CoreBuilder, FuncUnstId, MAType, TALibError, atr, ema, macd, macdOpen, MacdOut, sma, smaLookback } from 'ta-lib';
-import type { FailureRetCode, MacdResult, RetCodeName, SmaOptions, SmaResult } from 'ta-lib';
+import { Core, CoreBuilder, FuncUnstId, MAType, TALibError, atr, ema, macd, macdOpen, MacdOut, ready, sma, smaLookback } from 'ta-lib';
+import type { EngineStatus, FailureRetCode, MacdResult, RetCodeName, SmaOptions, SmaResult } from 'ta-lib';
+import * as js from 'ta-lib/js';
+import { Functions } from 'ta-lib/metadata';
 
 const close = new Float64Array(10);
 const out = new Float64Array(close.length);
@@ -17,4 +19,10 @@ const a: Float64Array = atr({ high: close, low: close, close }, { timePeriod: 14
 const t: MAType = MAType.EMA;
 const codeOf = (err: unknown): RetCodeName | undefined => (err instanceof TALibError ? err.code : undefined);
 const retCodeOf = (err: unknown): FailureRetCode | undefined => (err instanceof TALibError ? err.retCode : undefined);
-export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf };
+const status: Promise<EngineStatus> = ready();
+const sameCore: Core = js.Core.DEFAULT;
+const jsValues: Float64Array = js.sma(close, { timePeriod: 3 }).values;
+// @ts-expect-error ta-lib/js has no engine to wait for
+js.ready();
+const names: string[] = Functions.all().map((f) => f.name);
+export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf, status, sameCore, jsValues, names };
