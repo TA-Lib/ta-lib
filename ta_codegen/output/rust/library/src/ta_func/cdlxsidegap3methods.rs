@@ -429,21 +429,15 @@ impl Core {
         // - third candle: black (white) candle that opens within the second real body and closes within the first real body
         outIdx = 0;
         loop {
-            if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) && // 1st and 2nd of same color
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -(if inClose[i] >= inOpen[i] { 1 } else { -1 }) && // 3rd opposite color
-               inOpen[i] < c_max(inClose[i - 1], inOpen[i - 1]) &&              // 3rd opens within 2nd rb
-               inOpen[i] > c_min(inClose[i - 1], inOpen[i - 1]) &&
-               inClose[i] < c_max(inClose[i - 2], inOpen[i - 2]) &&             // 3rd closes within 1st rb
-               inClose[i] > c_min(inClose[i - 2], inOpen[i - 2]) &&
-               ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // when 1st is white
-                 ((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) || // upside gap
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // when 1st is black
-                 ((if c_max(inOpen[i - 1], inClose[i - 1]) < c_min(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0)) // downside gap
-            {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32;
-            } else {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-            }
+            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) & // 1st and 2nd of same color
+                ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & // 3rd opposite color
+                (((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & // 3rd opens within 2nd rb
+                ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])) & (((inClose[i] < inClose[i - 2]) | (inClose[i] < inOpen[i - 2]))) & // 3rd closes within 1st rb
+                ((inClose[i] > inClose[i - 2]) | (inClose[i] > inOpen[i - 2])) & (((inClose[i - 2] >= inOpen[i - 2]) & // when 1st is white
+                (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) | // upside gap
+                ((!(inClose[i - 2] >= inOpen[i - 2])) & // when 1st is black
+                (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))))), // downside gap
+                ((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) * 100) as i32, 0);
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
             i += 1;

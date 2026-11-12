@@ -1065,24 +1065,14 @@ impl Core {
             // The meaning of "very short" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1    // 3 black candlesticks
-                {
-                    if inOpen[i - 4] > inOpen[i - 3] &&
-                       inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
-                       inClose[i - 4] > inClose[i - 3] &&
-                       inClose[i - 3] > inClose[i - 2] &&                              // and closes
-                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
-                       (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) &&
-                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
-                       inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
-                       inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(!(inClose[i - 4] >= inOpen[i - 4])) + u32::from(!(inClose[i - 3] >= inOpen[i - 3])) + u32::from((!(inClose[i - 2] >= inOpen[i - 2])))) == 3) { // 3 black candlesticks
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & // with consecutively lower opens
+                        (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & // and closes
+                        (!(inClose[i - 1] >= inOpen[i - 1])) & // 4th: black with an upper shadow
+                        ((inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & (inClose[i] >= inOpen[i]) & // 5th: white
+                        (inOpen[i] > inOpen[i - 1]) &          // that opens above prior candle's body
+                        (inClose[i] > inHigh[i - 1])),         // and closes above prior candle's high
+                        100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1165,24 +1155,14 @@ impl Core {
             // The meaning of "very short" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1    // 3 black candlesticks
-                {
-                    if inOpen[i - 4] > inOpen[i - 3] &&
-                       inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
-                       inClose[i - 4] > inClose[i - 3] &&
-                       inClose[i - 3] > inClose[i - 2] &&                              // and closes
-                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
-                       (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) &&
-                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
-                       inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
-                       inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(!(inClose[i - 4] >= inOpen[i - 4])) + u32::from(!(inClose[i - 3] >= inOpen[i - 3])) + u32::from((!(inClose[i - 2] >= inOpen[i - 2])))) == 3) { // 3 black candlesticks
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & // with consecutively lower opens
+                        (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & // and closes
+                        (!(inClose[i - 1] >= inOpen[i - 1])) & // 4th: black with an upper shadow
+                        ((inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & (inClose[i] >= inOpen[i]) & // 5th: white
+                        (inOpen[i] > inOpen[i - 1]) &          // that opens above prior candle's body
+                        (inClose[i] > inHigh[i - 1])),         // and closes above prior candle's high
+                        100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1265,24 +1245,14 @@ impl Core {
             // The meaning of "very short" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1    // 3 black candlesticks
-                {
-                    if inOpen[i - 4] > inOpen[i - 3] &&
-                       inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
-                       inClose[i - 4] > inClose[i - 3] &&
-                       inClose[i - 3] > inClose[i - 2] &&                              // and closes
-                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
-                       (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) &&
-                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
-                       inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
-                       inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(!(inClose[i - 4] >= inOpen[i - 4])) + u32::from(!(inClose[i - 3] >= inOpen[i - 3])) + u32::from((!(inClose[i - 2] >= inOpen[i - 2])))) == 3) { // 3 black candlesticks
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & // with consecutively lower opens
+                        (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & // and closes
+                        (!(inClose[i - 1] >= inOpen[i - 1])) & // 4th: black with an upper shadow
+                        ((inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & (inClose[i] >= inOpen[i]) & // 5th: white
+                        (inOpen[i] > inOpen[i - 1]) &          // that opens above prior candle's body
+                        (inClose[i] > inHigh[i - 1])),         // and closes above prior candle's high
+                        100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1365,24 +1335,14 @@ impl Core {
             // The meaning of "very short" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) == -1 &&
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1    // 3 black candlesticks
-                {
-                    if inOpen[i - 4] > inOpen[i - 3] &&
-                       inOpen[i - 3] > inOpen[i - 2] &&                                // with consecutively lower opens
-                       inClose[i - 4] > inClose[i - 3] &&
-                       inClose[i - 3] > inClose[i - 2] &&                              // and closes
-                       (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 4th: black with an upper shadow
-                       (inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
-                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&          // 5th: white
-                       inOpen[i] > inOpen[i - 1] &&                                    // that opens above prior candle's body
-                       inClose[i] > inHigh[i - 1]                                      // and closes above prior candle's high
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(!(inClose[i - 4] >= inOpen[i - 4])) + u32::from(!(inClose[i - 3] >= inOpen[i - 3])) + u32::from((!(inClose[i - 2] >= inOpen[i - 2])))) == 3) { // 3 black candlesticks
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & // with consecutively lower opens
+                        (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & // and closes
+                        (!(inClose[i - 1] >= inOpen[i - 1])) & // 4th: black with an upper shadow
+                        ((inHigh[i - 1] - (if inClose[i - 1] >= inOpen[i - 1] { inClose[i - 1] } else { inOpen[i - 1] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (ShadowVeryShort_rangeType) == 2 { 0.5 } else { 1.0 }))) & (inClose[i] >= inOpen[i]) & // 5th: white
+                        (inOpen[i] > inOpen[i - 1]) &          // that opens above prior candle's body
+                        (inClose[i] > inHigh[i - 1])),         // and closes above prior candle's high
+                        100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }

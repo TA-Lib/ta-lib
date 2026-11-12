@@ -339,7 +339,7 @@ fn rust_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
 fn rust_output_writes_are_stride_scaled() {
     let s = rust_stream_section("cdlhammer");
     assert!(
-        s.contains("outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;"),
+        s.contains("outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = "),
         "per-bar output writes scale by the stride"
     );
 }
@@ -773,6 +773,44 @@ fn apo_family_period_swap_is_a_write_bound_precondition() {
              (larger) period — the fast period would overrun it"
         );
     }
+}
+
+/// An open transcribed from the batch body decides each bar the way that body
+/// does: a select there is a select here, stored through the strided write.
+#[test]
+fn a_transcribed_open_selects_where_its_batch_body_does() {
+    let (mut selecting, mut transcribed) = (0usize, 0usize);
+    let mut drifted: Vec<String> = Vec::new();
+    for name in streaming_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let func = func.resolved_for(ir::Lang::Rust);
+        let plan = ta_codegen_lib::streaming::validate_streamable(&func, common::make_registry())
+            .unwrap_or_else(|e| panic!("{name}: {e}"));
+        if !matches!(
+            plan,
+            ta_codegen_lib::streaming::StreamPlan::Loop(_) | ta_codegen_lib::streaming::StreamPlan::DualMode(_)
+        ) {
+            continue;
+        }
+        transcribed += 1;
+        let full = backends::rust_lang::generate(&func, &enums, common::make_registry(), common::make_helpers());
+        let body = |tier: &str| {
+            let scalar = format!("    fn {name}_{tier}_scalar(");
+            body_of(&full, &if full.contains(&scalar) { scalar } else { format!("    pub(crate) fn {name}_{tier}(") })
+        };
+        let (batch, open) = (body("impl"), body("open_impl"));
+        let picks = "= std::hint::select_unpredictable(";
+        if batch.contains(picks) != open.contains(picks) {
+            drifted.push(format!("{name}: batch selects={}, open selects={}", batch.contains(picks), open.contains(picks)));
+        }
+        if let Some(line) = open.lines().find(|l| l.contains(picks) && !l.contains("* outStride) as usize] = ")) {
+            drifted.push(format!("{name}: an open select is not stored through the stride: {}", line.trim()));
+        }
+        selecting += usize::from(open.contains(picks));
+    }
+    assert!(drifted.is_empty(), "open and batch decide differently:\n{}", drifted.join("\n"));
+    assert!(transcribed >= 150, "only {transcribed} transcribed opens: the plan match moved");
+    assert!(selecting > 0, "no transcribed open selects, so this proved nothing");
 }
 
 /// The stream tier's FMA dispatch is attached by a TEXT pass

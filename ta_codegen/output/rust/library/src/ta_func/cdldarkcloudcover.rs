@@ -1071,18 +1071,12 @@ impl Core {
             // with optInPenetration
             outIdx = 0;
             loop {
-                if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 && // 1st: white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&        // 2nd: black
-                   inOpen[i] > inHigh[i - 1]                                      // open above prior high
-                {
-                    if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) && // long
-                       inClose[i] > inOpen[i - 1] && // close within prior body
-                       inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
+                    u32::from((!(inClose[i] >= inOpen[i]))) +       // 2nd: black
+                    u32::from((inOpen[i] > inHigh[i - 1]))) == 3) { // open above prior high
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // long
+                        (inClose[i] > inOpen[i - 1]) & // close within prior body
+                        (inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration)), -100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1161,18 +1155,12 @@ impl Core {
             // with optInPenetration
             outIdx = 0;
             loop {
-                if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 && // 1st: white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&        // 2nd: black
-                   inOpen[i] > inHigh[i - 1]                                      // open above prior high
-                {
-                    if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) && // long
-                       inClose[i] > inOpen[i - 1] && // close within prior body
-                       inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
+                    u32::from((!(inClose[i] >= inOpen[i]))) +       // 2nd: black
+                    u32::from((inOpen[i] > inHigh[i - 1]))) == 3) { // open above prior high
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // long
+                        (inClose[i] > inOpen[i - 1]) & // close within prior body
+                        (inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration)), -100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1251,18 +1239,12 @@ impl Core {
             // with optInPenetration
             outIdx = 0;
             loop {
-                if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 && // 1st: white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&        // 2nd: black
-                   inOpen[i] > inHigh[i - 1]                                      // open above prior high
-                {
-                    if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 })) && // long
-                       inClose[i] > inOpen[i - 1] && // close within prior body
-                       inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
+                    u32::from((!(inClose[i] >= inOpen[i]))) +       // 2nd: black
+                    u32::from((inOpen[i] > inHigh[i - 1]))) == 3) { // open above prior high
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 2 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (2) == 2 { 0.5 } else { 1.0 }))) & // long
+                        (inClose[i] > inOpen[i - 1]) & // close within prior body
+                        (inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration)), -100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1341,18 +1323,12 @@ impl Core {
             // with optInPenetration
             outIdx = 0;
             loop {
-                if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 && // 1st: white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&        // 2nd: black
-                   inOpen[i] > inHigh[i - 1]                                      // open above prior high
-                {
-                    if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // long
-                       inClose[i] > inOpen[i - 1] && // close within prior body
-                       inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = -100;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inClose[i - 1] >= inOpen[i - 1])) + // 1st: white
+                    u32::from((!(inClose[i] >= inOpen[i]))) +       // 2nd: black
+                    u32::from((inOpen[i] > inHigh[i - 1]))) == 3) { // open above prior high
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))) & // long
+                        (inClose[i] > inOpen[i - 1]) & // close within prior body
+                        (inClose[i] < inClose[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs() * optInPenetration)), -100, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }

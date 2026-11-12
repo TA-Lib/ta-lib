@@ -410,21 +410,11 @@ impl Core {
         // - third: candle that closes higher (lower) than the second candle
         outIdx = 0;
         loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // white engulfs black
-                inClose[i - 1] > inOpen[i - 2] &&
-                inOpen[i - 1] < inClose[i - 2] &&
-                inClose[i] > inClose[i - 1] ||                                  // third candle higher
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                inOpen[i - 1] > inClose[i - 2] &&
-                inClose[i - 1] < inOpen[i - 2] &&
-                inClose[i] < inClose[i - 1]                                     // third candle lower
-            {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
-            } else {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-            }
+            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 1] >= inOpen[i - 1]) & (!(inClose[i - 2] >= inOpen[i - 2])) & // white engulfs black
+                (inClose[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i] > inClose[i - 1])) | // third candle higher
+                ((!(inClose[i - 1] >= inOpen[i - 1])) & (inClose[i - 2] >= inOpen[i - 2]) & // black engulfs white
+                (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i] < inClose[i - 1]))), // third candle lower
+                ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
             i += 1;
             if !(i <= endIdx) { break; }
         }

@@ -2114,6 +2114,12 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
+/// The open's batch region with the batch body's selects, taken before the
+/// region's stores are strided: the rewrite recognises only a plain store index.
+fn eager_selected(func: &FuncDef, body: &[Statement], helpers: &HelperRegistry) -> Vec<Statement> {
+    super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers)
+}
+
 /// The open-family emitter: `pub(crate) <name>_open_internal` (Scalar) or
 /// `pub <name>_open_and_fill` (Fill). `body` is the transcribed batch region
 /// (loop tier: `model.body`; dual-mode: `prologue ++ arm body ++
@@ -2139,7 +2145,7 @@ fn emit_open_internal(
     emit_identity_fast_path(o, func, model, &fields, typing, split, registry, helpers, counter);
 
     // --- transcribed batch body --------------------------------------------
-    let open_body = build_open_body_rust(model, body);
+    let open_body = build_open_body_rust(model, &eager_selected(func, body, helpers));
     emit_open_region(
         o, func, model, typing, &open_body, enums, registry, helpers, counter, &[],
         &mut |o: &mut String| {
@@ -2509,6 +2515,11 @@ fn emit_open_region(
                 enums, registry, helpers, counter,
             ));
         }
+    };
+    let render = |o: &mut String, stmts: &[Statement], indent: usize| {
+        let mut t = String::new();
+        render(&mut t, stmts, indent);
+        o.push_str(&super::eager_select::lay_out(&t, false));
     };
     let copies = if inserts.is_empty() { super::rust_lang::range_type_copies(body, func) } else { None };
     let Some(copies) = copies else {
@@ -3837,7 +3848,7 @@ fn emit_dual_open(
         let mut body: Vec<Statement> = dmp.prologue.to_vec();
         body.extend_from_slice(arm.body);
         body.extend_from_slice(dmp.epilogue);
-        let open_body = build_open_body_rust(arm, &body);
+        let open_body = build_open_body_rust(arm, &eager_selected(func, &body, helpers));
         let mut s = String::new();
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let complement = dual_complement_literal(own, other);

@@ -1274,34 +1274,24 @@ impl Core {
             // it to be relatively long
             outIdx = 0;
             loop {
-                if ((if inLow[i - 1] > inHigh[i - 2] { 1 } else { 0 }) != 0) &&   // upside gap between 1st and 2nd
-                   ((if inHigh[i] < inLow[i - 1] { 1 } else { 0 }) != 0) &&       // downside gap between 2nd and 3rd
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 && // 1st white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1           // 3rd black
-                {
-                    if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) && // 1st: long
-                       (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) && // 3rd: longer than short
-                       inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration // 3rd closes well within 1st rb
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
-                } else if ((if inHigh[i - 1] < inLow[i - 2] { 1 } else { 0 }) != 0) &&    // downside gap between 1st and 2nd
-                   ((if inLow[i] > inHigh[i - 1] { 1 } else { 0 }) != 0) &&        // upside gap between 2nd and 3rd
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 1st black
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1             // 3rd white
-                {
-                    if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) && // 1st: long
-                       (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) && // 3rd: longer than short
-                       inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2]) // 3rd closes well within 1st rb
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inLow[i - 1] > inHigh[i - 2])) +     // upside gap between 1st and 2nd
+                    u32::from((inHigh[i] < inLow[i - 1])) +          // downside gap between 2nd and 3rd
+                    u32::from((inClose[i - 2] >= inOpen[i - 2])) +   // 1st white
+                    u32::from((!(inClose[i] >= inOpen[i])))) == 4) { // 3rd black
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st: long
+                        ((inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 2nd: doji
+                        ((inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 3rd: longer than short
+                        (inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration)), // 3rd closes well within 1st rb
+                        ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
+                } else if ((u32::from((inHigh[i - 1] < inLow[i - 2])) + // downside gap between 1st and 2nd
+                    u32::from((inLow[i] > inHigh[i - 1])) +             // upside gap between 2nd and 3rd
+                    u32::from((!(inClose[i - 2] >= inOpen[i - 2]))) +   // 1st black
+                    u32::from((inClose[i] >= inOpen[i]))) == 4) {       // 3rd white
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 1st: long
+                        ((inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match 1 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (1) == 2 { 0.5 } else { 1.0 }))) & // 2nd: doji
+                        ((inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))) & // 3rd: longer than short
+                        (inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2]))), // 3rd closes well within 1st rb
+                        ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1468,34 +1458,24 @@ impl Core {
             // it to be relatively long
             outIdx = 0;
             loop {
-                if ((if inLow[i - 1] > inHigh[i - 2] { 1 } else { 0 }) != 0) &&   // upside gap between 1st and 2nd
-                   ((if inHigh[i] < inLow[i - 1] { 1 } else { 0 }) != 0) &&       // downside gap between 2nd and 3rd
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 && // 1st white
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1           // 3rd black
-                {
-                    if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long
-                       (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) && // 3rd: longer than short
-                       inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration // 3rd closes well within 1st rb
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
-                } else if ((if inHigh[i - 1] < inLow[i - 2] { 1 } else { 0 }) != 0) &&    // downside gap between 1st and 2nd
-                   ((if inLow[i] > inHigh[i - 1] { 1 } else { 0 }) != 0) &&        // upside gap between 2nd and 3rd
-                   (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 1st black
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1             // 3rd white
-                {
-                    if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long
-                       (inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) && // 2nd: doji
-                       (inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) && // 3rd: longer than short
-                       inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2]) // 3rd closes well within 1st rb
-                    {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from((inLow[i - 1] > inHigh[i - 2])) +     // upside gap between 1st and 2nd
+                    u32::from((inHigh[i] < inLow[i - 1])) +          // downside gap between 2nd and 3rd
+                    u32::from((inClose[i - 2] >= inOpen[i - 2])) +   // 1st white
+                    u32::from((!(inClose[i] >= inOpen[i])))) == 4) { // 3rd black
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st: long
+                        ((inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 2nd: doji
+                        ((inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 3rd: longer than short
+                        (inClose[i] < inClose[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs() * optInPenetration)), // 3rd closes well within 1st rb
+                        ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
+                } else if ((u32::from((inHigh[i - 1] < inLow[i - 2])) + // downside gap between 1st and 2nd
+                    u32::from((inLow[i] > inHigh[i - 1])) +             // upside gap between 2nd and 3rd
+                    u32::from((!(inClose[i - 2] >= inOpen[i - 2]))) +   // 1st black
+                    u32::from((inClose[i] >= inOpen[i]))) == 4) {       // 3rd white
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 1st: long
+                        ((inClose[i - 1] - inOpen[i - 1]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 2nd: doji
+                        ((inClose[i] - inOpen[i]).abs() > ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))) & // 3rd: longer than short
+                        (inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2]))), // 3rd closes well within 1st rb
+                        ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }

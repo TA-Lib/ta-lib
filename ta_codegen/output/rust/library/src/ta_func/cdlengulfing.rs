@@ -411,27 +411,9 @@ impl Core {
         // - second: white (black) real body that engulfs the prior real body
         outIdx = 0;
         loop {
-            if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
-                (inClose[i] >= inOpen[i - 1] &&
-                  inOpen[i] < inClose[i - 1] ||
-                 inClose[i] > inOpen[i - 1] &&
-                  inOpen[i] <= inClose[i - 1]) ||
-               (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                (inOpen[i] >= inClose[i - 1] &&
-                  inClose[i] < inOpen[i - 1] ||
-                 inOpen[i] > inClose[i - 1] &&
-                  inClose[i] <= inOpen[i - 1])
-            {
-                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
-                }
-            } else {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-            }
+            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i] >= inOpen[i]) & (!(inClose[i - 1] >= inOpen[i - 1])) & // white engulfs black
+                (((inClose[i] >= inOpen[i - 1]) & (inOpen[i] < inClose[i - 1])) | ((inClose[i] > inOpen[i - 1]) & (inOpen[i] <= inClose[i - 1])))) | ((!(inClose[i] >= inOpen[i])) & (inClose[i - 1] >= inOpen[i - 1]) & // black engulfs white
+                (((inOpen[i] >= inClose[i - 1]) & (inClose[i] < inOpen[i - 1])) | ((inOpen[i] > inClose[i - 1]) & (inClose[i] <= inOpen[i - 1]))))), std::hint::select_unpredictable(((inOpen[i] != inClose[i - 1]) & (inClose[i] != inOpen[i - 1])), ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32), 0);
             i += 1;
             if !(i <= endIdx) { break; }
         }

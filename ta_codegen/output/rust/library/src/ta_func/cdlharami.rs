@@ -884,24 +884,11 @@ impl Core {
             // The meaning of "short" and "long" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) // 1st: long
-                {
-                    if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })) // 2nd: short
-                    {
-                        // 2nd is engulfed by 1st
-                        if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
-                            // 2nd is engulfed by 1st
-                            // (one end of real body can match;
-                            // engulfing guaranteed by "long" and "short")
-                        } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
-                        } else {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                        }
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 })))) + // 1st: long
+                    u32::from(((inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match 0 { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (0) == 2 { 0.5 } else { 1.0 }))))) == 2) { // 2nd: short
+                    // 2nd is engulfed by 1st
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1])) & ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1]))), (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, // 2nd is engulfed by 1st (one end of real body can match; engulfing guaranteed by "long" and "short")
+                        std::hint::select_unpredictable((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1])) & ((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1]))), (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32, 0));
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
@@ -1016,24 +1003,11 @@ impl Core {
             // The meaning of "short" and "long" is specified with TA_SetCandleSettings
             outIdx = 0;
             loop {
-                if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) // 1st: long
-                {
-                    if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) // 2nd: short
-                    {
-                        // 2nd is engulfed by 1st
-                        if c_max(inClose[i], inOpen[i]) < c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) > c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
-                            // 2nd is engulfed by 1st
-                            // (one end of real body can match;
-                            // engulfing guaranteed by "long" and "short")
-                        } else if c_max(inClose[i], inOpen[i]) <= c_max(inClose[i - 1], inOpen[i - 1]) && c_min(inClose[i], inOpen[i]) >= c_min(inClose[i - 1], inOpen[i - 1]) {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32;
-                        } else {
-                            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                        }
-                    } else {
-                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-                    }
+                if ((u32::from(((inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })))) + // 1st: long
+                    u32::from(((inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))))) == 2) { // 2nd: short
+                    // 2nd is engulfed by 1st
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1])) & ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1]))), (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, // 2nd is engulfed by 1st (one end of real body can match; engulfing guaranteed by "long" and "short")
+                        std::hint::select_unpredictable((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1])) & ((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1]))), (-(if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 80) as i32, 0));
                 } else {
                     outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
