@@ -440,8 +440,9 @@ language's own server.
   the one that survives a candlestick's 3-valued output — is in
   `src/tools/ta_regtest/CLAUDE.md`.
 - The grids run under ASan/UBSan/LSan (LSan has caught real sub-open leaks) and,
-  for CDL, under four candle-setting rounds: defaults, bumped, zeroed and
-  all-Shadows, the last gating macro arithmetic no default exercises.
+  for CDL, under candle-setting rounds: defaults, bumped, zeroed, all-Shadows
+  and each setting's remaining range type, the last two gating macro arithmetic
+  no default exercises.
 
 ## Constraints
 

@@ -18355,14 +18355,15 @@ function svShortHistory(e: unknown): boolean {
   return (e as TALibError).retCode === RetCode.INSUFFICIENT_HISTORY;
 }
 
-// Defaults / avgPeriod+3 / avgPeriod=0 / rangeType=Shadows, as every server sweeps.
+// Defaults / avgPeriod+3 / avgPeriod=0 / rangeType=Shadows / the other range type, as every server sweeps.
 function svCandleRound(rd: number): CoreBuilder {
   const b = Core.builder();
   if (rd === 0) return b;
   for (const cs of Core.DEFAULT.candleSettings) {
     if (rd === 1) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, cs.avgPeriod + 3, cs.factor);
     else if (rd === 2) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, 0, cs.factor);
-    else b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], RangeType.SHADOWS, cs.avgPeriod, cs.factor);
+    else if (rd === 3) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], RangeType.SHADOWS, cs.avgPeriod, cs.factor);
+    else b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType === RangeType.REAL_BODY ? RangeType.HIGH_LOW : RangeType.REAL_BODY, cs.avgPeriod, cs.factor);
   }
   return b;
 }
@@ -18385,6 +18386,7 @@ function sv_AC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -18436,7 +18438,7 @@ function sv_AC(p: Params): string {
       let st: AC.AcStream;
       try { st = AC.acOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -18530,7 +18532,7 @@ function sv_AC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ACCBANDS(p: Params): string {
@@ -18551,6 +18553,7 @@ function sv_ACCBANDS(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -18609,7 +18612,7 @@ function sv_ACCBANDS(p: Params): string {
       let st: ACCBANDS.AccbandsStream;
       try { st = ACCBANDS.accbandsOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new ACCBANDS.AccbandsOut(); st.value(v0);
       if (svXtierNe(v0.outUpperBand, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMiddleBand, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -18737,7 +18740,7 @@ function sv_ACCBANDS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ACOS(p: Params): string {
@@ -18755,6 +18758,7 @@ function sv_ACOS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -18806,7 +18810,7 @@ function sv_ACOS(p: Params): string {
       let st: ACOS.AcosStream;
       try { st = ACOS.acosOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -18895,7 +18899,7 @@ function sv_ACOS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AD(p: Params): string {
@@ -18913,6 +18917,7 @@ function sv_AD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -18964,7 +18969,7 @@ function sv_AD(p: Params): string {
       let st: AD.AdStream;
       try { st = AD.adOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19053,7 +19058,7 @@ function sv_AD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ADD(p: Params): string {
@@ -19071,6 +19076,7 @@ function sv_ADD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19122,7 +19128,7 @@ function sv_ADD(p: Params): string {
       let st: ADD.AddStream;
       try { st = ADD.addOpen(fz_c.slice(0, P), fz_v.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19211,7 +19217,7 @@ function sv_ADD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ADOSC(p: Params): string {
@@ -19232,6 +19238,7 @@ function sv_ADOSC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19285,7 +19292,7 @@ function sv_ADOSC(p: Params): string {
       let st: ADOSC.AdoscStream;
       try { st = ADOSC.adoscOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19379,7 +19386,7 @@ function sv_ADOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ADR(p: Params): string {
@@ -19398,6 +19405,7 @@ function sv_ADR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19449,7 +19457,7 @@ function sv_ADR(p: Params): string {
       let st: ADR.AdrStream;
       try { st = ADR.adrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19543,7 +19551,7 @@ function sv_ADR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ADX(p: Params): string {
@@ -19563,6 +19571,7 @@ function sv_ADX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19616,7 +19625,7 @@ function sv_ADX(p: Params): string {
       let st: ADX.AdxStream;
       try { st = ADX.adxOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19710,7 +19719,7 @@ function sv_ADX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ADXR(p: Params): string {
@@ -19730,6 +19739,7 @@ function sv_ADXR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19783,7 +19793,7 @@ function sv_ADXR(p: Params): string {
       let st: ADXR.AdxrStream;
       try { st = ADXR.adxrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -19877,7 +19887,7 @@ function sv_ADXR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ALLIGATOR(p: Params): string {
@@ -19904,6 +19914,7 @@ function sv_ALLIGATOR(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -19964,7 +19975,7 @@ function sv_ALLIGATOR(p: Params): string {
       let st: ALLIGATOR.AlligatorStream;
       try { st = ALLIGATOR.alligatorOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new ALLIGATOR.AlligatorOut(); st.value(v0);
       if (svXtierNe(v0.outJaw, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outTeeth, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -20092,7 +20103,7 @@ function sv_ALLIGATOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ALMA(p: Params): string {
@@ -20113,6 +20124,7 @@ function sv_ALMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -20164,7 +20176,7 @@ function sv_ALMA(p: Params): string {
       let st: ALMA.AlmaStream;
       try { st = ALMA.almaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -20258,7 +20270,7 @@ function sv_ALMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AO(p: Params): string {
@@ -20278,6 +20290,7 @@ function sv_AO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -20329,7 +20342,7 @@ function sv_AO(p: Params): string {
       let st: AO.AoStream;
       try { st = AO.aoOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -20423,7 +20436,7 @@ function sv_AO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_APO(p: Params): string {
@@ -20446,6 +20459,7 @@ function sv_APO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -20499,7 +20513,7 @@ function sv_APO(p: Params): string {
       let st: APO.ApoStream;
       try { st = APO.apoOpen(fz_c.slice(0, P), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -20593,7 +20607,7 @@ function sv_APO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AROON(p: Params): string {
@@ -20613,6 +20627,7 @@ function sv_AROON(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -20668,7 +20683,7 @@ function sv_AROON(p: Params): string {
       let st: AROON.AroonStream;
       try { st = AROON.aroonOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new AROON.AroonOut(); st.value(v0);
       if (svXtierNe(v0.outAroonDown, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outAroonUp, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -20783,7 +20798,7 @@ function sv_AROON(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AROONOSC(p: Params): string {
@@ -20802,6 +20817,7 @@ function sv_AROONOSC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -20853,7 +20869,7 @@ function sv_AROONOSC(p: Params): string {
       let st: AROONOSC.AroonoscStream;
       try { st = AROONOSC.aroonoscOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -20947,7 +20963,7 @@ function sv_AROONOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ASI(p: Params): string {
@@ -20966,6 +20982,7 @@ function sv_ASI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21017,7 +21034,7 @@ function sv_ASI(p: Params): string {
       let st: ASI.AsiStream;
       try { st = ASI.asiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { limitMove: optInLimitMove, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21106,7 +21123,7 @@ function sv_ASI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ASIN(p: Params): string {
@@ -21124,6 +21141,7 @@ function sv_ASIN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21175,7 +21193,7 @@ function sv_ASIN(p: Params): string {
       let st: ASIN.AsinStream;
       try { st = ASIN.asinOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21264,7 +21282,7 @@ function sv_ASIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ATAN(p: Params): string {
@@ -21282,6 +21300,7 @@ function sv_ATAN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21333,7 +21352,7 @@ function sv_ATAN(p: Params): string {
       let st: ATAN.AtanStream;
       try { st = ATAN.atanOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21422,7 +21441,7 @@ function sv_ATAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ATR(p: Params): string {
@@ -21442,6 +21461,7 @@ function sv_ATR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21495,7 +21515,7 @@ function sv_ATR(p: Params): string {
       let st: ATR.AtrStream;
       try { st = ATR.atrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21589,7 +21609,7 @@ function sv_ATR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AVGDEV(p: Params): string {
@@ -21608,6 +21628,7 @@ function sv_AVGDEV(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21659,7 +21680,7 @@ function sv_AVGDEV(p: Params): string {
       let st: AVGDEV.AvgdevStream;
       try { st = AVGDEV.avgdevOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21753,7 +21774,7 @@ function sv_AVGDEV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_AVGPRICE(p: Params): string {
@@ -21771,6 +21792,7 @@ function sv_AVGPRICE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21822,7 +21844,7 @@ function sv_AVGPRICE(p: Params): string {
       let st: AVGPRICE.AvgpriceStream;
       try { st = AVGPRICE.avgpriceOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -21911,7 +21933,7 @@ function sv_AVGPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_BBANDS(p: Params): string {
@@ -21937,6 +21959,7 @@ function sv_BBANDS(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -21997,7 +22020,7 @@ function sv_BBANDS(p: Params): string {
       let st: BBANDS.BbandsStream;
       try { st = BBANDS.bbandsOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new BBANDS.BbandsOut(); st.value(v0);
       if (svXtierNe(v0.outUpperBand, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMiddleBand, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -22125,7 +22148,7 @@ function sv_BBANDS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_BBW(p: Params): string {
@@ -22149,6 +22172,7 @@ function sv_BBW(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22202,7 +22226,7 @@ function sv_BBW(p: Params): string {
       let st: BBW.BbwStream;
       try { st = BBW.bbwOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -22296,7 +22320,7 @@ function sv_BBW(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_BETA(p: Params): string {
@@ -22315,6 +22339,7 @@ function sv_BETA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22366,7 +22391,7 @@ function sv_BETA(p: Params): string {
       let st: BETA.BetaStream;
       try { st = BETA.betaOpen(fz_c.slice(0, P), fz_v.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -22460,7 +22485,7 @@ function sv_BETA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_BOP(p: Params): string {
@@ -22478,6 +22503,7 @@ function sv_BOP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22529,7 +22555,7 @@ function sv_BOP(p: Params): string {
       let st: BOP.BopStream;
       try { st = BOP.bopOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -22618,7 +22644,7 @@ function sv_BOP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CCI(p: Params): string {
@@ -22637,6 +22663,7 @@ function sv_CCI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22688,7 +22715,7 @@ function sv_CCI(p: Params): string {
       let st: CCI.CciStream;
       try { st = CCI.cciOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -22782,7 +22809,7 @@ function sv_CCI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL2CROWS(p: Params): string {
@@ -22801,6 +22828,7 @@ function sv_CDL2CROWS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22816,7 +22844,7 @@ function sv_CDL2CROWS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -22828,7 +22856,7 @@ function sv_CDL2CROWS(p: Params): string {
       try { CDL2CROWS.cdl2crowsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -22853,7 +22881,7 @@ function sv_CDL2CROWS(p: Params): string {
       let st: CDL2CROWS.Cdl2crowsStream;
       try { st = CDL2CROWS.cdl2crowsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -22942,7 +22970,7 @@ function sv_CDL2CROWS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3BLACKCROWS(p: Params): string {
@@ -22961,6 +22989,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -22976,7 +23005,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -22988,7 +23017,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
       try { CDL3BLACKCROWS.cdl3blackcrowsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23013,7 +23042,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
       let st: CDL3BLACKCROWS.Cdl3blackcrowsStream;
       try { st = CDL3BLACKCROWS.cdl3blackcrowsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23102,7 +23131,7 @@ function sv_CDL3BLACKCROWS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3INSIDE(p: Params): string {
@@ -23121,6 +23150,7 @@ function sv_CDL3INSIDE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23136,7 +23166,7 @@ function sv_CDL3INSIDE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23148,7 +23178,7 @@ function sv_CDL3INSIDE(p: Params): string {
       try { CDL3INSIDE.cdl3insideOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23173,7 +23203,7 @@ function sv_CDL3INSIDE(p: Params): string {
       let st: CDL3INSIDE.Cdl3insideStream;
       try { st = CDL3INSIDE.cdl3insideOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23262,7 +23292,7 @@ function sv_CDL3INSIDE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3LINESTRIKE(p: Params): string {
@@ -23281,6 +23311,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23296,7 +23327,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23308,7 +23339,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
       try { CDL3LINESTRIKE.cdl3linestrikeOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23333,7 +23364,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
       let st: CDL3LINESTRIKE.Cdl3linestrikeStream;
       try { st = CDL3LINESTRIKE.cdl3linestrikeOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23422,7 +23453,7 @@ function sv_CDL3LINESTRIKE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3OUTSIDE(p: Params): string {
@@ -23441,6 +23472,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23456,7 +23488,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23468,7 +23500,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
       try { CDL3OUTSIDE.cdl3outsideOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23493,7 +23525,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
       let st: CDL3OUTSIDE.Cdl3outsideStream;
       try { st = CDL3OUTSIDE.cdl3outsideOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23582,7 +23614,7 @@ function sv_CDL3OUTSIDE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3STARSINSOUTH(p: Params): string {
@@ -23601,6 +23633,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23616,7 +23649,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23628,7 +23661,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
       try { CDL3STARSINSOUTH.cdl3starsinsouthOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23653,7 +23686,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
       let st: CDL3STARSINSOUTH.Cdl3starsinsouthStream;
       try { st = CDL3STARSINSOUTH.cdl3starsinsouthOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23742,7 +23775,7 @@ function sv_CDL3STARSINSOUTH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDL3WHITESOLDIERS(p: Params): string {
@@ -23761,6 +23794,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23776,7 +23810,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23788,7 +23822,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
       try { CDL3WHITESOLDIERS.cdl3whitesoldiersOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23813,7 +23847,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
       let st: CDL3WHITESOLDIERS.Cdl3whitesoldiersStream;
       try { st = CDL3WHITESOLDIERS.cdl3whitesoldiersOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -23902,7 +23936,7 @@ function sv_CDL3WHITESOLDIERS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLABANDONEDBABY(p: Params): string {
@@ -23922,6 +23956,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -23937,7 +23972,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -23949,7 +23984,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
       try { CDLABANDONEDBABY.cdlabandonedbabyOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -23974,7 +24009,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
       let st: CDLABANDONEDBABY.CdlabandonedbabyStream;
       try { st = CDLABANDONEDBABY.cdlabandonedbabyOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24063,7 +24098,7 @@ function sv_CDLABANDONEDBABY(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLADVANCEBLOCK(p: Params): string {
@@ -24082,6 +24117,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24097,7 +24133,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24109,7 +24145,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
       try { CDLADVANCEBLOCK.cdladvanceblockOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24134,7 +24170,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
       let st: CDLADVANCEBLOCK.CdladvanceblockStream;
       try { st = CDLADVANCEBLOCK.cdladvanceblockOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24223,7 +24259,7 @@ function sv_CDLADVANCEBLOCK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLBELTHOLD(p: Params): string {
@@ -24242,6 +24278,7 @@ function sv_CDLBELTHOLD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24257,7 +24294,7 @@ function sv_CDLBELTHOLD(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24269,7 +24306,7 @@ function sv_CDLBELTHOLD(p: Params): string {
       try { CDLBELTHOLD.cdlbeltholdOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24294,7 +24331,7 @@ function sv_CDLBELTHOLD(p: Params): string {
       let st: CDLBELTHOLD.CdlbeltholdStream;
       try { st = CDLBELTHOLD.cdlbeltholdOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24383,7 +24420,7 @@ function sv_CDLBELTHOLD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLBREAKAWAY(p: Params): string {
@@ -24402,6 +24439,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24417,7 +24455,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24429,7 +24467,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
       try { CDLBREAKAWAY.cdlbreakawayOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24454,7 +24492,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
       let st: CDLBREAKAWAY.CdlbreakawayStream;
       try { st = CDLBREAKAWAY.cdlbreakawayOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24543,7 +24581,7 @@ function sv_CDLBREAKAWAY(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLCLOSINGMARUBOZU(p: Params): string {
@@ -24562,6 +24600,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24577,7 +24616,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24589,7 +24628,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
       try { CDLCLOSINGMARUBOZU.cdlclosingmarubozuOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24614,7 +24653,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
       let st: CDLCLOSINGMARUBOZU.CdlclosingmarubozuStream;
       try { st = CDLCLOSINGMARUBOZU.cdlclosingmarubozuOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24703,7 +24742,7 @@ function sv_CDLCLOSINGMARUBOZU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLCONCEALBABYSWALL(p: Params): string {
@@ -24722,6 +24761,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24737,7 +24777,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24749,7 +24789,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
       try { CDLCONCEALBABYSWALL.cdlconcealbabyswallOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24774,7 +24814,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
       let st: CDLCONCEALBABYSWALL.CdlconcealbabyswallStream;
       try { st = CDLCONCEALBABYSWALL.cdlconcealbabyswallOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -24863,7 +24903,7 @@ function sv_CDLCONCEALBABYSWALL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLCOUNTERATTACK(p: Params): string {
@@ -24882,6 +24922,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -24897,7 +24938,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -24909,7 +24950,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
       try { CDLCOUNTERATTACK.cdlcounterattackOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -24934,7 +24975,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
       let st: CDLCOUNTERATTACK.CdlcounterattackStream;
       try { st = CDLCOUNTERATTACK.cdlcounterattackOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25023,7 +25064,7 @@ function sv_CDLCOUNTERATTACK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLDARKCLOUDCOVER(p: Params): string {
@@ -25043,6 +25084,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25058,7 +25100,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25070,7 +25112,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
       try { CDLDARKCLOUDCOVER.cdldarkcloudcoverOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25095,7 +25137,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
       let st: CDLDARKCLOUDCOVER.CdldarkcloudcoverStream;
       try { st = CDLDARKCLOUDCOVER.cdldarkcloudcoverOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25184,7 +25226,7 @@ function sv_CDLDARKCLOUDCOVER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLDOJI(p: Params): string {
@@ -25203,6 +25245,7 @@ function sv_CDLDOJI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25218,7 +25261,7 @@ function sv_CDLDOJI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25230,7 +25273,7 @@ function sv_CDLDOJI(p: Params): string {
       try { CDLDOJI.cdldojiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25255,7 +25298,7 @@ function sv_CDLDOJI(p: Params): string {
       let st: CDLDOJI.CdldojiStream;
       try { st = CDLDOJI.cdldojiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25344,7 +25387,7 @@ function sv_CDLDOJI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLDOJISTAR(p: Params): string {
@@ -25363,6 +25406,7 @@ function sv_CDLDOJISTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25378,7 +25422,7 @@ function sv_CDLDOJISTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25390,7 +25434,7 @@ function sv_CDLDOJISTAR(p: Params): string {
       try { CDLDOJISTAR.cdldojistarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25415,7 +25459,7 @@ function sv_CDLDOJISTAR(p: Params): string {
       let st: CDLDOJISTAR.CdldojistarStream;
       try { st = CDLDOJISTAR.cdldojistarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25504,7 +25548,7 @@ function sv_CDLDOJISTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLDRAGONFLYDOJI(p: Params): string {
@@ -25523,6 +25567,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25538,7 +25583,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25550,7 +25595,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
       try { CDLDRAGONFLYDOJI.cdldragonflydojiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25575,7 +25620,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
       let st: CDLDRAGONFLYDOJI.CdldragonflydojiStream;
       try { st = CDLDRAGONFLYDOJI.cdldragonflydojiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25664,7 +25709,7 @@ function sv_CDLDRAGONFLYDOJI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLENGULFING(p: Params): string {
@@ -25683,6 +25728,7 @@ function sv_CDLENGULFING(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25698,7 +25744,7 @@ function sv_CDLENGULFING(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25710,7 +25756,7 @@ function sv_CDLENGULFING(p: Params): string {
       try { CDLENGULFING.cdlengulfingOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25735,7 +25781,7 @@ function sv_CDLENGULFING(p: Params): string {
       let st: CDLENGULFING.CdlengulfingStream;
       try { st = CDLENGULFING.cdlengulfingOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25824,7 +25870,7 @@ function sv_CDLENGULFING(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLEVENINGDOJISTAR(p: Params): string {
@@ -25844,6 +25890,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -25859,7 +25906,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -25871,7 +25918,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
       try { CDLEVENINGDOJISTAR.cdleveningdojistarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -25896,7 +25943,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
       let st: CDLEVENINGDOJISTAR.CdleveningdojistarStream;
       try { st = CDLEVENINGDOJISTAR.cdleveningdojistarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -25985,7 +26032,7 @@ function sv_CDLEVENINGDOJISTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLEVENINGSTAR(p: Params): string {
@@ -26005,6 +26052,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26020,7 +26068,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26032,7 +26080,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
       try { CDLEVENINGSTAR.cdleveningstarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26057,7 +26105,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
       let st: CDLEVENINGSTAR.CdleveningstarStream;
       try { st = CDLEVENINGSTAR.cdleveningstarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26146,7 +26194,7 @@ function sv_CDLEVENINGSTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
@@ -26165,6 +26213,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26180,7 +26229,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26192,7 +26241,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
       try { CDLGAPSIDESIDEWHITE.cdlgapsidesidewhiteOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26217,7 +26266,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
       let st: CDLGAPSIDESIDEWHITE.CdlgapsidesidewhiteStream;
       try { st = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhiteOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26306,7 +26355,7 @@ function sv_CDLGAPSIDESIDEWHITE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLGRAVESTONEDOJI(p: Params): string {
@@ -26325,6 +26374,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26340,7 +26390,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26352,7 +26402,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
       try { CDLGRAVESTONEDOJI.cdlgravestonedojiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26377,7 +26427,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
       let st: CDLGRAVESTONEDOJI.CdlgravestonedojiStream;
       try { st = CDLGRAVESTONEDOJI.cdlgravestonedojiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26466,7 +26516,7 @@ function sv_CDLGRAVESTONEDOJI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHAMMER(p: Params): string {
@@ -26485,6 +26535,7 @@ function sv_CDLHAMMER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26500,7 +26551,7 @@ function sv_CDLHAMMER(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26512,7 +26563,7 @@ function sv_CDLHAMMER(p: Params): string {
       try { CDLHAMMER.cdlhammerOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26537,7 +26588,7 @@ function sv_CDLHAMMER(p: Params): string {
       let st: CDLHAMMER.CdlhammerStream;
       try { st = CDLHAMMER.cdlhammerOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26626,7 +26677,7 @@ function sv_CDLHAMMER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHANGINGMAN(p: Params): string {
@@ -26645,6 +26696,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26660,7 +26712,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26672,7 +26724,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
       try { CDLHANGINGMAN.cdlhangingmanOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26697,7 +26749,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
       let st: CDLHANGINGMAN.CdlhangingmanStream;
       try { st = CDLHANGINGMAN.cdlhangingmanOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26786,7 +26838,7 @@ function sv_CDLHANGINGMAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHARAMI(p: Params): string {
@@ -26805,6 +26857,7 @@ function sv_CDLHARAMI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26820,7 +26873,7 @@ function sv_CDLHARAMI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26832,7 +26885,7 @@ function sv_CDLHARAMI(p: Params): string {
       try { CDLHARAMI.cdlharamiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -26857,7 +26910,7 @@ function sv_CDLHARAMI(p: Params): string {
       let st: CDLHARAMI.CdlharamiStream;
       try { st = CDLHARAMI.cdlharamiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -26946,7 +26999,7 @@ function sv_CDLHARAMI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHARAMICROSS(p: Params): string {
@@ -26965,6 +27018,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -26980,7 +27034,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -26992,7 +27046,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
       try { CDLHARAMICROSS.cdlharamicrossOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27017,7 +27071,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
       let st: CDLHARAMICROSS.CdlharamicrossStream;
       try { st = CDLHARAMICROSS.cdlharamicrossOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27106,7 +27160,7 @@ function sv_CDLHARAMICROSS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHIGHWAVE(p: Params): string {
@@ -27125,6 +27179,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27140,7 +27195,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27152,7 +27207,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
       try { CDLHIGHWAVE.cdlhighwaveOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27177,7 +27232,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
       let st: CDLHIGHWAVE.CdlhighwaveStream;
       try { st = CDLHIGHWAVE.cdlhighwaveOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27266,7 +27321,7 @@ function sv_CDLHIGHWAVE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHIKKAKE(p: Params): string {
@@ -27285,6 +27340,7 @@ function sv_CDLHIKKAKE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27300,7 +27356,7 @@ function sv_CDLHIKKAKE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27312,7 +27368,7 @@ function sv_CDLHIKKAKE(p: Params): string {
       try { CDLHIKKAKE.cdlhikkakeOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27337,7 +27393,7 @@ function sv_CDLHIKKAKE(p: Params): string {
       let st: CDLHIKKAKE.CdlhikkakeStream;
       try { st = CDLHIKKAKE.cdlhikkakeOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27426,7 +27482,7 @@ function sv_CDLHIKKAKE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHIKKAKEMOD(p: Params): string {
@@ -27445,6 +27501,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27460,7 +27517,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27472,7 +27529,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
       try { CDLHIKKAKEMOD.cdlhikkakemodOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27497,7 +27554,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
       let st: CDLHIKKAKEMOD.CdlhikkakemodStream;
       try { st = CDLHIKKAKEMOD.cdlhikkakemodOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27586,7 +27643,7 @@ function sv_CDLHIKKAKEMOD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLHOMINGPIGEON(p: Params): string {
@@ -27605,6 +27662,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27620,7 +27678,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27632,7 +27690,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
       try { CDLHOMINGPIGEON.cdlhomingpigeonOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27657,7 +27715,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
       let st: CDLHOMINGPIGEON.CdlhomingpigeonStream;
       try { st = CDLHOMINGPIGEON.cdlhomingpigeonOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27746,7 +27804,7 @@ function sv_CDLHOMINGPIGEON(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLIDENTICAL3CROWS(p: Params): string {
@@ -27765,6 +27823,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27780,7 +27839,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27792,7 +27851,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
       try { CDLIDENTICAL3CROWS.cdlidentical3crowsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27817,7 +27876,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
       let st: CDLIDENTICAL3CROWS.Cdlidentical3crowsStream;
       try { st = CDLIDENTICAL3CROWS.cdlidentical3crowsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -27906,7 +27965,7 @@ function sv_CDLIDENTICAL3CROWS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLINNECK(p: Params): string {
@@ -27925,6 +27984,7 @@ function sv_CDLINNECK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -27940,7 +28000,7 @@ function sv_CDLINNECK(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -27952,7 +28012,7 @@ function sv_CDLINNECK(p: Params): string {
       try { CDLINNECK.cdlinneckOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -27977,7 +28037,7 @@ function sv_CDLINNECK(p: Params): string {
       let st: CDLINNECK.CdlinneckStream;
       try { st = CDLINNECK.cdlinneckOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28066,7 +28126,7 @@ function sv_CDLINNECK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLINVERTEDHAMMER(p: Params): string {
@@ -28085,6 +28145,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28100,7 +28161,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28112,7 +28173,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
       try { CDLINVERTEDHAMMER.cdlinvertedhammerOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28137,7 +28198,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
       let st: CDLINVERTEDHAMMER.CdlinvertedhammerStream;
       try { st = CDLINVERTEDHAMMER.cdlinvertedhammerOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28226,7 +28287,7 @@ function sv_CDLINVERTEDHAMMER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLKICKING(p: Params): string {
@@ -28245,6 +28306,7 @@ function sv_CDLKICKING(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28260,7 +28322,7 @@ function sv_CDLKICKING(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28272,7 +28334,7 @@ function sv_CDLKICKING(p: Params): string {
       try { CDLKICKING.cdlkickingOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28297,7 +28359,7 @@ function sv_CDLKICKING(p: Params): string {
       let st: CDLKICKING.CdlkickingStream;
       try { st = CDLKICKING.cdlkickingOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28386,7 +28448,7 @@ function sv_CDLKICKING(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLKICKINGBYLENGTH(p: Params): string {
@@ -28405,6 +28467,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28420,7 +28483,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28432,7 +28495,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
       try { CDLKICKINGBYLENGTH.cdlkickingbylengthOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28457,7 +28520,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
       let st: CDLKICKINGBYLENGTH.CdlkickingbylengthStream;
       try { st = CDLKICKINGBYLENGTH.cdlkickingbylengthOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28546,7 +28609,7 @@ function sv_CDLKICKINGBYLENGTH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLLADDERBOTTOM(p: Params): string {
@@ -28565,6 +28628,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28580,7 +28644,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28592,7 +28656,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
       try { CDLLADDERBOTTOM.cdlladderbottomOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28617,7 +28681,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
       let st: CDLLADDERBOTTOM.CdlladderbottomStream;
       try { st = CDLLADDERBOTTOM.cdlladderbottomOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28706,7 +28770,7 @@ function sv_CDLLADDERBOTTOM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLLONGLEGGEDDOJI(p: Params): string {
@@ -28725,6 +28789,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28740,7 +28805,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28752,7 +28817,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
       try { CDLLONGLEGGEDDOJI.cdllongleggeddojiOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28777,7 +28842,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
       let st: CDLLONGLEGGEDDOJI.CdllongleggeddojiStream;
       try { st = CDLLONGLEGGEDDOJI.cdllongleggeddojiOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -28866,7 +28931,7 @@ function sv_CDLLONGLEGGEDDOJI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLLONGLINE(p: Params): string {
@@ -28885,6 +28950,7 @@ function sv_CDLLONGLINE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -28900,7 +28966,7 @@ function sv_CDLLONGLINE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -28912,7 +28978,7 @@ function sv_CDLLONGLINE(p: Params): string {
       try { CDLLONGLINE.cdllonglineOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -28937,7 +29003,7 @@ function sv_CDLLONGLINE(p: Params): string {
       let st: CDLLONGLINE.CdllonglineStream;
       try { st = CDLLONGLINE.cdllonglineOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29026,7 +29092,7 @@ function sv_CDLLONGLINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLMARUBOZU(p: Params): string {
@@ -29045,6 +29111,7 @@ function sv_CDLMARUBOZU(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29060,7 +29127,7 @@ function sv_CDLMARUBOZU(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29072,7 +29139,7 @@ function sv_CDLMARUBOZU(p: Params): string {
       try { CDLMARUBOZU.cdlmarubozuOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29097,7 +29164,7 @@ function sv_CDLMARUBOZU(p: Params): string {
       let st: CDLMARUBOZU.CdlmarubozuStream;
       try { st = CDLMARUBOZU.cdlmarubozuOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29186,7 +29253,7 @@ function sv_CDLMARUBOZU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLMATCHINGLOW(p: Params): string {
@@ -29205,6 +29272,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29220,7 +29288,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29232,7 +29300,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
       try { CDLMATCHINGLOW.cdlmatchinglowOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29257,7 +29325,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
       let st: CDLMATCHINGLOW.CdlmatchinglowStream;
       try { st = CDLMATCHINGLOW.cdlmatchinglowOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29346,7 +29414,7 @@ function sv_CDLMATCHINGLOW(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLMATHOLD(p: Params): string {
@@ -29366,6 +29434,7 @@ function sv_CDLMATHOLD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29381,7 +29450,7 @@ function sv_CDLMATHOLD(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29393,7 +29462,7 @@ function sv_CDLMATHOLD(p: Params): string {
       try { CDLMATHOLD.cdlmatholdOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29418,7 +29487,7 @@ function sv_CDLMATHOLD(p: Params): string {
       let st: CDLMATHOLD.CdlmatholdStream;
       try { st = CDLMATHOLD.cdlmatholdOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29507,7 +29576,7 @@ function sv_CDLMATHOLD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLMORNINGDOJISTAR(p: Params): string {
@@ -29527,6 +29596,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29542,7 +29612,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29554,7 +29624,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
       try { CDLMORNINGDOJISTAR.cdlmorningdojistarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29579,7 +29649,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
       let st: CDLMORNINGDOJISTAR.CdlmorningdojistarStream;
       try { st = CDLMORNINGDOJISTAR.cdlmorningdojistarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29668,7 +29738,7 @@ function sv_CDLMORNINGDOJISTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLMORNINGSTAR(p: Params): string {
@@ -29688,6 +29758,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29703,7 +29774,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29715,7 +29786,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
       try { CDLMORNINGSTAR.cdlmorningstarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { penetration: optInPenetration, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29740,7 +29811,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
       let st: CDLMORNINGSTAR.CdlmorningstarStream;
       try { st = CDLMORNINGSTAR.cdlmorningstarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { penetration: optInPenetration, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29829,7 +29900,7 @@ function sv_CDLMORNINGSTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLONNECK(p: Params): string {
@@ -29848,6 +29919,7 @@ function sv_CDLONNECK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -29863,7 +29935,7 @@ function sv_CDLONNECK(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -29875,7 +29947,7 @@ function sv_CDLONNECK(p: Params): string {
       try { CDLONNECK.cdlonneckOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -29900,7 +29972,7 @@ function sv_CDLONNECK(p: Params): string {
       let st: CDLONNECK.CdlonneckStream;
       try { st = CDLONNECK.cdlonneckOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -29989,7 +30061,7 @@ function sv_CDLONNECK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLPIERCING(p: Params): string {
@@ -30008,6 +30080,7 @@ function sv_CDLPIERCING(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30023,7 +30096,7 @@ function sv_CDLPIERCING(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30035,7 +30108,7 @@ function sv_CDLPIERCING(p: Params): string {
       try { CDLPIERCING.cdlpiercingOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30060,7 +30133,7 @@ function sv_CDLPIERCING(p: Params): string {
       let st: CDLPIERCING.CdlpiercingStream;
       try { st = CDLPIERCING.cdlpiercingOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30149,7 +30222,7 @@ function sv_CDLPIERCING(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLRICKSHAWMAN(p: Params): string {
@@ -30168,6 +30241,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30183,7 +30257,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30195,7 +30269,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
       try { CDLRICKSHAWMAN.cdlrickshawmanOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30220,7 +30294,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
       let st: CDLRICKSHAWMAN.CdlrickshawmanStream;
       try { st = CDLRICKSHAWMAN.cdlrickshawmanOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30309,7 +30383,7 @@ function sv_CDLRICKSHAWMAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLRISEFALL3METHODS(p: Params): string {
@@ -30328,6 +30402,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30343,7 +30418,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30355,7 +30430,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
       try { CDLRISEFALL3METHODS.cdlrisefall3methodsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30380,7 +30455,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
       let st: CDLRISEFALL3METHODS.Cdlrisefall3methodsStream;
       try { st = CDLRISEFALL3METHODS.cdlrisefall3methodsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30469,7 +30544,7 @@ function sv_CDLRISEFALL3METHODS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSEPARATINGLINES(p: Params): string {
@@ -30488,6 +30563,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30503,7 +30579,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30515,7 +30591,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
       try { CDLSEPARATINGLINES.cdlseparatinglinesOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30540,7 +30616,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
       let st: CDLSEPARATINGLINES.CdlseparatinglinesStream;
       try { st = CDLSEPARATINGLINES.cdlseparatinglinesOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30629,7 +30705,7 @@ function sv_CDLSEPARATINGLINES(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSHOOTINGSTAR(p: Params): string {
@@ -30648,6 +30724,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30663,7 +30740,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30675,7 +30752,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
       try { CDLSHOOTINGSTAR.cdlshootingstarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30700,7 +30777,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
       let st: CDLSHOOTINGSTAR.CdlshootingstarStream;
       try { st = CDLSHOOTINGSTAR.cdlshootingstarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30789,7 +30866,7 @@ function sv_CDLSHOOTINGSTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSHORTLINE(p: Params): string {
@@ -30808,6 +30885,7 @@ function sv_CDLSHORTLINE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30823,7 +30901,7 @@ function sv_CDLSHORTLINE(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30835,7 +30913,7 @@ function sv_CDLSHORTLINE(p: Params): string {
       try { CDLSHORTLINE.cdlshortlineOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -30860,7 +30938,7 @@ function sv_CDLSHORTLINE(p: Params): string {
       let st: CDLSHORTLINE.CdlshortlineStream;
       try { st = CDLSHORTLINE.cdlshortlineOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -30949,7 +31027,7 @@ function sv_CDLSHORTLINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSPINNINGTOP(p: Params): string {
@@ -30968,6 +31046,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -30983,7 +31062,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -30995,7 +31074,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
       try { CDLSPINNINGTOP.cdlspinningtopOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31020,7 +31099,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
       let st: CDLSPINNINGTOP.CdlspinningtopStream;
       try { st = CDLSPINNINGTOP.cdlspinningtopOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31109,7 +31188,7 @@ function sv_CDLSPINNINGTOP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSTALLEDPATTERN(p: Params): string {
@@ -31128,6 +31207,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31143,7 +31223,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31155,7 +31235,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
       try { CDLSTALLEDPATTERN.cdlstalledpatternOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31180,7 +31260,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
       let st: CDLSTALLEDPATTERN.CdlstalledpatternStream;
       try { st = CDLSTALLEDPATTERN.cdlstalledpatternOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31269,7 +31349,7 @@ function sv_CDLSTALLEDPATTERN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLSTICKSANDWICH(p: Params): string {
@@ -31288,6 +31368,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31303,7 +31384,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31315,7 +31396,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
       try { CDLSTICKSANDWICH.cdlsticksandwichOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31340,7 +31421,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
       let st: CDLSTICKSANDWICH.CdlsticksandwichStream;
       try { st = CDLSTICKSANDWICH.cdlsticksandwichOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31429,7 +31510,7 @@ function sv_CDLSTICKSANDWICH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLTAKURI(p: Params): string {
@@ -31448,6 +31529,7 @@ function sv_CDLTAKURI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31463,7 +31545,7 @@ function sv_CDLTAKURI(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31475,7 +31557,7 @@ function sv_CDLTAKURI(p: Params): string {
       try { CDLTAKURI.cdltakuriOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31500,7 +31582,7 @@ function sv_CDLTAKURI(p: Params): string {
       let st: CDLTAKURI.CdltakuriStream;
       try { st = CDLTAKURI.cdltakuriOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31589,7 +31671,7 @@ function sv_CDLTAKURI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLTASUKIGAP(p: Params): string {
@@ -31608,6 +31690,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31623,7 +31706,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31635,7 +31718,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
       try { CDLTASUKIGAP.cdltasukigapOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31660,7 +31743,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
       let st: CDLTASUKIGAP.CdltasukigapStream;
       try { st = CDLTASUKIGAP.cdltasukigapOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31749,7 +31832,7 @@ function sv_CDLTASUKIGAP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLTHRUSTING(p: Params): string {
@@ -31768,6 +31851,7 @@ function sv_CDLTHRUSTING(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31783,7 +31867,7 @@ function sv_CDLTHRUSTING(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31795,7 +31879,7 @@ function sv_CDLTHRUSTING(p: Params): string {
       try { CDLTHRUSTING.cdlthrustingOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31820,7 +31904,7 @@ function sv_CDLTHRUSTING(p: Params): string {
       let st: CDLTHRUSTING.CdlthrustingStream;
       try { st = CDLTHRUSTING.cdlthrustingOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -31909,7 +31993,7 @@ function sv_CDLTHRUSTING(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLTRISTAR(p: Params): string {
@@ -31928,6 +32012,7 @@ function sv_CDLTRISTAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -31943,7 +32028,7 @@ function sv_CDLTRISTAR(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -31955,7 +32040,7 @@ function sv_CDLTRISTAR(p: Params): string {
       try { CDLTRISTAR.cdltristarOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -31980,7 +32065,7 @@ function sv_CDLTRISTAR(p: Params): string {
       let st: CDLTRISTAR.CdltristarStream;
       try { st = CDLTRISTAR.cdltristarOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -32069,7 +32154,7 @@ function sv_CDLTRISTAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLUNIQUE3RIVER(p: Params): string {
@@ -32088,6 +32173,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32103,7 +32189,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -32115,7 +32201,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
       try { CDLUNIQUE3RIVER.cdlunique3riverOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -32140,7 +32226,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
       let st: CDLUNIQUE3RIVER.Cdlunique3riverStream;
       try { st = CDLUNIQUE3RIVER.cdlunique3riverOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -32229,7 +32315,7 @@ function sv_CDLUNIQUE3RIVER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
@@ -32248,6 +32334,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32263,7 +32350,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -32275,7 +32362,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
       try { CDLUPSIDEGAP2CROWS.cdlupsidegap2crowsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -32300,7 +32387,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
       let st: CDLUPSIDEGAP2CROWS.Cdlupsidegap2crowsStream;
       try { st = CDLUPSIDEGAP2CROWS.cdlupsidegap2crowsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -32389,7 +32476,7 @@ function sv_CDLUPSIDEGAP2CROWS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CDLXSIDEGAP3METHODS(p: Params): string {
@@ -32408,6 +32495,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32423,7 +32511,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
   let rangeLegs = 0;
   let rangeSites = 0;
   const zsign = [0];
-  const rounds = candleLegs !== 0 ? 4 : 1;
+  const rounds = candleLegs !== 0 ? 5 : 1;
   for (let rd = 0; rd < rounds; rd++) {
     const c2 = svCandleRound(rd).build();
     let rc: number;
@@ -32435,7 +32523,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
       try { CDLXSIDEGAP3METHODS.cdlxsidegap3methodsOpen({ open: fz_o, high: fz_h, low: fz_l, close: fz_c }, { core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
       if (!openRejects) allOk = false;
       if (rd + 1 < rounds) continue;
-      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}}`;
+      return `{"retCode":${rc},"legs":${legs},"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${allOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}}`;
     }
     fillChecked = 1;
     try {
@@ -32460,7 +32548,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
       let st: CDLXSIDEGAP3METHODS.Cdlxsidegap3methodsStream;
       try { st = CDLXSIDEGAP3METHODS.cdlxsidegap3methodsOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -32549,7 +32637,7 @@ function sv_CDLXSIDEGAP3METHODS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CE(p: Params): string {
@@ -32571,6 +32659,7 @@ function sv_CE(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32628,7 +32717,7 @@ function sv_CE(p: Params): string {
       let st: CE.CeStream;
       try { st = CE.ceOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new CE.CeOut(); st.value(v0);
       if (svXtierNe(v0.outLong, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outShort, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -32743,7 +32832,7 @@ function sv_CE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CEIL(p: Params): string {
@@ -32761,6 +32850,7 @@ function sv_CEIL(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32812,7 +32902,7 @@ function sv_CEIL(p: Params): string {
       let st: CEIL.CeilStream;
       try { st = CEIL.ceilOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -32901,7 +32991,7 @@ function sv_CEIL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CG(p: Params): string {
@@ -32920,6 +33010,7 @@ function sv_CG(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -32971,7 +33062,7 @@ function sv_CG(p: Params): string {
       let st: CG.CgStream;
       try { st = CG.cgOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -33065,7 +33156,7 @@ function sv_CG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CHOP(p: Params): string {
@@ -33084,6 +33175,7 @@ function sv_CHOP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33135,7 +33227,7 @@ function sv_CHOP(p: Params): string {
       let st: CHOP.ChopStream;
       try { st = CHOP.chopOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -33229,7 +33321,7 @@ function sv_CHOP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CHOPTR(p: Params): string {
@@ -33248,6 +33340,7 @@ function sv_CHOPTR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33299,7 +33392,7 @@ function sv_CHOPTR(p: Params): string {
       let st: CHOPTR.ChoptrStream;
       try { st = CHOPTR.choptrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -33393,7 +33486,7 @@ function sv_CHOPTR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CKSP(p: Params): string {
@@ -33416,6 +33509,7 @@ function sv_CKSP(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33473,7 +33567,7 @@ function sv_CKSP(p: Params): string {
       let st: CKSP.CkspStream;
       try { st = CKSP.ckspOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new CKSP.CkspOut(); st.value(v0);
       if (svXtierNe(v0.outHighStop, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outLowStop, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -33588,7 +33682,7 @@ function sv_CKSP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CMF(p: Params): string {
@@ -33607,6 +33701,7 @@ function sv_CMF(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33658,7 +33753,7 @@ function sv_CMF(p: Params): string {
       let st: CMF.CmfStream;
       try { st = CMF.cmfOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -33752,7 +33847,7 @@ function sv_CMF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CMO(p: Params): string {
@@ -33772,6 +33867,7 @@ function sv_CMO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33825,7 +33921,7 @@ function sv_CMO(p: Params): string {
       let st: CMO.CmoStream;
       try { st = CMO.cmoOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -33919,7 +34015,7 @@ function sv_CMO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CMOU(p: Params): string {
@@ -33938,6 +34034,7 @@ function sv_CMOU(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -33989,7 +34086,7 @@ function sv_CMOU(p: Params): string {
       let st: CMOU.CmouStream;
       try { st = CMOU.cmouOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34083,7 +34180,7 @@ function sv_CMOU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_COPPOCK(p: Params): string {
@@ -34104,6 +34201,7 @@ function sv_COPPOCK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34155,7 +34253,7 @@ function sv_COPPOCK(p: Params): string {
       let st: COPPOCK.CoppockStream;
       try { st = COPPOCK.coppockOpen(fz_c.slice(0, P), { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34249,7 +34347,7 @@ function sv_COPPOCK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CORREL(p: Params): string {
@@ -34268,6 +34366,7 @@ function sv_CORREL(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34319,7 +34418,7 @@ function sv_CORREL(p: Params): string {
       let st: CORREL.CorrelStream;
       try { st = CORREL.correlOpen(fz_c.slice(0, P), fz_v.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34413,7 +34512,7 @@ function sv_CORREL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_COS(p: Params): string {
@@ -34431,6 +34530,7 @@ function sv_COS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34482,7 +34582,7 @@ function sv_COS(p: Params): string {
       let st: COS.CosStream;
       try { st = COS.cosOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34571,7 +34671,7 @@ function sv_COS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_COSH(p: Params): string {
@@ -34589,6 +34689,7 @@ function sv_COSH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34640,7 +34741,7 @@ function sv_COSH(p: Params): string {
       let st: COSH.CoshStream;
       try { st = COSH.coshOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34729,7 +34830,7 @@ function sv_COSH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CRSI(p: Params): string {
@@ -34751,6 +34852,7 @@ function sv_CRSI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34804,7 +34906,7 @@ function sv_CRSI(p: Params): string {
       let st: CRSI.CrsiStream;
       try { st = CRSI.crsiOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -34898,7 +35000,7 @@ function sv_CRSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CTI(p: Params): string {
@@ -34917,6 +35019,7 @@ function sv_CTI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -34968,7 +35071,7 @@ function sv_CTI(p: Params): string {
       let st: CTI.CtiStream;
       try { st = CTI.ctiOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -35062,7 +35165,7 @@ function sv_CTI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CUMSUM(p: Params): string {
@@ -35080,6 +35183,7 @@ function sv_CUMSUM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35131,7 +35235,7 @@ function sv_CUMSUM(p: Params): string {
       let st: CUMSUM.CumsumStream;
       try { st = CUMSUM.cumsumOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -35220,7 +35324,7 @@ function sv_CUMSUM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_CVI(p: Params): string {
@@ -35241,6 +35345,7 @@ function sv_CVI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35294,7 +35399,7 @@ function sv_CVI(p: Params): string {
       let st: CVI.CviStream;
       try { st = CVI.cviOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -35388,7 +35493,7 @@ function sv_CVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DEMA(p: Params): string {
@@ -35408,6 +35513,7 @@ function sv_DEMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35461,7 +35567,7 @@ function sv_DEMA(p: Params): string {
       let st: DEMA.DemaStream;
       try { st = DEMA.demaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -35555,7 +35661,7 @@ function sv_DEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DIV(p: Params): string {
@@ -35573,6 +35679,7 @@ function sv_DIV(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35624,7 +35731,7 @@ function sv_DIV(p: Params): string {
       let st: DIV.DivStream;
       try { st = DIV.divOpen(fz_c.slice(0, P), fz_v.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -35713,7 +35820,7 @@ function sv_DIV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DONCHIAN(p: Params): string {
@@ -35734,6 +35841,7 @@ function sv_DONCHIAN(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35792,7 +35900,7 @@ function sv_DONCHIAN(p: Params): string {
       let st: DONCHIAN.DonchianStream;
       try { st = DONCHIAN.donchianOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new DONCHIAN.DonchianOut(); st.value(v0);
       if (svXtierNe(v0.outUpperBand, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMiddleBand, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -35920,7 +36028,7 @@ function sv_DONCHIAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DOSC(p: Params): string {
@@ -35943,6 +36051,7 @@ function sv_DOSC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -35996,7 +36105,7 @@ function sv_DOSC(p: Params): string {
       let st: DOSC.DoscStream;
       try { st = DOSC.doscOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36090,7 +36199,7 @@ function sv_DOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DPO(p: Params): string {
@@ -36109,6 +36218,7 @@ function sv_DPO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36160,7 +36270,7 @@ function sv_DPO(p: Params): string {
       let st: DPO.DpoStream;
       try { st = DPO.dpoOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36254,7 +36364,7 @@ function sv_DPO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_DX(p: Params): string {
@@ -36274,6 +36384,7 @@ function sv_DX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36327,7 +36438,7 @@ function sv_DX(p: Params): string {
       let st: DX.DxStream;
       try { st = DX.dxOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36421,7 +36532,7 @@ function sv_DX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_EFI(p: Params): string {
@@ -36441,6 +36552,7 @@ function sv_EFI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36494,7 +36606,7 @@ function sv_EFI(p: Params): string {
       let st: EFI.EfiStream;
       try { st = EFI.efiOpen({ close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36588,7 +36700,7 @@ function sv_EFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_EMA(p: Params): string {
@@ -36608,6 +36720,7 @@ function sv_EMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36661,7 +36774,7 @@ function sv_EMA(p: Params): string {
       let st: EMA.EmaStream;
       try { st = EMA.emaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36755,7 +36868,7 @@ function sv_EMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_EMV(p: Params): string {
@@ -36775,6 +36888,7 @@ function sv_EMV(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36826,7 +36940,7 @@ function sv_EMV(p: Params): string {
       let st: EMV.EmvStream;
       try { st = EMV.emvOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -36920,7 +37034,7 @@ function sv_EMV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ER(p: Params): string {
@@ -36939,6 +37053,7 @@ function sv_ER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -36990,7 +37105,7 @@ function sv_ER(p: Params): string {
       let st: ER.ErStream;
       try { st = ER.erOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -37084,7 +37199,7 @@ function sv_ER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ERI(p: Params): string {
@@ -37105,6 +37220,7 @@ function sv_ERI(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -37162,7 +37278,7 @@ function sv_ERI(p: Params): string {
       let st: ERI.EriStream;
       try { st = ERI.eriOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new ERI.EriOut(); st.value(v0);
       if (svXtierNe(v0.outBullPower, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outBearPower, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -37277,7 +37393,7 @@ function sv_ERI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_EXP(p: Params): string {
@@ -37295,6 +37411,7 @@ function sv_EXP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -37346,7 +37463,7 @@ function sv_EXP(p: Params): string {
       let st: EXP.ExpStream;
       try { st = EXP.expOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -37435,7 +37552,7 @@ function sv_EXP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_FISHER(p: Params): string {
@@ -37456,6 +37573,7 @@ function sv_FISHER(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -37513,7 +37631,7 @@ function sv_FISHER(p: Params): string {
       let st: FISHER.FisherStream;
       try { st = FISHER.fisherOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new FISHER.FisherOut(); st.value(v0);
       if (svXtierNe(v0.outFisher, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outTrigger, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -37628,7 +37746,7 @@ function sv_FISHER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_FLOOR(p: Params): string {
@@ -37646,6 +37764,7 @@ function sv_FLOOR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -37697,7 +37816,7 @@ function sv_FLOOR(p: Params): string {
       let st: FLOOR.FloorStream;
       try { st = FLOOR.floorOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -37786,7 +37905,7 @@ function sv_FLOOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_FOSC(p: Params): string {
@@ -37805,6 +37924,7 @@ function sv_FOSC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -37856,7 +37976,7 @@ function sv_FOSC(p: Params): string {
       let st: FOSC.FoscStream;
       try { st = FOSC.foscOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -37950,7 +38070,7 @@ function sv_FOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_FRACTAL(p: Params): string {
@@ -37971,6 +38091,7 @@ function sv_FRACTAL(p: Params): string {
   const b0 = new Int32Array(svN);
   const b1 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38024,7 +38145,7 @@ function sv_FRACTAL(p: Params): string {
       let st: FRACTAL.FractalStream;
       try { st = FRACTAL.fractalOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { leftBars: optInLeftBars, rightBars: optInRightBars, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new FRACTAL.FractalOut(); st.value(v0);
       if (v0.outSwingHigh !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (v0.outSwingLow !== b1[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -38139,7 +38260,7 @@ function sv_FRACTAL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_FRAMA(p: Params): string {
@@ -38159,6 +38280,7 @@ function sv_FRAMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38212,7 +38334,7 @@ function sv_FRAMA(p: Params): string {
       let st: FRAMA.FramaStream;
       try { st = FRAMA.framaOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -38306,7 +38428,7 @@ function sv_FRAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_GATOR(p: Params): string {
@@ -38332,6 +38454,7 @@ function sv_GATOR(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38389,7 +38512,7 @@ function sv_GATOR(p: Params): string {
       let st: GATOR.GatorStream;
       try { st = GATOR.gatorOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new GATOR.GatorOut(); st.value(v0);
       if (svXtierNe(v0.outUpper, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outLower, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -38504,7 +38627,7 @@ function sv_GATOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HA(p: Params): string {
@@ -38526,6 +38649,7 @@ function sv_HA(p: Params): string {
   const b2 = new Float64Array(svN);
   const b3 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38589,7 +38713,7 @@ function sv_HA(p: Params): string {
       let st: HA.HaStream;
       try { st = HA.haOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new HA.HaOut(); st.value(v0);
       if (svXtierNe(v0.outHaOpen, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outHaHigh, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -38720,7 +38844,7 @@ function sv_HA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HMA(p: Params): string {
@@ -38739,6 +38863,7 @@ function sv_HMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38790,7 +38915,7 @@ function sv_HMA(p: Params): string {
       let st: HMA.HmaStream;
       try { st = HMA.hmaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -38884,7 +39009,7 @@ function sv_HMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_DCPERIOD(p: Params): string {
@@ -38903,6 +39028,7 @@ function sv_HT_DCPERIOD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -38956,7 +39082,7 @@ function sv_HT_DCPERIOD(p: Params): string {
       let st: HT_DCPERIOD.HtDcperiodStream;
       try { st = HT_DCPERIOD.htDcperiodOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -39045,7 +39171,7 @@ function sv_HT_DCPERIOD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_DCPHASE(p: Params): string {
@@ -39064,6 +39190,7 @@ function sv_HT_DCPHASE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39117,7 +39244,7 @@ function sv_HT_DCPHASE(p: Params): string {
       let st: HT_DCPHASE.HtDcphaseStream;
       try { st = HT_DCPHASE.htDcphaseOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -39206,7 +39333,7 @@ function sv_HT_DCPHASE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_PHASOR(p: Params): string {
@@ -39226,6 +39353,7 @@ function sv_HT_PHASOR(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39283,7 +39411,7 @@ function sv_HT_PHASOR(p: Params): string {
       let st: HT_PHASOR.HtPhasorStream;
       try { st = HT_PHASOR.htPhasorOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new HT_PHASOR.HtPhasorOut(); st.value(v0);
       if (svXtierNe(v0.outInPhase, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outQuadrature, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -39390,7 +39518,7 @@ function sv_HT_PHASOR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_SINE(p: Params): string {
@@ -39410,6 +39538,7 @@ function sv_HT_SINE(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39467,7 +39596,7 @@ function sv_HT_SINE(p: Params): string {
       let st: HT_SINE.HtSineStream;
       try { st = HT_SINE.htSineOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new HT_SINE.HtSineOut(); st.value(v0);
       if (svXtierNe(v0.outSine, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outLeadSine, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -39574,7 +39703,7 @@ function sv_HT_SINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_TRENDLINE(p: Params): string {
@@ -39593,6 +39722,7 @@ function sv_HT_TRENDLINE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39646,7 +39776,7 @@ function sv_HT_TRENDLINE(p: Params): string {
       let st: HT_TRENDLINE.HtTrendlineStream;
       try { st = HT_TRENDLINE.htTrendlineOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -39735,7 +39865,7 @@ function sv_HT_TRENDLINE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_HT_TRENDMODE(p: Params): string {
@@ -39754,6 +39884,7 @@ function sv_HT_TRENDMODE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39806,7 +39937,7 @@ function sv_HT_TRENDMODE(p: Params): string {
       let st: HT_TRENDMODE.HtTrendmodeStream;
       try { st = HT_TRENDMODE.htTrendmodeOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -39895,7 +40026,7 @@ function sv_HT_TRENDMODE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_IBS(p: Params): string {
@@ -39913,6 +40044,7 @@ function sv_IBS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -39964,7 +40096,7 @@ function sv_IBS(p: Params): string {
       let st: IBS.IbsStream;
       try { st = IBS.ibsOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -40053,7 +40185,7 @@ function sv_IBS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ICHIMOKU(p: Params): string {
@@ -40077,6 +40209,7 @@ function sv_ICHIMOKU(p: Params): string {
   const b2 = new Float64Array(svN);
   const b3 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -40138,7 +40271,7 @@ function sv_ICHIMOKU(p: Params): string {
       let st: ICHIMOKU.IchimokuStream;
       try { st = ICHIMOKU.ichimokuOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new ICHIMOKU.IchimokuOut(); st.value(v0);
       if (svXtierNe(v0.outTenkanSen, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outKijunSen, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -40279,7 +40412,7 @@ function sv_ICHIMOKU(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_IMI(p: Params): string {
@@ -40298,6 +40431,7 @@ function sv_IMI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -40349,7 +40483,7 @@ function sv_IMI(p: Params): string {
       let st: IMI.ImiStream;
       try { st = IMI.imiOpen({ open: fz_o.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -40443,7 +40577,7 @@ function sv_IMI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KAMA(p: Params): string {
@@ -40463,6 +40597,7 @@ function sv_KAMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -40516,7 +40651,7 @@ function sv_KAMA(p: Params): string {
       let st: KAMA.KamaStream;
       try { st = KAMA.kamaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -40610,7 +40745,7 @@ function sv_KAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KC(p: Params): string {
@@ -40634,6 +40769,7 @@ function sv_KC(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -40694,7 +40830,7 @@ function sv_KC(p: Params): string {
       let st: KC.KcStream;
       try { st = KC.kcOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new KC.KcOut(); st.value(v0);
       if (svXtierNe(v0.outUpperBand, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMiddleBand, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -40822,7 +40958,7 @@ function sv_KC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KDJ(p: Params): string {
@@ -40850,6 +40986,7 @@ function sv_KDJ(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -40910,7 +41047,7 @@ function sv_KDJ(p: Params): string {
       let st: KDJ.KdjStream;
       try { st = KDJ.kdjOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new KDJ.KdjOut(); st.value(v0);
       if (svXtierNe(v0.outK, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outD, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -41038,7 +41175,7 @@ function sv_KDJ(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KST(p: Params): string {
@@ -41066,6 +41203,7 @@ function sv_KST(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -41121,7 +41259,7 @@ function sv_KST(p: Params): string {
       let st: KST.KstStream;
       try { st = KST.kstOpen(fz_c.slice(0, P), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new KST.KstOut(); st.value(v0);
       if (svXtierNe(v0.outKst, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outKstSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -41236,7 +41374,7 @@ function sv_KST(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KSTEXT(p: Params): string {
@@ -41269,6 +41407,7 @@ function sv_KSTEXT(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -41326,7 +41465,7 @@ function sv_KSTEXT(p: Params): string {
       let st: KSTEXT.KstextStream;
       try { st = KSTEXT.kstextOpen(fz_c.slice(0, P), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new KSTEXT.KstextOut(); st.value(v0);
       if (svXtierNe(v0.outKst, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outKstSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -41441,7 +41580,7 @@ function sv_KSTEXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KURTOSIS(p: Params): string {
@@ -41460,6 +41599,7 @@ function sv_KURTOSIS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -41511,7 +41651,7 @@ function sv_KURTOSIS(p: Params): string {
       let st: KURTOSIS.KurtosisStream;
       try { st = KURTOSIS.kurtosisOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -41605,7 +41745,7 @@ function sv_KURTOSIS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_KVO(p: Params): string {
@@ -41628,6 +41768,7 @@ function sv_KVO(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -41685,7 +41826,7 @@ function sv_KVO(p: Params): string {
       let st: KVO.KvoStream;
       try { st = KVO.kvoOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new KVO.KvoOut(); st.value(v0);
       if (svXtierNe(v0.outKvo, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outKvoSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -41800,7 +41941,7 @@ function sv_KVO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LINEARREG(p: Params): string {
@@ -41819,6 +41960,7 @@ function sv_LINEARREG(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -41870,7 +42012,7 @@ function sv_LINEARREG(p: Params): string {
       let st: LINEARREG.LinearregStream;
       try { st = LINEARREG.linearregOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -41964,7 +42106,7 @@ function sv_LINEARREG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LINEARREG_ANGLE(p: Params): string {
@@ -41983,6 +42125,7 @@ function sv_LINEARREG_ANGLE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42034,7 +42177,7 @@ function sv_LINEARREG_ANGLE(p: Params): string {
       let st: LINEARREG_ANGLE.LinearregAngleStream;
       try { st = LINEARREG_ANGLE.linearregAngleOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42128,7 +42271,7 @@ function sv_LINEARREG_ANGLE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LINEARREG_INTERCEPT(p: Params): string {
@@ -42147,6 +42290,7 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42198,7 +42342,7 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
       let st: LINEARREG_INTERCEPT.LinearregInterceptStream;
       try { st = LINEARREG_INTERCEPT.linearregInterceptOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42292,7 +42436,7 @@ function sv_LINEARREG_INTERCEPT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LINEARREG_SLOPE(p: Params): string {
@@ -42311,6 +42455,7 @@ function sv_LINEARREG_SLOPE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42362,7 +42507,7 @@ function sv_LINEARREG_SLOPE(p: Params): string {
       let st: LINEARREG_SLOPE.LinearregSlopeStream;
       try { st = LINEARREG_SLOPE.linearregSlopeOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42456,7 +42601,7 @@ function sv_LINEARREG_SLOPE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LN(p: Params): string {
@@ -42474,6 +42619,7 @@ function sv_LN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42525,7 +42671,7 @@ function sv_LN(p: Params): string {
       let st: LN.LnStream;
       try { st = LN.lnOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42614,7 +42760,7 @@ function sv_LN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_LOG10(p: Params): string {
@@ -42632,6 +42778,7 @@ function sv_LOG10(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42683,7 +42830,7 @@ function sv_LOG10(p: Params): string {
       let st: LOG10.Log10Stream;
       try { st = LOG10.log10Open(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42772,7 +42919,7 @@ function sv_LOG10(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MA(p: Params): string {
@@ -42794,6 +42941,7 @@ function sv_MA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -42847,7 +42995,7 @@ function sv_MA(p: Params): string {
       let st: MA.MaStream;
       try { st = MA.maOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -42941,7 +43089,7 @@ function sv_MA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MACD(p: Params): string {
@@ -42965,6 +43113,7 @@ function sv_MACD(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -43025,7 +43174,7 @@ function sv_MACD(p: Params): string {
       let st: MACD.MacdStream;
       try { st = MACD.macdOpen(fz_c.slice(0, P), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MACD.MacdOut(); st.value(v0);
       if (svXtierNe(v0.outMacd, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMacdSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -43153,7 +43302,7 @@ function sv_MACD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MACDEXT(p: Params): string {
@@ -43183,6 +43332,7 @@ function sv_MACDEXT(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -43243,7 +43393,7 @@ function sv_MACDEXT(p: Params): string {
       let st: MACDEXT.MacdextStream;
       try { st = MACDEXT.macdextOpen(fz_c.slice(0, P), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MACDEXT.MacdextOut(); st.value(v0);
       if (svXtierNe(v0.outMacd, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMacdSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -43371,7 +43521,7 @@ function sv_MACDEXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MACDFIX(p: Params): string {
@@ -43393,6 +43543,7 @@ function sv_MACDFIX(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -43453,7 +43604,7 @@ function sv_MACDFIX(p: Params): string {
       let st: MACDFIX.MacdfixStream;
       try { st = MACDFIX.macdfixOpen(fz_c.slice(0, P), { signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MACDFIX.MacdfixOut(); st.value(v0);
       if (svXtierNe(v0.outMacd, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMacdSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -43581,7 +43732,7 @@ function sv_MACDFIX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MACDV(p: Params): string {
@@ -43605,6 +43756,7 @@ function sv_MACDV(p: Params): string {
   const b1 = new Float64Array(svN);
   const b2 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -43665,7 +43817,7 @@ function sv_MACDV(p: Params): string {
       let st: MACDV.MacdvStream;
       try { st = MACDV.macdvOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MACDV.MacdvOut(); st.value(v0);
       if (svXtierNe(v0.outMacdv, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMacdvSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -43793,7 +43945,7 @@ function sv_MACDV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MAMA(p: Params): string {
@@ -43815,6 +43967,7 @@ function sv_MAMA(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -43872,7 +44025,7 @@ function sv_MAMA(p: Params): string {
       let st: MAMA.MamaStream;
       try { st = MAMA.mamaOpen(fz_c.slice(0, P), { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MAMA.MamaOut(); st.value(v0);
       if (svXtierNe(v0.outMama, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outFama, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -43979,7 +44132,7 @@ function sv_MAMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MARKETFI(p: Params): string {
@@ -43997,6 +44150,7 @@ function sv_MARKETFI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44048,7 +44202,7 @@ function sv_MARKETFI(p: Params): string {
       let st: MARKETFI.MarketfiStream;
       try { st = MARKETFI.marketfiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44137,7 +44291,7 @@ function sv_MARKETFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MASSI(p: Params): string {
@@ -44158,6 +44312,7 @@ function sv_MASSI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44211,7 +44366,7 @@ function sv_MASSI(p: Params): string {
       let st: MASSI.MassiStream;
       try { st = MASSI.massiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44305,7 +44460,7 @@ function sv_MASSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MAVP(p: Params): string {
@@ -44329,6 +44484,7 @@ function sv_MAVP(p: Params): string {
   for (let _pi = 0; _pi < svN; _pi++) { fz_v[_pi] = optInMinPeriod + (_pi % (optInMaxPeriod - optInMinPeriod + 3)) - 1; }
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44382,7 +44538,7 @@ function sv_MAVP(p: Params): string {
       let st: MAVP.MavpStream;
       try { st = MAVP.mavpOpen(fz_c.slice(0, P), fz_v.slice(0, P), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44476,7 +44632,7 @@ function sv_MAVP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MAX(p: Params): string {
@@ -44495,6 +44651,7 @@ function sv_MAX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44546,7 +44703,7 @@ function sv_MAX(p: Params): string {
       let st: MAX.MaxStream;
       try { st = MAX.maxOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44640,7 +44797,7 @@ function sv_MAX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MAXINDEX(p: Params): string {
@@ -44659,6 +44816,7 @@ function sv_MAXINDEX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44709,7 +44867,7 @@ function sv_MAXINDEX(p: Params): string {
       let st: MAXINDEX.MaxindexStream;
       try { st = MAXINDEX.maxindexOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44803,7 +44961,7 @@ function sv_MAXINDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MCGD(p: Params): string {
@@ -44823,6 +44981,7 @@ function sv_MCGD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -44876,7 +45035,7 @@ function sv_MCGD(p: Params): string {
       let st: MCGD.McgdStream;
       try { st = MCGD.mcgdOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -44970,7 +45129,7 @@ function sv_MCGD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MEDIAN(p: Params): string {
@@ -44989,6 +45148,7 @@ function sv_MEDIAN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45040,7 +45200,7 @@ function sv_MEDIAN(p: Params): string {
       let st: MEDIAN.MedianStream;
       try { st = MEDIAN.medianOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45134,7 +45294,7 @@ function sv_MEDIAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MEDPRICE(p: Params): string {
@@ -45152,6 +45312,7 @@ function sv_MEDPRICE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45203,7 +45364,7 @@ function sv_MEDPRICE(p: Params): string {
       let st: MEDPRICE.MedpriceStream;
       try { st = MEDPRICE.medpriceOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45292,7 +45453,7 @@ function sv_MEDPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MFI(p: Params): string {
@@ -45311,6 +45472,7 @@ function sv_MFI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45362,7 +45524,7 @@ function sv_MFI(p: Params): string {
       let st: MFI.MfiStream;
       try { st = MFI.mfiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45456,7 +45618,7 @@ function sv_MFI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MIDPOINT(p: Params): string {
@@ -45475,6 +45637,7 @@ function sv_MIDPOINT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45526,7 +45689,7 @@ function sv_MIDPOINT(p: Params): string {
       let st: MIDPOINT.MidpointStream;
       try { st = MIDPOINT.midpointOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45620,7 +45783,7 @@ function sv_MIDPOINT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MIDPRICE(p: Params): string {
@@ -45639,6 +45802,7 @@ function sv_MIDPRICE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45690,7 +45854,7 @@ function sv_MIDPRICE(p: Params): string {
       let st: MIDPRICE.MidpriceStream;
       try { st = MIDPRICE.midpriceOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45784,7 +45948,7 @@ function sv_MIDPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MIN(p: Params): string {
@@ -45803,6 +45967,7 @@ function sv_MIN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -45854,7 +46019,7 @@ function sv_MIN(p: Params): string {
       let st: MIN.MinStream;
       try { st = MIN.minOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -45948,7 +46113,7 @@ function sv_MIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MININDEX(p: Params): string {
@@ -45967,6 +46132,7 @@ function sv_MININDEX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46017,7 +46183,7 @@ function sv_MININDEX(p: Params): string {
       let st: MININDEX.MinindexStream;
       try { st = MININDEX.minindexOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (st.value() !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -46111,7 +46277,7 @@ function sv_MININDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MINMAX(p: Params): string {
@@ -46131,6 +46297,7 @@ function sv_MINMAX(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46186,7 +46353,7 @@ function sv_MINMAX(p: Params): string {
       let st: MINMAX.MinmaxStream;
       try { st = MINMAX.minmaxOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MINMAX.MinmaxOut(); st.value(v0);
       if (svXtierNe(v0.outMin, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMax, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -46301,7 +46468,7 @@ function sv_MINMAX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MINMAXINDEX(p: Params): string {
@@ -46321,6 +46488,7 @@ function sv_MINMAXINDEX(p: Params): string {
   const b0 = new Int32Array(svN);
   const b1 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46374,7 +46542,7 @@ function sv_MINMAXINDEX(p: Params): string {
       let st: MINMAXINDEX.MinmaxindexStream;
       try { st = MINMAXINDEX.minmaxindexOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new MINMAXINDEX.MinmaxindexOut(); st.value(v0);
       if (v0.outMinIdx !== b0[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (v0.outMaxIdx !== b1[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -46489,7 +46657,7 @@ function sv_MINMAXINDEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MINUS_DI(p: Params): string {
@@ -46509,6 +46677,7 @@ function sv_MINUS_DI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46562,7 +46731,7 @@ function sv_MINUS_DI(p: Params): string {
       let st: MINUS_DI.MinusDiStream;
       try { st = MINUS_DI.minusDiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -46656,7 +46825,7 @@ function sv_MINUS_DI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MINUS_DM(p: Params): string {
@@ -46676,6 +46845,7 @@ function sv_MINUS_DM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46729,7 +46899,7 @@ function sv_MINUS_DM(p: Params): string {
       let st: MINUS_DM.MinusDmStream;
       try { st = MINUS_DM.minusDmOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -46823,7 +46993,7 @@ function sv_MINUS_DM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MOM(p: Params): string {
@@ -46842,6 +47012,7 @@ function sv_MOM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -46893,7 +47064,7 @@ function sv_MOM(p: Params): string {
       let st: MOM.MomStream;
       try { st = MOM.momOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -46987,7 +47158,7 @@ function sv_MOM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_MULT(p: Params): string {
@@ -47005,6 +47176,7 @@ function sv_MULT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47056,7 +47228,7 @@ function sv_MULT(p: Params): string {
       let st: MULT.MultStream;
       try { st = MULT.multOpen(fz_c.slice(0, P), fz_v.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47145,7 +47317,7 @@ function sv_MULT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_NATR(p: Params): string {
@@ -47165,6 +47337,7 @@ function sv_NATR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47218,7 +47391,7 @@ function sv_NATR(p: Params): string {
       let st: NATR.NatrStream;
       try { st = NATR.natrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47312,7 +47485,7 @@ function sv_NATR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_NVI(p: Params): string {
@@ -47330,6 +47503,7 @@ function sv_NVI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47381,7 +47555,7 @@ function sv_NVI(p: Params): string {
       let st: NVI.NviStream;
       try { st = NVI.nviOpen({ close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47470,7 +47644,7 @@ function sv_NVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_OBV(p: Params): string {
@@ -47488,6 +47662,7 @@ function sv_OBV(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47539,7 +47714,7 @@ function sv_OBV(p: Params): string {
       let st: OBV.ObvStream;
       try { st = OBV.obvOpen(fz_c.slice(0, P), { volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47628,7 +47803,7 @@ function sv_OBV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PERCENTB(p: Params): string {
@@ -47652,6 +47827,7 @@ function sv_PERCENTB(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47705,7 +47881,7 @@ function sv_PERCENTB(p: Params): string {
       let st: PERCENTB.PercentbStream;
       try { st = PERCENTB.percentbOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47799,7 +47975,7 @@ function sv_PERCENTB(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PERCENTILE(p: Params): string {
@@ -47819,6 +47995,7 @@ function sv_PERCENTILE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -47870,7 +48047,7 @@ function sv_PERCENTILE(p: Params): string {
       let st: PERCENTILE.PercentileStream;
       try { st = PERCENTILE.percentileOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, percentile: optInPercentile, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -47964,7 +48141,7 @@ function sv_PERCENTILE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PERCENTRANK(p: Params): string {
@@ -47983,6 +48160,7 @@ function sv_PERCENTRANK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48034,7 +48212,7 @@ function sv_PERCENTRANK(p: Params): string {
       let st: PERCENTRANK.PercentrankStream;
       try { st = PERCENTRANK.percentrankOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48128,7 +48306,7 @@ function sv_PERCENTRANK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PLUS_DI(p: Params): string {
@@ -48148,6 +48326,7 @@ function sv_PLUS_DI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48201,7 +48380,7 @@ function sv_PLUS_DI(p: Params): string {
       let st: PLUS_DI.PlusDiStream;
       try { st = PLUS_DI.plusDiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48295,7 +48474,7 @@ function sv_PLUS_DI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PLUS_DM(p: Params): string {
@@ -48315,6 +48494,7 @@ function sv_PLUS_DM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48368,7 +48548,7 @@ function sv_PLUS_DM(p: Params): string {
       let st: PLUS_DM.PlusDmStream;
       try { st = PLUS_DM.plusDmOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48462,7 +48642,7 @@ function sv_PLUS_DM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PPO(p: Params): string {
@@ -48485,6 +48665,7 @@ function sv_PPO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48538,7 +48719,7 @@ function sv_PPO(p: Params): string {
       let st: PPO.PpoStream;
       try { st = PPO.ppoOpen(fz_c.slice(0, P), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48632,7 +48813,7 @@ function sv_PPO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PSO(p: Params): string {
@@ -48653,6 +48834,7 @@ function sv_PSO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48706,7 +48888,7 @@ function sv_PSO(p: Params): string {
       let st: PSO.PsoStream;
       try { st = PSO.psoOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48800,7 +48982,7 @@ function sv_PSO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PVI(p: Params): string {
@@ -48818,6 +49000,7 @@ function sv_PVI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -48869,7 +49052,7 @@ function sv_PVI(p: Params): string {
       let st: PVI.PviStream;
       try { st = PVI.pviOpen({ close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -48958,7 +49141,7 @@ function sv_PVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PVO(p: Params): string {
@@ -48981,6 +49164,7 @@ function sv_PVO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49034,7 +49218,7 @@ function sv_PVO(p: Params): string {
       let st: PVO.PvoStream;
       try { st = PVO.pvoOpen({ volume: fz_v.slice(0, P) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49128,7 +49312,7 @@ function sv_PVO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_PVT(p: Params): string {
@@ -49146,6 +49330,7 @@ function sv_PVT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49197,7 +49382,7 @@ function sv_PVT(p: Params): string {
       let st: PVT.PvtStream;
       try { st = PVT.pvtOpen({ close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49286,7 +49471,7 @@ function sv_PVT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_QSTICK(p: Params): string {
@@ -49305,6 +49490,7 @@ function sv_QSTICK(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49356,7 +49542,7 @@ function sv_QSTICK(p: Params): string {
       let st: QSTICK.QstickStream;
       try { st = QSTICK.qstickOpen({ open: fz_o.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49450,7 +49636,7 @@ function sv_QSTICK(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_RMA(p: Params): string {
@@ -49470,6 +49656,7 @@ function sv_RMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49523,7 +49710,7 @@ function sv_RMA(p: Params): string {
       let st: RMA.RmaStream;
       try { st = RMA.rmaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49617,7 +49804,7 @@ function sv_RMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ROC(p: Params): string {
@@ -49636,6 +49823,7 @@ function sv_ROC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49687,7 +49875,7 @@ function sv_ROC(p: Params): string {
       let st: ROC.RocStream;
       try { st = ROC.rocOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49781,7 +49969,7 @@ function sv_ROC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ROCP(p: Params): string {
@@ -49800,6 +49988,7 @@ function sv_ROCP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -49851,7 +50040,7 @@ function sv_ROCP(p: Params): string {
       let st: ROCP.RocpStream;
       try { st = ROCP.rocpOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -49945,7 +50134,7 @@ function sv_ROCP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ROCR(p: Params): string {
@@ -49964,6 +50153,7 @@ function sv_ROCR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50015,7 +50205,7 @@ function sv_ROCR(p: Params): string {
       let st: ROCR.RocrStream;
       try { st = ROCR.rocrOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50109,7 +50299,7 @@ function sv_ROCR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ROCR100(p: Params): string {
@@ -50128,6 +50318,7 @@ function sv_ROCR100(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50179,7 +50370,7 @@ function sv_ROCR100(p: Params): string {
       let st: ROCR100.Rocr100Stream;
       try { st = ROCR100.rocr100Open(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50273,7 +50464,7 @@ function sv_ROCR100(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ROGERSSATCHELL(p: Params): string {
@@ -50293,6 +50484,7 @@ function sv_ROGERSSATCHELL(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50344,7 +50536,7 @@ function sv_ROGERSSATCHELL(p: Params): string {
       let st: ROGERSSATCHELL.RogerssatchellStream;
       try { st = ROGERSSATCHELL.rogerssatchellOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50438,7 +50630,7 @@ function sv_ROGERSSATCHELL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_RSI(p: Params): string {
@@ -50458,6 +50650,7 @@ function sv_RSI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50511,7 +50704,7 @@ function sv_RSI(p: Params): string {
       let st: RSI.RsiStream;
       try { st = RSI.rsiOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50605,7 +50798,7 @@ function sv_RSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_RVI(p: Params): string {
@@ -50626,6 +50819,7 @@ function sv_RVI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50679,7 +50873,7 @@ function sv_RVI(p: Params): string {
       let st: RVI.RviStream;
       try { st = RVI.rviOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50773,7 +50967,7 @@ function sv_RVI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_RVIR(p: Params): string {
@@ -50794,6 +50988,7 @@ function sv_RVIR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -50847,7 +51042,7 @@ function sv_RVIR(p: Params): string {
       let st: RVIR.RvirStream;
       try { st = RVIR.rvirOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -50941,7 +51136,7 @@ function sv_RVIR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_RVOL(p: Params): string {
@@ -50960,6 +51155,7 @@ function sv_RVOL(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51011,7 +51207,7 @@ function sv_RVOL(p: Params): string {
       let st: RVOL.RvolStream;
       try { st = RVOL.rvolOpen({ volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51105,7 +51301,7 @@ function sv_RVOL(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SAR(p: Params): string {
@@ -51125,6 +51321,7 @@ function sv_SAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51176,7 +51373,7 @@ function sv_SAR(p: Params): string {
       let st: SAR.SarStream;
       try { st = SAR.sarOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { acceleration: optInAcceleration, maximum: optInMaximum, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51265,7 +51462,7 @@ function sv_SAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SAREXT(p: Params): string {
@@ -51291,6 +51488,7 @@ function sv_SAREXT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51342,7 +51540,7 @@ function sv_SAREXT(p: Params): string {
       let st: SAREXT.SarextStream;
       try { st = SAREXT.sarextOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51431,7 +51629,7 @@ function sv_SAREXT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SHARPE(p: Params): string {
@@ -51452,6 +51650,7 @@ function sv_SHARPE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51503,7 +51702,7 @@ function sv_SHARPE(p: Params): string {
       let st: SHARPE.SharpeStream;
       try { st = SHARPE.sharpeOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51597,7 +51796,7 @@ function sv_SHARPE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SI(p: Params): string {
@@ -51616,6 +51815,7 @@ function sv_SI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51667,7 +51867,7 @@ function sv_SI(p: Params): string {
       let st: SI.SiStream;
       try { st = SI.siOpen({ open: fz_o.slice(0, P), high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { limitMove: optInLimitMove, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51756,7 +51956,7 @@ function sv_SI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SIN(p: Params): string {
@@ -51774,6 +51974,7 @@ function sv_SIN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51825,7 +52026,7 @@ function sv_SIN(p: Params): string {
       let st: SIN.SinStream;
       try { st = SIN.sinOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -51914,7 +52115,7 @@ function sv_SIN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SINH(p: Params): string {
@@ -51932,6 +52133,7 @@ function sv_SINH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -51983,7 +52185,7 @@ function sv_SINH(p: Params): string {
       let st: SINH.SinhStream;
       try { st = SINH.sinhOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -52072,7 +52274,7 @@ function sv_SINH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SKEW(p: Params): string {
@@ -52091,6 +52293,7 @@ function sv_SKEW(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52142,7 +52345,7 @@ function sv_SKEW(p: Params): string {
       let st: SKEW.SkewStream;
       try { st = SKEW.skewOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -52236,7 +52439,7 @@ function sv_SKEW(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SMA(p: Params): string {
@@ -52255,6 +52458,7 @@ function sv_SMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52306,7 +52510,7 @@ function sv_SMA(p: Params): string {
       let st: SMA.SmaStream;
       try { st = SMA.smaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -52400,7 +52604,7 @@ function sv_SMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SMI(p: Params): string {
@@ -52424,6 +52628,7 @@ function sv_SMI(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52481,7 +52686,7 @@ function sv_SMI(p: Params): string {
       let st: SMI.SmiStream;
       try { st = SMI.smiOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new SMI.SmiOut(); st.value(v0);
       if (svXtierNe(v0.outSmi, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outSmiSignal, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -52596,7 +52801,7 @@ function sv_SMI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SORTINO(p: Params): string {
@@ -52617,6 +52822,7 @@ function sv_SORTINO(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52668,7 +52874,7 @@ function sv_SORTINO(p: Params): string {
       let st: SORTINO.SortinoStream;
       try { st = SORTINO.sortinoOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -52762,7 +52968,7 @@ function sv_SORTINO(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SQRT(p: Params): string {
@@ -52780,6 +52986,7 @@ function sv_SQRT(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52831,7 +53038,7 @@ function sv_SQRT(p: Params): string {
       let st: SQRT.SqrtStream;
       try { st = SQRT.sqrtOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -52920,7 +53127,7 @@ function sv_SQRT(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SQZMOM(p: Params): string {
@@ -52945,6 +53152,7 @@ function sv_SQZMOM(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -52999,7 +53207,7 @@ function sv_SQZMOM(p: Params): string {
       let st: SQZMOM.SqzmomStream;
       try { st = SQZMOM.sqzmomOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new SQZMOM.SqzmomOut(); st.value(v0);
       if (svXtierNe(v0.outMomentum, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (v0.outSqueeze !== b1[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -53114,7 +53322,7 @@ function sv_SQZMOM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_STC(p: Params): string {
@@ -53136,6 +53344,7 @@ function sv_STC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -53189,7 +53398,7 @@ function sv_STC(p: Params): string {
       let st: STC.StcStream;
       try { st = STC.stcOpen(fz_c.slice(0, P), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -53283,7 +53492,7 @@ function sv_STC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_STDDEV(p: Params): string {
@@ -53303,6 +53512,7 @@ function sv_STDDEV(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -53354,7 +53564,7 @@ function sv_STDDEV(p: Params): string {
       let st: STDDEV.StddevStream;
       try { st = STDDEV.stddevOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, nbDev: optInNbDev, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -53448,7 +53658,7 @@ function sv_STDDEV(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_STOCH(p: Params): string {
@@ -53475,6 +53685,7 @@ function sv_STOCH(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -53532,7 +53743,7 @@ function sv_STOCH(p: Params): string {
       let st: STOCH.StochStream;
       try { st = STOCH.stochOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new STOCH.StochOut(); st.value(v0);
       if (svXtierNe(v0.outSlowK, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outSlowD, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -53647,7 +53858,7 @@ function sv_STOCH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_STOCHF(p: Params): string {
@@ -53671,6 +53882,7 @@ function sv_STOCHF(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -53728,7 +53940,7 @@ function sv_STOCHF(p: Params): string {
       let st: STOCHF.StochfStream;
       try { st = STOCHF.stochfOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new STOCHF.StochfOut(); st.value(v0);
       if (svXtierNe(v0.outFastK, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outFastD, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -53843,7 +54055,7 @@ function sv_STOCHF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_STOCHRSI(p: Params): string {
@@ -53868,6 +54080,7 @@ function sv_STOCHRSI(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -53925,7 +54138,7 @@ function sv_STOCHRSI(p: Params): string {
       let st: STOCHRSI.StochrsiStream;
       try { st = STOCHRSI.stochrsiOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new STOCHRSI.StochrsiOut(); st.value(v0);
       if (svXtierNe(v0.outFastK, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outFastD, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -54040,7 +54253,7 @@ function sv_STOCHRSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SUB(p: Params): string {
@@ -54058,6 +54271,7 @@ function sv_SUB(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54109,7 +54323,7 @@ function sv_SUB(p: Params): string {
       let st: SUB.SubStream;
       try { st = SUB.subOpen(fz_c.slice(0, P), fz_v.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -54198,7 +54412,7 @@ function sv_SUB(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SUM(p: Params): string {
@@ -54217,6 +54431,7 @@ function sv_SUM(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54268,7 +54483,7 @@ function sv_SUM(p: Params): string {
       let st: SUM.SumStream;
       try { st = SUM.sumOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -54362,7 +54577,7 @@ function sv_SUM(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SUPERTREND(p: Params): string {
@@ -54384,6 +54599,7 @@ function sv_SUPERTREND(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54440,7 +54656,7 @@ function sv_SUPERTREND(p: Params): string {
       let st: SUPERTREND.SupertrendStream;
       try { st = SUPERTREND.supertrendOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new SUPERTREND.SupertrendOut(); st.value(v0);
       if (svXtierNe(v0.outSupertrend, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (v0.outTrend !== b1[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -54555,7 +54771,7 @@ function sv_SUPERTREND(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SWAK_2PHP(p: Params): string {
@@ -54575,6 +54791,7 @@ function sv_SWAK_2PHP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54628,7 +54845,7 @@ function sv_SWAK_2PHP(p: Params): string {
       let st: SWAK_2PHP.Swak2phpStream;
       try { st = SWAK_2PHP.swak2phpOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -54722,7 +54939,7 @@ function sv_SWAK_2PHP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SWAK_BP(p: Params): string {
@@ -54743,6 +54960,7 @@ function sv_SWAK_BP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54796,7 +55014,7 @@ function sv_SWAK_BP(p: Params): string {
       let st: SWAK_BP.SwakBpStream;
       try { st = SWAK_BP.swakBpOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, delta: optInDelta, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -54890,7 +55108,7 @@ function sv_SWAK_BP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SWAK_BUTTER(p: Params): string {
@@ -54910,6 +55128,7 @@ function sv_SWAK_BUTTER(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -54963,7 +55182,7 @@ function sv_SWAK_BUTTER(p: Params): string {
       let st: SWAK_BUTTER.SwakButterStream;
       try { st = SWAK_BUTTER.swakButterOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55057,7 +55276,7 @@ function sv_SWAK_BUTTER(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SWAK_GAUSS(p: Params): string {
@@ -55077,6 +55296,7 @@ function sv_SWAK_GAUSS(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55130,7 +55350,7 @@ function sv_SWAK_GAUSS(p: Params): string {
       let st: SWAK_GAUSS.SwakGaussStream;
       try { st = SWAK_GAUSS.swakGaussOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55224,7 +55444,7 @@ function sv_SWAK_GAUSS(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_SWAK_HP(p: Params): string {
@@ -55244,6 +55464,7 @@ function sv_SWAK_HP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55297,7 +55518,7 @@ function sv_SWAK_HP(p: Params): string {
       let st: SWAK_HP.SwakHpStream;
       try { st = SWAK_HP.swakHpOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55391,7 +55612,7 @@ function sv_SWAK_HP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_T3(p: Params): string {
@@ -55412,6 +55633,7 @@ function sv_T3(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55465,7 +55687,7 @@ function sv_T3(p: Params): string {
       let st: T3.T3Stream;
       try { st = T3.t3Open(fz_c.slice(0, P), { timePeriod: optInTimePeriod, vFactor: optInVFactor, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55559,7 +55781,7 @@ function sv_T3(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TAN(p: Params): string {
@@ -55577,6 +55799,7 @@ function sv_TAN(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55628,7 +55851,7 @@ function sv_TAN(p: Params): string {
       let st: TAN.TanStream;
       try { st = TAN.tanOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55717,7 +55940,7 @@ function sv_TAN(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TANH(p: Params): string {
@@ -55735,6 +55958,7 @@ function sv_TANH(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55786,7 +56010,7 @@ function sv_TANH(p: Params): string {
       let st: TANH.TanhStream;
       try { st = TANH.tanhOpen(fz_c.slice(0, P), { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -55875,7 +56099,7 @@ function sv_TANH(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TEMA(p: Params): string {
@@ -55895,6 +56119,7 @@ function sv_TEMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -55948,7 +56173,7 @@ function sv_TEMA(p: Params): string {
       let st: TEMA.TemaStream;
       try { st = TEMA.temaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56042,7 +56267,7 @@ function sv_TEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TRANGE(p: Params): string {
@@ -56060,6 +56285,7 @@ function sv_TRANGE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56111,7 +56337,7 @@ function sv_TRANGE(p: Params): string {
       let st: TRANGE.TrangeStream;
       try { st = TRANGE.trangeOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56200,7 +56426,7 @@ function sv_TRANGE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TRIMA(p: Params): string {
@@ -56219,6 +56445,7 @@ function sv_TRIMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56270,7 +56497,7 @@ function sv_TRIMA(p: Params): string {
       let st: TRIMA.TrimaStream;
       try { st = TRIMA.trimaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56364,7 +56591,7 @@ function sv_TRIMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TRIX(p: Params): string {
@@ -56384,6 +56611,7 @@ function sv_TRIX(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56437,7 +56665,7 @@ function sv_TRIX(p: Params): string {
       let st: TRIX.TrixStream;
       try { st = TRIX.trixOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56531,7 +56759,7 @@ function sv_TRIX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TSF(p: Params): string {
@@ -56550,6 +56778,7 @@ function sv_TSF(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56601,7 +56830,7 @@ function sv_TSF(p: Params): string {
       let st: TSF.TsfStream;
       try { st = TSF.tsfOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56695,7 +56924,7 @@ function sv_TSF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TSI(p: Params): string {
@@ -56716,6 +56945,7 @@ function sv_TSI(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56769,7 +56999,7 @@ function sv_TSI(p: Params): string {
       let st: TSI.TsiStream;
       try { st = TSI.tsiOpen(fz_c.slice(0, P), { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -56863,7 +57093,7 @@ function sv_TSI(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_TYPPRICE(p: Params): string {
@@ -56881,6 +57111,7 @@ function sv_TYPPRICE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -56932,7 +57163,7 @@ function sv_TYPPRICE(p: Params): string {
       let st: TYPPRICE.TyppriceStream;
       try { st = TYPPRICE.typpriceOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -57021,7 +57252,7 @@ function sv_TYPPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ULTOSC(p: Params): string {
@@ -57042,6 +57273,7 @@ function sv_ULTOSC(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57093,7 +57325,7 @@ function sv_ULTOSC(p: Params): string {
       let st: ULTOSC.UltoscStream;
       try { st = ULTOSC.ultoscOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -57187,7 +57419,7 @@ function sv_ULTOSC(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VAR(p: Params): string {
@@ -57207,6 +57439,7 @@ function sv_VAR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57258,7 +57491,7 @@ function sv_VAR(p: Params): string {
       let st: VAR.VarStream;
       try { st = VAR.varOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, nbDev: optInNbDev, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -57352,7 +57585,7 @@ function sv_VAR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VHF(p: Params): string {
@@ -57371,6 +57604,7 @@ function sv_VHF(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57422,7 +57656,7 @@ function sv_VHF(p: Params): string {
       let st: VHF.VhfStream;
       try { st = VHF.vhfOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -57516,7 +57750,7 @@ function sv_VHF(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VIDYA(p: Params): string {
@@ -57537,6 +57771,7 @@ function sv_VIDYA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57590,7 +57825,7 @@ function sv_VIDYA(p: Params): string {
       let st: VIDYA.VidyaStream;
       try { st = VIDYA.vidyaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -57684,7 +57919,7 @@ function sv_VIDYA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VORTEX(p: Params): string {
@@ -57704,6 +57939,7 @@ function sv_VORTEX(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57759,7 +57995,7 @@ function sv_VORTEX(p: Params): string {
       let st: VORTEX.VortexStream;
       try { st = VORTEX.vortexOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new VORTEX.VortexOut(); st.value(v0);
       if (svXtierNe(v0.outPlusVi, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outMinusVi, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -57874,7 +58110,7 @@ function sv_VORTEX(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VWAP(p: Params): string {
@@ -57892,6 +58128,7 @@ function sv_VWAP(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -57943,7 +58180,7 @@ function sv_VWAP(p: Params): string {
       let st: VWAP.VwapStream;
       try { st = VWAP.vwapOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P), volume: fz_v.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -58032,7 +58269,7 @@ function sv_VWAP(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_VWMA(p: Params): string {
@@ -58051,6 +58288,7 @@ function sv_VWMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58102,7 +58340,7 @@ function sv_VWMA(p: Params): string {
       let st: VWMA.VwmaStream;
       try { st = VWMA.vwmaOpen(fz_c.slice(0, P), { volume: fz_v.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -58196,7 +58434,7 @@ function sv_VWMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_WAD(p: Params): string {
@@ -58214,6 +58452,7 @@ function sv_WAD(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58265,7 +58504,7 @@ function sv_WAD(p: Params): string {
       let st: WAD.WadStream;
       try { st = WAD.wadOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -58354,7 +58593,7 @@ function sv_WAD(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_WAVETREND(p: Params): string {
@@ -58377,6 +58616,7 @@ function sv_WAVETREND(p: Params): string {
   const b0 = new Float64Array(svN);
   const b1 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58434,7 +58674,7 @@ function sv_WAVETREND(p: Params): string {
       let st: WAVETREND.WavetrendStream;
       try { st = WAVETREND.wavetrendOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new WAVETREND.WavetrendOut(); st.value(v0);
       if (svXtierNe(v0.outWt1, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (svXtierNe(v0.outWt2, b1[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -58549,7 +58789,7 @@ function sv_WAVETREND(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_WCLPRICE(p: Params): string {
@@ -58567,6 +58807,7 @@ function sv_WCLPRICE(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58618,7 +58859,7 @@ function sv_WCLPRICE(p: Params): string {
       let st: WCLPRICE.WclpriceStream;
       try { st = WCLPRICE.wclpriceOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -58707,7 +58948,7 @@ function sv_WCLPRICE(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_WILLR(p: Params): string {
@@ -58726,6 +58967,7 @@ function sv_WILLR(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58777,7 +59019,7 @@ function sv_WILLR(p: Params): string {
       let st: WILLR.WillrStream;
       try { st = WILLR.willrOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P), close: fz_c.slice(0, P) }, { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -58871,7 +59113,7 @@ function sv_WILLR(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_WMA(p: Params): string {
@@ -58890,6 +59132,7 @@ function sv_WMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -58941,7 +59184,7 @@ function sv_WMA(p: Params): string {
       let st: WMA.WmaStream;
       try { st = WMA.wmaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -59035,7 +59278,7 @@ function sv_WMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ZIGZAG(p: Params): string {
@@ -59057,6 +59300,7 @@ function sv_ZIGZAG(p: Params): string {
   const b1 = new Int32Array(svN);
   const b2 = new Int32Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -59114,7 +59358,7 @@ function sv_ZIGZAG(p: Params): string {
       let st: ZIGZAG.ZigzagStream;
       try { st = ZIGZAG.zigzagOpen({ high: fz_h.slice(0, P), low: fz_l.slice(0, P) }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       const v0 = new ZIGZAG.ZigzagOut(); st.value(v0);
       if (svXtierNe(v0.outZigZag, b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       if (v0.outTrend !== b1[P - 1 - beg.value]) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":1,"where":"open"`; }
@@ -59242,7 +59486,7 @@ function sv_ZIGZAG(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function sv_ZLEMA(p: Params): string {
@@ -59262,6 +59506,7 @@ function sv_ZLEMA(p: Params): string {
   fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
   const b0 = new Float64Array(svN);
   let legs = 0;
+  let roundMask = 0;
   let allOk = true;
   let peekAll = true;
   let peekReps = 0;
@@ -59315,7 +59560,7 @@ function sv_ZLEMA(p: Params): string {
       let st: ZLEMA.ZlemaStream;
       try { st = ZLEMA.zlemaOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, core: c2 }); }
       catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
-      legs++;
+      legs++; roundMask |= 1 << rd;
       if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
       for (let t = P; t < svN; t++) {
         let pkTook = true;
@@ -59409,7 +59654,7 @@ function sv_ZLEMA(p: Params): string {
       }
     }
   }
-  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]},"round_mask":${roundMask}${diag}}`;
 }
 
 function handleStreamVerify(p: Params): string {

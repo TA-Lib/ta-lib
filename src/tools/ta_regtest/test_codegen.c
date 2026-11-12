@@ -3543,6 +3543,8 @@ static int stream_flag(const char *resp, const char *key)
     return atoi(p + strlen(key));
 }
 
+#define STREAM_CANDLE_ROUNDS_MASK 0x1F
+
 static void stream_build_request(char *buf, const TA_FuncInfo *fi,
                                  const double *optVals,
                                  int shape, int seed, int n,
@@ -3554,7 +3556,9 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
         "\"unstablePeriod\":%d",
         fi->name, shape, seed, n, unstablePeriod);
     /* Candle functions: ask the server for the settings-variation rounds
-     * (avgPeriods bumped, then zeroed) on top of the default-settings legs. */
+     * (avgPeriods bumped, then zeroed; every range type Shadows; every range
+     * type the one that is neither its default nor Shadows) on top of the
+     * default-settings legs. */
     if( fi->flags & TA_FUNC_FLG_CANDLESTICK )
         pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"candleLegs\":1");
     unsigned int i;
@@ -3959,6 +3963,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
     int rangeSites = 0;    /* OR of the range-compare sites that fired */
     int rangeSitesAll = 0; /* the set the server says it has */
+    int roundMask = 0;     /* OR of the candle rounds that compared a leg */
     int cloneChecked = 0;  /* this function ran the fork leg */
     int valueChecked = 0;  /* this function probed its Value accessor */
     int valueLegs = 0;
@@ -4302,6 +4307,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 int l = stream_flag(ctx->responseBuf, "\"legs\":");
                 if( l > 0 ) legs += l;
                 if( l > 0 && v >= firstRangeMin ) rangeMinLegs += l;
+                {
+                    int rm = stream_flag(ctx->responseBuf, "\"round_mask\":");
+                    if( rm > 0 ) roundMask |= rm;
+                }
                 if( stream_flag(ctx->responseBuf, "\"unsupportedArm\":") == 1 )
                     rejArms++;
                 /* Cross-tier +0.0/-0.0 pairs the server chose not to fail on
@@ -4326,6 +4335,14 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         printf("STREAM VACUOUS [TA_%s]: 0 verified legs (%d expected-reject "
                "probes)\n", funcInfo->name, rejArms);
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+        return;
+    }
+    if( (funcInfo->flags & TA_FUNC_FLG_CANDLESTICK) && roundMask != STREAM_CANDLE_ROUNDS_MASK )
+    {
+        printf("STREAM CANDLE ROUND VACUOUS [TA_%s]: rounds that compared a leg = 0x%x, "
+               "expected 0x%x\n", funcInfo->name, roundMask, STREAM_CANDLE_ROUNDS_MASK);
         ctx->failed++;
         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
         return;

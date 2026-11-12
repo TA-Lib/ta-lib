@@ -244,7 +244,7 @@ fn emit_csharp_sv_func(
     }
     s.push_str(&bdecls);
 
-    s.push_str("        long legs = 0;\n        bool allOk = true;\n        bool peekAll = true;\n        long peekReps = 0;\n        long peekRejects = 0;\n        bool peekRepAll = true;\n        int fillChecked = 0;\n        bool fillOk = true;\n        int beg = 0, nb = 0;\n        string diag = \"\";\n");
+    s.push_str("        long legs = 0;\n        int roundMask = 0;\n        bool allOk = true;\n        bool peekAll = true;\n        long peekReps = 0;\n        long peekRejects = 0;\n        bool peekRepAll = true;\n        int fillChecked = 0;\n        bool fillOk = true;\n        int beg = 0, nb = 0;\n        string diag = \"\";\n");
     // The range leg (#241): a handle's OutRange against what batch reported for
     // the same bars. Public API in every backend, so unlike the state leg this
     // one is not C-only.
@@ -313,7 +313,7 @@ fn emit_csharp_sv_func(
     }
 
     if candle {
-        s.push_str("        int rounds = (candleLegs != 0) ? 4 : 1;\n");
+        s.push_str("        int rounds = (candleLegs != 0) ? 5 : 1;\n");
     } else {
         s.push_str("        int rounds = 1;\n");
     }
@@ -395,7 +395,7 @@ fn emit_csharp_sv_func(
         s.push_str("                if (!openRejects) allOk = false;\n");
         // A failed round must not truncate the sweep.
         s.push_str("                if (rd + 1 < rounds) continue;\n");
-        s.push_str("                return \"{\\\"retCode\\\":\" + (int)rc + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + \"}\";\n");
+        s.push_str("                return \"{\\\"retCode\\\":\" + (int)rc + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + \",\\\"round_mask\\\":\" + roundMask + \"}\";\n");
     } else {
         s.push_str("                return \"{\\\"retCode\\\":\" + (int)rc + \",\\\"legs\\\":0,\\\"nb\\\":\" + nb + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (openRejects ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
     }
@@ -647,7 +647,7 @@ fn emit_csharp_sv_func(
     // THE ONLY `legs++` IN THIS FILE. See the header note: the plan compares
     // this count against the Java row for equality, so every C#-only leg below
     // reports through its own counter instead.
-    s.push_str("                legs++;\n");
+    s.push_str("                legs++; roundMask |= 1 << rd;\n");
     // Open-value compare, through `Value`. Load-bearing: Open returns only the
     // handle, so this anchor compare IS the `Value` verification at open.
     let up_ty = if multi {
@@ -912,7 +912,7 @@ fn emit_csharp_sv_func(
 
     // RULE 3 -- A REAL MID-STREAM CANDLE-SETTINGS LEG.
     //
-    // The four rounds above do NOT test the open-time snapshot at all: each
+    // The rounds above do NOT test the open-time snapshot at all: each
     // builds a fresh Core and opens on it, so the step's snapshot and the Core's
     // live settings hold the same value and a step reading the wrong one is
     // invisible. Keep the rounds as the open-time check; do not claim more.
@@ -1094,7 +1094,7 @@ fn emit_csharp_sv_func(
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign + \",\\\"round_mask\\\":\" + roundMask + extra + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -1145,7 +1145,8 @@ pub(crate) fn generate_csharp_stream_verify(
 
     // Candle rounds, through the shipped builder.
     s.push_str("    /* Candle-settings rounds (mirror the C/Rust/Java sweep): defaults /\n");
-    s.push_str("       avgPeriod+3 / avgPeriod=0 (instant candle) / rangeType=Shadows.\n");
+    s.push_str("       avgPeriod+3 / avgPeriod=0 (instant candle) / rangeType=Shadows /\n");
+    s.push_str("       the range type that is neither the default nor Shadows.\n");
     s.push_str("       Goes through the SHIPPED CoreBuilder, so the validation exercised is the\n");
     s.push_str("       library's own and not a second copy living in the server; Build() takes a\n");
     s.push_str("       snapshot, so a built Core never aliases the builder.\n");
@@ -1154,7 +1155,7 @@ pub(crate) fn generate_csharp_stream_verify(
     s.push_str("       so the rounds cannot compound. (C# needs none of Java's care about\n");
     s.push_str("       editing the shared defaults in place: Core clones the array and\n");
     s.push_str("       CandleSetting is immutable, so replacing a slot reaches nothing else.)\n");
-    s.push_str("       WHAT THESE FOUR ROUNDS DO NOT TEST: the open-time snapshot. Each round\n");
+    s.push_str("       WHAT THESE ROUNDS DO NOT TEST: the open-time snapshot. Each round\n");
     s.push_str("       builds its Core and opens on it, so the step's snapshot and the Core's\n");
     s.push_str("       live settings hold the same value and a step reading the wrong one is\n");
     s.push_str("       invisible here. SvMutateLiveCandles below is what tests that. */\n");
@@ -1168,6 +1169,8 @@ pub(crate) fn generate_csharp_stream_verify(
     s.push_str("                b = b.CandleSetting((CandleSettingType)ci, cs.RangeType, 0, cs.Factor);\n");
     s.push_str("            else if (rd == 3)\n");
     s.push_str("                b = b.CandleSetting((CandleSettingType)ci, TALib.RangeType.Shadows, cs.AvgPeriod, cs.Factor);\n");
+    s.push_str("            else if (rd == 4)\n");
+    s.push_str("                b = b.CandleSetting((CandleSettingType)ci, cs.RangeType == TALib.RangeType.RealBody ? TALib.RangeType.HighLow : TALib.RangeType.RealBody, cs.AvgPeriod, cs.Factor);\n");
     s.push_str("        }\n");
     s.push_str("        return b;\n");
     s.push_str("    }\n\n");

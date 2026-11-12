@@ -187,7 +187,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     s.push_str(&bdecls);
 
-    s.push_str("        long legs = 0;\n        boolean allOk = true;\n        boolean peekAll = true;\n        long peekReps = 0;\n        long peekRejects = 0;\n        boolean peekRepAll = true;\n        int fillChecked = 0;\n        boolean fillOk = true;\n        MInteger beg = new MInteger();\n        MInteger nb = new MInteger();\n        String diag = \"\";\n");
+    s.push_str("        long legs = 0;\n        int roundMask = 0;\n        boolean allOk = true;\n        boolean peekAll = true;\n        long peekReps = 0;\n        long peekRejects = 0;\n        boolean peekRepAll = true;\n        int fillChecked = 0;\n        boolean fillOk = true;\n        MInteger beg = new MInteger();\n        MInteger nb = new MInteger();\n        String diag = \"\";\n");
     // The range leg (#241): a handle's outRange() against what batch reported
     // for the same bars. Public API in every backend, so unlike the state leg
     // this one is not C-only.
@@ -197,7 +197,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // process and a static would carry one function's count into the next.
     s.push_str("        long[] zsign = { 0 };\n");
     if candle {
-        s.push_str("        int rounds = (candleLegs != 0) ? 4 : 1;\n");
+        s.push_str("        int rounds = (candleLegs != 0) ? 5 : 1;\n");
     } else {
         s.push_str("        int rounds = 1;\n");
     }
@@ -258,7 +258,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     if candle {
         s.push_str("                if (!openRejects) allOk = false;\n");
         s.push_str("                if (rd + 1 < rounds) continue;\n");
-        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + \"}\";\n");
+        s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":\" + legs + \",\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (allOk ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + \",\\\"round_mask\\\":\" + roundMask + \"}\";\n");
     } else {
         s.push_str("                return \"{\\\"retCode\\\":\" + rc.toInt() + \",\\\"legs\\\":0,\\\"nb\\\":\" + nb.value + \",\\\"openRejects\\\":\" + (openRejects ? 1 : 0) + \",\\\"ok\\\":\" + (openRejects ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
     }
@@ -343,7 +343,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         pfx_ins("p")
     );
     s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"openRejectP\\\":\" + p; continue; }\n");
-    s.push_str("                legs++;\n");
+    s.push_str("                legs++; roundMask |= 1 << rd;\n");
     // Open-value compare through value() (load-bearing: Java open returns only
     // the handle, so the anchor compare IS the value() verification).
     if multi {
@@ -698,7 +698,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"step_ok\\\":\" + (allOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"peek_reps\\\":\" + peekReps + \",\\\"peek_rep_ok\\\":\" + (peekRepAll ? 1 : 0) + \",\\\"peek_rejects\\\":\" + peekRejects + \",\\\"benign\\\":\" + zsign[0] + \",\\\"round_mask\\\":\" + roundMask + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -724,7 +724,7 @@ pub(crate) fn generate_java_stream_verify(
     s.push_str("        return true;\n");
     s.push_str("    }\n\n");
     // Candle-settings rounds (mirror the C/Rust sweep): defaults / avgPeriod+3
-    // / avgPeriod=0 (instant candle) / rangeType=Shadows.
+    // / avgPeriod=0 (instant candle) / rangeType=Shadows / the other range type.
     // REPLACES each slot rather than mutating the CandleSetting in it. `new Core()`
     // shallow-clones DEFAULT_CANDLE_SETTINGS, so every Core's slot i is the SAME
     // object as the default's slot i; writing `cs.avgPeriod += 3` there would edit
@@ -744,6 +744,9 @@ pub(crate) fn generate_java_stream_verify(
     s.push_str("            } else if (rd == 3) {\n");
     s.push_str("                c.candleSettings[i] =\n");
     s.push_str("                    new CandleSetting(RangeType.SHADOWS, cs.avgPeriod, cs.factor);\n");
+    s.push_str("            } else if (rd == 4) {\n");
+    s.push_str("                c.candleSettings[i] = new CandleSetting(\n");
+    s.push_str("                    cs.rangeType == RangeType.REAL_BODY ? RangeType.HIGH_LOW : RangeType.REAL_BODY, cs.avgPeriod, cs.factor);\n");
     s.push_str("            }\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
