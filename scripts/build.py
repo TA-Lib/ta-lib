@@ -16,7 +16,7 @@
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
 #   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript libraries (cargo)
-#   scripts/build.py wasm           Build, optimise and check bin/ta_lib.wasm (cargo, wasm-opt)
+#   scripts/build.py wasm           Build and check bin/ta_lib.wasm (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -33,7 +33,6 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import binaryen_toolchain
 from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
@@ -165,9 +164,7 @@ def show_help():
                         --language. --node=22,24,26 (or all) runs the
                         TypeScript suite once per pinned Node major instead.
     wasm                Build bin/ta_lib.wasm from the committed ta_codegen/output/wasm
-                        crate for wasm32-unknown-unknown, optimise it with the
-                        Binaryen wasm-opt scripts/binaryen_toolchain.json pins
-                        (fetched and verified on first use), then fail unless it
+                        crate for wasm32-unknown-unknown, then fail unless it
                         imports nothing and its only relaxed-SIMD instruction
                         is f64x2.relaxed_madd. Generates nothing; needs the
                         pinned toolchain's wasm32-unknown-unknown target.
@@ -385,18 +382,9 @@ WASM_TARGET = 'wasm32-unknown-unknown'
 # The no-vectorize flags are load-bearing for values, not a performance choice.
 WASM_RUSTFLAGS = ['-C', 'target-feature=+simd128,+relaxed-simd',
                   '-C', 'no-vectorize-loops', '-C', 'no-vectorize-slp']
-# Exactly the features the module validates with, so wasm-opt can emit nothing
-# a runtime the build never targeted would refuse. The first call drops the
-# target_features section: wasm-opt enables every feature it lists on top of
-# these flags.
-WASM_OPT_FEATURES = ['--mvp-features', '--enable-simd', '--enable-relaxed-simd',
-                     '--enable-bulk-memory-opt', '--enable-nontrapping-float-to-int',
-                     '--enable-sign-ext']
-WASM_OPT_LEVEL = '-O3'
 
 def build_wasm(root_dir: str) -> int:
-    """Builds bin/ta_lib.wasm from the committed crate, optimises it with the
-    pinned wasm-opt and checks it."""
+    """Builds bin/ta_lib.wasm from the committed crate and checks it."""
     def target_installed():
         sysroot = subprocess.run(['rustc', '--print', 'sysroot'], cwd=root_dir,
                                  capture_output=True, text=True)
@@ -409,11 +397,6 @@ def build_wasm(root_dir: str) -> int:
         print(f"Error: the Rust target {WASM_TARGET} is not installed for the toolchain "
               f"rust-toolchain.toml pins. Install it with 'rustup target add {WASM_TARGET}' "
               f"from the repository root.", flush=True)
-        return 1
-    try:
-        wasm_opt = binaryen_toolchain.wasm_opt()
-    except binaryen_toolchain.ToolchainError as e:
-        print(f"Error: {e}", flush=True)
         return 1
     crate = os.path.join(root_dir, 'ta_codegen', 'output', 'wasm')
     # Panic locations embed source paths; the shipped module must not carry the build machine's.
@@ -431,21 +414,9 @@ def build_wasm(root_dir: str) -> int:
     except subprocess.CalledProcessError:
         return 1
     built = os.path.join(crate, 'target', WASM_TARGET, 'release', 'ta_lib_wasm.wasm')
-    stripped = os.path.join(crate, 'target', WASM_TARGET, 'release', 'ta_lib_wasm.untargeted.wasm')
     staged = out + '.tmp'
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    try:
-        subprocess.run([wasm_opt, built, *WASM_OPT_FEATURES, '--strip-target-features', '-o', stripped],
-                       check=True, cwd=root_dir)
-        subprocess.run([wasm_opt, stripped, *WASM_OPT_FEATURES, WASM_OPT_LEVEL,
-                        '--strip-debug', '--strip-producers', '-o', staged],
-                       check=True, cwd=root_dir)
-    except subprocess.CalledProcessError:
-        print(f"Error: wasm-opt failed on {os.path.relpath(built, root_dir)}; see its output above.",
-              flush=True)
-        return 1
-    print(f"  {os.path.relpath(built, root_dir)}: {os.path.getsize(built)} bytes; "
-          f"after wasm-opt {WASM_OPT_LEVEL}: {os.path.getsize(staged)} bytes", flush=True)
+    shutil.copyfile(built, staged)
     os.replace(staged, out)
     rc = subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'check_wasm_module.py'),
                          out]).returncode

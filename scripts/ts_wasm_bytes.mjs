@@ -4,8 +4,8 @@
 // <library>/dist), the module holding bin/ta_lib.wasm as base64 that the
 // default entry imports, and its declaration beside it. Run after tsc has
 // emitted there. Refuses a bin/ta_lib.wasm that is missing or older than any
-// source of the crate it is built from, or than the build's flags and wasm-opt
-// pin: `scripts/build.py wasm` rebuilds it.
+// source of the crate it is built from, or than the build's flags:
+// `scripts/build.py wasm` rebuilds it.
 import { copyFileSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +17,6 @@ const wasm = join(root, 'bin', 'ta_lib.wasm');
 const sources = [
   'rust-toolchain.toml',
   'scripts/build.py',
-  'scripts/binaryen_toolchain.json',
   'ta_codegen/output/wasm/Cargo.toml',
   'ta_codegen/output/wasm/src',
   'ta_codegen/output/rust/library/Cargo.toml',
