@@ -571,7 +571,9 @@ static void sv_candle_avg(int mode) {
     int i;
     for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         TA_SetCandleSettings( (TA_CandleSettingType)i,
-                              mode == 2 ? TA_RangeType_Shadows : TA_Globals->candleSettings[i].rangeType,
+                              mode == 2 ? TA_RangeType_Shadows
+                              : mode == 3 ? (TA_Globals->candleSettings[i].rangeType == TA_RangeType_RealBody ? TA_RangeType_HighLow : TA_RangeType_RealBody)
+                              : TA_Globals->candleSettings[i].rangeType,
                               mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),
                               TA_Globals->candleSettings[i].factor );
 }
@@ -14861,7 +14863,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -14875,7 +14877,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -14986,7 +14988,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -15105,7 +15107,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -15131,7 +15133,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -15145,7 +15147,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -15256,7 +15258,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -15375,7 +15377,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -15401,7 +15403,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -15415,7 +15417,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -15526,7 +15528,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -15645,7 +15647,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -15671,7 +15673,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -15685,7 +15687,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -15796,7 +15798,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -15915,7 +15917,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -15941,7 +15943,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -15955,7 +15957,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -16066,7 +16068,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -16185,7 +16187,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -16211,7 +16213,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -16225,7 +16227,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -16336,7 +16338,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -16455,7 +16457,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -16481,7 +16483,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -16495,7 +16497,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -16606,7 +16608,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -16725,7 +16727,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -16752,7 +16754,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -16766,7 +16768,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -16877,7 +16879,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -16996,7 +16998,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -17022,7 +17024,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -17036,7 +17038,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -17147,7 +17149,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -17266,7 +17268,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -17292,7 +17294,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -17306,7 +17308,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -17417,7 +17419,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -17536,7 +17538,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -17562,7 +17564,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -17576,7 +17578,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -17687,7 +17689,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -17806,7 +17808,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -17832,7 +17834,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -17846,7 +17848,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -17957,7 +17959,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -18076,7 +18078,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -18102,7 +18104,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -18116,7 +18118,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -18227,7 +18229,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -18346,7 +18348,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -18372,7 +18374,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -18386,7 +18388,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -18497,7 +18499,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -18616,7 +18618,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -18643,7 +18645,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -18657,7 +18659,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -18768,7 +18770,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -18887,7 +18889,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -18913,7 +18915,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -18927,7 +18929,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -19038,7 +19040,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -19157,7 +19159,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -19183,7 +19185,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -19197,7 +19199,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -19308,7 +19310,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -19427,7 +19429,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -19453,7 +19455,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -19467,7 +19469,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -19578,7 +19580,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -19697,7 +19699,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -19723,7 +19725,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -19737,7 +19739,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -19848,7 +19850,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -19967,7 +19969,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -19994,7 +19996,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -20008,7 +20010,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -20119,7 +20121,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -20238,7 +20240,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -20265,7 +20267,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -20279,7 +20281,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -20390,7 +20392,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -20509,7 +20511,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -20535,7 +20537,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -20549,7 +20551,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -20660,7 +20662,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -20779,7 +20781,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -20805,7 +20807,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -20819,7 +20821,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -20930,7 +20932,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -21049,7 +21051,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -21075,7 +21077,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -21089,7 +21091,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -21200,7 +21202,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -21319,7 +21321,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -21345,7 +21347,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -21359,7 +21361,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -21470,7 +21472,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -21589,7 +21591,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -21615,7 +21617,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -21629,7 +21631,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -21740,7 +21742,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -21859,7 +21861,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -21885,7 +21887,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -21899,7 +21901,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -22010,7 +22012,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -22129,7 +22131,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -22155,7 +22157,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -22169,7 +22171,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -22280,7 +22282,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -22399,7 +22401,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -22425,7 +22427,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -22439,7 +22441,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -22550,7 +22552,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -22669,7 +22671,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -22695,7 +22697,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -22709,7 +22711,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -22820,7 +22822,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -22939,7 +22941,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -22965,7 +22967,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -22979,7 +22981,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -23090,7 +23092,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -23209,7 +23211,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -23235,7 +23237,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -23249,7 +23251,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -23360,7 +23362,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -23479,7 +23481,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -23505,7 +23507,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -23519,7 +23521,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -23630,7 +23632,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -23749,7 +23751,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -23775,7 +23777,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -23789,7 +23791,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -23900,7 +23902,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -24019,7 +24021,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -24045,7 +24047,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -24059,7 +24061,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -24170,7 +24172,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -24289,7 +24291,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -24315,7 +24317,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -24329,7 +24331,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -24440,7 +24442,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -24559,7 +24561,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -24585,7 +24587,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -24599,7 +24601,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -24710,7 +24712,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -24829,7 +24831,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -24855,7 +24857,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -24869,7 +24871,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -24980,7 +24982,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -25099,7 +25101,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -25125,7 +25127,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -25139,7 +25141,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -25250,7 +25252,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -25369,7 +25371,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -25395,7 +25397,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -25409,7 +25411,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -25520,7 +25522,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -25639,7 +25641,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -25665,7 +25667,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -25679,7 +25681,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -25790,7 +25792,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -25909,7 +25911,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -25936,7 +25938,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -25950,7 +25952,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -26061,7 +26063,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -26180,7 +26182,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -26207,7 +26209,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -26221,7 +26223,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -26332,7 +26334,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -26451,7 +26453,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -26478,7 +26480,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -26492,7 +26494,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -26603,7 +26605,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -26722,7 +26724,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -26748,7 +26750,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -26762,7 +26764,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -26873,7 +26875,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -26992,7 +26994,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -27018,7 +27020,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -27032,7 +27034,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -27143,7 +27145,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -27262,7 +27264,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -27288,7 +27290,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -27302,7 +27304,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -27413,7 +27415,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -27532,7 +27534,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -27558,7 +27560,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -27572,7 +27574,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -27683,7 +27685,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -27802,7 +27804,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -27828,7 +27830,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -27842,7 +27844,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -27953,7 +27955,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -28072,7 +28074,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -28098,7 +28100,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -28112,7 +28114,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -28223,7 +28225,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -28342,7 +28344,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -28368,7 +28370,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -28382,7 +28384,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -28493,7 +28495,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -28612,7 +28614,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -28638,7 +28640,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -28652,7 +28654,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -28763,7 +28765,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -28882,7 +28884,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -28908,7 +28910,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -28922,7 +28924,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -29033,7 +29035,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -29152,7 +29154,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -29178,7 +29180,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -29192,7 +29194,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -29303,7 +29305,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -29422,7 +29424,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -29448,7 +29450,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -29462,7 +29464,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -29573,7 +29575,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -29692,7 +29694,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -29718,7 +29720,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -29732,7 +29734,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -29843,7 +29845,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -29962,7 +29964,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -29988,7 +29990,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -30002,7 +30004,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -30113,7 +30115,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -30232,7 +30234,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -30258,7 +30260,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -30272,7 +30274,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -30383,7 +30385,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -30502,7 +30504,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -30528,7 +30530,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -30542,7 +30544,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -30653,7 +30655,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -30772,7 +30774,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -30798,7 +30800,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -30812,7 +30814,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -30923,7 +30925,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -31042,7 +31044,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {
@@ -31068,7 +31070,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
     int rB = 0, rN = 0;
     int svZsign = 0;
     int pref[4]; int pc[4];
-    int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
+    int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;
     pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0");
     for( rd = 0; rd < rounds; rd++ ) {
     if( rd > 0 ) TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -31082,7 +31084,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
         if( !openRejects ) allOk = 0;
         if( rd + 1 < rounds ) continue;
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);
+        pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);
         return;
     }
     {
@@ -31193,7 +31195,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
         pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", lgi, P, lgi, ok, lgi, pkOk);
         if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }
         if( !pkOk ) peekAll = 0;
-        lgi++;
+        lgi++; rdMask |= 1 << rd;
     }
     if( stEq )
     {
@@ -31312,7 +31314,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
     pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
     if( rangeChecked && !rangeOk ) allOk = 0;
     pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);
+    pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"short_history_checked\":%d,\"short_history_ok\":%d,\"short_history_bad\":\"%s\",\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d,\"vmath\":%d,\"round_mask\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);
 }
 
 static SV_NOINLINE void sv_verify_CE(const char *json, char *resp, int resp_size, int svN, int svK, int svCandle) {

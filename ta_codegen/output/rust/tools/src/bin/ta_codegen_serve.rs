@@ -1979,6 +1979,7 @@ fn sv_apply_candle_round(mut b: CoreBuilder, rd: i32) -> CoreBuilder {
             1 => c.avg_period += 3,
             2 => c.avg_period = 0,
             3 => c.range_type = RangeType::Shadows,
+            4 => c.range_type = if c.range_type == RangeType::RealBody { RangeType::HighLow } else { RangeType::RealBody },
             _ => {}
         }
         b = b.candle_setting(t, c);
@@ -2462,6 +2463,7 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -2518,7 +2520,7 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
             match c2.ac_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -2607,7 +2609,7 @@ pub(super) fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -2862,6 +2864,7 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -2924,7 +2927,7 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
             match c2.accbands_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -3041,7 +3044,7 @@ pub(super) fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -3281,6 +3284,7 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -3337,7 +3341,7 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
             match c2.acos_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -3426,7 +3430,7 @@ pub(super) fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -3673,6 +3677,7 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -3729,7 +3734,7 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
             match c2.ad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -3818,7 +3823,7 @@ pub(super) fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4055,6 +4060,7 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -4111,7 +4117,7 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
             match c2.add_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -4200,7 +4206,7 @@ pub(super) fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4455,6 +4461,7 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -4512,7 +4519,7 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
             match c2.adosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -4601,7 +4608,7 @@ pub(super) fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -4843,6 +4850,7 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -4899,7 +4907,7 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
             match c2.adr_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -4988,7 +4996,7 @@ pub(super) fn sv_adr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -5236,6 +5244,7 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -5293,7 +5302,7 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
             match c2.adx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -5382,7 +5391,7 @@ pub(super) fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -5629,6 +5638,7 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -5686,7 +5696,7 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
             match c2.adxr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -5775,7 +5785,7 @@ pub(super) fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6037,6 +6047,7 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -6100,7 +6111,7 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
             match c2.alligator_open(&fz_h[..p], &fz_l[..p], optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -6217,7 +6228,7 @@ pub(super) fn sv_alligator(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6469,6 +6480,7 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -6525,7 +6537,7 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
             match c2.alma_open(&fz_c[..p], optInTimePeriod, optInSigma, optInOffset) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -6614,7 +6626,7 @@ pub(super) fn sv_alma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -6854,6 +6866,7 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -6910,7 +6923,7 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
             match c2.ao_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -6999,7 +7012,7 @@ pub(super) fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -7244,6 +7257,7 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -7306,7 +7320,7 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
             match c2.apo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -7395,7 +7409,7 @@ pub(super) fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -7636,6 +7650,7 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -7695,7 +7710,7 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
             match c2.aroon_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -7798,7 +7813,7 @@ pub(super) fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8041,6 +8056,7 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -8097,7 +8113,7 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
             match c2.aroonosc_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -8186,7 +8202,7 @@ pub(super) fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8439,6 +8455,7 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -8495,7 +8512,7 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
             match c2.asi_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInLimitMove) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -8584,7 +8601,7 @@ pub(super) fn sv_asi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -8814,6 +8831,7 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -8870,7 +8888,7 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
             match c2.asin_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -8959,7 +8977,7 @@ pub(super) fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9182,6 +9200,7 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -9238,7 +9257,7 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
             match c2.atan_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -9327,7 +9346,7 @@ pub(super) fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9572,6 +9591,7 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -9629,7 +9649,7 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
             match c2.atr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -9718,7 +9738,7 @@ pub(super) fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -9949,6 +9969,7 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -10005,7 +10026,7 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
             match c2.avgdev_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -10094,7 +10115,7 @@ pub(super) fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -10342,6 +10363,7 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -10398,7 +10420,7 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
             match c2.avgprice_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -10487,7 +10509,7 @@ pub(super) fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -10745,6 +10767,7 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -10813,7 +10836,7 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
             match c2.bbands_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -10930,7 +10953,7 @@ pub(super) fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -11190,6 +11213,7 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -11252,7 +11276,7 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
             match c2.bbw_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -11341,7 +11365,7 @@ pub(super) fn sv_bbw(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -11579,6 +11603,7 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -11635,7 +11660,7 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
             match c2.beta_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -11724,7 +11749,7 @@ pub(super) fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -11974,6 +11999,7 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -12030,7 +12056,7 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
             match c2.bop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -12119,7 +12145,7 @@ pub(super) fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -12367,6 +12393,7 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -12423,7 +12450,7 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
             match c2.cci_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -12512,7 +12539,7 @@ pub(super) fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -12765,6 +12792,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -12783,7 +12811,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -12798,7 +12826,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl2crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -12824,7 +12852,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             match c2.cdl2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -12913,7 +12941,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -13167,6 +13195,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -13185,7 +13214,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -13200,7 +13229,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3blackcrows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -13226,7 +13255,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             match c2.cdl3blackcrows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -13315,7 +13344,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -13569,6 +13598,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -13587,7 +13617,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -13602,7 +13632,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3inside_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -13628,7 +13658,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             match c2.cdl3inside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -13717,7 +13747,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -13971,6 +14001,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -13989,7 +14020,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -14004,7 +14035,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3linestrike_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -14030,7 +14061,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             match c2.cdl3linestrike_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -14119,7 +14150,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -14373,6 +14404,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -14391,7 +14423,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -14406,7 +14438,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3outside_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -14432,7 +14464,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             match c2.cdl3outside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -14521,7 +14553,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -14775,6 +14807,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -14793,7 +14826,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -14808,7 +14841,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3starsinsouth_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -14834,7 +14867,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             match c2.cdl3starsinsouth_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -14923,7 +14956,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -15177,6 +15210,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -15195,7 +15229,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -15210,7 +15244,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdl3whitesoldiers_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -15236,7 +15270,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             match c2.cdl3whitesoldiers_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -15325,7 +15359,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -15582,6 +15616,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -15600,7 +15635,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -15615,7 +15650,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlabandonedbaby_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -15641,7 +15676,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             match c2.cdlabandonedbaby_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -15730,7 +15765,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -15985,6 +16020,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -16003,7 +16039,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -16018,7 +16054,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdladvanceblock_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -16044,7 +16080,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             match c2.cdladvanceblock_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -16133,7 +16169,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -16387,6 +16423,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -16405,7 +16442,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -16420,7 +16457,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlbelthold_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -16446,7 +16483,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             match c2.cdlbelthold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -16535,7 +16572,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -16789,6 +16826,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -16807,7 +16845,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -16822,7 +16860,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlbreakaway_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -16848,7 +16886,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             match c2.cdlbreakaway_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -16937,7 +16975,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -17191,6 +17229,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -17209,7 +17248,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -17224,7 +17263,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlclosingmarubozu_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -17250,7 +17289,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             match c2.cdlclosingmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -17339,7 +17378,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -17593,6 +17632,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -17611,7 +17651,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -17626,7 +17666,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlconcealbabyswall_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -17652,7 +17692,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             match c2.cdlconcealbabyswall_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -17741,7 +17781,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -17995,6 +18035,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -18013,7 +18054,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -18028,7 +18069,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlcounterattack_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -18054,7 +18095,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             match c2.cdlcounterattack_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -18143,7 +18184,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -18400,6 +18441,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -18418,7 +18460,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -18433,7 +18475,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdldarkcloudcover_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -18459,7 +18501,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             match c2.cdldarkcloudcover_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -18548,7 +18590,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -18803,6 +18845,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -18821,7 +18864,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -18836,7 +18879,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdldoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -18862,7 +18905,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
             match c2.cdldoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -18951,7 +18994,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -19205,6 +19248,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -19223,7 +19267,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -19238,7 +19282,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdldojistar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -19264,7 +19308,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             match c2.cdldojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -19353,7 +19397,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -19607,6 +19651,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -19625,7 +19670,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -19640,7 +19685,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdldragonflydoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -19666,7 +19711,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             match c2.cdldragonflydoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -19755,7 +19800,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -20009,6 +20054,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -20027,7 +20073,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -20042,7 +20088,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlengulfing_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -20068,7 +20114,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             match c2.cdlengulfing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -20157,7 +20203,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -20414,6 +20460,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -20432,7 +20479,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -20447,7 +20494,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdleveningdojistar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -20473,7 +20520,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             match c2.cdleveningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -20562,7 +20609,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -20820,6 +20867,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -20838,7 +20886,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -20853,7 +20901,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdleveningstar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -20879,7 +20927,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             match c2.cdleveningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -20968,7 +21016,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -21223,6 +21271,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -21241,7 +21290,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -21256,7 +21305,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlgapsidesidewhite_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -21282,7 +21331,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             match c2.cdlgapsidesidewhite_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -21371,7 +21420,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -21625,6 +21674,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -21643,7 +21693,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -21658,7 +21708,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlgravestonedoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -21684,7 +21734,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             match c2.cdlgravestonedoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -21773,7 +21823,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -22027,6 +22077,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -22045,7 +22096,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -22060,7 +22111,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhammer_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -22086,7 +22137,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             match c2.cdlhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -22175,7 +22226,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -22429,6 +22480,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -22447,7 +22499,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -22462,7 +22514,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhangingman_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -22488,7 +22540,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             match c2.cdlhangingman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -22577,7 +22629,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -22831,6 +22883,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -22849,7 +22902,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -22864,7 +22917,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlharami_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -22890,7 +22943,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
             match c2.cdlharami_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -22979,7 +23032,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -23233,6 +23286,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -23251,7 +23305,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -23266,7 +23320,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlharamicross_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -23292,7 +23346,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             match c2.cdlharamicross_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -23381,7 +23435,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -23635,6 +23689,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -23653,7 +23708,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -23668,7 +23723,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhighwave_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -23694,7 +23749,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             match c2.cdlhighwave_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -23783,7 +23838,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -24037,6 +24092,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -24055,7 +24111,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -24070,7 +24126,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhikkake_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -24096,7 +24152,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             match c2.cdlhikkake_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -24185,7 +24241,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -24439,6 +24495,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -24457,7 +24514,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -24472,7 +24529,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhikkakemod_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -24498,7 +24555,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             match c2.cdlhikkakemod_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -24587,7 +24644,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -24841,6 +24898,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -24859,7 +24917,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -24874,7 +24932,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlhomingpigeon_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -24900,7 +24958,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             match c2.cdlhomingpigeon_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -24989,7 +25047,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -25243,6 +25301,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -25261,7 +25320,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -25276,7 +25335,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlidentical3crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -25302,7 +25361,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             match c2.cdlidentical3crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -25391,7 +25450,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -25645,6 +25704,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -25663,7 +25723,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -25678,7 +25738,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlinneck_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -25704,7 +25764,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             match c2.cdlinneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -25793,7 +25853,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -26047,6 +26107,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -26065,7 +26126,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -26080,7 +26141,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlinvertedhammer_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -26106,7 +26167,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             match c2.cdlinvertedhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -26195,7 +26256,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -26449,6 +26510,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -26467,7 +26529,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -26482,7 +26544,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlkicking_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -26508,7 +26570,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             match c2.cdlkicking_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -26597,7 +26659,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -26851,6 +26913,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -26869,7 +26932,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -26884,7 +26947,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlkickingbylength_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -26910,7 +26973,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             match c2.cdlkickingbylength_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -26999,7 +27062,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -27253,6 +27316,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -27271,7 +27335,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -27286,7 +27350,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlladderbottom_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -27312,7 +27376,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             match c2.cdlladderbottom_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -27401,7 +27465,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -27655,6 +27719,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -27673,7 +27738,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -27688,7 +27753,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdllongleggeddoji_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -27714,7 +27779,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             match c2.cdllongleggeddoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -27803,7 +27868,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -28057,6 +28122,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -28075,7 +28141,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -28090,7 +28156,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdllongline_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -28116,7 +28182,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
             match c2.cdllongline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -28205,7 +28271,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -28459,6 +28525,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -28477,7 +28544,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -28492,7 +28559,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlmarubozu_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -28518,7 +28585,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             match c2.cdlmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -28607,7 +28674,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -28861,6 +28928,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -28879,7 +28947,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -28894,7 +28962,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlmatchinglow_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -28920,7 +28988,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             match c2.cdlmatchinglow_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -29009,7 +29077,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -29266,6 +29334,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -29284,7 +29353,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -29299,7 +29368,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlmathold_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -29325,7 +29394,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             match c2.cdlmathold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -29414,7 +29483,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -29672,6 +29741,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -29690,7 +29760,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -29705,7 +29775,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlmorningdojistar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -29731,7 +29801,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             match c2.cdlmorningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -29820,7 +29890,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -30078,6 +30148,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -30096,7 +30167,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -30111,7 +30182,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlmorningstar_open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -30137,7 +30208,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             match c2.cdlmorningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -30226,7 +30297,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -30481,6 +30552,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -30499,7 +30571,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -30514,7 +30586,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlonneck_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -30540,7 +30612,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             match c2.cdlonneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -30629,7 +30701,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -30883,6 +30955,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -30901,7 +30974,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -30916,7 +30989,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlpiercing_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -30942,7 +31015,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             match c2.cdlpiercing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -31031,7 +31104,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -31285,6 +31358,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -31303,7 +31377,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -31318,7 +31392,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlrickshawman_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -31344,7 +31418,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             match c2.cdlrickshawman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -31433,7 +31507,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -31687,6 +31761,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -31705,7 +31780,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -31720,7 +31795,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlrisefall3methods_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -31746,7 +31821,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             match c2.cdlrisefall3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -31835,7 +31910,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -32089,6 +32164,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -32107,7 +32183,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -32122,7 +32198,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlseparatinglines_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -32148,7 +32224,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             match c2.cdlseparatinglines_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -32237,7 +32313,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -32491,6 +32567,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -32509,7 +32586,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -32524,7 +32601,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlshootingstar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -32550,7 +32627,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             match c2.cdlshootingstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -32639,7 +32716,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -32893,6 +32970,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -32911,7 +32989,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -32926,7 +33004,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlshortline_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -32952,7 +33030,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             match c2.cdlshortline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -33041,7 +33119,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -33295,6 +33373,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -33313,7 +33392,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -33328,7 +33407,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlspinningtop_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -33354,7 +33433,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             match c2.cdlspinningtop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -33443,7 +33522,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -33697,6 +33776,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -33715,7 +33795,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -33730,7 +33810,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlstalledpattern_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -33756,7 +33836,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             match c2.cdlstalledpattern_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -33845,7 +33925,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -34099,6 +34179,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -34117,7 +34198,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -34132,7 +34213,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlsticksandwich_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -34158,7 +34239,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             match c2.cdlsticksandwich_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -34247,7 +34328,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -34501,6 +34582,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -34519,7 +34601,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -34534,7 +34616,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdltakuri_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -34560,7 +34642,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             match c2.cdltakuri_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -34649,7 +34731,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -34903,6 +34985,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -34921,7 +35004,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -34936,7 +35019,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdltasukigap_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -34962,7 +35045,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             match c2.cdltasukigap_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -35051,7 +35134,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -35305,6 +35388,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -35323,7 +35407,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -35338,7 +35422,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlthrusting_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -35364,7 +35448,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             match c2.cdlthrusting_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -35453,7 +35537,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -35707,6 +35791,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -35725,7 +35810,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -35740,7 +35825,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdltristar_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -35766,7 +35851,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
             match c2.cdltristar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -35855,7 +35940,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -36109,6 +36194,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -36127,7 +36213,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -36142,7 +36228,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlunique3river_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -36168,7 +36254,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             match c2.cdlunique3river_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -36257,7 +36343,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -36511,6 +36597,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -36529,7 +36616,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -36544,7 +36631,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlupsidegap2crows_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -36570,7 +36657,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             match c2.cdlupsidegap2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -36659,7 +36746,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -36913,6 +37000,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -36931,7 +37019,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     let mut value_ok = true;
     let mut value_legs = 0i64;
     let zsign = 0i64;
-    let rounds = if candleLegs != 0 { 4 } else { 1 };
+    let rounds = if candleLegs != 0 { 5 } else { 1 };
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
@@ -36946,7 +37034,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             let open_rejects = c2.cdlxsidegap3methods_open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
             if !open_rejects { all_ok = false; }
             if rd + 1 < rounds { continue; }
-            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);
+            return format!("{{\"retCode\":{},\"legs\":{},\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}}}", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);
         }
         fill_checked = 1;
         {
@@ -36972,7 +37060,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             match c2.cdlxsidegap3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -37061,7 +37149,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -37316,6 +37404,7 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -37376,7 +37465,7 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
             match c2.ce_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInMultiplier) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -37479,7 +37568,7 @@ pub(super) fn sv_ce(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -37714,6 +37803,7 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -37770,7 +37860,7 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
             match c2.ceil_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -37859,7 +37949,7 @@ pub(super) fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38085,6 +38175,7 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -38141,7 +38232,7 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
             match c2.cg_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -38230,7 +38321,7 @@ pub(super) fn sv_cg(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38473,6 +38564,7 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -38529,7 +38621,7 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
             match c2.chop_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -38618,7 +38710,7 @@ pub(super) fn sv_chop(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -38865,6 +38957,7 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -38921,7 +39014,7 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
             match c2.choptr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -39010,7 +39103,7 @@ pub(super) fn sv_choptr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -39267,6 +39360,7 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -39327,7 +39421,7 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
             match c2.cksp_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInMultiplier, optInStopPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -39430,7 +39524,7 @@ pub(super) fn sv_cksp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -39693,6 +39787,7 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -39749,7 +39844,7 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
             match c2.cmf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -39838,7 +39933,7 @@ pub(super) fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40074,6 +40169,7 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -40131,7 +40227,7 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
             match c2.cmo_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -40220,7 +40316,7 @@ pub(super) fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40447,6 +40543,7 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -40503,7 +40600,7 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
             match c2.cmou_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -40592,7 +40689,7 @@ pub(super) fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -40825,6 +40922,7 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -40881,7 +40979,7 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
             match c2.coppock_open(&fz_c[..p], optInWMAPeriod, optInROC1Period, optInROC2Period) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -40970,7 +41068,7 @@ pub(super) fn sv_coppock(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -41207,6 +41305,7 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -41263,7 +41362,7 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
             match c2.correl_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -41352,7 +41451,7 @@ pub(super) fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -41578,6 +41677,7 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -41634,7 +41734,7 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
             match c2.cos_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -41723,7 +41823,7 @@ pub(super) fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -41946,6 +42046,7 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -42002,7 +42103,7 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
             match c2.cosh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -42091,7 +42192,7 @@ pub(super) fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -42323,6 +42424,7 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -42380,7 +42482,7 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
             match c2.crsi_open(&fz_c[..p], optInTimePeriod, optInStreakPeriod, optInRankPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -42469,7 +42571,7 @@ pub(super) fn sv_crsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -42698,6 +42800,7 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -42754,7 +42857,7 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
             match c2.cti_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -42843,7 +42946,7 @@ pub(super) fn sv_cti(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43067,6 +43170,7 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -43123,7 +43227,7 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
             match c2.cumsum_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -43212,7 +43316,7 @@ pub(super) fn sv_cumsum(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43449,6 +43553,7 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -43506,7 +43611,7 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
             match c2.cvi_open(&fz_h[..p], &fz_l[..p], optInTimePeriod, optInROCPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -43595,7 +43700,7 @@ pub(super) fn sv_cvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -43825,6 +43930,7 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -43882,7 +43988,7 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
             match c2.dema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -43971,7 +44077,7 @@ pub(super) fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -44203,6 +44309,7 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -44259,7 +44366,7 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
             match c2.div_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -44348,7 +44455,7 @@ pub(super) fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -44592,6 +44699,7 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -44654,7 +44762,7 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
             match c2.donchian_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -44771,7 +44879,7 @@ pub(super) fn sv_donchian(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45021,6 +45129,7 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -45079,7 +45188,7 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
             match c2.dosc_open(&fz_c[..p], optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -45168,7 +45277,7 @@ pub(super) fn sv_dosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45398,6 +45507,7 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -45454,7 +45564,7 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
             match c2.dpo_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -45543,7 +45653,7 @@ pub(super) fn sv_dpo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -45789,6 +45899,7 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -45846,7 +45957,7 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
             match c2.dx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -45935,7 +46046,7 @@ pub(super) fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -46174,6 +46285,7 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -46231,7 +46343,7 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
             match c2.efi_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -46320,7 +46432,7 @@ pub(super) fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -46552,6 +46664,7 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -46609,7 +46722,7 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
             match c2.ema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -46698,7 +46811,7 @@ pub(super) fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -46944,6 +47057,7 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -47000,7 +47114,7 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
             match c2.emv_open(&fz_h[..p], &fz_l[..p], &fz_v[..p], optInTimePeriod, optInVolumeDivisor) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -47089,7 +47203,7 @@ pub(super) fn sv_emv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -47321,6 +47435,7 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -47377,7 +47492,7 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
             match c2.er_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -47466,7 +47581,7 @@ pub(super) fn sv_er(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -47713,6 +47828,7 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -47773,7 +47889,7 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
             match c2.eri_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -47876,7 +47992,7 @@ pub(super) fn sv_eri(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -48110,6 +48226,7 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -48166,7 +48283,7 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
             match c2.exp_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -48255,7 +48372,7 @@ pub(super) fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -48496,6 +48613,7 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -48556,7 +48674,7 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
             match c2.fisher_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -48659,7 +48777,7 @@ pub(super) fn sv_fisher(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -48891,6 +49009,7 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -48947,7 +49066,7 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
             match c2.floor_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -49036,7 +49155,7 @@ pub(super) fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -49262,6 +49381,7 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -49318,7 +49438,7 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
             match c2.fosc_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -49407,7 +49527,7 @@ pub(super) fn sv_fosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -49649,6 +49769,7 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -49708,7 +49829,7 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
             match c2.fractal_open(&fz_h[..p], &fz_l[..p], optInLeftBars, optInRightBars) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0.0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -49811,7 +49932,7 @@ pub(super) fn sv_fractal(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -50058,6 +50179,7 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -50115,7 +50237,7 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
             match c2.frama_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -50204,7 +50326,7 @@ pub(super) fn sv_frama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -50460,6 +50582,7 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -50520,7 +50643,7 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
             match c2.gator_open(&fz_h[..p], &fz_l[..p], optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -50623,7 +50746,7 @@ pub(super) fn sv_gator(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -50899,6 +51022,7 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut b3: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -50965,7 +51089,7 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
             match c2.ha_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -51096,7 +51220,7 @@ pub(super) fn sv_ha(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -51346,6 +51470,7 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -51402,7 +51527,7 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
             match c2.hma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -51491,7 +51616,7 @@ pub(super) fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -51718,6 +51843,7 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -51775,7 +51901,7 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             match c2.ht_dcperiod_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -51864,7 +51990,7 @@ pub(super) fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -52090,6 +52216,7 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -52147,7 +52274,7 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             match c2.ht_dcphase_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -52236,7 +52363,7 @@ pub(super) fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -52466,6 +52593,7 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -52526,7 +52654,7 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             match c2.ht_phasor_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -52629,7 +52757,7 @@ pub(super) fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -52865,6 +52993,7 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -52925,7 +53054,7 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
             match c2.ht_sine_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -53028,7 +53157,7 @@ pub(super) fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -53260,6 +53389,7 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -53317,7 +53447,7 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             match c2.ht_trendline_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -53406,7 +53536,7 @@ pub(super) fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -53632,6 +53762,7 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -53689,7 +53820,7 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             match c2.ht_trendmode_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -53778,7 +53909,7 @@ pub(super) fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -54017,6 +54148,7 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -54073,7 +54205,7 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
             match c2.ibs_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -54162,7 +54294,7 @@ pub(super) fn sv_ibs(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -54418,6 +54550,7 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut b3: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -54483,7 +54616,7 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
             match c2.ichimoku_open(&fz_h[..p], &fz_l[..p], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -54614,7 +54747,7 @@ pub(super) fn sv_ichimoku(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -54871,6 +55004,7 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -54927,7 +55061,7 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
             match c2.imi_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -55016,7 +55150,7 @@ pub(super) fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -55248,6 +55382,7 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -55305,7 +55440,7 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
             match c2.kama_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -55394,7 +55529,7 @@ pub(super) fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -55651,6 +55786,7 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -55715,7 +55851,7 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
             match c2.kc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInATRPeriod, optInNbDev) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -55832,7 +55968,7 @@ pub(super) fn sv_kc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -56128,6 +56264,7 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -56196,7 +56333,7 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
             match c2.kdj_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -56313,7 +56450,7 @@ pub(super) fn sv_kdj(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -56588,6 +56725,7 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -56647,7 +56785,7 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
             match c2.kst_open(&fz_c[..p], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -56750,7 +56888,7 @@ pub(super) fn sv_kst(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -57040,6 +57178,7 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -57105,7 +57244,7 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
             match c2.kstext_open(&fz_c[..p], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -57208,7 +57347,7 @@ pub(super) fn sv_kstext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -57451,6 +57590,7 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -57507,7 +57647,7 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
             match c2.kurtosis_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -57596,7 +57736,7 @@ pub(super) fn sv_kurtosis(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -57857,6 +57997,7 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -57917,7 +58058,7 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
             match c2.kvo_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -58020,7 +58161,7 @@ pub(super) fn sv_kvo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -58261,6 +58402,7 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -58317,7 +58459,7 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
             match c2.linearreg_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -58406,7 +58548,7 @@ pub(super) fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -58633,6 +58775,7 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -58689,7 +58832,7 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             match c2.linearreg_angle_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -58778,7 +58921,7 @@ pub(super) fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59005,6 +59148,7 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -59061,7 +59205,7 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             match c2.linearreg_intercept_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -59150,7 +59294,7 @@ pub(super) fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59377,6 +59521,7 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -59433,7 +59578,7 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             match c2.linearreg_slope_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -59522,7 +59667,7 @@ pub(super) fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -59746,6 +59891,7 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -59802,7 +59948,7 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
             match c2.ln_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -59891,7 +60037,7 @@ pub(super) fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -60114,6 +60260,7 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -60170,7 +60317,7 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
             match c2.log10_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -60259,7 +60406,7 @@ pub(super) fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -60497,6 +60644,7 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -60559,7 +60707,7 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
             match c2.ma_open(&fz_c[..p], optInTimePeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -60648,7 +60796,7 @@ pub(super) fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -60890,6 +61038,7 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -60953,7 +61102,7 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
             match c2.macd_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -61070,7 +61219,7 @@ pub(super) fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -61355,6 +61504,7 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -61423,7 +61573,7 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
             match c2.macdext_open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -61540,7 +61690,7 @@ pub(super) fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -61792,6 +61942,7 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -61855,7 +62006,7 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
             match c2.macdfix_open(&fz_c[..p], optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -61972,7 +62123,7 @@ pub(super) fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -62241,6 +62392,7 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut b2: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -62305,7 +62457,7 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
             match c2.macdv_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -62422,7 +62574,7 @@ pub(super) fn sv_macdv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -62677,6 +62829,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -62737,7 +62890,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             match c2.mama_open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -62840,7 +62993,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -63087,6 +63240,7 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -63143,7 +63297,7 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
             match c2.marketfi_open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -63232,7 +63386,7 @@ pub(super) fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -63473,6 +63627,7 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -63530,7 +63685,7 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
             match c2.massi_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -63619,7 +63774,7 @@ pub(super) fn sv_massi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -63873,6 +64028,7 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
     for _pi in 0..svN { fz_v[_pi] = (optInMinPeriod + ((_pi as i32) % (optInMaxPeriod - optInMinPeriod + 3)) - 1) as f64; }
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -63935,7 +64091,7 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
             match c2.mavp_open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -64024,7 +64180,7 @@ pub(super) fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -64255,6 +64411,7 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -64311,7 +64468,7 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
             match c2.max_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -64400,7 +64557,7 @@ pub(super) fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -64627,6 +64784,7 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -64683,7 +64841,7 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
             match c2.maxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -64772,7 +64930,7 @@ pub(super) fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -65002,6 +65160,7 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -65059,7 +65218,7 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
             match c2.mcgd_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -65148,7 +65307,7 @@ pub(super) fn sv_mcgd(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -65375,6 +65534,7 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -65431,7 +65591,7 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
             match c2.median_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -65520,7 +65680,7 @@ pub(super) fn sv_median(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -65752,6 +65912,7 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -65808,7 +65969,7 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
             match c2.medprice_open(&fz_h[..p], &fz_l[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -65897,7 +66058,7 @@ pub(super) fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66149,6 +66310,7 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -66205,7 +66367,7 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
             match c2.mfi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -66294,7 +66456,7 @@ pub(super) fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66527,6 +66689,7 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -66583,7 +66746,7 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
             match c2.midpoint_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -66672,7 +66835,7 @@ pub(super) fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -66907,6 +67070,7 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -66963,7 +67127,7 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
             match c2.midprice_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -67052,7 +67216,7 @@ pub(super) fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -67281,6 +67445,7 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -67337,7 +67502,7 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
             match c2.min_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -67426,7 +67591,7 @@ pub(super) fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -67653,6 +67818,7 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -67709,7 +67875,7 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
             match c2.minindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va != v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -67798,7 +67964,7 @@ pub(super) fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -68029,6 +68195,7 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -68088,7 +68255,7 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
             match c2.minmax_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -68191,7 +68358,7 @@ pub(super) fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -68428,6 +68595,7 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     let mut b0: Vec<i32> = vec![0i32; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -68487,7 +68655,7 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             match c2.minmaxindex_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if v0.0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -68590,7 +68758,7 @@ pub(super) fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -68842,6 +69010,7 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -68899,7 +69068,7 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
             match c2.minus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -68988,7 +69157,7 @@ pub(super) fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69230,6 +69399,7 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -69287,7 +69457,7 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
             match c2.minus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -69376,7 +69546,7 @@ pub(super) fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69605,6 +69775,7 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -69661,7 +69832,7 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
             match c2.mom_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -69750,7 +69921,7 @@ pub(super) fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -69982,6 +70153,7 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -70038,7 +70210,7 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
             match c2.mult_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -70127,7 +70299,7 @@ pub(super) fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -70374,6 +70546,7 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -70431,7 +70604,7 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
             match c2.natr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -70520,7 +70693,7 @@ pub(super) fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -70756,6 +70929,7 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -70812,7 +70986,7 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
             match c2.nvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -70901,7 +71075,7 @@ pub(super) fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71134,6 +71308,7 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -71190,7 +71365,7 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
             match c2.obv_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -71279,7 +71454,7 @@ pub(super) fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71525,6 +71700,7 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -71587,7 +71763,7 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
             match c2.percentb_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -71676,7 +71852,7 @@ pub(super) fn sv_percentb(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -71909,6 +72085,7 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -71965,7 +72142,7 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
             match c2.percentile_open(&fz_c[..p], optInTimePeriod, optInPercentile) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -72054,7 +72231,7 @@ pub(super) fn sv_percentile(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -72282,6 +72459,7 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -72338,7 +72516,7 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
             match c2.percentrank_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -72427,7 +72605,7 @@ pub(super) fn sv_percentrank(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -72673,6 +72851,7 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -72730,7 +72909,7 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
             match c2.plus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -72819,7 +72998,7 @@ pub(super) fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -73061,6 +73240,7 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -73118,7 +73298,7 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
             match c2.plus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -73207,7 +73387,7 @@ pub(super) fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -73451,6 +73631,7 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -73513,7 +73694,7 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
             match c2.ppo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -73602,7 +73783,7 @@ pub(super) fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -73850,6 +74031,7 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -73907,7 +74089,7 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
             match c2.pso_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInEMAPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -73996,7 +74178,7 @@ pub(super) fn sv_pso(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -74233,6 +74415,7 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -74289,7 +74472,7 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
             match c2.pvi_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -74378,7 +74561,7 @@ pub(super) fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -74621,6 +74804,7 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -74683,7 +74867,7 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
             match c2.pvo_open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -74772,7 +74956,7 @@ pub(super) fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -75006,6 +75190,7 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -75062,7 +75247,7 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
             match c2.pvt_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -75151,7 +75336,7 @@ pub(super) fn sv_pvt(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -75387,6 +75572,7 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -75443,7 +75629,7 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
             match c2.qstick_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -75532,7 +75718,7 @@ pub(super) fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -75764,6 +75950,7 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -75821,7 +76008,7 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
             match c2.rma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -75910,7 +76097,7 @@ pub(super) fn sv_rma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76137,6 +76324,7 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -76193,7 +76381,7 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
             match c2.roc_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -76282,7 +76470,7 @@ pub(super) fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76509,6 +76697,7 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -76565,7 +76754,7 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
             match c2.rocp_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -76654,7 +76843,7 @@ pub(super) fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -76881,6 +77070,7 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -76937,7 +77127,7 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
             match c2.rocr_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -77026,7 +77216,7 @@ pub(super) fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -77253,6 +77443,7 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -77309,7 +77500,7 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
             match c2.rocr100_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -77398,7 +77589,7 @@ pub(super) fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -77652,6 +77843,7 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -77708,7 +77900,7 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
             match c2.rogerssatchell_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInAnnualization) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -77797,7 +77989,7 @@ pub(super) fn sv_rogerssatchell(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -78034,6 +78226,7 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -78091,7 +78284,7 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
             match c2.rsi_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -78180,7 +78373,7 @@ pub(super) fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -78413,6 +78606,7 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -78470,7 +78664,7 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
             match c2.rvi_open(&fz_c[..p], optInTimePeriod, optInStdDevPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -78559,7 +78753,7 @@ pub(super) fn sv_rvi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -78798,6 +78992,7 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -78855,7 +79050,7 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
             match c2.rvir_open(&fz_h[..p], &fz_l[..p], optInTimePeriod, optInStdDevPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -78944,7 +79139,7 @@ pub(super) fn sv_rvir(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79174,6 +79369,7 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -79230,7 +79426,7 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
             match c2.rvol_open(&fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -79319,7 +79515,7 @@ pub(super) fn sv_rvol(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79557,6 +79753,7 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -79613,7 +79810,7 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
             match c2.sar_open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -79702,7 +79899,7 @@ pub(super) fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -79961,6 +80158,7 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -80017,7 +80215,7 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
             match c2.sarext_open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -80106,7 +80304,7 @@ pub(super) fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -80348,6 +80546,7 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -80404,7 +80603,7 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
             match c2.sharpe_open(&fz_c[..p], optInTimePeriod, optInRiskFreeRate, optInAnnualization) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -80493,7 +80692,7 @@ pub(super) fn sv_sharpe(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -80746,6 +80945,7 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -80802,7 +81002,7 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
             match c2.si_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInLimitMove) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -80891,7 +81091,7 @@ pub(super) fn sv_si(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81121,6 +81321,7 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -81177,7 +81378,7 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
             match c2.sin_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -81266,7 +81467,7 @@ pub(super) fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81489,6 +81690,7 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -81545,7 +81747,7 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
             match c2.sinh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -81634,7 +81836,7 @@ pub(super) fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -81860,6 +82062,7 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -81916,7 +82119,7 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
             match c2.skew_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -82005,7 +82208,7 @@ pub(super) fn sv_skew(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -82232,6 +82435,7 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -82288,7 +82492,7 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
             match c2.sma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -82377,7 +82581,7 @@ pub(super) fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -82633,6 +82837,7 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -82693,7 +82898,7 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
             match c2.smi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -82796,7 +83001,7 @@ pub(super) fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -83042,6 +83247,7 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -83098,7 +83304,7 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
             match c2.sortino_open(&fz_c[..p], optInTimePeriod, optInMAR, optInAnnualization) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -83187,7 +83393,7 @@ pub(super) fn sv_sortino(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -83413,6 +83619,7 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -83469,7 +83676,7 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
             match c2.sqrt_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -83558,7 +83765,7 @@ pub(super) fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -83819,6 +84026,7 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -83878,7 +84086,7 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
             match c2.sqzmom_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -83981,7 +84189,7 @@ pub(super) fn sv_sqzmom(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -84232,6 +84440,7 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -84290,7 +84499,7 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
             match c2.stc_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInCyclePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -84379,7 +84588,7 @@ pub(super) fn sv_stc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -84611,6 +84820,7 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -84667,7 +84877,7 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
             match c2.stddev_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -84756,7 +84966,7 @@ pub(super) fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -85031,6 +85241,7 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -85096,7 +85307,7 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
             match c2.stoch_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -85199,7 +85410,7 @@ pub(super) fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -85475,6 +85686,7 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -85540,7 +85752,7 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
             match c2.stochf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -85643,7 +85855,7 @@ pub(super) fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -85904,6 +86116,7 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -85970,7 +86183,7 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
             match c2.stochrsi_open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -86073,7 +86286,7 @@ pub(super) fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -86314,6 +86527,7 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -86370,7 +86584,7 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
             match c2.sub_open(&fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -86459,7 +86673,7 @@ pub(super) fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -86687,6 +86901,7 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -86743,7 +86958,7 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
             match c2.sum_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -86832,7 +87047,7 @@ pub(super) fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -87082,6 +87297,7 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -87142,7 +87358,7 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
             match c2.supertrend_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInMultiplier) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -87245,7 +87461,7 @@ pub(super) fn sv_supertrend(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -87486,6 +87702,7 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -87543,7 +87760,7 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
             match c2.swak_2php_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -87632,7 +87849,7 @@ pub(super) fn sv_swak_2php(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -87865,6 +88082,7 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -87922,7 +88140,7 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
             match c2.swak_bp_open(&fz_c[..p], optInTimePeriod, optInDelta) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -88011,7 +88229,7 @@ pub(super) fn sv_swak_bp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88242,6 +88460,7 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -88299,7 +88518,7 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
             match c2.swak_butter_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -88388,7 +88607,7 @@ pub(super) fn sv_swak_butter(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88618,6 +88837,7 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -88675,7 +88895,7 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
             match c2.swak_gauss_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -88764,7 +88984,7 @@ pub(super) fn sv_swak_gauss(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -88994,6 +89214,7 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -89051,7 +89272,7 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
             match c2.swak_hp_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -89140,7 +89361,7 @@ pub(super) fn sv_swak_hp(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -89373,6 +89594,7 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -89430,7 +89652,7 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
             match c2.t3_open(&fz_c[..p], optInTimePeriod, optInVFactor) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -89519,7 +89741,7 @@ pub(super) fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -89744,6 +89966,7 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -89800,7 +90023,7 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
             match c2.tan_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -89889,7 +90112,7 @@ pub(super) fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90112,6 +90335,7 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -90168,7 +90392,7 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
             match c2.tanh_open(&fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -90257,7 +90481,7 @@ pub(super) fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90483,6 +90707,7 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -90540,7 +90765,7 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
             match c2.tema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -90629,7 +90854,7 @@ pub(super) fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -90869,6 +91094,7 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -90925,7 +91151,7 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
             match c2.trange_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -91014,7 +91240,7 @@ pub(super) fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91244,6 +91470,7 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -91300,7 +91527,7 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
             match c2.trima_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -91389,7 +91616,7 @@ pub(super) fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91616,6 +91843,7 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -91673,7 +91901,7 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
             match c2.trix_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -91762,7 +91990,7 @@ pub(super) fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -91989,6 +92217,7 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -92045,7 +92274,7 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
             match c2.tsf_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -92134,7 +92363,7 @@ pub(super) fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -92364,6 +92593,7 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -92421,7 +92651,7 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
             match c2.tsi_open(&fz_c[..p], optInFirstPeriod, optInSecondPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -92510,7 +92740,7 @@ pub(super) fn sv_tsi(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -92751,6 +92981,7 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -92807,7 +93038,7 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
             match c2.typprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -92896,7 +93127,7 @@ pub(super) fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93148,6 +93379,7 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -93204,7 +93436,7 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
             match c2.ultosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -93293,7 +93525,7 @@ pub(super) fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93529,6 +93761,7 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -93585,7 +93818,7 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
             match c2.var_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -93674,7 +93907,7 @@ pub(super) fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -93902,6 +94135,7 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -93958,7 +94192,7 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
             match c2.vhf_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -94047,7 +94281,7 @@ pub(super) fn sv_vhf(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -94280,6 +94514,7 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -94337,7 +94572,7 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
             match c2.vidya_open(&fz_c[..p], optInTimePeriod, optInCMOPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -94426,7 +94661,7 @@ pub(super) fn sv_vidya(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -94674,6 +94909,7 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -94733,7 +94969,7 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
             match c2.vortex_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -94836,7 +95072,7 @@ pub(super) fn sv_vortex(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -95094,6 +95330,7 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -95150,7 +95387,7 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
             match c2.vwap_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -95239,7 +95476,7 @@ pub(super) fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -95479,6 +95716,7 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -95535,7 +95773,7 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
             match c2.vwma_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -95624,7 +95862,7 @@ pub(super) fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -95866,6 +96104,7 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -95922,7 +96161,7 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
             match c2.wad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -96011,7 +96250,7 @@ pub(super) fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -96267,6 +96506,7 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut b1: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -96327,7 +96567,7 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
             match c2.wavetrend_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInChannelPeriod, optInAveragePeriod, optInSignalPeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
@@ -96430,7 +96670,7 @@ pub(super) fn sv_wavetrend(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -96682,6 +96922,7 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -96738,7 +96979,7 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
             match c2.wclprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -96827,7 +97068,7 @@ pub(super) fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -97073,6 +97314,7 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -97129,7 +97371,7 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
             match c2.willr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -97218,7 +97460,7 @@ pub(super) fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -97449,6 +97691,7 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -97505,7 +97748,7 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
             match c2.wma_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -97594,7 +97837,7 @@ pub(super) fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -97840,6 +98083,7 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
     let mut b1: Vec<i32> = vec![0i32; svN];
     let mut b2: Vec<i32> = vec![0i32; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -97902,7 +98146,7 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
             match c2.zigzag_open(&fz_h[..p], &fz_l[..p], optInSensitivity, optInMinTrendLength) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     if v0.2 != b2[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
@@ -98019,7 +98263,7 @@ pub(super) fn sv_zigzag(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
@@ -98261,6 +98505,7 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
     fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
     let mut b0: Vec<f64> = vec![0.0f64; svN];
     let mut legs = 0i64;
+    let mut round_mask = 0i32;
     let mut all_ok = true;
     let mut peek_all = true;
     let mut peek_reps = 0i64;
@@ -98318,7 +98563,7 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
             match c2.zlema_open(&fz_c[..p], optInTimePeriod) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
                 Ok((mut st, v0)) => {
-                    legs += 1;
+                    legs += 1; round_mask |= 1 << rd;
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     { let va = st.value(); value_checked = 1; value_legs += 1;
                       if va.to_bits() != v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
@@ -98407,7 +98652,7 @@ pub(super) fn sv_zlema(core: &Core, params: &Value) -> String {
             }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{},\"round_mask\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)
 }
 
 #[allow(clippy::too_many_arguments, clippy::needless_range_loop)]

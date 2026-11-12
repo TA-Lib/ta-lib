@@ -133,11 +133,11 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     }
     s.push_str(&bdecls);
 
-    s.push_str("  let legs = 0;\n  let allOk = true;\n  let peekAll = true;\n  let peekReps = 0;\n  let peekRejects = 0;\n  let peekRepAll = true;\n  let fillChecked = 0;\n  let fillOk = true;\n  const beg = new MInteger();\n  const nb = new MInteger();\n  let diag = '';\n");
+    s.push_str("  let legs = 0;\n  let roundMask = 0;\n  let allOk = true;\n  let peekAll = true;\n  let peekReps = 0;\n  let peekRejects = 0;\n  let peekRepAll = true;\n  let fillChecked = 0;\n  let fillOk = true;\n  const beg = new MInteger();\n  const nb = new MInteger();\n  let diag = '';\n");
     s.push_str("  let rangeChecked = 0;\n  let rangeOk = true;\n  let rangeLegs = 0;\n  let rangeSites = 0;\n");
     s.push_str("  const zsign = [0];\n");
     if candle {
-        s.push_str("  const rounds = candleLegs !== 0 ? 4 : 1;\n");
+        s.push_str("  const rounds = candleLegs !== 0 ? 5 : 1;\n");
     } else {
         s.push_str("  const rounds = 1;\n");
     }
@@ -201,7 +201,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     if candle {
         s.push_str("      if (!openRejects) allOk = false;\n");
         s.push_str("      if (rd + 1 < rounds) continue;\n");
-        s.push_str("      return `{\"retCode\":${rc},\"legs\":${legs},\"nb\":${nb.value},\"openRejects\":${openRejects ? 1 : 0},\"ok\":${allOk ? 1 : 0},\"peek_ok\":${peekAll ? 1 : 0},\"peek_reps\":${peekReps},\"peek_rep_ok\":${peekRepAll ? 1 : 0},\"peek_rejects\":${peekRejects},\"benign\":${zsign[0]}}`;\n");
+        s.push_str("      return `{\"retCode\":${rc},\"legs\":${legs},\"nb\":${nb.value},\"openRejects\":${openRejects ? 1 : 0},\"ok\":${allOk ? 1 : 0},\"peek_ok\":${peekAll ? 1 : 0},\"peek_reps\":${peekReps},\"peek_rep_ok\":${peekRepAll ? 1 : 0},\"peek_rejects\":${peekRejects},\"benign\":${zsign[0]},\"round_mask\":${roundMask}}`;\n");
     } else {
         s.push_str("      return `{\"retCode\":${rc},\"legs\":0,\"nb\":${nb.value},\"openRejects\":${openRejects ? 1 : 0},\"ok\":${openRejects ? 1 : 0},\"peek_ok\":1}`;\n");
     }
@@ -251,7 +251,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let _ = writeln!(s, "      let st: {ns}.{};", names.stream_class);
     let _ = writeln!(s, "      try {{ st = {}; }}", open(&pfx_ins("P")));
     s.push_str("      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,\"openRejectP\":${P}`; continue; }\n");
-    s.push_str("      legs++;\n");
+    s.push_str("      legs++; roundMask |= 1 << rd;\n");
     let open_diag = |i: usize| {
         format!("{{ allOk = false; if (diag === '') diag = `,\"badBar\":${{P - 1}},\"badOut\":{i},\"where\":\"open\"`; }}")
     };
@@ -525,7 +525,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     s.push_str("  }\n");
     let _ = writeln!(
         s,
-        "  return `{{\"retCode\":0,\"beg\":${{beg.value}},\"nb\":${{nb.value}},\"legs\":${{legs}},\"fill_checked\":${{fillChecked}},\"fill_ok\":${{fillOk ? 1 : 0}},\"range_checked\":${{rangeChecked}},\"range_legs\":${{rangeLegs}},\"range_sites\":${{rangeSites}},\"range_sites_all\":{SV_RANGE_MASK_TS},\"range_ok\":${{rangeOk ? 1 : 0}},\"step_ok\":${{allOk ? 1 : 0}},\"ok\":${{allOk && fillOk && rangeOk ? 1 : 0}},\"peek_ok\":${{peekAll ? 1 : 0}},\"peek_reps\":${{peekReps}},\"peek_rep_ok\":${{peekRepAll ? 1 : 0}},\"peek_rejects\":${{peekRejects}},\"benign\":${{zsign[0]}}${{diag}}}}`;"
+        "  return `{{\"retCode\":0,\"beg\":${{beg.value}},\"nb\":${{nb.value}},\"legs\":${{legs}},\"fill_checked\":${{fillChecked}},\"fill_ok\":${{fillOk ? 1 : 0}},\"range_checked\":${{rangeChecked}},\"range_legs\":${{rangeLegs}},\"range_sites\":${{rangeSites}},\"range_sites_all\":{SV_RANGE_MASK_TS},\"range_ok\":${{rangeOk ? 1 : 0}},\"step_ok\":${{allOk ? 1 : 0}},\"ok\":${{allOk && fillOk && rangeOk ? 1 : 0}},\"peek_ok\":${{peekAll ? 1 : 0}},\"peek_reps\":${{peekReps}},\"peek_rep_ok\":${{peekRepAll ? 1 : 0}},\"peek_rejects\":${{peekRejects}},\"benign\":${{zsign[0]}},\"round_mask\":${{roundMask}}${{diag}}}}`;"
     );
     s.push_str("}\n\n");
     s
@@ -585,14 +585,15 @@ function svShortHistory(e: unknown): boolean {
   return (e as TALibError).retCode === RetCode.INSUFFICIENT_HISTORY;
 }
 
-// Defaults / avgPeriod+3 / avgPeriod=0 / rangeType=Shadows, as every server sweeps.
+// Defaults / avgPeriod+3 / avgPeriod=0 / rangeType=Shadows / the other range type, as every server sweeps.
 function svCandleRound(rd: number): CoreBuilder {
   const b = Core.builder();
   if (rd === 0) return b;
   for (const cs of Core.DEFAULT.candleSettings) {
     if (rd === 1) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, cs.avgPeriod + 3, cs.factor);
     else if (rd === 2) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, 0, cs.factor);
-    else b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], RangeType.SHADOWS, cs.avgPeriod, cs.factor);
+    else if (rd === 3) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], RangeType.SHADOWS, cs.avgPeriod, cs.factor);
+    else b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType === RangeType.REAL_BODY ? RangeType.HIGH_LOW : RangeType.REAL_BODY, cs.avgPeriod, cs.factor);
   }
   return b;
 }

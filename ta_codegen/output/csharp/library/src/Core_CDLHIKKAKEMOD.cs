@@ -150,102 +150,395 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx - 3 ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
-         i += 1;
+      if( Near_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2]));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Near_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]);
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Near_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
       }
-      patternCount = 0;
-      patternResult = 0;
-      patternHigh = 0.0;
-      patternLow = 0.0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         /* copy here the pattern recognition code below */
-         if( inHigh[i - 2] < inHigh[i - 3] &&
-             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
-             inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
-             (inHigh[i] < inHigh[i - 1] &&
-               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
-               inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
-              inHigh[i] > inHigh[i - 1] &&
-               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
-               inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
-            patternHigh = inHigh[i - 1];
-            patternLow = inLow[i - 1];
-            patternCount = 4;
-         } else if( patternCount > 0 &&
-             (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
-               inClose[i] > patternHigh || /* close higher than the high of 3rd */
-              patternResult < 0 &&
-               inClose[i] < patternLow) )  /* close lower than the low of 3rd */
-         {
-            patternCount = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
-         }
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle
-       * - second candle: candle with range less than first candle and close near the bottom (near the top)
-       * - third candle: lower high and higher low than 2nd
-       * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
-       * Confirmation could come in the next 3 days with:
-       * - a day that closes higher than the high (lower than the low) of the 3rd candle
-       */
-      outIdx = 0;
-      do {
-         if( inHigh[i - 2] < inHigh[i - 3] &&
-             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
-             inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
-             (inHigh[i] < inHigh[i - 1] &&
-               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
-               inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
-              inHigh[i] > inHigh[i - 1] &&
-               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
-               inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
-            patternHigh = inHigh[i - 1];
-            patternLow = inLow[i - 1];
-            patternCount = 4;
-            outInteger[outIdx++] = patternResult;
-         } else if( patternCount > 0 &&
-             (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
-               inClose[i] > patternHigh || /* close higher than the high of 3rd */
-              patternResult < 0 &&
-               inClose[i] < patternLow) )  /* close lower than the low of 3rd */
-         {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
-            patternCount = 0;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
    }
    internal RetCode CdlhikkakemodImpl( int startIdx,
                                        int endIdx,
@@ -289,59 +582,223 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx - 3 ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
-         i += 1;
+      if( Near_rangeType == 0 ) {
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) - (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) - (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Near_rangeType == 1 ) {
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((double)inHigh[i - 2] - (double)inLow[i - 2]);
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((double)inHigh[i - 2] - (double)inLow[i - 2]) - ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += ((double)inHigh[i - 2] - (double)inLow[i - 2]) - ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Near_rangeType == 2 ) {
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) - (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0)))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) - (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
+               patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+               patternHigh = (double)inHigh[i - 1];
+               patternLow = (double)inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++] = patternResult;
+            } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
+               outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
       }
-      patternCount = 0;
-      patternResult = 0;
-      patternHigh = 0.0;
-      patternLow = 0.0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
-            patternHigh = (double)inHigh[i - 1];
-            patternLow = (double)inLow[i - 1];
-            patternCount = 4;
-         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
-            patternCount = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
-         }
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && ((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) {
-            patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
-            patternHigh = (double)inHigh[i - 1];
-            patternLow = (double)inLow[i - 1];
-            patternCount = 4;
-            outInteger[outIdx++] = patternResult;
-         } else if( patternCount > 0 && (patternResult > 0 && (double)inClose[i] > patternHigh || patternResult < 0 && (double)inClose[i] < patternLow) ) {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
-            patternCount = 0;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
    }
    /// <summary>
    /// A four-candle pattern: two successively narrower inside bars, then a
@@ -844,135 +1301,527 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx - 3 ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
-         i += 1;
-      }
-      patternCount = 0;
-      patternResult = 0;
-      patternHigh = 0.0;
-      patternLow = 0.0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         /* copy here the pattern recognition code below */
-         if( inHigh[i - 2] < inHigh[i - 3] &&
-             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
-             inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
-             (inHigh[i] < inHigh[i - 1] &&
-               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
-               inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
-              inHigh[i] > inHigh[i - 1] &&
-               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
-               inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
-            patternHigh = inHigh[i - 1];
-            patternLow = inLow[i - 1];
-            patternCount = 4;
-         } else if( patternCount > 0 &&
-             (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
-               inClose[i] > patternHigh || /* close higher than the high of 3rd */
-              patternResult < 0 &&
-               inClose[i] < patternLow) )  /* close lower than the low of 3rd */
-         {
-            patternCount = 0;
+      if( Near_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2]));
+            i += 1;
          }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
          }
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle
-       * - second candle: candle with range less than first candle and close near the bottom (near the top)
-       * - third candle: lower high and higher low than 2nd
-       * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
-       * Confirmation could come in the next 3 days with:
-       * - a day that closes higher than the high (lower than the low) of the 3rd candle
-       */
-      outIdx = 0;
-      do {
-         if( inHigh[i - 2] < inHigh[i - 3] &&
-             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
-             inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
-             (inHigh[i] < inHigh[i - 1] &&
-               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
-               inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
-              inHigh[i] > inHigh[i - 1] &&
-               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
-               inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
-            patternHigh = inHigh[i - 1];
-            patternLow = inLow[i - 1];
-            patternCount = 4;
-            outInteger[outIdx++ * outStride] = patternResult;
-         } else if( patternCount > 0 &&
-             (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
-               inClose[i] > patternHigh || /* close higher than the high of 3rd */
-              patternResult < 0 &&
-               inClose[i] < patternLow) )  /* close lower than the low of 3rd */
-         {
-            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
-            patternCount = 0;
-         } else {
-            outInteger[outIdx++ * outStride] = 0;
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++ * outStride] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            NearPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
          }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
-         NearTrailingIdx += 1;
-         if( patternCount > 0 ) {
-            patternCount -= 1;
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
          }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_NearTrailingIdx = i - NearTrailingIdx;
-      int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
-      if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.patternResult = patternResult;
+         sp.patternCount = patternCount;
+         sp.patternHigh = patternHigh;
+         sp.patternLow = patternLow;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag3_inHigh = inHigh[historyLen - 3];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag3_inLow = inLow[historyLen - 3];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( Near_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]);
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++ * outStride] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            NearPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]);
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.patternResult = patternResult;
+         sp.patternCount = patternCount;
+         sp.patternHigh = patternHigh;
+         sp.patternLow = patternLow;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag3_inHigh = inHigh[historyLen - 3];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag3_inLow = inLow[historyLen - 3];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( Near_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0)))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++ * outStride] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            NearPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2]));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.patternResult = patternResult;
+         sp.patternCount = patternCount;
+         sp.patternHigh = patternHigh;
+         sp.patternLow = patternLow;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag3_inHigh = inHigh[historyLen - 3];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag3_inLow = inLow[historyLen - 3];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx - 3 ) {
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         patternCount = 0;
+         patternResult = 0;
+         patternHigh = 0.0;
+         patternLow = 0.0;
+         i = startIdx - 3;
+         while( i < startIdx ) {
+            /* copy here the pattern recognition code below */
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               patternCount = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle
+          * - second candle: candle with range less than first candle and close near the bottom (near the top)
+          * - third candle: lower high and higher low than 2nd
+          * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+          * Confirmation could come in the next 3 days with:
+          * - a day that closes higher than the high (lower than the low) of the 3rd candle
+          */
+         outIdx = 0;
+         do {
+            if( inHigh[i - 2] < inHigh[i - 3] &&
+                inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+                inHigh[i - 1] < inHigh[i - 2] &&
+                inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+                (inHigh[i] < inHigh[i - 1] &&
+                  inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+                  inClose[i - 2] <= inLow[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || /* (bull) 2nd: close near the low */
+                 inHigh[i] > inHigh[i - 1] &&
+                  inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+                  inClose[i - 2] >= inHigh[i - 2] - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 2nd: close near the top */
+            {
+               patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+               patternHigh = inHigh[i - 1];
+               patternLow = inLow[i - 1];
+               patternCount = 4;
+               outInteger[outIdx++ * outStride] = patternResult;
+            } else if( patternCount > 0 &&
+                (patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+                  inClose[i] > patternHigh || /* close higher than the high of 3rd */
+                 patternResult < 0 &&
+                  inClose[i] < patternLow) )  /* close lower than the low of 3rd */
+            {
+               outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+               patternCount = 0;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+            NearTrailingIdx += 1;
+            if( patternCount > 0 ) {
+               patternCount -= 1;
+            }
+            i += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.patternResult = patternResult;
+         sp.patternCount = patternCount;
+         sp.patternHigh = patternHigh;
+         sp.patternLow = patternLow;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag3_inHigh = inHigh[historyLen - 3];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag3_inLow = inLow[historyLen - 3];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       }
-      int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
-      double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
-      }
-      sp.NearPeriodTotal = NearPeriodTotal;
-      sp.patternResult = patternResult;
-      sp.patternCount = patternCount;
-      sp.patternHigh = patternHigh;
-      sp.patternLow = patternLow;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag3_inHigh = inHigh[historyLen - 3];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.lag3_inLow = inLow[historyLen - 3];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
-      sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
-      sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
-      sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
-      sp.cs_Near_rangeType = Near_rangeType;
-      sp.cs_Near_avgPeriod = Near_avgPeriod;
-      sp.cs_Near_factor = Near_factor;
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 

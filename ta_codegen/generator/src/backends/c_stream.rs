@@ -5341,34 +5341,67 @@ fn emit_open_arm(
     let _ = writeln!(o, "\n   {{");
     let selected = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
     let open_body = build_open_body_from(model, &selected);
-    let mut open_body_c = String::new();
-    for s in &open_body {
-        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
-    }
-    let open_body_c = super::eager_select::lay_out(&open_body_c, true);
+    let render = |stmts: &[Statement]| {
+        let mut c = String::new();
+        for s in stmts {
+            c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+        }
+        c
+    };
+    let lay_out = |c: &str| super::eager_select::lay_out(c, true);
+    let copies = super::c::range_type_copies(&open_body, func);
+    let (head_c, arms_c) = match &copies {
+        Some(copies) => {
+            let head_c = render(&copies.head);
+            let count = counter.get();
+            let arms_c: Vec<String> = copies
+                .arms
+                .iter()
+                .map(|arm| {
+                    counter.set(count);
+                    render(&arm.body)
+                })
+                .collect();
+            (head_c, arms_c)
+        }
+        None => (render(&open_body), Vec::new()),
+    };
     let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
-        o.push_str(&emit_used_candle_unpacking(&open_settings, &open_body_c, 6));
+        let as_written = lay_out(&format!("{head_c}{}", arms_c.last().map_or("", String::as_str)));
+        o.push_str(&emit_used_candle_unpacking(&open_settings, &as_written, 6));
     }
-    o.push_str(&open_body_c);
+    o.push_str(&lay_out(&head_c));
 
     // --- state capture --------------------------------------------------------
-    let _ = writeln!(o, "\n      /* Capture the live batch state into the handle. */");
-    o.push_str(&alloc_and_capture(
+    let mut capture = String::new();
+    let _ = writeln!(capture, "\n      /* Capture the live batch state into the handle. */");
+    capture.push_str(&alloc_and_capture(
         func, model, "      ", /*with_state=*/ true, "", registry, helpers, counter,
     ));
     for lag in &model.lags {
         for k in 1..=lag.depth {
             let _ = writeln!(
-                o,
+                capture,
                 "      sp->{} = {}[historyLen - {k}];",
                 StreamModel::lag_field(&lag.array, k),
                 lag.array
             );
         }
     }
-    emit_circ_capture(o, model, &n);
-    emit_open_tail(o, func);
+    emit_circ_capture(&mut capture, model, &n);
+    emit_open_tail(&mut capture, func);
+    match &copies {
+        Some(copies) => {
+            for (k, (arm, arm_c)) in copies.arms.iter().zip(&arms_c).enumerate() {
+                o.push_str(&super::c::open_range_type_arm(k, arm, "      "));
+                o.push_str(&lay_out(arm_c));
+                o.push_str(&capture);
+                o.push_str("      }\n");
+            }
+        }
+        None => o.push_str(&capture),
+    }
     let _ = writeln!(o, "   }}");
 }
 

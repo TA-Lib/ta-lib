@@ -2,11 +2,11 @@ pub mod abstract_rows;
 pub mod builtins;
 pub mod c;
 pub mod c_hygiene;
-pub mod c_candle_defaults;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
 pub mod cond_fold;
+pub mod range_type_copy;
 pub mod divisor_guard;
 pub(crate) mod eager_select;
 #[cfg(test)]

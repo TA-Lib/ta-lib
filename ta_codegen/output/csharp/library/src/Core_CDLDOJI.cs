@@ -138,39 +138,143 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyDojiPeriodTotal = 0;
-      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-      i = BodyDojiTrailingIdx;
-      while( i < startIdx ) {
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       *
-       * Must have:
-       * - open quite equal to close
-       * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( BodyDoji_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (Math.Abs(inClose[i] - inOpen[i]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
           */
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyDojiTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += (Math.Abs(inClose[i] - inOpen[i])) - (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyDoji_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (inHigh[i] - inLow[i]);
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i] - inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]);
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyDoji_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) - ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    internal RetCode CdldojiImpl( int startIdx,
                                  int endIdx,
@@ -210,27 +314,95 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      BodyDojiPeriodTotal = 0;
-      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-      i = BodyDojiTrailingIdx;
-      while( i < startIdx ) {
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( BodyDoji_rangeType == 0 ) {
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (Math.Abs((double)inClose[i] - (double)inOpen[i]));
+            i += 1;
          }
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[BodyDojiTrailingIdx] - (double)inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[BodyDojiTrailingIdx] - (double)inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[BodyDojiTrailingIdx] - ((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inClose[BodyDojiTrailingIdx]) : ((double)inOpen[BodyDojiTrailingIdx]))) + (((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inOpen[BodyDojiTrailingIdx]) : ((double)inClose[BodyDojiTrailingIdx])) - (double)inLow[BodyDojiTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyDojiTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (Math.Abs((double)inClose[i] - (double)inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyDojiPeriodTotal += (Math.Abs((double)inClose[i] - (double)inOpen[i])) - (Math.Abs((double)inClose[BodyDojiTrailingIdx] - (double)inOpen[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyDoji_rangeType == 1 ) {
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((double)inHigh[i] - (double)inLow[i]);
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((double)inHigh[i] - (double)inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyDojiPeriodTotal += ((double)inHigh[i] - (double)inLow[i]) - ((double)inHigh[BodyDojiTrailingIdx] - (double)inLow[BodyDojiTrailingIdx]);
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyDoji_rangeType == 2 ) {
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i]));
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyDojiPeriodTotal += (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) - (((double)inHigh[BodyDojiTrailingIdx] - ((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inClose[BodyDojiTrailingIdx]) : ((double)inOpen[BodyDojiTrailingIdx]))) + (((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inOpen[BodyDojiTrailingIdx]) : ((double)inClose[BodyDojiTrailingIdx])) - (double)inLow[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)));
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[BodyDojiTrailingIdx] - (double)inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[BodyDojiTrailingIdx] - (double)inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[BodyDojiTrailingIdx] - ((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inClose[BodyDojiTrailingIdx]) : ((double)inOpen[BodyDojiTrailingIdx]))) + (((((double)inClose[BodyDojiTrailingIdx]) >= ((double)inOpen[BodyDojiTrailingIdx])) ? ((double)inOpen[BodyDojiTrailingIdx]) : ((double)inClose[BodyDojiTrailingIdx])) - (double)inLow[BodyDojiTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    /// <summary>
    /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
@@ -632,56 +804,211 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyDojiPeriodTotal = 0;
-      BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
-      i = BodyDojiTrailingIdx;
-      while( i < startIdx ) {
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       *
-       * Must have:
-       * - open quite equal to close
-       * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++ * outStride] = 100;
-         } else {
-            outInteger[outIdx++ * outStride] = 0;
+      if( BodyDoji_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (Math.Abs(inClose[i] - inOpen[i]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
           */
-         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyDojiTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
-      if( cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += (Math.Abs(inClose[i] - inOpen[i])) - (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
+         if( cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
+         double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+         sp.ringPos_BodyDojiTrailingIdx = 0;
+         sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
+         sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
+         sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+         sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+         sp.cs_BodyDoji_factor = BodyDoji_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( BodyDoji_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += (inHigh[i] - inLow[i]);
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i] - inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]);
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
+         if( cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
+         double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+         sp.ringPos_BodyDojiTrailingIdx = 0;
+         sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
+         sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
+         sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+         sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+         sp.cs_BodyDoji_factor = BodyDoji_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( BodyDoji_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) - ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx]));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
+         if( cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
+         double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+         sp.ringPos_BodyDojiTrailingIdx = 0;
+         sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
+         sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
+         sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+         sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+         sp.cs_BodyDoji_factor = BodyDoji_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyDojiPeriodTotal = 0;
+         BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+         i = BodyDojiTrailingIdx;
+         while( i < startIdx ) {
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          *
+          * Must have:
+          * - open quite equal to close
+          * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyDojiTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
+         if( cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
+         double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+         sp.ringPos_BodyDojiTrailingIdx = 0;
+         sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
+         sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
+         sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+         sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+         sp.cs_BodyDoji_factor = BodyDoji_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       }
-      int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
-      double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
-      }
-      sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
-      sp.ringPos_BodyDojiTrailingIdx = 0;
-      sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
-      sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
-      sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
-      sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
-      sp.cs_BodyDoji_factor = BodyDoji_factor;
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 

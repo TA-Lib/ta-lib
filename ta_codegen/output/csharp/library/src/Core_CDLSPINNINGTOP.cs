@@ -138,39 +138,143 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - small real body
-       * - shadows longer than the real body
-       * The meaning of "short" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( BodyShort_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (Math.Abs(inClose[i] - inOpen[i]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
           */
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += (Math.Abs(inClose[i] - inOpen[i])) - (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyShort_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (inHigh[i] - inLow[i]);
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (inHigh[i] - inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]);
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyShort_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) - ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    internal RetCode CdlspinningtopImpl( int startIdx,
                                         int endIdx,
@@ -210,27 +314,95 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)));
-         i += 1;
-      }
-      outIdx = 0;
-      do {
-         if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( BodyShort_rangeType == 0 ) {
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (Math.Abs((double)inClose[i] - (double)inOpen[i]));
+            i += 1;
          }
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyTrailingIdx] - ((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inClose[BodyTrailingIdx]) : ((double)inOpen[BodyTrailingIdx]))) + (((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inOpen[BodyTrailingIdx]) : ((double)inClose[BodyTrailingIdx])) - (double)inLow[BodyTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (Math.Abs((double)inClose[i] - (double)inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyPeriodTotal += (Math.Abs((double)inClose[i] - (double)inOpen[i])) - (Math.Abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyShort_rangeType == 1 ) {
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((double)inHigh[i] - (double)inLow[i]);
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((double)inHigh[i] - (double)inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyPeriodTotal += ((double)inHigh[i] - (double)inLow[i]) - ((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]);
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( BodyShort_rangeType == 2 ) {
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i]));
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyPeriodTotal += (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) - (((double)inHigh[BodyTrailingIdx] - ((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inClose[BodyTrailingIdx]) : ((double)inOpen[BodyTrailingIdx]))) + (((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inOpen[BodyTrailingIdx]) : ((double)inClose[BodyTrailingIdx])) - (double)inLow[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)));
+            i += 1;
+         }
+         outIdx = 0;
+         do {
+            if( ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > Math.Abs((double)inClose[i] - (double)inOpen[i]) && Math.Abs((double)inClose[i] - (double)inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyTrailingIdx] - (double)inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyTrailingIdx] - (double)inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyTrailingIdx] - ((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inClose[BodyTrailingIdx]) : ((double)inOpen[BodyTrailingIdx]))) + (((((double)inClose[BodyTrailingIdx]) >= ((double)inOpen[BodyTrailingIdx])) ? ((double)inOpen[BodyTrailingIdx]) : ((double)inClose[BodyTrailingIdx])) - (double)inLow[BodyTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    /// <summary>
    /// Single-candle pattern: a small real body with both an upper and a lower
@@ -634,56 +806,211 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx ) {
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - small real body
-       * - shadows longer than the real body
-       * The meaning of "short" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else {
-            outInteger[outIdx++ * outStride] = 0;
+      if( BodyShort_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (Math.Abs(inClose[i] - inOpen[i]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
           */
-         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_BodyTrailingIdx = i - BodyTrailingIdx;
-      if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) ) {
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += (Math.Abs(inClose[i] - inOpen[i])) - (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+         if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+         double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyPeriodTotal = BodyPeriodTotal;
+         sp.ringPos_BodyTrailingIdx = 0;
+         sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+         sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+         sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+         sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+         sp.cs_BodyShort_factor = BodyShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( BodyShort_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += (inHigh[i] - inLow[i]);
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : (inHigh[i] - inLow[i])) / 1.0))) ) {
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += (inHigh[i] - inLow[i]) - (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]);
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+         if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+         double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyPeriodTotal = BodyPeriodTotal;
+         sp.ringPos_BodyTrailingIdx = 0;
+         sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+         sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+         sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+         sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+         sp.cs_BodyShort_factor = BodyShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( BodyShort_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i]))) / 2.0))) ) {
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) - ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx]));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+         if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+         double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyPeriodTotal = BodyPeriodTotal;
+         sp.ringPos_BodyTrailingIdx = 0;
+         sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+         sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+         sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+         sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+         sp.cs_BodyShort_factor = BodyShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         BodyPeriodTotal = 0;
+         BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+         i = BodyTrailingIdx;
+         while( i < startIdx ) {
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+            i += 1;
+         }
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - small real body
+          * - shadows longer than the real body
+          * The meaning of "short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.Abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.Abs(inClose[i] - inOpen[i]) && Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+            i += 1;
+            BodyTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+         if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+         double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
+         for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.BodyPeriodTotal = BodyPeriodTotal;
+         sp.ringPos_BodyTrailingIdx = 0;
+         sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+         sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+         sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+         sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+         sp.cs_BodyShort_factor = BodyShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       }
-      int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
-      double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
-      }
-      sp.BodyPeriodTotal = BodyPeriodTotal;
-      sp.ringPos_BodyTrailingIdx = 0;
-      sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
-      sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
-      sp.cs_BodyShort_rangeType = BodyShort_rangeType;
-      sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
-      sp.cs_BodyShort_factor = BodyShort_factor;
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 

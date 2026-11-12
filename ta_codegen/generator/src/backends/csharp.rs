@@ -1090,18 +1090,57 @@ fn gen_func_inner(
         }
     }
 
-    // Render body statements (skip VarDecls)
-    for stmt in body {
-        if matches!(stmt, Statement::VarDecl { .. }) {
-            continue;
+    let render_top = |stmts: &[Statement], indent: usize, out: &mut String| {
+        for stmt in stmts {
+            if !matches!(stmt, Statement::VarDecl { .. }) {
+                out.push_str(&render_statement_ctx(stmt, indent, &ctx, enums, registry, helpers));
+            }
         }
-        out.push_str(&render_statement_ctx(stmt, 6, &ctx, enums, registry, helpers));
+    };
+    if let Some(copies) = range_type_copies(body, func) {
+        render_top(&copies.head, 6, &mut out);
+        let count = inline_counter.get();
+        for (k, arm) in copies.arms.iter().enumerate() {
+            inline_counter.set(count);
+            out.push_str(&open_range_type_arm(k, arm, "      "));
+            render_top(&arm.body, 9, &mut out);
+        }
+        out.push_str("      }\n");
+    } else {
+        render_top(body, 6, &mut out);
     }
 
     // Closing brace — return statement comes from IR body
     out.push_str("   }\n");
 
     out
+}
+
+fn range_type_code(t: super::range_type_copy::RangeType) -> i64 {
+    use super::range_type_copy::RangeType;
+    match t {
+        RangeType::RealBody => 0,
+        RangeType::HighLow => 1,
+        RangeType::Shadows => 2,
+    }
+}
+
+/// `body`'s range-type copies, each folded type the literal
+/// [`try_render_candle_ternary`] selects its one arm on.
+pub(crate) fn range_type_copies(body: &[Statement], func: &FuncDef) -> Option<super::range_type_copy::Copies> {
+    super::range_type_copy::split(body, &func.opt_outs, &|t| Expr::IntLiteral(range_type_code(t)))
+}
+
+/// The line that opens arm `k` at `pad`, closing the one before; the caller
+/// closes the last with `{pad}}`.
+pub(crate) fn open_range_type_arm(k: usize, arm: &super::range_type_copy::Arm, pad: &str) -> String {
+    let Some(guard) = &arm.guard else { return format!("{pad}}} else {{\n") };
+    let cond: Vec<String> = guard
+        .iter()
+        .map(|(s, t)| format!("{} == {}", super::range_type_copy::range_type_var(s), range_type_code(*t)))
+        .collect();
+    let close = if k == 0 { "" } else { "} else " };
+    format!("{pad}{close}if( {} ) {{\n", cond.join(" && "))
 }
 
 /// Render a ForC init or update clause. If it's a Block with multiple
@@ -2747,13 +2786,20 @@ fn try_render_candle_ternary(
             // rather than read from input/helpers/candlestick.c, so a fix to
             // the helper alone does NOT reach C# -- java.rs carries the same
             // duplicate.
-            Some(format!(
-                "(({rt} == 0) ? (Math.Abs({close} - {open})) \
-                 : (({rt} == 1) ? ({high} - {low}) \
-                 : (({rt} == 2) ? (({high} - ((({close}) >= ({open})) ? ({close}) : ({open}))) \
-                 + (((({close}) >= ({open})) ? ({open}) : ({close})) - {low})) \
-                 : 0.0)))"
-            ))
+            let real_body = format!("(Math.Abs({close} - {open}))");
+            let high_low = format!("({high} - {low})");
+            let shadows = format!(
+                "(({high} - ((({close}) >= ({open})) ? ({close}) : ({open}))) \
+                 + (((({close}) >= ({open})) ? ({open}) : ({close})) - {low}))"
+            );
+            Some(match &args[0] {
+                Expr::IntLiteral(0) => real_body,
+                Expr::IntLiteral(1) => high_low,
+                Expr::IntLiteral(2) => shadows,
+                _ => format!(
+                    "(({rt} == 0) ? {real_body} : (({rt} == 1) ? {high_low} : (({rt} == 2) ? {shadows} : 0.0)))"
+                ),
+            })
         }
         "ta_candleaverage" if args.len() == 8 => {
             let rt = r(&args[0]);
@@ -2765,10 +2811,15 @@ fn try_render_candle_ternary(
                 .collect();
             let candlerange =
                 try_render_candle_ternary("ta_candlerange", &cr_args, ctx, registry, helpers)?;
+            let divisor = match &args[0] {
+                Expr::IntLiteral(2) => "2.0".to_string(),
+                Expr::IntLiteral(_) => "1.0".to_string(),
+                _ => format!("(({rt} == 2) ? 2.0 : 1.0)"),
+            };
             Some(format!(
                 "(({factor} * ((({avg_period} != 0) \
                  ? ({sum} / {avg_period}) : {candlerange}) \
-                 / (({rt} == 2) ? 2.0 : 1.0))))"
+                 / {divisor})))"
             ))
         }
         _ => None,

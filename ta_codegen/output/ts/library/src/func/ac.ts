@@ -759,13 +759,13 @@ function acStepImpl(sp: AcStream, inHigh: number, inLow: number): void {
   sp.cur_outReal = tempReal;
   ringCapL_trailingFastIdx = sp.ringCap_trailingFastIdx;
   ringPosL_trailingFastIdx = sp.ringPos_trailingFastIdx;
-  sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = (inHigh + inLow) / 2.0;
+  sp.ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
   ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
   ringPosL_trailingFastIdx = ringPosL_trailingFastIdx & (ringPosL_trailingFastIdx - ringCapL_trailingFastIdx >> 31);
   sp.ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
   ringCapL_trailingSlowIdx = sp.ringCap_trailingSlowIdx;
   ringPosL_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
-  sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = (inHigh + inLow) / 2.0;
+  sp.ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice;
   ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
   ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx & (ringPosL_trailingSlowIdx - ringCapL_trailingSlowIdx >> 31);
   sp.ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;

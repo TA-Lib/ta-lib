@@ -188,7 +188,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     }
     s.push_str(&bdecls);
 
-    s.push_str("    let mut legs = 0i64;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut peek_reps = 0i64;\n    let mut peek_rejects = 0i64;\n    let mut peek_rep_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
+    s.push_str("    let mut legs = 0i64;\n    let mut round_mask = 0i32;\n    let mut all_ok = true;\n    let mut peek_all = true;\n    let mut peek_reps = 0i64;\n    let mut peek_rejects = 0i64;\n    let mut peek_rep_all = true;\n    let mut fill_checked = 0i32;\n    let mut fill_ok = true;\n    let mut beg = 0usize;\n    let mut nb = 0usize;\n    let mut diag = String::new();\n");
     // The range leg (#241): a handle's OutRange against what batch reported for
     // the same bars. Public API in every backend, so unlike the state leg this
     // one is not C-only.
@@ -202,7 +202,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     let z_mut = if out_is_int.iter().any(|b| !*b) { "mut " } else { "" };
     let _ = writeln!(s, "    let {z_mut}zsign = 0i64;");
     let rounds = if candle {
-        "    let rounds = if candleLegs != 0 { 4 } else { 1 };\n"
+        "    let rounds = if candleLegs != 0 { 5 } else { 1 };\n"
     } else {
         "    let rounds = 1;\n"
     };
@@ -268,7 +268,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     if candle {
         s.push_str("            if !open_rejects { all_ok = false; }\n");
         s.push_str("            if rd + 1 < rounds { continue; }\n");
-        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":{},\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{}}}\", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign);\n");
+        s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":{},\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{},\\\"round_mask\\\":{}}}\", retcode_to_int(rc), legs, nb, i32::from(open_rejects), i32::from(all_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask);\n");
     } else {
         s.push_str("            return format!(\"{{\\\"retCode\\\":{},\\\"legs\\\":0,\\\"nb\\\":{},\\\"openRejects\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));\n");
     }
@@ -324,7 +324,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"value_checked\\\":{},\\\"value_legs\\\":{},\\\"value_ok\\\":{},\\\"step_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"value_checked\\\":{},\\\"value_legs\\\":{},\\\"value_ok\\\":{},\\\"step_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"peek_reps\\\":{},\\\"peek_rep_ok\\\":{},\\\"peek_rejects\\\":{},\\\"benign\\\":{},\\\"round_mask\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, round_mask, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -348,7 +348,7 @@ fn emit_rust_sv_prefix_sweep(
     let fname_snake = crate::backends::common::snake_words(fname);
     let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(\",\\\"openRejectP\\\":{}\", p); } }\n");
-    s.push_str("                Ok((mut st, v0)) => {\n                    legs += 1;\n");
+    s.push_str("                Ok((mut st, v0)) => {\n                    legs += 1; round_mask |= 1 << rd;\n");
     // open-value compare
     let destructure = |var: &str| -> Vec<String> {
         if n_out == 1 {
@@ -607,7 +607,7 @@ pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("    true\n");
     s.push_str("}\n\n");
     // Candle-settings rounds (mirror the C sweep): defaults / avgPeriod+3 /
-    // avgPeriod=0 (instant candle) / rangeType=Shadows.
+    // avgPeriod=0 (instant candle) / rangeType=Shadows / the other range type.
     s.push_str("fn sv_apply_candle_round(mut b: CoreBuilder, rd: i32) -> CoreBuilder {\n");
     s.push_str("    let defaults = Core::new();\n");
     s.push_str("    for t in [CandleSettingType::BodyLong, CandleSettingType::BodyVeryLong,\n");
@@ -620,6 +620,7 @@ pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("            1 => c.avg_period += 3,\n");
     s.push_str("            2 => c.avg_period = 0,\n");
     s.push_str("            3 => c.range_type = RangeType::Shadows,\n");
+    s.push_str("            4 => c.range_type = if c.range_type == RangeType::RealBody { RangeType::HighLow } else { RangeType::RealBody },\n");
     s.push_str("            _ => {}\n");
     s.push_str("        }\n");
     s.push_str("        b = b.candle_setting(t, c);\n");

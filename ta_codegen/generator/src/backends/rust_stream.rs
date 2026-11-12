@@ -2142,10 +2142,9 @@ fn emit_open_internal(
     let open_body = build_open_body_rust(model, body);
     emit_open_region(
         o, func, model, typing, &open_body, enums, registry, helpers, counter, &[],
-    );
-
-    emit_capture_and_publish(
-        o, func, model, &model.state, typing, split, registry, helpers, counter, &[],
+        &mut |o: &mut String| {
+            emit_capture_and_publish(o, func, model, &model.state, typing, split, registry, helpers, counter, &[]);
+        },
     );
     let _ = writeln!(o, "    }}\n");
 }
@@ -2397,8 +2396,9 @@ fn emit_capture_and_publish(
 
 /// Render the transcribed open region with batch-identical hoisting: circbuf
 /// prologs, `let mut` declarations for every top-level VarDecl, candle
-/// unpacking, VarDecl-init re-emission, then the statements.
-#[allow(clippy::too_many_arguments)]
+/// unpacking, VarDecl-init re-emission, then the statements, then `tail`: once
+/// inside each range-type copy, whose locals end with its block.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_open_region(
     o: &mut String,
     func: &FuncDef,
@@ -2410,6 +2410,7 @@ fn emit_open_region(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     inserts: &[(usize, String)],
+    tail: &mut dyn FnMut(&mut String),
 ) {
     // This backend's cleanup sequence, explicit so a pass can be made
     // conditional later. C states none: every one of these would be wrong there.
@@ -2490,23 +2491,41 @@ fn emit_open_region(
         }
     }
 
-    for (i, stmt) in body.iter().enumerate() {
-        // Composed tier: sub-stream opens splice in IMMEDIATELY before the
-        // batch call that consumes their series (order is the contract —
-        // in-place smoothing overwrites the raw series right after).
-        for (at, text) in inserts {
-            if *at == i {
-                o.push_str(text);
+    let render = |o: &mut String, stmts: &[Statement], indent: usize| {
+        for (i, stmt) in stmts.iter().enumerate() {
+            // Composed tier: sub-stream opens splice in IMMEDIATELY before the
+            // batch call that consumes their series (order is the contract —
+            // in-place smoothing overwrites the raw series right after).
+            for (at, text) in inserts {
+                if *at == i {
+                    o.push_str(text);
+                }
             }
+            if matches!(stmt, Statement::VarDecl { .. }) {
+                continue;
+            }
+            o.push_str(&render_statement(
+                stmt, indent, ctx, &for_loop_vars, &var_inits, &output_names, &opt_real_params,
+                enums, registry, helpers, counter,
+            ));
         }
-        if matches!(stmt, Statement::VarDecl { .. }) {
-            continue;
-        }
-        o.push_str(&render_statement(
-            stmt, 8, ctx, &for_loop_vars, &var_inits, &output_names, &opt_real_params,
-            enums, registry, helpers, counter,
-        ));
+    };
+    let copies = if inserts.is_empty() { super::rust_lang::range_type_copies(body, func) } else { None };
+    let Some(copies) = copies else {
+        render(o, body, 8);
+        return tail(o);
+    };
+    render(o, &copies.head, 8);
+    let count = counter.get();
+    for (k, arm) in copies.arms.iter().enumerate() {
+        counter.set(count);
+        o.push_str(&super::rust_lang::open_range_type_arm(k, arm, "        "));
+        let mut a = String::new();
+        render(&mut a, &arm.body, 8);
+        tail(&mut a);
+        o.push_str(&indent_block(&a, 4));
     }
+    o.push_str("        }\n");
 }
 
 /// The param==1 identity fast path in the open head (mirrors C).
@@ -3820,10 +3839,11 @@ fn emit_dual_open(
         body.extend_from_slice(dmp.epilogue);
         let open_body = build_open_body_rust(arm, &body);
         let mut s = String::new();
-        emit_open_region(&mut s, func, arm, typing, &open_body, enums, registry, helpers, counter, &[]);
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let complement = dual_complement_literal(own, other);
-        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, split, registry, helpers, counter, &complement);
+        emit_open_region(&mut s, func, arm, typing, &open_body, enums, registry, helpers, counter, &[], &mut |s: &mut String| {
+            emit_capture_and_publish(s, func, arm, union_scalars, typing, split, registry, helpers, counter, &complement);
+        });
         o.push_str(&indent_block(&s, 4));
     }
     let _ = writeln!(o, "        }}");

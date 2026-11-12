@@ -1248,7 +1248,8 @@ public class TaCodegenServe {
     static double svUpdSink;
 
     /* Candle-settings rounds (mirror the C/Rust/Java sweep): defaults /
-       avgPeriod+3 / avgPeriod=0 (instant candle) / rangeType=Shadows.
+       avgPeriod+3 / avgPeriod=0 (instant candle) / rangeType=Shadows /
+       the range type that is neither the default nor Shadows.
        Goes through the SHIPPED CoreBuilder, so the validation exercised is the
        library's own and not a second copy living in the server; Build() takes a
        snapshot, so a built Core never aliases the builder.
@@ -1257,7 +1258,7 @@ public class TaCodegenServe {
        so the rounds cannot compound. (C# needs none of Java's care about
        editing the shared defaults in place: Core clones the array and
        CandleSetting is immutable, so replacing a slot reaches nothing else.)
-       WHAT THESE FOUR ROUNDS DO NOT TEST: the open-time snapshot. Each round
+       WHAT THESE ROUNDS DO NOT TEST: the open-time snapshot. Each round
        builds its Core and opens on it, so the step's snapshot and the Core's
        live settings hold the same value and a step reading the wrong one is
        invisible here. SvMutateLiveCandles below is what tests that. */
@@ -1271,6 +1272,8 @@ public class TaCodegenServe {
                 b = b.CandleSetting((CandleSettingType)ci, cs.RangeType, 0, cs.Factor);
             else if (rd == 3)
                 b = b.CandleSetting((CandleSettingType)ci, TALib.RangeType.Shadows, cs.AvgPeriod, cs.Factor);
+            else if (rd == 4)
+                b = b.CandleSetting((CandleSettingType)ci, cs.RangeType == TALib.RangeType.RealBody ? TALib.RangeType.HighLow : TALib.RangeType.RealBody, cs.AvgPeriod, cs.Factor);
         }
         return b;
     }
@@ -1322,6 +1325,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -1391,7 +1395,7 @@ public class TaCodegenServe {
                 Core.AcStream st;
                 try { st = c2.AcOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -1510,7 +1514,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ACCBANDS(JsonElement req) {
@@ -1532,6 +1536,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -1646,7 +1651,7 @@ public class TaCodegenServe {
                 Core.AccbandsStream st;
                 try { st = c2.AccbandsOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.AccbandsValue v0 = st.Value;
                 if (SvXtierNe(v0.RealUpperBand, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -1791,7 +1796,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ACOS(JsonElement req) {
@@ -1810,6 +1815,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -1877,7 +1883,7 @@ public class TaCodegenServe {
                 Core.AcosStream st;
                 try { st = c2.AcosOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -1989,7 +1995,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AD(JsonElement req) {
@@ -2008,6 +2014,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -2081,7 +2088,7 @@ public class TaCodegenServe {
                 Core.AdStream st;
                 try { st = c2.AdOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -2193,7 +2200,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ADD(JsonElement req) {
@@ -2212,6 +2219,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -2281,7 +2289,7 @@ public class TaCodegenServe {
                 Core.AddStream st;
                 try { st = c2.AddOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -2393,7 +2401,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ADOSC(JsonElement req) {
@@ -2414,6 +2422,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -2488,7 +2497,7 @@ public class TaCodegenServe {
                 Core.AdoscStream st;
                 try { st = c2.AdoscOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInFastPeriod, optInSlowPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -2607,7 +2616,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ADR(JsonElement req) {
@@ -2627,6 +2636,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -2696,7 +2706,7 @@ public class TaCodegenServe {
                 Core.AdrStream st;
                 try { st = c2.AdrOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -2815,7 +2825,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ADX(JsonElement req) {
@@ -2835,6 +2845,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -2907,7 +2918,7 @@ public class TaCodegenServe {
                 Core.AdxStream st;
                 try { st = c2.AdxOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -3026,7 +3037,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ADXR(JsonElement req) {
@@ -3046,6 +3057,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -3118,7 +3130,7 @@ public class TaCodegenServe {
                 Core.AdxrStream st;
                 try { st = c2.AdxrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -3237,7 +3249,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ALLIGATOR(JsonElement req) {
@@ -3264,6 +3276,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -3373,7 +3386,7 @@ public class TaCodegenServe {
                 Core.AlligatorStream st;
                 try { st = c2.AlligatorOpen(fz_h[..p], fz_l[..p], optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.AlligatorValue v0 = st.Value;
                 if (SvXtierNe(v0.Jaw, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Teeth, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -3518,7 +3531,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ALMA(JsonElement req) {
@@ -3540,6 +3553,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -3607,7 +3621,7 @@ public class TaCodegenServe {
                 Core.AlmaStream st;
                 try { st = c2.AlmaOpen(fz_c[..p], optInTimePeriod, optInSigma, optInOffset); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -3726,7 +3740,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AO(JsonElement req) {
@@ -3747,6 +3761,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -3816,7 +3831,7 @@ public class TaCodegenServe {
                 Core.AoStream st;
                 try { st = c2.AoOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -3935,7 +3950,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_APO(JsonElement req) {
@@ -3958,6 +3973,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -4043,7 +4059,7 @@ public class TaCodegenServe {
                 Core.ApoStream st;
                 try { st = c2.ApoOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -4162,7 +4178,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AROON(JsonElement req) {
@@ -4183,6 +4199,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -4269,7 +4286,7 @@ public class TaCodegenServe {
                 Core.AroonStream st;
                 try { st = c2.AroonOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.AroonValue v0 = st.Value;
                 if (SvXtierNe(v0.AroonDown, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.AroonUp, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -4401,7 +4418,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AROONOSC(JsonElement req) {
@@ -4421,6 +4438,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -4490,7 +4508,7 @@ public class TaCodegenServe {
                 Core.AroonoscStream st;
                 try { st = c2.AroonoscOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -4609,7 +4627,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ASI(JsonElement req) {
@@ -4629,6 +4647,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -4702,7 +4721,7 @@ public class TaCodegenServe {
                 Core.AsiStream st;
                 try { st = c2.AsiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInLimitMove); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -4814,7 +4833,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ASIN(JsonElement req) {
@@ -4833,6 +4852,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -4900,7 +4920,7 @@ public class TaCodegenServe {
                 Core.AsinStream st;
                 try { st = c2.AsinOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -5012,7 +5032,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ATAN(JsonElement req) {
@@ -5031,6 +5051,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -5098,7 +5119,7 @@ public class TaCodegenServe {
                 Core.AtanStream st;
                 try { st = c2.AtanOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -5210,7 +5231,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ATR(JsonElement req) {
@@ -5230,6 +5251,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -5302,7 +5324,7 @@ public class TaCodegenServe {
                 Core.AtrStream st;
                 try { st = c2.AtrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -5421,7 +5443,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AVGDEV(JsonElement req) {
@@ -5441,6 +5463,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -5508,7 +5531,7 @@ public class TaCodegenServe {
                 Core.AvgdevStream st;
                 try { st = c2.AvgdevOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -5627,7 +5650,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_AVGPRICE(JsonElement req) {
@@ -5646,6 +5669,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -5719,7 +5743,7 @@ public class TaCodegenServe {
                 Core.AvgpriceStream st;
                 try { st = c2.AvgpriceOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -5831,7 +5855,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_BBANDS(JsonElement req) {
@@ -5857,6 +5881,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -5981,7 +6006,7 @@ public class TaCodegenServe {
                 Core.BbandsStream st;
                 try { st = c2.BbandsOpen(fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.BbandsValue v0 = st.Value;
                 if (SvXtierNe(v0.RealUpperBand, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -6126,7 +6151,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_BBW(JsonElement req) {
@@ -6150,6 +6175,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -6235,7 +6261,7 @@ public class TaCodegenServe {
                 Core.BbwStream st;
                 try { st = c2.BbwOpen(fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -6354,7 +6380,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_BETA(JsonElement req) {
@@ -6374,6 +6400,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -6443,7 +6470,7 @@ public class TaCodegenServe {
                 Core.BetaStream st;
                 try { st = c2.BetaOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -6562,7 +6589,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_BOP(JsonElement req) {
@@ -6581,6 +6608,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -6654,7 +6682,7 @@ public class TaCodegenServe {
                 Core.BopStream st;
                 try { st = c2.BopOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -6766,7 +6794,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CCI(JsonElement req) {
@@ -6786,6 +6814,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -6857,7 +6886,7 @@ public class TaCodegenServe {
                 Core.CciStream st;
                 try { st = c2.CciOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -6976,7 +7005,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL2CROWS(JsonElement req) {
@@ -6996,6 +7025,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -7014,7 +7044,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -7033,7 +7063,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -7063,7 +7093,7 @@ public class TaCodegenServe {
                 Core.Cdl2crowsStream st;
                 try { st = c2.Cdl2crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -7202,7 +7232,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3BLACKCROWS(JsonElement req) {
@@ -7222,6 +7252,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -7240,7 +7271,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -7259,7 +7290,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -7289,7 +7320,7 @@ public class TaCodegenServe {
                 Core.Cdl3blackcrowsStream st;
                 try { st = c2.Cdl3blackcrowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -7428,7 +7459,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3INSIDE(JsonElement req) {
@@ -7448,6 +7479,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -7466,7 +7498,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -7485,7 +7517,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -7515,7 +7547,7 @@ public class TaCodegenServe {
                 Core.Cdl3insideStream st;
                 try { st = c2.Cdl3insideOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -7654,7 +7686,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3LINESTRIKE(JsonElement req) {
@@ -7674,6 +7706,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -7692,7 +7725,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -7711,7 +7744,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -7741,7 +7774,7 @@ public class TaCodegenServe {
                 Core.Cdl3linestrikeStream st;
                 try { st = c2.Cdl3linestrikeOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -7880,7 +7913,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3OUTSIDE(JsonElement req) {
@@ -7900,6 +7933,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -7918,7 +7952,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -7937,7 +7971,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -7967,7 +8001,7 @@ public class TaCodegenServe {
                 Core.Cdl3outsideStream st;
                 try { st = c2.Cdl3outsideOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -8106,7 +8140,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3STARSINSOUTH(JsonElement req) {
@@ -8126,6 +8160,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -8144,7 +8179,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -8163,7 +8198,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -8193,7 +8228,7 @@ public class TaCodegenServe {
                 Core.Cdl3starsinsouthStream st;
                 try { st = c2.Cdl3starsinsouthOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -8332,7 +8367,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDL3WHITESOLDIERS(JsonElement req) {
@@ -8352,6 +8387,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -8370,7 +8406,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -8389,7 +8425,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -8419,7 +8455,7 @@ public class TaCodegenServe {
                 Core.Cdl3whitesoldiersStream st;
                 try { st = c2.Cdl3whitesoldiersOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -8558,7 +8594,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLABANDONEDBABY(JsonElement req) {
@@ -8579,6 +8615,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -8597,7 +8634,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -8616,7 +8653,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -8646,7 +8683,7 @@ public class TaCodegenServe {
                 Core.CdlabandonedbabyStream st;
                 try { st = c2.CdlabandonedbabyOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -8785,7 +8822,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLADVANCEBLOCK(JsonElement req) {
@@ -8805,6 +8842,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -8823,7 +8861,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -8842,7 +8880,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -8872,7 +8910,7 @@ public class TaCodegenServe {
                 Core.CdladvanceblockStream st;
                 try { st = c2.CdladvanceblockOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -9011,7 +9049,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLBELTHOLD(JsonElement req) {
@@ -9031,6 +9069,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -9049,7 +9088,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -9068,7 +9107,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -9098,7 +9137,7 @@ public class TaCodegenServe {
                 Core.CdlbeltholdStream st;
                 try { st = c2.CdlbeltholdOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -9237,7 +9276,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLBREAKAWAY(JsonElement req) {
@@ -9257,6 +9296,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -9275,7 +9315,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -9294,7 +9334,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -9324,7 +9364,7 @@ public class TaCodegenServe {
                 Core.CdlbreakawayStream st;
                 try { st = c2.CdlbreakawayOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -9463,7 +9503,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLCLOSINGMARUBOZU(JsonElement req) {
@@ -9483,6 +9523,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -9501,7 +9542,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -9520,7 +9561,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -9550,7 +9591,7 @@ public class TaCodegenServe {
                 Core.CdlclosingmarubozuStream st;
                 try { st = c2.CdlclosingmarubozuOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -9689,7 +9730,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLCONCEALBABYSWALL(JsonElement req) {
@@ -9709,6 +9750,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -9727,7 +9769,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -9746,7 +9788,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -9776,7 +9818,7 @@ public class TaCodegenServe {
                 Core.CdlconcealbabyswallStream st;
                 try { st = c2.CdlconcealbabyswallOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -9915,7 +9957,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLCOUNTERATTACK(JsonElement req) {
@@ -9935,6 +9977,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -9953,7 +9996,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -9972,7 +10015,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -10002,7 +10045,7 @@ public class TaCodegenServe {
                 Core.CdlcounterattackStream st;
                 try { st = c2.CdlcounterattackOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -10141,7 +10184,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLDARKCLOUDCOVER(JsonElement req) {
@@ -10162,6 +10205,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -10180,7 +10224,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -10199,7 +10243,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -10229,7 +10273,7 @@ public class TaCodegenServe {
                 Core.CdldarkcloudcoverStream st;
                 try { st = c2.CdldarkcloudcoverOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -10368,7 +10412,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLDOJI(JsonElement req) {
@@ -10388,6 +10432,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -10406,7 +10451,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -10425,7 +10470,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -10455,7 +10500,7 @@ public class TaCodegenServe {
                 Core.CdldojiStream st;
                 try { st = c2.CdldojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -10594,7 +10639,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLDOJISTAR(JsonElement req) {
@@ -10614,6 +10659,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -10632,7 +10678,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -10651,7 +10697,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -10681,7 +10727,7 @@ public class TaCodegenServe {
                 Core.CdldojistarStream st;
                 try { st = c2.CdldojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -10820,7 +10866,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLDRAGONFLYDOJI(JsonElement req) {
@@ -10840,6 +10886,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -10858,7 +10905,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -10877,7 +10924,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -10907,7 +10954,7 @@ public class TaCodegenServe {
                 Core.CdldragonflydojiStream st;
                 try { st = c2.CdldragonflydojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -11046,7 +11093,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLENGULFING(JsonElement req) {
@@ -11066,6 +11113,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -11084,7 +11132,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -11103,7 +11151,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -11133,7 +11181,7 @@ public class TaCodegenServe {
                 Core.CdlengulfingStream st;
                 try { st = c2.CdlengulfingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -11272,7 +11320,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLEVENINGDOJISTAR(JsonElement req) {
@@ -11293,6 +11341,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -11311,7 +11360,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -11330,7 +11379,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -11360,7 +11409,7 @@ public class TaCodegenServe {
                 Core.CdleveningdojistarStream st;
                 try { st = c2.CdleveningdojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -11499,7 +11548,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLEVENINGSTAR(JsonElement req) {
@@ -11520,6 +11569,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -11538,7 +11588,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -11557,7 +11607,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -11587,7 +11637,7 @@ public class TaCodegenServe {
                 Core.CdleveningstarStream st;
                 try { st = c2.CdleveningstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -11726,7 +11776,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLGAPSIDESIDEWHITE(JsonElement req) {
@@ -11746,6 +11796,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -11764,7 +11815,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -11783,7 +11834,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -11813,7 +11864,7 @@ public class TaCodegenServe {
                 Core.CdlgapsidesidewhiteStream st;
                 try { st = c2.CdlgapsidesidewhiteOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -11952,7 +12003,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLGRAVESTONEDOJI(JsonElement req) {
@@ -11972,6 +12023,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -11990,7 +12042,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -12009,7 +12061,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -12039,7 +12091,7 @@ public class TaCodegenServe {
                 Core.CdlgravestonedojiStream st;
                 try { st = c2.CdlgravestonedojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -12178,7 +12230,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHAMMER(JsonElement req) {
@@ -12198,6 +12250,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -12216,7 +12269,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -12235,7 +12288,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -12265,7 +12318,7 @@ public class TaCodegenServe {
                 Core.CdlhammerStream st;
                 try { st = c2.CdlhammerOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -12404,7 +12457,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHANGINGMAN(JsonElement req) {
@@ -12424,6 +12477,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -12442,7 +12496,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -12461,7 +12515,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -12491,7 +12545,7 @@ public class TaCodegenServe {
                 Core.CdlhangingmanStream st;
                 try { st = c2.CdlhangingmanOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -12630,7 +12684,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHARAMI(JsonElement req) {
@@ -12650,6 +12704,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -12668,7 +12723,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -12687,7 +12742,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -12717,7 +12772,7 @@ public class TaCodegenServe {
                 Core.CdlharamiStream st;
                 try { st = c2.CdlharamiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -12856,7 +12911,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHARAMICROSS(JsonElement req) {
@@ -12876,6 +12931,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -12894,7 +12950,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -12913,7 +12969,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -12943,7 +12999,7 @@ public class TaCodegenServe {
                 Core.CdlharamicrossStream st;
                 try { st = c2.CdlharamicrossOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -13082,7 +13138,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHIGHWAVE(JsonElement req) {
@@ -13102,6 +13158,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -13120,7 +13177,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -13139,7 +13196,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -13169,7 +13226,7 @@ public class TaCodegenServe {
                 Core.CdlhighwaveStream st;
                 try { st = c2.CdlhighwaveOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -13308,7 +13365,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHIKKAKE(JsonElement req) {
@@ -13328,6 +13385,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -13346,7 +13404,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -13365,7 +13423,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -13395,7 +13453,7 @@ public class TaCodegenServe {
                 Core.CdlhikkakeStream st;
                 try { st = c2.CdlhikkakeOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -13534,7 +13592,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHIKKAKEMOD(JsonElement req) {
@@ -13554,6 +13612,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -13572,7 +13631,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -13591,7 +13650,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -13621,7 +13680,7 @@ public class TaCodegenServe {
                 Core.CdlhikkakemodStream st;
                 try { st = c2.CdlhikkakemodOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -13760,7 +13819,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLHOMINGPIGEON(JsonElement req) {
@@ -13780,6 +13839,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -13798,7 +13858,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -13817,7 +13877,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -13847,7 +13907,7 @@ public class TaCodegenServe {
                 Core.CdlhomingpigeonStream st;
                 try { st = c2.CdlhomingpigeonOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -13986,7 +14046,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLIDENTICAL3CROWS(JsonElement req) {
@@ -14006,6 +14066,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -14024,7 +14085,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -14043,7 +14104,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -14073,7 +14134,7 @@ public class TaCodegenServe {
                 Core.Cdlidentical3crowsStream st;
                 try { st = c2.Cdlidentical3crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -14212,7 +14273,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLINNECK(JsonElement req) {
@@ -14232,6 +14293,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -14250,7 +14312,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -14269,7 +14331,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -14299,7 +14361,7 @@ public class TaCodegenServe {
                 Core.CdlinneckStream st;
                 try { st = c2.CdlinneckOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -14438,7 +14500,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLINVERTEDHAMMER(JsonElement req) {
@@ -14458,6 +14520,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -14476,7 +14539,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -14495,7 +14558,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -14525,7 +14588,7 @@ public class TaCodegenServe {
                 Core.CdlinvertedhammerStream st;
                 try { st = c2.CdlinvertedhammerOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -14664,7 +14727,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLKICKING(JsonElement req) {
@@ -14684,6 +14747,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -14702,7 +14766,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -14721,7 +14785,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -14751,7 +14815,7 @@ public class TaCodegenServe {
                 Core.CdlkickingStream st;
                 try { st = c2.CdlkickingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -14890,7 +14954,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLKICKINGBYLENGTH(JsonElement req) {
@@ -14910,6 +14974,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -14928,7 +14993,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -14947,7 +15012,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -14977,7 +15042,7 @@ public class TaCodegenServe {
                 Core.CdlkickingbylengthStream st;
                 try { st = c2.CdlkickingbylengthOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -15116,7 +15181,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLLADDERBOTTOM(JsonElement req) {
@@ -15136,6 +15201,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -15154,7 +15220,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -15173,7 +15239,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -15203,7 +15269,7 @@ public class TaCodegenServe {
                 Core.CdlladderbottomStream st;
                 try { st = c2.CdlladderbottomOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -15342,7 +15408,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLLONGLEGGEDDOJI(JsonElement req) {
@@ -15362,6 +15428,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -15380,7 +15447,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -15399,7 +15466,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -15429,7 +15496,7 @@ public class TaCodegenServe {
                 Core.CdllongleggeddojiStream st;
                 try { st = c2.CdllongleggeddojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -15568,7 +15635,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLLONGLINE(JsonElement req) {
@@ -15588,6 +15655,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -15606,7 +15674,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -15625,7 +15693,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -15655,7 +15723,7 @@ public class TaCodegenServe {
                 Core.CdllonglineStream st;
                 try { st = c2.CdllonglineOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -15794,7 +15862,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLMARUBOZU(JsonElement req) {
@@ -15814,6 +15882,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -15832,7 +15901,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -15851,7 +15920,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -15881,7 +15950,7 @@ public class TaCodegenServe {
                 Core.CdlmarubozuStream st;
                 try { st = c2.CdlmarubozuOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -16020,7 +16089,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLMATCHINGLOW(JsonElement req) {
@@ -16040,6 +16109,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -16058,7 +16128,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -16077,7 +16147,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -16107,7 +16177,7 @@ public class TaCodegenServe {
                 Core.CdlmatchinglowStream st;
                 try { st = c2.CdlmatchinglowOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -16246,7 +16316,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLMATHOLD(JsonElement req) {
@@ -16267,6 +16337,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -16285,7 +16356,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -16304,7 +16375,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -16334,7 +16405,7 @@ public class TaCodegenServe {
                 Core.CdlmatholdStream st;
                 try { st = c2.CdlmatholdOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -16473,7 +16544,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLMORNINGDOJISTAR(JsonElement req) {
@@ -16494,6 +16565,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -16512,7 +16584,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -16531,7 +16603,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -16561,7 +16633,7 @@ public class TaCodegenServe {
                 Core.CdlmorningdojistarStream st;
                 try { st = c2.CdlmorningdojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -16700,7 +16772,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLMORNINGSTAR(JsonElement req) {
@@ -16721,6 +16793,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -16739,7 +16812,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -16758,7 +16831,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -16788,7 +16861,7 @@ public class TaCodegenServe {
                 Core.CdlmorningstarStream st;
                 try { st = c2.CdlmorningstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -16927,7 +17000,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLONNECK(JsonElement req) {
@@ -16947,6 +17020,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -16965,7 +17039,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -16984,7 +17058,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -17014,7 +17088,7 @@ public class TaCodegenServe {
                 Core.CdlonneckStream st;
                 try { st = c2.CdlonneckOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -17153,7 +17227,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLPIERCING(JsonElement req) {
@@ -17173,6 +17247,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -17191,7 +17266,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -17210,7 +17285,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -17240,7 +17315,7 @@ public class TaCodegenServe {
                 Core.CdlpiercingStream st;
                 try { st = c2.CdlpiercingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -17379,7 +17454,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLRICKSHAWMAN(JsonElement req) {
@@ -17399,6 +17474,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -17417,7 +17493,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -17436,7 +17512,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -17466,7 +17542,7 @@ public class TaCodegenServe {
                 Core.CdlrickshawmanStream st;
                 try { st = c2.CdlrickshawmanOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -17605,7 +17681,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLRISEFALL3METHODS(JsonElement req) {
@@ -17625,6 +17701,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -17643,7 +17720,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -17662,7 +17739,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -17692,7 +17769,7 @@ public class TaCodegenServe {
                 Core.Cdlrisefall3methodsStream st;
                 try { st = c2.Cdlrisefall3methodsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -17831,7 +17908,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSEPARATINGLINES(JsonElement req) {
@@ -17851,6 +17928,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -17869,7 +17947,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -17888,7 +17966,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -17918,7 +17996,7 @@ public class TaCodegenServe {
                 Core.CdlseparatinglinesStream st;
                 try { st = c2.CdlseparatinglinesOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -18057,7 +18135,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSHOOTINGSTAR(JsonElement req) {
@@ -18077,6 +18155,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -18095,7 +18174,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -18114,7 +18193,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -18144,7 +18223,7 @@ public class TaCodegenServe {
                 Core.CdlshootingstarStream st;
                 try { st = c2.CdlshootingstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -18283,7 +18362,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSHORTLINE(JsonElement req) {
@@ -18303,6 +18382,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -18321,7 +18401,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -18340,7 +18420,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -18370,7 +18450,7 @@ public class TaCodegenServe {
                 Core.CdlshortlineStream st;
                 try { st = c2.CdlshortlineOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -18509,7 +18589,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSPINNINGTOP(JsonElement req) {
@@ -18529,6 +18609,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -18547,7 +18628,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -18566,7 +18647,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -18596,7 +18677,7 @@ public class TaCodegenServe {
                 Core.CdlspinningtopStream st;
                 try { st = c2.CdlspinningtopOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -18735,7 +18816,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSTALLEDPATTERN(JsonElement req) {
@@ -18755,6 +18836,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -18773,7 +18855,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -18792,7 +18874,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -18822,7 +18904,7 @@ public class TaCodegenServe {
                 Core.CdlstalledpatternStream st;
                 try { st = c2.CdlstalledpatternOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -18961,7 +19043,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLSTICKSANDWICH(JsonElement req) {
@@ -18981,6 +19063,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -18999,7 +19082,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -19018,7 +19101,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -19048,7 +19131,7 @@ public class TaCodegenServe {
                 Core.CdlsticksandwichStream st;
                 try { st = c2.CdlsticksandwichOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -19187,7 +19270,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLTAKURI(JsonElement req) {
@@ -19207,6 +19290,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -19225,7 +19309,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -19244,7 +19328,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -19274,7 +19358,7 @@ public class TaCodegenServe {
                 Core.CdltakuriStream st;
                 try { st = c2.CdltakuriOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -19413,7 +19497,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLTASUKIGAP(JsonElement req) {
@@ -19433,6 +19517,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -19451,7 +19536,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -19470,7 +19555,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -19500,7 +19585,7 @@ public class TaCodegenServe {
                 Core.CdltasukigapStream st;
                 try { st = c2.CdltasukigapOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -19639,7 +19724,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLTHRUSTING(JsonElement req) {
@@ -19659,6 +19744,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -19677,7 +19763,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -19696,7 +19782,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -19726,7 +19812,7 @@ public class TaCodegenServe {
                 Core.CdlthrustingStream st;
                 try { st = c2.CdlthrustingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -19865,7 +19951,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLTRISTAR(JsonElement req) {
@@ -19885,6 +19971,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -19903,7 +19990,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -19922,7 +20009,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -19952,7 +20039,7 @@ public class TaCodegenServe {
                 Core.CdltristarStream st;
                 try { st = c2.CdltristarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -20091,7 +20178,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLUNIQUE3RIVER(JsonElement req) {
@@ -20111,6 +20198,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -20129,7 +20217,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -20148,7 +20236,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -20178,7 +20266,7 @@ public class TaCodegenServe {
                 Core.Cdlunique3riverStream st;
                 try { st = c2.Cdlunique3riverOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -20317,7 +20405,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLUPSIDEGAP2CROWS(JsonElement req) {
@@ -20337,6 +20425,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -20355,7 +20444,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -20374,7 +20463,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -20404,7 +20493,7 @@ public class TaCodegenServe {
                 Core.Cdlupsidegap2crowsStream st;
                 try { st = c2.Cdlupsidegap2crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -20543,7 +20632,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CDLXSIDEGAP3METHODS(JsonElement req) {
@@ -20563,6 +20652,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -20581,7 +20671,7 @@ public class TaCodegenServe {
         int candleMutRan = 0;
         int candleMutMoved = 0;
         long zsignMut = 0;
-        int rounds = (candleLegs != 0) ? 4 : 1;
+        int rounds = (candleLegs != 0) ? 5 : 1;
         for (int rd = 0; rd < rounds; rd++) {
             CoreBuilder cb = Core.Builder();
             cb = SvApplyCandleRound(cb, rd);
@@ -20600,7 +20690,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + "}";
             }
             fillChecked = 1;
             try {
@@ -20630,7 +20720,7 @@ public class TaCodegenServe {
                 Core.Cdlxsidegap3methodsStream st;
                 try { st = c2.Cdlxsidegap3methodsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -20769,7 +20859,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CE(JsonElement req) {
@@ -20791,6 +20881,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -20882,7 +20973,7 @@ public class TaCodegenServe {
                 Core.CeStream st;
                 try { st = c2.CeOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInMultiplier); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.CeValue v0 = st.Value;
                 if (SvXtierNe(v0.RealLong, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealShort, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -21014,7 +21105,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CEIL(JsonElement req) {
@@ -21033,6 +21124,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -21100,7 +21192,7 @@ public class TaCodegenServe {
                 Core.CeilStream st;
                 try { st = c2.CeilOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -21212,7 +21304,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CG(JsonElement req) {
@@ -21232,6 +21324,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -21299,7 +21392,7 @@ public class TaCodegenServe {
                 Core.CgStream st;
                 try { st = c2.CgOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -21418,7 +21511,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CHOP(JsonElement req) {
@@ -21438,6 +21531,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -21509,7 +21603,7 @@ public class TaCodegenServe {
                 Core.ChopStream st;
                 try { st = c2.ChopOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -21628,7 +21722,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CHOPTR(JsonElement req) {
@@ -21648,6 +21742,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -21719,7 +21814,7 @@ public class TaCodegenServe {
                 Core.ChoptrStream st;
                 try { st = c2.ChoptrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -21838,7 +21933,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CKSP(JsonElement req) {
@@ -21861,6 +21956,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -21952,7 +22048,7 @@ public class TaCodegenServe {
                 Core.CkspStream st;
                 try { st = c2.CkspOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInMultiplier, optInStopPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.CkspValue v0 = st.Value;
                 if (SvXtierNe(v0.HighStop, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.LowStop, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -22084,7 +22180,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CMF(JsonElement req) {
@@ -22104,6 +22200,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -22177,7 +22274,7 @@ public class TaCodegenServe {
                 Core.CmfStream st;
                 try { st = c2.CmfOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -22296,7 +22393,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CMO(JsonElement req) {
@@ -22316,6 +22413,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -22384,7 +22482,7 @@ public class TaCodegenServe {
                 Core.CmoStream st;
                 try { st = c2.CmoOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -22503,7 +22601,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CMOU(JsonElement req) {
@@ -22523,6 +22621,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -22590,7 +22689,7 @@ public class TaCodegenServe {
                 Core.CmouStream st;
                 try { st = c2.CmouOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -22709,7 +22808,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_COPPOCK(JsonElement req) {
@@ -22731,6 +22830,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -22798,7 +22898,7 @@ public class TaCodegenServe {
                 Core.CoppockStream st;
                 try { st = c2.CoppockOpen(fz_c[..p], optInWMAPeriod, optInROC1Period, optInROC2Period); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -22917,7 +23017,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CORREL(JsonElement req) {
@@ -22937,6 +23037,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -23006,7 +23107,7 @@ public class TaCodegenServe {
                 Core.CorrelStream st;
                 try { st = c2.CorrelOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -23125,7 +23226,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_COS(JsonElement req) {
@@ -23144,6 +23245,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -23211,7 +23313,7 @@ public class TaCodegenServe {
                 Core.CosStream st;
                 try { st = c2.CosOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -23323,7 +23425,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_COSH(JsonElement req) {
@@ -23342,6 +23444,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -23409,7 +23512,7 @@ public class TaCodegenServe {
                 Core.CoshStream st;
                 try { st = c2.CoshOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -23521,7 +23624,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CRSI(JsonElement req) {
@@ -23543,6 +23646,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -23611,7 +23715,7 @@ public class TaCodegenServe {
                 Core.CrsiStream st;
                 try { st = c2.CrsiOpen(fz_c[..p], optInTimePeriod, optInStreakPeriod, optInRankPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -23730,7 +23834,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CTI(JsonElement req) {
@@ -23750,6 +23854,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -23817,7 +23922,7 @@ public class TaCodegenServe {
                 Core.CtiStream st;
                 try { st = c2.CtiOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -23936,7 +24041,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CUMSUM(JsonElement req) {
@@ -23955,6 +24060,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -24022,7 +24128,7 @@ public class TaCodegenServe {
                 Core.CumsumStream st;
                 try { st = c2.CumsumOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -24134,7 +24240,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_CVI(JsonElement req) {
@@ -24155,6 +24261,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -24225,7 +24332,7 @@ public class TaCodegenServe {
                 Core.CviStream st;
                 try { st = c2.CviOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInROCPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -24344,7 +24451,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DEMA(JsonElement req) {
@@ -24364,6 +24471,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -24432,7 +24540,7 @@ public class TaCodegenServe {
                 Core.DemaStream st;
                 try { st = c2.DemaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -24551,7 +24659,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DIV(JsonElement req) {
@@ -24570,6 +24678,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -24639,7 +24748,7 @@ public class TaCodegenServe {
                 Core.DivStream st;
                 try { st = c2.DivOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -24751,7 +24860,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DONCHIAN(JsonElement req) {
@@ -24773,6 +24882,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -24881,7 +24991,7 @@ public class TaCodegenServe {
                 Core.DonchianStream st;
                 try { st = c2.DonchianOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.DonchianValue v0 = st.Value;
                 if (SvXtierNe(v0.RealUpperBand, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -25026,7 +25136,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DOSC(JsonElement req) {
@@ -25049,6 +25159,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -25118,7 +25229,7 @@ public class TaCodegenServe {
                 Core.DoscStream st;
                 try { st = c2.DoscOpen(fz_c[..p], optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -25237,7 +25348,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DPO(JsonElement req) {
@@ -25257,6 +25368,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -25324,7 +25436,7 @@ public class TaCodegenServe {
                 Core.DpoStream st;
                 try { st = c2.DpoOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -25443,7 +25555,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_DX(JsonElement req) {
@@ -25463,6 +25575,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -25535,7 +25648,7 @@ public class TaCodegenServe {
                 Core.DxStream st;
                 try { st = c2.DxOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -25654,7 +25767,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_EFI(JsonElement req) {
@@ -25674,6 +25787,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -25744,7 +25858,7 @@ public class TaCodegenServe {
                 Core.EfiStream st;
                 try { st = c2.EfiOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -25863,7 +25977,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_EMA(JsonElement req) {
@@ -25883,6 +25997,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -25951,7 +26066,7 @@ public class TaCodegenServe {
                 Core.EmaStream st;
                 try { st = c2.EmaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -26070,7 +26185,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_EMV(JsonElement req) {
@@ -26091,6 +26206,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -26162,7 +26278,7 @@ public class TaCodegenServe {
                 Core.EmvStream st;
                 try { st = c2.EmvOpen(fz_h[..p], fz_l[..p], fz_v[..p], optInTimePeriod, optInVolumeDivisor); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -26281,7 +26397,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ER(JsonElement req) {
@@ -26301,6 +26417,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -26368,7 +26485,7 @@ public class TaCodegenServe {
                 Core.ErStream st;
                 try { st = c2.ErOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -26487,7 +26604,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ERI(JsonElement req) {
@@ -26508,6 +26625,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -26599,7 +26717,7 @@ public class TaCodegenServe {
                 Core.EriStream st;
                 try { st = c2.EriOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.EriValue v0 = st.Value;
                 if (SvXtierNe(v0.BullPower, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.BearPower, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -26731,7 +26849,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_EXP(JsonElement req) {
@@ -26750,6 +26868,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -26817,7 +26936,7 @@ public class TaCodegenServe {
                 Core.ExpStream st;
                 try { st = c2.ExpOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -26929,7 +27048,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_FISHER(JsonElement req) {
@@ -26950,6 +27069,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -27037,7 +27157,7 @@ public class TaCodegenServe {
                 Core.FisherStream st;
                 try { st = c2.FisherOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.FisherValue v0 = st.Value;
                 if (SvXtierNe(v0.Fisher, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Trigger, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -27169,7 +27289,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_FLOOR(JsonElement req) {
@@ -27188,6 +27308,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -27255,7 +27376,7 @@ public class TaCodegenServe {
                 Core.FloorStream st;
                 try { st = c2.FloorOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -27367,7 +27488,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_FOSC(JsonElement req) {
@@ -27387,6 +27508,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -27454,7 +27576,7 @@ public class TaCodegenServe {
                 Core.FoscStream st;
                 try { st = c2.FoscOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -27573,7 +27695,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_FRACTAL(JsonElement req) {
@@ -27595,6 +27717,7 @@ public class TaCodegenServe {
         int[] b0 = new int[svN];
         int[] b1 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -27667,7 +27790,7 @@ public class TaCodegenServe {
                 Core.FractalStream st;
                 try { st = c2.FractalOpen(fz_h[..p], fz_l[..p], optInLeftBars, optInRightBars); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.FractalValue v0 = st.Value;
                 if (v0.SwingHigh != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.SwingLow != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -27799,7 +27922,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_FRAMA(JsonElement req) {
@@ -27819,6 +27942,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -27889,7 +28013,7 @@ public class TaCodegenServe {
                 Core.FramaStream st;
                 try { st = c2.FramaOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -28008,7 +28132,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_GATOR(JsonElement req) {
@@ -28034,6 +28158,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -28121,7 +28246,7 @@ public class TaCodegenServe {
                 Core.GatorStream st;
                 try { st = c2.GatorOpen(fz_h[..p], fz_l[..p], optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.GatorValue v0 = st.Value;
                 if (SvXtierNe(v0.Upper, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Lower, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -28253,7 +28378,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HA(JsonElement req) {
@@ -28275,6 +28400,7 @@ public class TaCodegenServe {
         double[] b2 = new double[svN];
         double[] b3 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -28428,7 +28554,7 @@ public class TaCodegenServe {
                 Core.HaStream st;
                 try { st = c2.HaOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.HaValue v0 = st.Value;
                 if (SvXtierNe(v0.HAOpen, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.HAHigh, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -28576,7 +28702,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HMA(JsonElement req) {
@@ -28596,6 +28722,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -28663,7 +28790,7 @@ public class TaCodegenServe {
                 Core.HmaStream st;
                 try { st = c2.HmaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -28782,7 +28909,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_DCPERIOD(JsonElement req) {
@@ -28801,6 +28928,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -28869,7 +28997,7 @@ public class TaCodegenServe {
                 Core.HtDcperiodStream st;
                 try { st = c2.HtDcperiodOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -28981,7 +29109,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_DCPHASE(JsonElement req) {
@@ -29000,6 +29128,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -29068,7 +29197,7 @@ public class TaCodegenServe {
                 Core.HtDcphaseStream st;
                 try { st = c2.HtDcphaseOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -29180,7 +29309,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_PHASOR(JsonElement req) {
@@ -29200,6 +29329,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -29283,7 +29413,7 @@ public class TaCodegenServe {
                 Core.HtPhasorStream st;
                 try { st = c2.HtPhasorOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.HtPhasorValue v0 = st.Value;
                 if (SvXtierNe(v0.InPhase, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Quadrature, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -29407,7 +29537,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_SINE(JsonElement req) {
@@ -29427,6 +29557,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -29510,7 +29641,7 @@ public class TaCodegenServe {
                 Core.HtSineStream st;
                 try { st = c2.HtSineOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.HtSineValue v0 = st.Value;
                 if (SvXtierNe(v0.Sine, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.LeadSine, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -29634,7 +29765,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_TRENDLINE(JsonElement req) {
@@ -29653,6 +29784,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -29721,7 +29853,7 @@ public class TaCodegenServe {
                 Core.HtTrendlineStream st;
                 try { st = c2.HtTrendlineOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -29833,7 +29965,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_HT_TRENDMODE(JsonElement req) {
@@ -29852,6 +29984,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -29914,7 +30047,7 @@ public class TaCodegenServe {
                 Core.HtTrendmodeStream st;
                 try { st = c2.HtTrendmodeOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -30026,7 +30159,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_IBS(JsonElement req) {
@@ -30045,6 +30178,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -30116,7 +30250,7 @@ public class TaCodegenServe {
                 Core.IbsStream st;
                 try { st = c2.IbsOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -30228,7 +30362,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ICHIMOKU(JsonElement req) {
@@ -30253,6 +30387,7 @@ public class TaCodegenServe {
         double[] b2 = new double[svN];
         double[] b3 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -30389,7 +30524,7 @@ public class TaCodegenServe {
                 Core.IchimokuStream st;
                 try { st = c2.IchimokuOpen(fz_h[..p], fz_l[..p], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.IchimokuValue v0 = st.Value;
                 if (SvXtierNe(v0.TenkanSen, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.KijunSen, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -30547,7 +30682,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_IMI(JsonElement req) {
@@ -30567,6 +30702,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -30636,7 +30772,7 @@ public class TaCodegenServe {
                 Core.ImiStream st;
                 try { st = c2.ImiOpen(fz_o[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -30755,7 +30891,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KAMA(JsonElement req) {
@@ -30775,6 +30911,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -30843,7 +30980,7 @@ public class TaCodegenServe {
                 Core.KamaStream st;
                 try { st = c2.KamaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -30962,7 +31099,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KC(JsonElement req) {
@@ -30986,6 +31123,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -31102,7 +31240,7 @@ public class TaCodegenServe {
                 Core.KcStream st;
                 try { st = c2.KcOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInATRPeriod, optInNbDev); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.KcValue v0 = st.Value;
                 if (SvXtierNe(v0.RealUpperBand, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -31247,7 +31385,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KDJ(JsonElement req) {
@@ -31275,6 +31413,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -31411,7 +31550,7 @@ public class TaCodegenServe {
                 Core.KdjStream st;
                 try { st = c2.KdjOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.KdjValue v0 = st.Value;
                 if (SvXtierNe(v0.K, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.D, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -31556,7 +31695,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KST(JsonElement req) {
@@ -31585,6 +31724,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -31667,7 +31807,7 @@ public class TaCodegenServe {
                 Core.KstStream st;
                 try { st = c2.KstOpen(fz_c[..p], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.KstValue v0 = st.Value;
                 if (SvXtierNe(v0.KST, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.KSTSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -31799,7 +31939,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KSTEXT(JsonElement req) {
@@ -31832,6 +31972,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -31934,7 +32075,7 @@ public class TaCodegenServe {
                 Core.KstextStream st;
                 try { st = c2.KstextOpen(fz_c[..p], optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.KstextValue v0 = st.Value;
                 if (SvXtierNe(v0.KST, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.KSTSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -32066,7 +32207,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KURTOSIS(JsonElement req) {
@@ -32086,6 +32227,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -32153,7 +32295,7 @@ public class TaCodegenServe {
                 Core.KurtosisStream st;
                 try { st = c2.KurtosisOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -32272,7 +32414,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_KVO(JsonElement req) {
@@ -32295,6 +32437,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -32390,7 +32533,7 @@ public class TaCodegenServe {
                 Core.KvoStream st;
                 try { st = c2.KvoOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.KvoValue v0 = st.Value;
                 if (SvXtierNe(v0.KVO, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.KVOSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -32522,7 +32665,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LINEARREG(JsonElement req) {
@@ -32542,6 +32685,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -32609,7 +32753,7 @@ public class TaCodegenServe {
                 Core.LinearregStream st;
                 try { st = c2.LinearregOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -32728,7 +32872,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_ANGLE(JsonElement req) {
@@ -32748,6 +32892,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -32815,7 +32960,7 @@ public class TaCodegenServe {
                 Core.LinearregAngleStream st;
                 try { st = c2.LinearregAngleOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -32934,7 +33079,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_INTERCEPT(JsonElement req) {
@@ -32954,6 +33099,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -33021,7 +33167,7 @@ public class TaCodegenServe {
                 Core.LinearregInterceptStream st;
                 try { st = c2.LinearregInterceptOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -33140,7 +33286,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_SLOPE(JsonElement req) {
@@ -33160,6 +33306,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -33227,7 +33374,7 @@ public class TaCodegenServe {
                 Core.LinearregSlopeStream st;
                 try { st = c2.LinearregSlopeOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -33346,7 +33493,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LN(JsonElement req) {
@@ -33365,6 +33512,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -33432,7 +33580,7 @@ public class TaCodegenServe {
                 Core.LnStream st;
                 try { st = c2.LnOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -33544,7 +33692,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_LOG10(JsonElement req) {
@@ -33563,6 +33711,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -33630,7 +33779,7 @@ public class TaCodegenServe {
                 Core.Log10Stream st;
                 try { st = c2.Log10Open(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -33742,7 +33891,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MA(JsonElement req) {
@@ -33764,6 +33913,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -33849,7 +33999,7 @@ public class TaCodegenServe {
                 Core.MaStream st;
                 try { st = c2.MaOpen(fz_c[..p], optInTimePeriod, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -33968,7 +34118,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MACD(JsonElement req) {
@@ -33992,6 +34142,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -34095,7 +34246,7 @@ public class TaCodegenServe {
                 Core.MacdStream st;
                 try { st = c2.MacdOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MacdValue v0 = st.Value;
                 if (SvXtierNe(v0.MACD, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -34240,7 +34391,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MACDEXT(JsonElement req) {
@@ -34270,6 +34421,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -34394,7 +34546,7 @@ public class TaCodegenServe {
                 Core.MacdextStream st;
                 try { st = c2.MacdextOpen(fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MacdextValue v0 = st.Value;
                 if (SvXtierNe(v0.MACD, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -34539,7 +34691,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MACDFIX(JsonElement req) {
@@ -34561,6 +34713,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -34664,7 +34817,7 @@ public class TaCodegenServe {
                 Core.MacdfixStream st;
                 try { st = c2.MacdfixOpen(fz_c[..p], optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MacdfixValue v0 = st.Value;
                 if (SvXtierNe(v0.MACD, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -34809,7 +34962,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MACDV(JsonElement req) {
@@ -34833,6 +34986,7 @@ public class TaCodegenServe {
         double[] b1 = new double[svN];
         double[] b2 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -34949,7 +35103,7 @@ public class TaCodegenServe {
                 Core.MacdvStream st;
                 try { st = c2.MacdvOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MacdvValue v0 = st.Value;
                 if (SvXtierNe(v0.MACDV, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDVSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -35094,7 +35248,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MAMA(JsonElement req) {
@@ -35116,6 +35270,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -35199,7 +35354,7 @@ public class TaCodegenServe {
                 Core.MamaStream st;
                 try { st = c2.MamaOpen(fz_c[..p], optInFastLimit, optInSlowLimit); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MamaValue v0 = st.Value;
                 if (SvXtierNe(v0.MAMA, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FAMA, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -35323,7 +35478,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MARKETFI(JsonElement req) {
@@ -35342,6 +35497,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -35413,7 +35569,7 @@ public class TaCodegenServe {
                 Core.MarketfiStream st;
                 try { st = c2.MarketfiOpen(fz_h[..p], fz_l[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -35525,7 +35681,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MASSI(JsonElement req) {
@@ -35546,6 +35702,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -35616,7 +35773,7 @@ public class TaCodegenServe {
                 Core.MassiStream st;
                 try { st = c2.MassiOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -35735,7 +35892,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MAVP(JsonElement req) {
@@ -35759,6 +35916,7 @@ public class TaCodegenServe {
         for (int _pi = 0; _pi < svN; _pi++) { fz_v[_pi] = optInMinPeriod + (_pi % (optInMaxPeriod - optInMinPeriod + 3)) - 1; }
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -35846,7 +36004,7 @@ public class TaCodegenServe {
                 Core.MavpStream st;
                 try { st = c2.MavpOpen(fz_c[..p], fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -35965,7 +36123,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MAX(JsonElement req) {
@@ -35985,6 +36143,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -36052,7 +36211,7 @@ public class TaCodegenServe {
                 Core.MaxStream st;
                 try { st = c2.MaxOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -36171,7 +36330,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MAXINDEX(JsonElement req) {
@@ -36191,6 +36350,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -36252,7 +36412,7 @@ public class TaCodegenServe {
                 Core.MaxindexStream st;
                 try { st = c2.MaxindexOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -36371,7 +36531,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MCGD(JsonElement req) {
@@ -36391,6 +36551,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -36459,7 +36620,7 @@ public class TaCodegenServe {
                 Core.McgdStream st;
                 try { st = c2.McgdOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -36578,7 +36739,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MEDIAN(JsonElement req) {
@@ -36598,6 +36759,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -36665,7 +36827,7 @@ public class TaCodegenServe {
                 Core.MedianStream st;
                 try { st = c2.MedianOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -36784,7 +36946,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MEDPRICE(JsonElement req) {
@@ -36803,6 +36965,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -36872,7 +37035,7 @@ public class TaCodegenServe {
                 Core.MedpriceStream st;
                 try { st = c2.MedpriceOpen(fz_h[..p], fz_l[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -36984,7 +37147,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MFI(JsonElement req) {
@@ -37004,6 +37167,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -37077,7 +37241,7 @@ public class TaCodegenServe {
                 Core.MfiStream st;
                 try { st = c2.MfiOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -37196,7 +37360,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MIDPOINT(JsonElement req) {
@@ -37216,6 +37380,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -37283,7 +37448,7 @@ public class TaCodegenServe {
                 Core.MidpointStream st;
                 try { st = c2.MidpointOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -37402,7 +37567,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MIDPRICE(JsonElement req) {
@@ -37422,6 +37587,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -37491,7 +37657,7 @@ public class TaCodegenServe {
                 Core.MidpriceStream st;
                 try { st = c2.MidpriceOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -37610,7 +37776,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MIN(JsonElement req) {
@@ -37630,6 +37796,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -37697,7 +37864,7 @@ public class TaCodegenServe {
                 Core.MinStream st;
                 try { st = c2.MinOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -37816,7 +37983,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MININDEX(JsonElement req) {
@@ -37836,6 +38003,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         int[] b0 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -37897,7 +38065,7 @@ public class TaCodegenServe {
                 Core.MinindexStream st;
                 try { st = c2.MinindexOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -38016,7 +38184,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MINMAX(JsonElement req) {
@@ -38037,6 +38205,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -38119,7 +38288,7 @@ public class TaCodegenServe {
                 Core.MinmaxStream st;
                 try { st = c2.MinmaxOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MinmaxValue v0 = st.Value;
                 if (SvXtierNe(v0.Min, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Max, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -38251,7 +38420,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MINMAXINDEX(JsonElement req) {
@@ -38272,6 +38441,7 @@ public class TaCodegenServe {
         int[] b0 = new int[svN];
         int[] b1 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -38344,7 +38514,7 @@ public class TaCodegenServe {
                 Core.MinmaxindexStream st;
                 try { st = c2.MinmaxindexOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.MinmaxindexValue v0 = st.Value;
                 if (v0.MinIdx != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.MaxIdx != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -38476,7 +38646,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MINUS_DI(JsonElement req) {
@@ -38496,6 +38666,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -38568,7 +38739,7 @@ public class TaCodegenServe {
                 Core.MinusDiStream st;
                 try { st = c2.MinusDiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -38687,7 +38858,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MINUS_DM(JsonElement req) {
@@ -38707,6 +38878,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -38777,7 +38949,7 @@ public class TaCodegenServe {
                 Core.MinusDmStream st;
                 try { st = c2.MinusDmOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -38896,7 +39068,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MOM(JsonElement req) {
@@ -38916,6 +39088,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -38983,7 +39156,7 @@ public class TaCodegenServe {
                 Core.MomStream st;
                 try { st = c2.MomOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -39102,7 +39275,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_MULT(JsonElement req) {
@@ -39121,6 +39294,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -39190,7 +39364,7 @@ public class TaCodegenServe {
                 Core.MultStream st;
                 try { st = c2.MultOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -39302,7 +39476,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_NATR(JsonElement req) {
@@ -39322,6 +39496,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -39394,7 +39569,7 @@ public class TaCodegenServe {
                 Core.NatrStream st;
                 try { st = c2.NatrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -39513,7 +39688,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_NVI(JsonElement req) {
@@ -39532,6 +39707,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -39601,7 +39777,7 @@ public class TaCodegenServe {
                 Core.NviStream st;
                 try { st = c2.NviOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -39713,7 +39889,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_OBV(JsonElement req) {
@@ -39732,6 +39908,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -39801,7 +39978,7 @@ public class TaCodegenServe {
                 Core.ObvStream st;
                 try { st = c2.ObvOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -39913,7 +40090,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PERCENTB(JsonElement req) {
@@ -39937,6 +40114,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -40022,7 +40200,7 @@ public class TaCodegenServe {
                 Core.PercentbStream st;
                 try { st = c2.PercentbOpen(fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -40141,7 +40319,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PERCENTILE(JsonElement req) {
@@ -40162,6 +40340,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -40229,7 +40408,7 @@ public class TaCodegenServe {
                 Core.PercentileStream st;
                 try { st = c2.PercentileOpen(fz_c[..p], optInTimePeriod, optInPercentile); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -40348,7 +40527,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PERCENTRANK(JsonElement req) {
@@ -40368,6 +40547,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -40435,7 +40615,7 @@ public class TaCodegenServe {
                 Core.PercentrankStream st;
                 try { st = c2.PercentrankOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -40554,7 +40734,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PLUS_DI(JsonElement req) {
@@ -40574,6 +40754,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -40646,7 +40827,7 @@ public class TaCodegenServe {
                 Core.PlusDiStream st;
                 try { st = c2.PlusDiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -40765,7 +40946,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PLUS_DM(JsonElement req) {
@@ -40785,6 +40966,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -40855,7 +41037,7 @@ public class TaCodegenServe {
                 Core.PlusDmStream st;
                 try { st = c2.PlusDmOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -40974,7 +41156,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PPO(JsonElement req) {
@@ -40997,6 +41179,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -41082,7 +41265,7 @@ public class TaCodegenServe {
                 Core.PpoStream st;
                 try { st = c2.PpoOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -41201,7 +41384,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PSO(JsonElement req) {
@@ -41222,6 +41405,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -41294,7 +41478,7 @@ public class TaCodegenServe {
                 Core.PsoStream st;
                 try { st = c2.PsoOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInEMAPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -41413,7 +41597,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PVI(JsonElement req) {
@@ -41432,6 +41616,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -41501,7 +41686,7 @@ public class TaCodegenServe {
                 Core.PviStream st;
                 try { st = c2.PviOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -41613,7 +41798,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PVO(JsonElement req) {
@@ -41636,6 +41821,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -41721,7 +41907,7 @@ public class TaCodegenServe {
                 Core.PvoStream st;
                 try { st = c2.PvoOpen(fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -41840,7 +42026,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_PVT(JsonElement req) {
@@ -41859,6 +42045,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -41928,7 +42115,7 @@ public class TaCodegenServe {
                 Core.PvtStream st;
                 try { st = c2.PvtOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -42040,7 +42227,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_QSTICK(JsonElement req) {
@@ -42060,6 +42247,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -42129,7 +42317,7 @@ public class TaCodegenServe {
                 Core.QstickStream st;
                 try { st = c2.QstickOpen(fz_o[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -42248,7 +42436,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_RMA(JsonElement req) {
@@ -42268,6 +42456,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -42336,7 +42525,7 @@ public class TaCodegenServe {
                 Core.RmaStream st;
                 try { st = c2.RmaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -42455,7 +42644,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ROC(JsonElement req) {
@@ -42475,6 +42664,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -42542,7 +42732,7 @@ public class TaCodegenServe {
                 Core.RocStream st;
                 try { st = c2.RocOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -42661,7 +42851,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ROCP(JsonElement req) {
@@ -42681,6 +42871,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -42748,7 +42939,7 @@ public class TaCodegenServe {
                 Core.RocpStream st;
                 try { st = c2.RocpOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -42867,7 +43058,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ROCR(JsonElement req) {
@@ -42887,6 +43078,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -42954,7 +43146,7 @@ public class TaCodegenServe {
                 Core.RocrStream st;
                 try { st = c2.RocrOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -43073,7 +43265,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ROCR100(JsonElement req) {
@@ -43093,6 +43285,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -43160,7 +43353,7 @@ public class TaCodegenServe {
                 Core.Rocr100Stream st;
                 try { st = c2.Rocr100Open(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -43279,7 +43472,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ROGERSSATCHELL(JsonElement req) {
@@ -43300,6 +43493,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -43373,7 +43567,7 @@ public class TaCodegenServe {
                 Core.RogerssatchellStream st;
                 try { st = c2.RogerssatchellOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInAnnualization); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -43492,7 +43686,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_RSI(JsonElement req) {
@@ -43512,6 +43706,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -43580,7 +43775,7 @@ public class TaCodegenServe {
                 Core.RsiStream st;
                 try { st = c2.RsiOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -43699,7 +43894,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_RVI(JsonElement req) {
@@ -43720,6 +43915,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -43788,7 +43984,7 @@ public class TaCodegenServe {
                 Core.RviStream st;
                 try { st = c2.RviOpen(fz_c[..p], optInTimePeriod, optInStdDevPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -43907,7 +44103,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_RVIR(JsonElement req) {
@@ -43928,6 +44124,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -43998,7 +44195,7 @@ public class TaCodegenServe {
                 Core.RvirStream st;
                 try { st = c2.RvirOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInStdDevPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -44117,7 +44314,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_RVOL(JsonElement req) {
@@ -44137,6 +44334,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -44204,7 +44402,7 @@ public class TaCodegenServe {
                 Core.RvolStream st;
                 try { st = c2.RvolOpen(fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -44323,7 +44521,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SAR(JsonElement req) {
@@ -44344,6 +44542,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -44413,7 +44612,7 @@ public class TaCodegenServe {
                 Core.SarStream st;
                 try { st = c2.SarOpen(fz_h[..p], fz_l[..p], optInAcceleration, optInMaximum); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -44525,7 +44724,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SAREXT(JsonElement req) {
@@ -44552,6 +44751,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -44621,7 +44821,7 @@ public class TaCodegenServe {
                 Core.SarextStream st;
                 try { st = c2.SarextOpen(fz_h[..p], fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -44733,7 +44933,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SHARPE(JsonElement req) {
@@ -44755,6 +44955,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -44822,7 +45023,7 @@ public class TaCodegenServe {
                 Core.SharpeStream st;
                 try { st = c2.SharpeOpen(fz_c[..p], optInTimePeriod, optInRiskFreeRate, optInAnnualization); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -44941,7 +45142,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SI(JsonElement req) {
@@ -44961,6 +45162,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -45034,7 +45236,7 @@ public class TaCodegenServe {
                 Core.SiStream st;
                 try { st = c2.SiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInLimitMove); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -45146,7 +45348,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SIN(JsonElement req) {
@@ -45165,6 +45367,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -45232,7 +45435,7 @@ public class TaCodegenServe {
                 Core.SinStream st;
                 try { st = c2.SinOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -45344,7 +45547,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SINH(JsonElement req) {
@@ -45363,6 +45566,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -45430,7 +45634,7 @@ public class TaCodegenServe {
                 Core.SinhStream st;
                 try { st = c2.SinhOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -45542,7 +45746,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SKEW(JsonElement req) {
@@ -45562,6 +45766,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -45629,7 +45834,7 @@ public class TaCodegenServe {
                 Core.SkewStream st;
                 try { st = c2.SkewOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -45748,7 +45953,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SMA(JsonElement req) {
@@ -45768,6 +45973,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -45835,7 +46041,7 @@ public class TaCodegenServe {
                 Core.SmaStream st;
                 try { st = c2.SmaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -45954,7 +46160,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SMI(JsonElement req) {
@@ -45978,6 +46184,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -46069,7 +46276,7 @@ public class TaCodegenServe {
                 Core.SmiStream st;
                 try { st = c2.SmiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.SmiValue v0 = st.Value;
                 if (SvXtierNe(v0.SMI, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.SMISignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -46201,7 +46408,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SORTINO(JsonElement req) {
@@ -46223,6 +46430,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -46290,7 +46498,7 @@ public class TaCodegenServe {
                 Core.SortinoStream st;
                 try { st = c2.SortinoOpen(fz_c[..p], optInTimePeriod, optInMAR, optInAnnualization); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -46409,7 +46617,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SQRT(JsonElement req) {
@@ -46428,6 +46636,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -46495,7 +46704,7 @@ public class TaCodegenServe {
                 Core.SqrtStream st;
                 try { st = c2.SqrtOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -46607,7 +46816,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SQZMOM(JsonElement req) {
@@ -46633,6 +46842,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         int[] b1 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -46708,7 +46918,7 @@ public class TaCodegenServe {
                 Core.SqzmomStream st;
                 try { st = c2.SqzmomOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.SqzmomValue v0 = st.Value;
                 if (SvXtierNe(v0.Momentum, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.Squeeze != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -46840,7 +47050,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_STC(JsonElement req) {
@@ -46862,6 +47072,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -46931,7 +47142,7 @@ public class TaCodegenServe {
                 Core.StcStream st;
                 try { st = c2.StcOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInCyclePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -47050,7 +47261,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_STDDEV(JsonElement req) {
@@ -47071,6 +47282,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -47138,7 +47350,7 @@ public class TaCodegenServe {
                 Core.StddevStream st;
                 try { st = c2.StddevOpen(fz_c[..p], optInTimePeriod, optInNbDev); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -47257,7 +47469,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_STOCH(JsonElement req) {
@@ -47284,6 +47496,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -47394,7 +47607,7 @@ public class TaCodegenServe {
                 Core.StochStream st;
                 try { st = c2.StochOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.StochValue v0 = st.Value;
                 if (SvXtierNe(v0.SlowK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.SlowD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -47526,7 +47739,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_STOCHF(JsonElement req) {
@@ -47550,6 +47763,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -47660,7 +47874,7 @@ public class TaCodegenServe {
                 Core.StochfStream st;
                 try { st = c2.StochfOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.StochfValue v0 = st.Value;
                 if (SvXtierNe(v0.FastK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FastD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -47792,7 +48006,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_STOCHRSI(JsonElement req) {
@@ -47817,6 +48031,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -47920,7 +48135,7 @@ public class TaCodegenServe {
                 Core.StochrsiStream st;
                 try { st = c2.StochrsiOpen(fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.StochrsiValue v0 = st.Value;
                 if (SvXtierNe(v0.FastK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FastD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -48052,7 +48267,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SUB(JsonElement req) {
@@ -48071,6 +48286,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -48140,7 +48356,7 @@ public class TaCodegenServe {
                 Core.SubStream st;
                 try { st = c2.SubOpen(fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -48252,7 +48468,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SUM(JsonElement req) {
@@ -48272,6 +48488,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -48339,7 +48556,7 @@ public class TaCodegenServe {
                 Core.SumStream st;
                 try { st = c2.SumOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -48458,7 +48675,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SUPERTREND(JsonElement req) {
@@ -48480,6 +48697,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         int[] b1 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -48556,7 +48774,7 @@ public class TaCodegenServe {
                 Core.SupertrendStream st;
                 try { st = c2.SupertrendOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInMultiplier); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.SupertrendValue v0 = st.Value;
                 if (SvXtierNe(v0.Supertrend, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.Trend != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -48688,7 +48906,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SWAK_2PHP(JsonElement req) {
@@ -48708,6 +48926,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -48776,7 +48995,7 @@ public class TaCodegenServe {
                 Core.Swak2phpStream st;
                 try { st = c2.Swak2phpOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -48895,7 +49114,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SWAK_BP(JsonElement req) {
@@ -48916,6 +49135,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -48984,7 +49204,7 @@ public class TaCodegenServe {
                 Core.SwakBpStream st;
                 try { st = c2.SwakBpOpen(fz_c[..p], optInTimePeriod, optInDelta); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -49103,7 +49323,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SWAK_BUTTER(JsonElement req) {
@@ -49123,6 +49343,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -49191,7 +49412,7 @@ public class TaCodegenServe {
                 Core.SwakButterStream st;
                 try { st = c2.SwakButterOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -49310,7 +49531,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SWAK_GAUSS(JsonElement req) {
@@ -49330,6 +49551,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -49398,7 +49620,7 @@ public class TaCodegenServe {
                 Core.SwakGaussStream st;
                 try { st = c2.SwakGaussOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -49517,7 +49739,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_SWAK_HP(JsonElement req) {
@@ -49537,6 +49759,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -49605,7 +49828,7 @@ public class TaCodegenServe {
                 Core.SwakHpStream st;
                 try { st = c2.SwakHpOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -49724,7 +49947,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_T3(JsonElement req) {
@@ -49745,6 +49968,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -49813,7 +50037,7 @@ public class TaCodegenServe {
                 Core.T3Stream st;
                 try { st = c2.T3Open(fz_c[..p], optInTimePeriod, optInVFactor); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -49932,7 +50156,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TAN(JsonElement req) {
@@ -49951,6 +50175,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -50018,7 +50243,7 @@ public class TaCodegenServe {
                 Core.TanStream st;
                 try { st = c2.TanOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -50130,7 +50355,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TANH(JsonElement req) {
@@ -50149,6 +50374,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -50216,7 +50442,7 @@ public class TaCodegenServe {
                 Core.TanhStream st;
                 try { st = c2.TanhOpen(fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -50328,7 +50554,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TEMA(JsonElement req) {
@@ -50348,6 +50574,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -50416,7 +50643,7 @@ public class TaCodegenServe {
                 Core.TemaStream st;
                 try { st = c2.TemaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -50535,7 +50762,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TRANGE(JsonElement req) {
@@ -50554,6 +50781,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -50625,7 +50853,7 @@ public class TaCodegenServe {
                 Core.TrangeStream st;
                 try { st = c2.TrangeOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -50737,7 +50965,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TRIMA(JsonElement req) {
@@ -50757,6 +50985,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -50824,7 +51053,7 @@ public class TaCodegenServe {
                 Core.TrimaStream st;
                 try { st = c2.TrimaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -50943,7 +51172,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TRIX(JsonElement req) {
@@ -50963,6 +51192,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -51031,7 +51261,7 @@ public class TaCodegenServe {
                 Core.TrixStream st;
                 try { st = c2.TrixOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -51150,7 +51380,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TSF(JsonElement req) {
@@ -51170,6 +51400,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -51237,7 +51468,7 @@ public class TaCodegenServe {
                 Core.TsfStream st;
                 try { st = c2.TsfOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -51356,7 +51587,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TSI(JsonElement req) {
@@ -51377,6 +51608,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -51445,7 +51677,7 @@ public class TaCodegenServe {
                 Core.TsiStream st;
                 try { st = c2.TsiOpen(fz_c[..p], optInFirstPeriod, optInSecondPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -51564,7 +51796,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_TYPPRICE(JsonElement req) {
@@ -51583,6 +51815,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -51654,7 +51887,7 @@ public class TaCodegenServe {
                 Core.TyppriceStream st;
                 try { st = c2.TyppriceOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -51766,7 +51999,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ULTOSC(JsonElement req) {
@@ -51788,6 +52021,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -51859,7 +52093,7 @@ public class TaCodegenServe {
                 Core.UltoscStream st;
                 try { st = c2.UltoscOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -51978,7 +52212,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VAR(JsonElement req) {
@@ -51999,6 +52233,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -52066,7 +52301,7 @@ public class TaCodegenServe {
                 Core.VarStream st;
                 try { st = c2.VarOpen(fz_c[..p], optInTimePeriod, optInNbDev); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -52185,7 +52420,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VHF(JsonElement req) {
@@ -52205,6 +52440,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -52272,7 +52508,7 @@ public class TaCodegenServe {
                 Core.VhfStream st;
                 try { st = c2.VhfOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -52391,7 +52627,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VIDYA(JsonElement req) {
@@ -52412,6 +52648,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -52480,7 +52717,7 @@ public class TaCodegenServe {
                 Core.VidyaStream st;
                 try { st = c2.VidyaOpen(fz_c[..p], optInTimePeriod, optInCMOPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -52599,7 +52836,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VORTEX(JsonElement req) {
@@ -52620,6 +52857,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -52710,7 +52948,7 @@ public class TaCodegenServe {
                 Core.VortexStream st;
                 try { st = c2.VortexOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.VortexValue v0 = st.Value;
                 if (SvXtierNe(v0.PlusVI, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MinusVI, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -52842,7 +53080,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VWAP(JsonElement req) {
@@ -52861,6 +53099,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -52934,7 +53173,7 @@ public class TaCodegenServe {
                 Core.VwapStream st;
                 try { st = c2.VwapOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -53046,7 +53285,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_VWMA(JsonElement req) {
@@ -53066,6 +53305,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -53135,7 +53375,7 @@ public class TaCodegenServe {
                 Core.VwmaStream st;
                 try { st = c2.VwmaOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -53254,7 +53494,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_WAD(JsonElement req) {
@@ -53273,6 +53513,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -53344,7 +53585,7 @@ public class TaCodegenServe {
                 Core.WadStream st;
                 try { st = c2.WadOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -53456,7 +53697,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_WAVETREND(JsonElement req) {
@@ -53479,6 +53720,7 @@ public class TaCodegenServe {
         double[] b0 = new double[svN];
         double[] b1 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -53570,7 +53812,7 @@ public class TaCodegenServe {
                 Core.WavetrendStream st;
                 try { st = c2.WavetrendOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.WavetrendValue v0 = st.Value;
                 if (SvXtierNe(v0.WT1, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.WT2, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -53702,7 +53944,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_WCLPRICE(JsonElement req) {
@@ -53721,6 +53963,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -53792,7 +54035,7 @@ public class TaCodegenServe {
                 Core.WclpriceStream st;
                 try { st = c2.WclpriceOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -53904,7 +54147,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_WILLR(JsonElement req) {
@@ -53924,6 +54167,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -53995,7 +54239,7 @@ public class TaCodegenServe {
                 Core.WillrStream st;
                 try { st = c2.WillrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -54114,7 +54358,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_WMA(JsonElement req) {
@@ -54134,6 +54378,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -54201,7 +54446,7 @@ public class TaCodegenServe {
                 Core.WmaStream st;
                 try { st = c2.WmaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -54320,7 +54565,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ZIGZAG(JsonElement req) {
@@ -54343,6 +54588,7 @@ public class TaCodegenServe {
         int[] b1 = new int[svN];
         int[] b2 = new int[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -54427,7 +54673,7 @@ public class TaCodegenServe {
                 Core.ZigzagStream st;
                 try { st = c2.ZigzagOpen(fz_h[..p], fz_l[..p], optInSensitivity, optInMinTrendLength); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 Core.ZigzagValue v0 = st.Value;
                 if (SvXtierNe(v0.ZigZag, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.Trend != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
@@ -54572,7 +54818,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string Sv_ZLEMA(JsonElement req) {
@@ -54592,6 +54838,7 @@ public class TaCodegenServe {
         FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
         double[] b0 = new double[svN];
         long legs = 0;
+        int roundMask = 0;
         bool allOk = true;
         bool peekAll = true;
         long peekReps = 0;
@@ -54660,7 +54907,7 @@ public class TaCodegenServe {
                 Core.ZlemaStream st;
                 try { st = c2.ZlemaOpen(fz_c[..p], optInTimePeriod); }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
+                legs++; roundMask |= 1 << rd;
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
@@ -54779,7 +55026,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + ",\"round_mask\":" + roundMask + extra + diag + "}";
     }
 
     static string HandleFuzzInHash(JsonElement req) {

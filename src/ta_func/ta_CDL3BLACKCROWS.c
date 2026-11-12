@@ -756,7 +756,7 @@ static void TA_CDL3BLACKCROWS_StepImpl( struct TA_CDL3BLACKCROWS_Stream *sp, dou
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
    ringPosL_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
-   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   sp->ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = range0;
    ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
    if( ringPosL_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {

@@ -139,47 +139,175 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle: black candle
-       * - second candle: white candle that trades only above the prior close (low > prior close)
-       * - third candle: black candle with the close equal to the first candle's close
-       * The meaning of "equal" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
-             inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
-             inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 3rd same close */
-             inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
-         {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( Equal_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
           */
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])) : 0.0)));
-         i += 1;
-         EqualTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) )
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Equal_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (inHigh[i - 2] - inLow[i - 2]);
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) )
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]);
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Equal_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) )
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])) : 0.0)));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    internal RetCode CdlsticksandwichImpl( int startIdx,
                                           int endIdx,
@@ -219,28 +347,99 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] >= (double)inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( Equal_rangeType == 0 ) {
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]));
+            i += 1;
          }
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[EqualTrailingIdx - 2] - (double)inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[EqualTrailingIdx - 2] - (double)inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[EqualTrailingIdx - 2] - ((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inClose[EqualTrailingIdx - 2]) : ((double)inOpen[EqualTrailingIdx - 2]))) + (((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inOpen[EqualTrailingIdx - 2]) : ((double)inClose[EqualTrailingIdx - 2])) - (double)inLow[EqualTrailingIdx - 2])) : 0.0)));
-         i += 1;
-         EqualTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) && (double)inClose[i] >= (double)inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            EqualPeriodTotal += (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) - (Math.Abs((double)inClose[EqualTrailingIdx - 2] - (double)inOpen[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Equal_rangeType == 1 ) {
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((double)inHigh[i - 2] - (double)inLow[i - 2]);
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0))) && (double)inClose[i] >= (double)inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((double)inHigh[i - 2] - (double)inLow[i - 2])) / 1.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            EqualPeriodTotal += ((double)inHigh[i - 2] - (double)inLow[i - 2]) - ((double)inHigh[EqualTrailingIdx - 2] - (double)inLow[EqualTrailingIdx - 2]);
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( Equal_rangeType == 2 ) {
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]));
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0))) && (double)inClose[i] >= (double)inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2]))) / 2.0))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            EqualPeriodTotal += (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) - (((double)inHigh[EqualTrailingIdx - 2] - ((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inClose[EqualTrailingIdx - 2]) : ((double)inOpen[EqualTrailingIdx - 2]))) + (((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inOpen[EqualTrailingIdx - 2]) : ((double)inClose[EqualTrailingIdx - 2])) - (double)inLow[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] >= (double)inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs((double)inClose[EqualTrailingIdx - 2] - (double)inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? ((double)inHigh[EqualTrailingIdx - 2] - (double)inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? (((double)inHigh[EqualTrailingIdx - 2] - ((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inClose[EqualTrailingIdx - 2]) : ((double)inOpen[EqualTrailingIdx - 2]))) + (((((double)inClose[EqualTrailingIdx - 2]) >= ((double)inOpen[EqualTrailingIdx - 2])) ? ((double)inOpen[EqualTrailingIdx - 2]) : ((double)inClose[EqualTrailingIdx - 2])) - (double)inLow[EqualTrailingIdx - 2])) : 0.0)));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    /// <summary>
    /// A three-candle bullish reversal pattern: two black candles (1st and 3rd)
@@ -683,74 +882,283 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle: black candle
-       * - second candle: white candle that trades only above the prior close (low > prior close)
-       * - third candle: black candle with the close equal to the first candle's close
-       * The meaning of "equal" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
-             inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
-             inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 3rd same close */
-             inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
-         {
-            outInteger[outIdx++ * outStride] = 100;
-         } else {
-            outInteger[outIdx++ * outStride] = 0;
+      if( Equal_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
           */
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])) : 0.0)));
-         i += 1;
-         EqualTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
-      int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 3;
-      if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += (Math.Abs(inClose[i - 2] - inOpen[i - 2])) - (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
+         int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 3;
+         if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
+         double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
+         for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.EqualPeriodTotal = EqualPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
+         sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
+         sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
+         sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
+         sp.cs_Equal_rangeType = Equal_rangeType;
+         sp.cs_Equal_avgPeriod = Equal_avgPeriod;
+         sp.cs_Equal_factor = Equal_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( Equal_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += (inHigh[i - 2] - inLow[i - 2]);
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : (inHigh[i - 2] - inLow[i - 2])) / 1.0))) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += (inHigh[i - 2] - inLow[i - 2]) - (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]);
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
+         int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 3;
+         if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
+         double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
+         for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.EqualPeriodTotal = EqualPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
+         sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
+         sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
+         sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
+         sp.cs_Equal_rangeType = Equal_rangeType;
+         sp.cs_Equal_avgPeriod = Equal_avgPeriod;
+         sp.cs_Equal_factor = Equal_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( Equal_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2]))) / 2.0))) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) - ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2]));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
+         int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 3;
+         if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
+         double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
+         for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.EqualPeriodTotal = EqualPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
+         sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
+         sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
+         sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
+         sp.cs_Equal_rangeType = Equal_rangeType;
+         sp.cs_Equal_avgPeriod = Equal_avgPeriod;
+         sp.cs_Equal_factor = Equal_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         EqualPeriodTotal = 0;
+         EqualTrailingIdx = startIdx - Equal_avgPeriod;
+         i = EqualTrailingIdx;
+         while( i < startIdx ) {
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - first candle: black candle
+          * - second candle: white candle that trades only above the prior close (low > prior close)
+          * - third candle: black candle with the close equal to the first candle's close
+          * The meaning of "equal" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
+                inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((Equal_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Equal_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(inClose[EqualTrailingIdx - 2] - inOpen[EqualTrailingIdx - 2])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 2] - inLow[EqualTrailingIdx - 2]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 2] - (((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inClose[EqualTrailingIdx - 2]) : (inOpen[EqualTrailingIdx - 2]))) + ((((inClose[EqualTrailingIdx - 2]) >= (inOpen[EqualTrailingIdx - 2])) ? (inOpen[EqualTrailingIdx - 2]) : (inClose[EqualTrailingIdx - 2])) - inLow[EqualTrailingIdx - 2])) : 0.0)));
+            i += 1;
+            EqualTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
+         int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 3;
+         if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
+         double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
+         for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.EqualPeriodTotal = EqualPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag2_inHigh = inHigh[historyLen - 2];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag2_inLow = inLow[historyLen - 2];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
+         sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
+         sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
+         sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
+         sp.cs_Equal_rangeType = Equal_rangeType;
+         sp.cs_Equal_avgPeriod = Equal_avgPeriod;
+         sp.cs_Equal_factor = Equal_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       }
-      int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
-      double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
-      }
-      sp.EqualPeriodTotal = EqualPeriodTotal;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
-      sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
-      sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
-      sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
-      sp.cs_Equal_rangeType = Equal_rangeType;
-      sp.cs_Equal_avgPeriod = Equal_avgPeriod;
-      sp.cs_Equal_factor = Equal_factor;
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 

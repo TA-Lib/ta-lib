@@ -141,6 +141,10 @@ pub(crate) const RESERVED_WORDS: &[&str] = &[
 ];
 
 thread_local! {
+    /// Whether a body of the function being generated took range-type copies;
+    /// set by each emit site, read once the file is done.
+    static RANGE_TYPE_COPIED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+
     /// FMA fusion name-sets for the function currently being stream-emitted. The
     /// stream emitter ([`c_stream`]) renders through the crate-public
     /// `render_statement*` / `render_expression` entry points one statement at a
@@ -412,6 +416,7 @@ pub fn generate(
     // call at the end, the whole streaming section.
     let _site_scope = crate::internal_error_ids::FuncScope::new(&func.name);
 
+    RANGE_TYPE_COPIED.with(|c| c.set(false));
     let mut out = String::new();
     out.push_str(&gen_header());
     out.push_str(&gen_header_comments(func));
@@ -441,20 +446,16 @@ pub fn generate(
         let _stream_idx = CircBufIdxUsedScope::new(func.stream_source());
         out.push_str(&super::c_stream::generate(func, enums, registry, helpers));
     }
+    if RANGE_TYPE_COPIED.with(|c| c.replace(false)) {
+        // gcc's path splitting duplicates a copied loop's latch and turns its
+        // output select back into a mispredicting branch.
+        out.insert_str(
+            pragma_at,
+            "#if defined(__GNUC__) && !defined(__clang__)\n#pragma GCC optimize(\"no-split-paths\")\n#endif\n\n",
+        );
+    }
     // Last, over the finished file: the emitters above place their `(void)x;`
     // before they know what the body will read (see `c_hygiene`).
-    if !func.opt_outs.contains(&crate::ir::OptOut::RangeTypeCopy) {
-        let copied = super::c_candle_defaults::specialize(&out);
-        if copied != out {
-            // gcc's path splitting duplicates a copied loop's latch and turns
-            // its output select back into a mispredicting branch.
-            out = copied;
-            out.insert_str(
-                pragma_at,
-                "#if defined(__GNUC__) && !defined(__clang__)\n#pragma GCC optimize(\"no-split-paths\")\n#endif\n\n",
-            );
-        }
-    }
     super::c_hygiene::scrub_void_casts(&out)
 }
 
@@ -848,6 +849,28 @@ fn gen_func(
     gen_func_inner(func, single_precision, None, enums, registry, helpers)
 }
 
+/// Split `body` into its range-type copies, recording for the file's pragma
+/// that a copy was taken.
+pub(crate) fn range_type_copies(body: &[Statement], func: &FuncDef) -> Option<super::range_type_copy::Copies> {
+    let copies = super::range_type_copy::split(body, &func.opt_outs, &|t| Expr::Var(t.c_name().to_string()));
+    if copies.is_some() {
+        RANGE_TYPE_COPIED.with(|c| c.set(true));
+    }
+    copies
+}
+
+/// The `if` / `else if` / `else` line and brace that open arm `k`, at `pad`;
+/// the caller closes it with `{pad}}`.
+pub(crate) fn open_range_type_arm(k: usize, arm: &super::range_type_copy::Arm, pad: &str) -> String {
+    let Some(guard) = &arm.guard else { return format!("{pad}else\n{pad}{{\n") };
+    let cond: Vec<String> = guard
+        .iter()
+        .map(|(s, t)| format!("{} == {}", super::range_type_copy::range_type_var(s), t.c_name()))
+        .collect();
+    let kw = if k == 0 { "if" } else { "else if" };
+    format!("{pad}{kw}( {} )\n{pad}{{\n", cond.join(" && "))
+}
+
 /// Drop `<Setting>_<prop>` declarations the rendered function never reads.
 ///
 /// The IR names all three properties of a setting the body touches, but a body
@@ -1160,69 +1183,83 @@ fn gen_func_inner(
     // Render remaining body statements.
     // First-occurrence VarDecls (with or without init) are skipped.
     // Duplicate VarDecls with init are rendered as plain assignments in their natural position.
-    let mut body_seen: Vec<String> = Vec::new();
-    for stmt in body {
-        match stmt {
-            Statement::VarDecl { name, init, .. } => {
-                if body_seen.contains(name) {
-                    // Duplicate VarDecl: render as assignment if it has an init
-                    if let Some(init_expr) = init {
-                        let mut hoisted = Vec::new();
-                        let mut cnt = ctx.inline_counter.get();
-                        let new_init =
-                            hoist_block_helpers(init_expr, helpers, &mut hoisted, &mut cnt, C_CANDLE_MACRO_FNS);
-                        ctx.inline_counter.set(cnt);
-                        out.push_str(&render_hoisted_blocks(
-                            &hoisted,
-                            3,
-                            ctx,
-                            enums,
-                            registry,
-                            helpers,
-                        ));
-                        out.push_str(&format!(
-                            "   {} = {};\n",
-                            name,
-                            render_expr(&new_init, ctx, registry, helpers)
-                        ));
-                    }
-                } else {
-                    body_seen.push(name.clone());
-                }
-            }
-            Statement::Block { body } => {
-                // Track VarDecl names inside Blocks (multi-var declarations)
-                // and render non-VarDecl statements (e.g., chained assignments
-                // like `*outBegIdx = today = startIdx;` which parse into a Block
-                // containing [Assign(today=startIdx), Assign(*outBegIdx=today)]).
-                for s in body {
-                    if let Statement::VarDecl { name, .. } = s {
-                        if !body_seen.contains(name) {
-                            body_seen.push(name.clone());
+    let render_top = |stmts: &[Statement], body_seen: &mut Vec<String>, out: &mut String| {
+        for stmt in stmts {
+            match stmt {
+                Statement::VarDecl { name, init, .. } => {
+                    if body_seen.contains(name) {
+                        // Duplicate VarDecl: render as assignment if it has an init
+                        if let Some(init_expr) = init {
+                            let mut hoisted = Vec::new();
+                            let mut cnt = ctx.inline_counter.get();
+                            let new_init =
+                                hoist_block_helpers(init_expr, helpers, &mut hoisted, &mut cnt, C_CANDLE_MACRO_FNS);
+                            ctx.inline_counter.set(cnt);
+                            out.push_str(&render_hoisted_blocks(
+                                &hoisted,
+                                3,
+                                ctx,
+                                enums,
+                                registry,
+                                helpers,
+                            ));
+                            out.push_str(&format!(
+                                "   {} = {};\n",
+                                name,
+                                render_expr(&new_init, ctx, registry, helpers)
+                            ));
                         }
                     } else {
-                        out.push_str(&render_stmt(
-                            s,
-                            3,
-                            ctx,
-                            enums,
-                            registry,
-                            helpers,
-                        ));
+                        body_seen.push(name.clone());
                     }
                 }
-            }
-            _ => {
-                out.push_str(&render_stmt(
-                    stmt,
-                    3,
-                    ctx,
-                    enums,
-                    registry,
-                    helpers,
-                ));
+                Statement::Block { body } => {
+                    // Track VarDecl names inside Blocks (multi-var declarations)
+                    // and render non-VarDecl statements (e.g., chained assignments
+                    // like `*outBegIdx = today = startIdx;` which parse into a Block
+                    // containing [Assign(today=startIdx), Assign(*outBegIdx=today)]).
+                    for s in body {
+                        if let Statement::VarDecl { name, .. } = s {
+                            if !body_seen.contains(name) {
+                                body_seen.push(name.clone());
+                            }
+                        } else {
+                            out.push_str(&render_stmt(
+                                s,
+                                3,
+                                ctx,
+                                enums,
+                                registry,
+                                helpers,
+                            ));
+                        }
+                    }
+                }
+                _ => {
+                    out.push_str(&render_stmt(
+                        stmt,
+                        3,
+                        ctx,
+                        enums,
+                        registry,
+                        helpers,
+                    ));
+                }
             }
         }
+    };
+    let mut body_seen: Vec<String> = Vec::new();
+    if let Some(copies) = range_type_copies(body, func) {
+        render_top(&copies.head, &mut body_seen, &mut out);
+        let count = ctx.inline_counter.get();
+        for (k, arm) in copies.arms.iter().enumerate() {
+            ctx.inline_counter.set(count);
+            out.push_str(&open_range_type_arm(k, arm, "   "));
+            render_top(&arm.body, &mut body_seen.clone(), &mut out);
+            out.push_str("   }\n");
+        }
+    } else {
+        render_top(body, &mut body_seen, &mut out);
     }
 
     out.push_str("}\n\n");
@@ -2584,7 +2621,9 @@ fn try_render_candle_macro(
     match fname {
         "ta_candlerange" if args.len() == 5 => {
             // ta_candlerange(SET_rangeType, inOpen[idx], inHigh[idx], inLow[idx], inClose[idx])
-            extract_candle_setting_name(&args[0])?;
+            if !is_range_type_operand(&args[0]) {
+                return None;
+            }
             let idx = extract_array_index(&args[4])?;
             let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
             Some(format!("TA_CANDLERANGE_OF({},{})", r(&args[0]), r(&idx)))
@@ -2592,7 +2631,9 @@ fn try_render_candle_macro(
         "ta_candleaverage" if args.len() == 8 => {
             // ta_candleaverage(SET_rangeType, SET_avgPeriod, SET_factor, sum,
             //                  inOpen[idx], inHigh[idx], inLow[idx], inClose[idx])
-            extract_candle_setting_name(&args[0])?;
+            if !is_range_type_operand(&args[0]) {
+                return None;
+            }
             let idx = extract_array_index(&args[7])?;
             let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
             let settings = args[..4].iter().map(r).collect::<Vec<_>>().join(",");
@@ -2637,6 +2678,12 @@ fn try_render_stream_candle_macro(
         }
         _ => None,
     }
+}
+
+/// A setting's range-type local, or a range type a copy folded in.
+fn is_range_type_operand(expr: &Expr) -> bool {
+    extract_candle_setting_name(expr).is_some()
+        || matches!(expr, Expr::Var(n) if super::range_type_copy::RangeType::from_c_name(n).is_some())
 }
 
 /// Extract the candle setting name from a `_rangeType` variable reference.

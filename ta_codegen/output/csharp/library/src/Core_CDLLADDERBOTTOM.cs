@@ -139,53 +139,199 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      ShadowVeryShortPeriodTotal = 0;
-      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-      i = ShadowVeryShortTrailingIdx;
-      while( i < startIdx ) {
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - three black candlesticks with consecutively lower opens and closes
-       * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
-       * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
-       * The meaning of "very short" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
-             inOpen[i - 4] > inOpen[i - 3] &&
-             inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-             inClose[i - 4] > inClose[i - 3] &&
-             inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-             (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-             inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-             inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-         {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( ShadowVeryShort_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
           */
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         ShadowVeryShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (Math.Abs(inClose[i - 1] - inOpen[i - 1]))) / 1.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1])) - (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( ShadowVeryShort_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (inHigh[i - 1] - inLow[i - 1]);
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += (inHigh[i - 1] - inLow[i - 1]) - (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]);
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( ShadowVeryShort_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]))) / 2.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) - ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    internal RetCode CdlladderbottomImpl( int startIdx,
                                          int endIdx,
@@ -225,28 +371,99 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      ShadowVeryShortPeriodTotal = 0;
-      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-      i = ShadowVeryShortTrailingIdx;
-      while( i < startIdx ) {
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
+      if( ShadowVeryShort_rangeType == 0 ) {
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]));
+            i += 1;
          }
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[ShadowVeryShortTrailingIdx - 1] - (double)inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[ShadowVeryShortTrailingIdx - 1] - (double)inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[ShadowVeryShortTrailingIdx - 1] - ((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inClose[ShadowVeryShortTrailingIdx - 1]) : ((double)inOpen[ShadowVeryShortTrailingIdx - 1]))) + (((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inOpen[ShadowVeryShortTrailingIdx - 1]) : ((double)inClose[ShadowVeryShortTrailingIdx - 1])) - (double)inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         ShadowVeryShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      return RetCode.Success ;
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]))) / 1.0))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            ShadowVeryShortPeriodTotal += (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) - (Math.Abs((double)inClose[ShadowVeryShortTrailingIdx - 1] - (double)inOpen[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( ShadowVeryShort_rangeType == 1 ) {
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((double)inHigh[i - 1] - (double)inLow[i - 1]);
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((double)inHigh[i - 1] - (double)inLow[i - 1])) / 1.0))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            ShadowVeryShortPeriodTotal += ((double)inHigh[i - 1] - (double)inLow[i - 1]) - ((double)inHigh[ShadowVeryShortTrailingIdx - 1] - (double)inLow[ShadowVeryShortTrailingIdx - 1]);
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else if( ShadowVeryShort_rangeType == 2 ) {
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1]));
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1]))) / 2.0))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            ShadowVeryShortPeriodTotal += (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) - (((double)inHigh[ShadowVeryShortTrailingIdx - 1] - ((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inClose[ShadowVeryShortTrailingIdx - 1]) : ((double)inOpen[ShadowVeryShortTrailingIdx - 1]))) + (((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inOpen[ShadowVeryShortTrailingIdx - 1]) : ((double)inClose[ShadowVeryShortTrailingIdx - 1])) - (double)inLow[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      } else {
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         outIdx = 0;
+         do {
+            if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == -1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inOpen[i - 4] > (double)inOpen[i - 3] && (double)inOpen[i - 3] > (double)inOpen[i - 2] && (double)inClose[i - 4] > (double)inClose[i - 3] && (double)inClose[i - 3] > (double)inClose[i - 2] && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inClose[i] > (double)inHigh[i - 1] ) {
+               outInteger[outIdx++] = 100;
+            } else {
+               outInteger[outIdx++] = 0;
+            }
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs((double)inClose[ShadowVeryShortTrailingIdx - 1] - (double)inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? ((double)inHigh[ShadowVeryShortTrailingIdx - 1] - (double)inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? (((double)inHigh[ShadowVeryShortTrailingIdx - 1] - ((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inClose[ShadowVeryShortTrailingIdx - 1]) : ((double)inOpen[ShadowVeryShortTrailingIdx - 1]))) + (((((double)inClose[ShadowVeryShortTrailingIdx - 1]) >= ((double)inOpen[ShadowVeryShortTrailingIdx - 1])) ? ((double)inOpen[ShadowVeryShortTrailingIdx - 1]) : ((double)inClose[ShadowVeryShortTrailingIdx - 1])) - (double)inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         return RetCode.Success ;
+      }
    }
    /// <summary>
    /// Five-candle bullish reversal pattern: three consecutively lower black
@@ -715,82 +932,315 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      ShadowVeryShortPeriodTotal = 0;
-      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-      i = ShadowVeryShortTrailingIdx;
-      while( i < startIdx ) {
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - three black candlesticks with consecutively lower opens and closes
-       * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
-       * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
-       * The meaning of "very short" is specified with TA_SetCandleSettings
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
-             inOpen[i - 4] > inOpen[i - 3] &&
-             inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-             inClose[i - 4] > inClose[i - 3] &&
-             inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-             (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-             inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-             inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-         {
-            outInteger[outIdx++ * outStride] = 100;
-         } else {
-            outInteger[outIdx++ * outStride] = 0;
+      if( ShadowVeryShort_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1]));
+            i += 1;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
           */
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         ShadowVeryShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement = outIdx;
-      outBegIdx = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
-      int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
-      if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (Math.Abs(inClose[i - 1] - inOpen[i - 1]))) / 1.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1])) - (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
+         int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
+         if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
+         double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
+         for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag3_inOpen = inOpen[historyLen - 3];
+         sp.lag4_inOpen = inOpen[historyLen - 4];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.lag3_inClose = inClose[historyLen - 3];
+         sp.lag4_inClose = inClose[historyLen - 4];
+         sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
+         sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
+         sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
+         sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
+         sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
+         sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
+         sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( ShadowVeryShort_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += (inHigh[i - 1] - inLow[i - 1]);
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += (inHigh[i - 1] - inLow[i - 1]) - (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]);
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
+         int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
+         if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
+         double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
+         for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag3_inOpen = inOpen[historyLen - 3];
+         sp.lag4_inOpen = inOpen[historyLen - 4];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.lag3_inClose = inClose[historyLen - 3];
+         sp.lag4_inClose = inClose[historyLen - 4];
+         sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
+         sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
+         sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
+         sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
+         sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
+         sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
+         sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else if( ShadowVeryShort_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]))) / 2.0))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) - ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1]));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
+         int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
+         if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
+         double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
+         for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag3_inOpen = inOpen[historyLen - 3];
+         sp.lag4_inOpen = inOpen[historyLen - 4];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.lag3_inClose = inClose[historyLen - 3];
+         sp.lag4_inClose = inClose[historyLen - 4];
+         sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
+         sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
+         sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
+         sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
+         sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
+         sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
+         sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         ShadowVeryShortPeriodTotal = 0;
+         ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+         i = ShadowVeryShortTrailingIdx;
+         while( i < startIdx ) {
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - three black candlesticks with consecutively lower opens and closes
+          * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
+          * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
+          * The meaning of "very short" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         do {
+            if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
+                ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 3 black candlesticks */
+                inOpen[i - 4] > inOpen[i - 3] &&
+                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
+                inClose[i - 4] > inClose[i - 3] &&
+                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
+                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
+                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
+                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
+            i += 1;
+            ShadowVeryShortTrailingIdx += 1;
+         } while( i <= endIdx );
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
+         int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
+         if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
+         double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
+         for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag3_inOpen = inOpen[historyLen - 3];
+         sp.lag4_inOpen = inOpen[historyLen - 4];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.lag3_inClose = inClose[historyLen - 3];
+         sp.lag4_inClose = inClose[historyLen - 4];
+         sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
+         sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
+         sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
+         sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
+         sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
+         sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
+         sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
+         sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       }
-      int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
-      double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
-      }
-      sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag3_inOpen = inOpen[historyLen - 3];
-      sp.lag4_inOpen = inOpen[historyLen - 4];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.lag3_inClose = inClose[historyLen - 3];
-      sp.lag4_inClose = inClose[historyLen - 4];
-      sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
-      sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
-      sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
-      sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
-      sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
-      sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
-      sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 

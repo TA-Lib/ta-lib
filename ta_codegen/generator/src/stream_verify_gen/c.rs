@@ -71,7 +71,7 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
         // Reachable after earlier candle rounds already compared, so the benign
         // count travels with it — otherwise those cases vanish from the summary.
-        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"benign\\\":%d,\\\"vmath\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);\n");
+        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"benign\\\":%d,\\\"vmath\\\":%d,\\\"round_mask\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath, rdMask);\n");
     } else {
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1,\\\"vmath\\\":%d}\", (int)rc, svNb, openRejects, openRejects, g_svVmath);\n");
     }
@@ -1277,12 +1277,16 @@ pub(crate) fn generate_c_stream_verify(
     // or zeroed (the instant-candle degenerate, runtime trailing lag 0).
     // mode 0: avgPeriod += 3; mode 1: avgPeriod = 0 (instant candle, runtime
     // trailing lag 0); mode 2: rangeType = Shadows everywhere (gates the
-    // TA_STREAM Shadows arithmetic, which no default setting exercises).
+    // TA_STREAM Shadows arithmetic, which no default setting exercises);
+    // mode 3: the type that is neither the default nor Shadows (RealBody
+    // when the default is Shadows).
     s.push_str("static void sv_candle_avg(int mode) {\n");
     s.push_str("    int i;\n");
     s.push_str("    for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )\n");
     s.push_str("        TA_SetCandleSettings( (TA_CandleSettingType)i,\n");
-    s.push_str("                              mode == 2 ? TA_RangeType_Shadows : TA_Globals->candleSettings[i].rangeType,\n");
+    s.push_str("                              mode == 2 ? TA_RangeType_Shadows\n");
+    s.push_str("                              : mode == 3 ? (TA_Globals->candleSettings[i].rangeType == TA_RangeType_RealBody ? TA_RangeType_HighLow : TA_RangeType_RealBody)\n");
+    s.push_str("                              : TA_Globals->candleSettings[i].rangeType,\n");
     s.push_str("                              mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),\n");
     s.push_str("                              TA_Globals->candleSettings[i].factor );\n");
     s.push_str("}\n\n");
@@ -1399,9 +1403,9 @@ pub(crate) fn generate_c_stream_verify(
         s.push_str("        int pref[4]; int pc[4];\n");
         if candle {
             // Candle functions honor "candleLegs": re-run the whole sweep
-            // under bumped and zeroed avgPeriods (settings-stability rule:
+            // once per settings round (settings-stability rule:
             // settings are fixed per round; each round reopens its streams).
-            s.push_str("        int rounds = svCandle ? 4 : 1; int rd, lgi = 0;\n");
+            s.push_str("        int rounds = svCandle ? 5 : 1; int rd, lgi = 0, rdMask = 0;\n");
         }
         for id in &pin_ids {
             s.push_str(&format!(
@@ -1752,7 +1756,7 @@ pub(crate) fn generate_c_stream_verify(
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
             s.push_str("            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, \",\\\"bar%d\\\":%d,\\\"out%d\\\":%d,\\\"batchv%d\\\":\\\"%a\\\",\\\"streamv%d\\\":\\\"%a\\\"\", lgi, badBar, lgi, badOut, lgi, bv, lgi, sv); }\n");
             s.push_str("            if( !pkOk ) peekAll = 0;\n");
-            s.push_str("            lgi++;\n");
+            s.push_str("            lgi++; rdMask |= 1 << rd;\n");
             s.push_str("        }\n");
         } else {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", li, P, li, ok, li, pkOk);\n");
@@ -1856,7 +1860,7 @@ pub(crate) fn generate_c_stream_verify(
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d,\\\"round_mask\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath, rdMask);\n");
         } else {
             s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);\n");
         }

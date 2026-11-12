@@ -627,7 +627,7 @@ function cdlcounterattackStepImpl(sp: CdlcounterattackStream, inOpen: number, in
   sp.lag1_inLow = inLow;
   sp.lag1_inClose = inClose;
   ringPosL_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-  sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType === 1) ? (inHigh - inLow) : ((BodyLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  sp.ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
   ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx & (ringPosL_BodyLongTrailingIdx - sp.ringCap_BodyLongTrailingIdx >> 31);
   sp.ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;

@@ -9064,6 +9064,25 @@ fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
     }
 }
 
+/// The scalar that still holds `value` at the end of `stmts`: a top-level
+/// `x = value;` with neither `x` nor anything `value` reads assigned after it.
+/// clang recomputes a candle range it is handed twice; gcc does not.
+fn held_in_scalar(stmts: &[Statement], value: &Expr) -> Option<String> {
+    let key = format!("{value:?}");
+    let mut reads = BTreeSet::new();
+    expr_var_names(value, &mut reads);
+    stmts.iter().enumerate().rev().find_map(|(at, st)| {
+        let Statement::Assign { target: Expr::Var(x), value: v, compound: false } = st else {
+            return None;
+        };
+        if format!("{v:?}") != key {
+            return None;
+        }
+        let later = assigned_in(&stmts[at + 1..]);
+        (!later.contains(x) && reads.is_disjoint(&later)).then(|| x.clone())
+    })
+}
+
 /// Append the end-of-update ring maintenance: store the new bar(s) into the
 /// current slot, advance the shared position, wrap at capacity.
 ///
@@ -9098,15 +9117,19 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
     });
     if ring.back == 0 {
         for arr in &ring.arrays {
+            let value = match &ring.derived {
+                Some(dr) => {
+                    let v = derived_bar_value(dr, names);
+                    held_in_scalar(out, &v).map_or(v, Expr::Var)
+                }
+                None => Expr::Var(names.bar(arr)),
+            };
             out.push(Statement::Assign {
                 target: Expr::ArrayAccess(
                     names.ring_buf(&ring.var, arr),
                     Box::new(Expr::Var(local_pos.clone())),
                 ),
-                value: match &ring.derived {
-                    Some(dr) => derived_bar_value(dr, names),
-                    None => Expr::Var(names.bar(arr)),
-                },
+                value,
                 compound: false,
             });
         }
