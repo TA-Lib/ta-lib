@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdleveningdojistar.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * A three-candle bearish reversal pattern: a long white candle, a doji that gaps
  * up (the star), then a black candle closing well down into the first candle's
@@ -99,19 +101,17 @@ export * from '../../func/cdleveningdojistar.ts';
  * @see [`cdlabandonedbaby`](https://ta-lib.org/functions/cdlabandonedbaby)
  */
 export function cdleveningdojistar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningdojistarOptions): CdleveningdojistarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdleveningdojistarResult | null;
-    try {
-      routed = cdleveningdojistarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLEVENINGDOJISTAR', cdleveningdojistarJs(prices, options));
-    }
+  let routed: CdleveningdojistarResult | null;
+  try {
+    routed = cdleveningdojistarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLEVENINGDOJISTAR', cdleveningdojistarJs(prices, options));
   }
   return cdleveningdojistarJs(prices, options);
 }
@@ -127,6 +127,9 @@ function cdleveningdojistarWasm(prices: { open: ArrayLike<number>; high: ArrayLi
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/ema.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Exponential moving average that weights recent prices more heavily via a
  * recursive smoothing factor. A core building block seeding or composing many
@@ -89,19 +91,17 @@ export * from '../../func/ema.ts';
  * @see [`t3`](https://ta-lib.org/functions/t3)
  */
 export function ema(real: ArrayLike<number>, options?: EmaOptions): EmaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: EmaResult | null;
-    try {
-      routed = emaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('EMA', emaJs(real, options));
-    }
+  let routed: EmaResult | null;
+  try {
+    routed = emaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('EMA', emaJs(real, options));
   }
   return emaJs(real, options);
 }
@@ -110,6 +110,9 @@ function emaWasm(real: ArrayLike<number>, options: EmaOptions | undefined): EmaR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

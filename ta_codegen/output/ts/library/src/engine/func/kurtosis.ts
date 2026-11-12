@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kurtosis.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * An estimate, from the trailing window, of the excess kurtosis of the
  * distribution its values come from: the fourth standardised moment minus 3, so a
@@ -96,19 +98,17 @@ export * from '../../func/kurtosis.ts';
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  */
 export function kurtosis(real: ArrayLike<number>, options?: KurtosisOptions): KurtosisResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KurtosisResult | null;
-    try {
-      routed = kurtosisWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KURTOSIS', kurtosisJs(real, options));
-    }
+  let routed: KurtosisResult | null;
+  try {
+    routed = kurtosisWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KURTOSIS', kurtosisJs(real, options));
   }
   return kurtosisJs(real, options);
 }
@@ -117,6 +117,9 @@ function kurtosisWasm(real: ArrayLike<number>, options: KurtosisOptions | undefi
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

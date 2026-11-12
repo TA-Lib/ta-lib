@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kdj.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * The stochastic oscillator as it is drawn on Chinese-market platforms: the
  * Slow-%K and Slow-%D lines plus a third line J that amplifies the gap between
@@ -113,19 +115,17 @@ export * from '../../func/kdj.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function kdj(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KdjOptions): KdjResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KdjResult | null;
-    try {
-      routed = kdjWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KDJ', kdjJs(prices, options));
-    }
+  let routed: KdjResult | null;
+  try {
+    routed = kdjWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KDJ', kdjJs(prices, options));
   }
   return kdjJs(prices, options);
 }
@@ -140,6 +140,9 @@ function kdjWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outK !== undefined || o.outD !== undefined || o.outJ !== undefined) {

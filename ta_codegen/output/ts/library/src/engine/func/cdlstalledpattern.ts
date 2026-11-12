@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlstalledpattern.ts';
 
+const WASM_FROM_BARS = 5000;
+
 /**
  * A three-candle pattern of three white candles with consecutively higher closes
  * where the third loses momentum (a small body riding on the shoulder of the
@@ -94,19 +96,17 @@ export * from '../../func/cdlstalledpattern.ts';
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
 export function cdlstalledpattern(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlstalledpatternResult | null;
-    try {
-      routed = cdlstalledpatternWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLSTALLEDPATTERN', cdlstalledpatternJs(prices, options));
-    }
+  let routed: CdlstalledpatternResult | null;
+  try {
+    routed = cdlstalledpatternWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLSTALLEDPATTERN', cdlstalledpatternJs(prices, options));
   }
   return cdlstalledpatternJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdlstalledpatternWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

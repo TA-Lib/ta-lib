@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/median.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * The middle order statistic of the trailing window: the central value when
  * `timePeriod` is odd, the mean of the two central values when it is even. A
@@ -100,19 +102,17 @@ export * from '../../func/median.ts';
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  */
 export function median(real: ArrayLike<number>, options?: MedianOptions): MedianResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MedianResult | null;
-    try {
-      routed = medianWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MEDIAN', medianJs(real, options));
-    }
+  let routed: MedianResult | null;
+  try {
+    routed = medianWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MEDIAN', medianJs(real, options));
   }
   return medianJs(real, options);
 }
@@ -121,6 +121,9 @@ function medianWasm(real: ArrayLike<number>, options: MedianOptions | undefined)
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

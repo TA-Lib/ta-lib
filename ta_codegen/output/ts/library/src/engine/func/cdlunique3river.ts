@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlunique3river.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * A three-candle bullish reversal pattern: a long black candle, then a black
  * harami candle that makes a lower low, then a small white candle. Signals a
@@ -98,19 +100,17 @@ export * from '../../func/cdlunique3river.ts';
  * @see [`cdl3inside`](https://ta-lib.org/functions/cdl3inside)
  */
 export function cdlunique3river(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlunique3riverOptions): Cdlunique3riverResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdlunique3riverResult | null;
-    try {
-      routed = cdlunique3riverWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLUNIQUE3RIVER', cdlunique3riverJs(prices, options));
-    }
+  let routed: Cdlunique3riverResult | null;
+  try {
+    routed = cdlunique3riverWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLUNIQUE3RIVER', cdlunique3riverJs(prices, options));
   }
   return cdlunique3riverJs(prices, options);
 }
@@ -126,6 +126,9 @@ function cdlunique3riverWasm(prices: { open: ArrayLike<number>; high: ArrayLike<
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

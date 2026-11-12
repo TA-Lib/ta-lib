@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/zlema.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Zero-Lag Exponential Moving Average: an
  * [`EMA`](https://ta-lib.org/functions/ema) applied not to price but to a
@@ -127,19 +129,17 @@ export * from '../../func/zlema.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function zlema(real: ArrayLike<number>, options?: ZlemaOptions): ZlemaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: ZlemaResult | null;
-    try {
-      routed = zlemaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ZLEMA', zlemaJs(real, options));
-    }
+  let routed: ZlemaResult | null;
+  try {
+    routed = zlemaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ZLEMA', zlemaJs(real, options));
   }
   return zlemaJs(real, options);
 }
@@ -148,6 +148,9 @@ function zlemaWasm(real: ArrayLike<number>, options: ZlemaOptions | undefined): 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

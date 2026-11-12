@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhikkakemod.ts';
 
+const WASM_FROM_BARS = 2500;
+
 /**
  * A four-candle pattern: two successively narrower inside bars, then a breakout
  * bar, with the second candle closing near one extreme of its range. Bullish or
@@ -91,19 +93,17 @@ export * from '../../func/cdlhikkakemod.ts';
  * @see [`cdlhikkake`](https://ta-lib.org/functions/cdlhikkake)
  */
 export function cdlhikkakemod(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakemodOptions): CdlhikkakemodResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlhikkakemodResult | null;
-    try {
-      routed = cdlhikkakemodWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHIKKAKEMOD', cdlhikkakemodJs(prices, options));
-    }
+  let routed: CdlhikkakemodResult | null;
+  try {
+    routed = cdlhikkakemodWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHIKKAKEMOD', cdlhikkakemodJs(prices, options));
   }
   return cdlhikkakemodJs(prices, options);
 }
@@ -119,6 +119,9 @@ function cdlhikkakemodWasm(prices: { open: ArrayLike<number>; high: ArrayLike<nu
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

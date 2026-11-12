@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/supertrend.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * An ATR-scaled trailing band that follows price on one side at a time and flips
  * to the other side when the close breaks through it. The trend rides the lower
@@ -126,19 +128,17 @@ export * from '../../func/supertrend.ts';
  * @see [`kc`](https://ta-lib.org/functions/kc)
  */
 export function supertrend(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SupertrendOptions): SupertrendResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SupertrendResult | null;
-    try {
-      routed = supertrendWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SUPERTREND', supertrendJs(prices, options));
-    }
+  let routed: SupertrendResult | null;
+  try {
+    routed = supertrendWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SUPERTREND', supertrendJs(prices, options));
   }
   return supertrendJs(prices, options);
 }
@@ -153,6 +153,9 @@ function supertrendWasm(prices: { open?: ArrayLike<number> | undefined; high: Ar
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outSupertrend !== undefined || o.outTrend !== undefined) {

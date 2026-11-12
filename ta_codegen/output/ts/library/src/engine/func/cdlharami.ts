@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlharami.ts';
 
+const WASM_FROM_BARS = 5000;
+
 /**
  * Two-candle pattern: a long real body followed by a short real body contained
  * within the first candle's real body. A reversal signal whose direction is the
@@ -92,19 +94,17 @@ export * from '../../func/cdlharami.ts';
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
  */
 export function cdlharami(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamiOptions): CdlharamiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlharamiResult | null;
-    try {
-      routed = cdlharamiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHARAMI', cdlharamiJs(prices, options));
-    }
+  let routed: CdlharamiResult | null;
+  try {
+    routed = cdlharamiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHARAMI', cdlharamiJs(prices, options));
   }
   return cdlharamiJs(prices, options);
 }
@@ -120,6 +120,9 @@ function cdlharamiWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

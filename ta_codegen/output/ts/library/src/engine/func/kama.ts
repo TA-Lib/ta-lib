@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kama.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar
  * to an efficiency ratio (directional move vs. total volatility). Reacts fast in
@@ -89,19 +91,17 @@ export * from '../../func/kama.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function kama(real: ArrayLike<number>, options?: KamaOptions): KamaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KamaResult | null;
-    try {
-      routed = kamaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KAMA', kamaJs(real, options));
-    }
+  let routed: KamaResult | null;
+  try {
+    routed = kamaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KAMA', kamaJs(real, options));
   }
   return kamaJs(real, options);
 }
@@ -110,6 +110,9 @@ function kamaWasm(real: ArrayLike<number>, options: KamaOptions | undefined): Ka
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

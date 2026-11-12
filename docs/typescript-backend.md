@@ -76,7 +76,7 @@ Semantics come from the type pass, never from a name heuristic. FMA site selecti
 
 ## 5. Performance
 
-Measured on intel-1 and amd-1 (2026-11-02), every function, batch, TypeScript timed through the body. These are `./js`'s numbers, and the default entry's while the routing table (W12) is empty:
+Measured on intel-1 and amd-1 (2026-11-02), every function, batch, TypeScript timed through the body. These are `./js`'s numbers, and the default entry's for a function or bar count the routing table (W12) does not name:
 
 - Median 150% to 240% slower than C at 2000 and 100k bars; 65% to 135% slower than Java.
 - Software `fma` (D9) is the dominant cost: every function more than 400% slower than Java runs it on a loop-carried chain. T3 is the worst, 1669% slower than Java on intel-1 at 100k bars (3,160,190 ns vs 178,671 ns).

@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhomingpigeon.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Two-candle pattern: a long black candle followed by a small black candle whose
  * real body sits inside the prior body. A hit signals a bullish reversal, most
@@ -93,19 +95,17 @@ export * from '../../func/cdlhomingpigeon.ts';
  * @see [`cdlmatchinglow`](https://ta-lib.org/functions/cdlmatchinglow)
  */
 export function cdlhomingpigeon(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhomingpigeonOptions): CdlhomingpigeonResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlhomingpigeonResult | null;
-    try {
-      routed = cdlhomingpigeonWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHOMINGPIGEON', cdlhomingpigeonJs(prices, options));
-    }
+  let routed: CdlhomingpigeonResult | null;
+  try {
+    routed = cdlhomingpigeonWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHOMINGPIGEON', cdlhomingpigeonJs(prices, options));
   }
   return cdlhomingpigeonJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdlhomingpigeonWasm(prices: { open: ArrayLike<number>; high: ArrayLike<
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

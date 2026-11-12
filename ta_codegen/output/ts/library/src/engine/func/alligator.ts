@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/alligator.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Bill Williams' Alligator (*Trading Chaos*, 1995): three smoothed moving averages
  * of the median price. The Jaw, Teeth and Lips are each drawn a few bars ahead of
@@ -111,19 +113,17 @@ export * from '../../func/alligator.ts';
  * @see [`ichimoku`](https://ta-lib.org/functions/ichimoku)
  */
 export function alligator(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AlligatorOptions): AlligatorResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AlligatorResult | null;
-    try {
-      routed = alligatorWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ALLIGATOR', alligatorJs(prices, options));
-    }
+  let routed: AlligatorResult | null;
+  try {
+    routed = alligatorWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ALLIGATOR', alligatorJs(prices, options));
   }
   return alligatorJs(prices, options);
 }
@@ -137,6 +137,9 @@ function alligatorWasm(prices: { open?: ArrayLike<number> | undefined; high: Arr
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outJaw !== undefined || o.outTeeth !== undefined || o.outLips !== undefined) {

@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhighwave.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Single-candle pattern: a short real body with both a very long upper and a very
  * long lower shadow. Signals market indecision; the output sign reports only
@@ -93,19 +95,17 @@ export * from '../../func/cdlhighwave.ts';
  * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
  */
 export function cdlhighwave(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhighwaveOptions): CdlhighwaveResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlhighwaveResult | null;
-    try {
-      routed = cdlhighwaveWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHIGHWAVE', cdlhighwaveJs(prices, options));
-    }
+  let routed: CdlhighwaveResult | null;
+  try {
+    routed = cdlhighwaveWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHIGHWAVE', cdlhighwaveJs(prices, options));
   }
   return cdlhighwaveJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdlhighwaveWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numb
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

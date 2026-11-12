@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlrisefall3methods.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * A five-candle continuation pattern: a long candle, three small counter-color
  * candles that stay partly within the first candle's high-low range, then a long
@@ -105,19 +107,17 @@ export * from '../../func/cdlrisefall3methods.ts';
  * @see [`cdl3outside`](https://ta-lib.org/functions/cdl3outside)
  */
 export function cdlrisefall3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdlrisefall3methodsResult | null;
-    try {
-      routed = cdlrisefall3methodsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLRISEFALL3METHODS', cdlrisefall3methodsJs(prices, options));
-    }
+  let routed: Cdlrisefall3methodsResult | null;
+  try {
+    routed = cdlrisefall3methodsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLRISEFALL3METHODS', cdlrisefall3methodsJs(prices, options));
   }
   return cdlrisefall3methodsJs(prices, options);
 }
@@ -133,6 +133,9 @@ function cdlrisefall3methodsWasm(prices: { open: ArrayLike<number>; high: ArrayL
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

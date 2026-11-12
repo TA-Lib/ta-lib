@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kst.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four
  * smoothed rates of change with a moving-average signal line. Each leg smooths a
@@ -117,19 +119,17 @@ export * from '../../func/kst.ts';
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
 export function kst(real: ArrayLike<number>, options?: KstOptions): KstResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KstResult | null;
-    try {
-      routed = kstWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KST', kstJs(real, options));
-    }
+  let routed: KstResult | null;
+  try {
+    routed = kstWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KST', kstJs(real, options));
   }
   return kstJs(real, options);
 }
@@ -138,6 +138,9 @@ function kstWasm(real: ArrayLike<number>, options: KstOptions | undefined): KstR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outKst !== undefined || o.outKstSignal !== undefined) {

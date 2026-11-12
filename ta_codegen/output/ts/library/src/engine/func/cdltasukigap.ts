@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltasukigap.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A three-candle pattern: a real-body-gapping candle followed by an opposite-color
  * candle that opens inside its body and closes back into the gap without filling
@@ -94,19 +96,17 @@ export * from '../../func/cdltasukigap.ts';
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
 export function cdltasukigap(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltasukigapOptions): CdltasukigapResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdltasukigapResult | null;
-    try {
-      routed = cdltasukigapWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLTASUKIGAP', cdltasukigapJs(prices, options));
-    }
+  let routed: CdltasukigapResult | null;
+  try {
+    routed = cdltasukigapWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLTASUKIGAP', cdltasukigapJs(prices, options));
   }
   return cdltasukigapJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdltasukigapWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

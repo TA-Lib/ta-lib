@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/plusDm.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Plus Directional Movement: the Wilder-smoothed accumulation of upward
  * directional movement (+DM1). A component of the Directional Movement System used
@@ -87,19 +89,17 @@ export * from '../../func/plusDm.ts';
  * @see [`adxr`](https://ta-lib.org/functions/adxr)
  */
 export function plusDm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PlusDmOptions): PlusDmResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PlusDmResult | null;
-    try {
-      routed = plusDmWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PLUS_DM', plusDmJs(prices, options));
-    }
+  let routed: PlusDmResult | null;
+  try {
+    routed = plusDmWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PLUS_DM', plusDmJs(prices, options));
   }
   return plusDmJs(prices, options);
 }
@@ -113,6 +113,9 @@ function plusDmWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

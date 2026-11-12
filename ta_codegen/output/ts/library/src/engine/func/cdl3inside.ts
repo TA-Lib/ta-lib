@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3inside.ts';
 
+const WASM_FROM_BARS = 5000;
+
 /**
  * A three-candle reversal pattern: a long real body, then a short real body
  * totally engulfed by it (a harami), then a third candle of opposite color to the
@@ -96,19 +98,17 @@ export * from '../../func/cdl3inside.ts';
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
  */
 export function cdl3inside(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3insideOptions): Cdl3insideResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdl3insideResult | null;
-    try {
-      routed = cdl3insideWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDL3INSIDE', cdl3insideJs(prices, options));
-    }
+  let routed: Cdl3insideResult | null;
+  try {
+    routed = cdl3insideWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDL3INSIDE', cdl3insideJs(prices, options));
   }
   return cdl3insideJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdl3insideWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

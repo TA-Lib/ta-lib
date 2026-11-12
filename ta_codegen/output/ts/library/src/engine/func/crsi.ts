@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/crsi.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Connors RSI: a 0 to 100 oscillator, the plain average of three short-term
  * momentum readings on that same scale. The first is Wilder's RSI of the closes
@@ -100,19 +102,17 @@ export * from '../../func/crsi.ts';
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  */
 export function crsi(real: ArrayLike<number>, options?: CrsiOptions): CrsiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CrsiResult | null;
-    try {
-      routed = crsiWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CRSI', crsiJs(real, options));
-    }
+  let routed: CrsiResult | null;
+  try {
+    routed = crsiWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CRSI', crsiJs(real, options));
   }
   return crsiJs(real, options);
 }
@@ -121,6 +121,9 @@ function crsiWasm(real: ArrayLike<number>, options: CrsiOptions | undefined): Cr
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

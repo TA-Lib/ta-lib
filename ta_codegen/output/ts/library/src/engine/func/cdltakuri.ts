@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltakuri.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Single-candle pattern: a doji whose open and close sit at the high (no/very
  * short upper shadow) with a very long lower shadow, i.e. a dragonfly doji with an
@@ -90,19 +92,17 @@ export * from '../../func/cdltakuri.ts';
  * @see [`cdlgravestonedoji`](https://ta-lib.org/functions/cdlgravestonedoji)
  */
 export function cdltakuri(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltakuriOptions): CdltakuriResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdltakuriResult | null;
-    try {
-      routed = cdltakuriWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLTAKURI', cdltakuriJs(prices, options));
-    }
+  let routed: CdltakuriResult | null;
+  try {
+    routed = cdltakuriWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLTAKURI', cdltakuriJs(prices, options));
   }
   return cdltakuriJs(prices, options);
 }
@@ -118,6 +118,9 @@ function cdltakuriWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

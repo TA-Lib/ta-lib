@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/dema.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce
  * lag versus a plain EMA. Overlap Studies overlay on price.
@@ -84,19 +86,17 @@ export * from '../../func/dema.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function dema(real: ArrayLike<number>, options?: DemaOptions): DemaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: DemaResult | null;
-    try {
-      routed = demaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('DEMA', demaJs(real, options));
-    }
+  let routed: DemaResult | null;
+  try {
+    routed = demaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('DEMA', demaJs(real, options));
   }
   return demaJs(real, options);
 }
@@ -105,6 +105,9 @@ function demaWasm(real: ArrayLike<number>, options: DemaOptions | undefined): De
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

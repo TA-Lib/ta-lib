@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/willr.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Williams' %R momentum oscillator over a rolling period, bounded in \[-100, 0].
  * Measures where the current close sits relative to the high-low range of the last
@@ -86,19 +88,17 @@ export * from '../../func/willr.ts';
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  */
 export function willr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WillrOptions): WillrResult {
-  if (engineRoute.mode !== 0) {
-    let routed: WillrResult | null;
-    try {
-      routed = willrWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('WILLR', willrJs(prices, options));
-    }
+  let routed: WillrResult | null;
+  try {
+    routed = willrWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('WILLR', willrJs(prices, options));
   }
   return willrJs(prices, options);
 }
@@ -113,6 +113,9 @@ function willrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

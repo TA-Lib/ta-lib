@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdlmathold.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * A five-candle bullish continuation pattern: a long white candle, an upside
  * real-body-gapped small black candle, two more small falling candles that hold
@@ -105,19 +107,17 @@ export * from '../../func/cdlmathold.ts';
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
 export function cdlmathold(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmatholdOptions): CdlmatholdResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlmatholdResult | null;
-    try {
-      routed = cdlmatholdWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLMATHOLD', cdlmatholdJs(prices, options));
-    }
+  let routed: CdlmatholdResult | null;
+  try {
+    routed = cdlmatholdWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLMATHOLD', cdlmatholdJs(prices, options));
   }
   return cdlmatholdJs(prices, options);
 }
@@ -133,6 +133,9 @@ function cdlmatholdWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

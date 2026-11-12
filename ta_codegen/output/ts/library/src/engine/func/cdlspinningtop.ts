@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlspinningtop.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Single-candle pattern: a small real body with both an upper and a lower shadow
  * longer than the body. Signals indecision; the code does not classify it as
@@ -85,19 +87,17 @@ export * from '../../func/cdlspinningtop.ts';
  * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
  */
 export function cdlspinningtop(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlspinningtopOptions): CdlspinningtopResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlspinningtopResult | null;
-    try {
-      routed = cdlspinningtopWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLSPINNINGTOP', cdlspinningtopJs(prices, options));
-    }
+  let routed: CdlspinningtopResult | null;
+  try {
+    routed = cdlspinningtopWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLSPINNINGTOP', cdlspinningtopJs(prices, options));
   }
   return cdlspinningtopJs(prices, options);
 }
@@ -113,6 +113,9 @@ function cdlspinningtopWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

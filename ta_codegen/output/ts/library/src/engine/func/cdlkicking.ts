@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlkicking.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Two-candle pattern of two opposite-color marubozu (long bodies with very short
  * shadows) separated by a price gap. A reversal signal whose direction is set by
@@ -94,19 +96,17 @@ export * from '../../func/cdlkicking.ts';
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
 export function cdlkicking(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlkickingOptions): CdlkickingResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlkickingResult | null;
-    try {
-      routed = cdlkickingWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLKICKING', cdlkickingJs(prices, options));
-    }
+  let routed: CdlkickingResult | null;
+  try {
+    routed = cdlkickingWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLKICKING', cdlkickingJs(prices, options));
   }
   return cdlkickingJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdlkickingWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

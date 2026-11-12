@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/macdfix.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
  * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
@@ -92,19 +94,17 @@ export * from '../../func/macdfix.ts';
  * @see [`apo`](https://ta-lib.org/functions/apo)
  */
 export function macdfix(real: ArrayLike<number>, options?: MacdfixOptions): MacdfixResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MacdfixResult | null;
-    try {
-      routed = macdfixWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MACDFIX', macdfixJs(real, options));
-    }
+  let routed: MacdfixResult | null;
+  try {
+    routed = macdfixWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MACDFIX', macdfixJs(real, options));
   }
   return macdfixJs(real, options);
 }
@@ -113,6 +113,9 @@ function macdfixWasm(real: ArrayLike<number>, options: MacdfixOptions | undefine
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMacd !== undefined || o.outMacdSignal !== undefined || o.outMacdHist !== undefined) {

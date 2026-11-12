@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/dosc.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in
  * series, with a simple average of that smoothed line subtracted from it.
@@ -113,19 +115,17 @@ export * from '../../func/dosc.ts';
  * @see [`ac`](https://ta-lib.org/functions/ac)
  */
 export function dosc(real: ArrayLike<number>, options?: DoscOptions): DoscResult {
-  if (engineRoute.mode !== 0) {
-    let routed: DoscResult | null;
-    try {
-      routed = doscWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('DOSC', doscJs(real, options));
-    }
+  let routed: DoscResult | null;
+  try {
+    routed = doscWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('DOSC', doscJs(real, options));
   }
   return doscJs(real, options);
 }
@@ -134,6 +134,9 @@ function doscWasm(real: ArrayLike<number>, options: DoscOptions | undefined): Do
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

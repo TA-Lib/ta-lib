@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cci.ts';
 
+const WASM_FROM_BARS = 2500;
+
 /**
  * Commodity Channel Index: measures the current typical price relative to its
  * simple moving average, scaled by mean absolute deviation. Momentum oscillator
@@ -85,19 +87,17 @@ export * from '../../func/cci.ts';
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
 export function cci(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CciOptions): CciResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CciResult | null;
-    try {
-      routed = cciWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CCI', cciJs(prices, options));
-    }
+  let routed: CciResult | null;
+  try {
+    routed = cciWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CCI', cciJs(prices, options));
   }
   return cciJs(prices, options);
 }
@@ -112,6 +112,9 @@ function cciWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

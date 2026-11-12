@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlxsidegap3methods.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * A three-candle continuation pattern: two same-color candles separated by a
  * real-body gap, followed by an opposite-color candle that fills into the gap.
@@ -102,19 +104,17 @@ export * from '../../func/cdlxsidegap3methods.ts';
  * @see [`cdlrisefall3methods`](https://ta-lib.org/functions/cdlrisefall3methods)
  */
 export function cdlxsidegap3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdlxsidegap3methodsResult | null;
-    try {
-      routed = cdlxsidegap3methodsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLXSIDEGAP3METHODS', cdlxsidegap3methodsJs(prices, options));
-    }
+  let routed: Cdlxsidegap3methodsResult | null;
+  try {
+    routed = cdlxsidegap3methodsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLXSIDEGAP3METHODS', cdlxsidegap3methodsJs(prices, options));
   }
   return cdlxsidegap3methodsJs(prices, options);
 }
@@ -130,6 +130,9 @@ function cdlxsidegap3methodsWasm(prices: { open: ArrayLike<number>; high: ArrayL
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

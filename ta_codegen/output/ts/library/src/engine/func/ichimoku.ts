@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/ichimoku.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs
  * and lows alone. Goichi Hosoda's reading is that a market's balance is visible
@@ -119,19 +121,17 @@ export * from '../../func/ichimoku.ts';
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  */
 export function ichimoku(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuResult {
-  if (engineRoute.mode !== 0) {
-    let routed: IchimokuResult | null;
-    try {
-      routed = ichimokuWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ICHIMOKU', ichimokuJs(prices, options));
-    }
+  let routed: IchimokuResult | null;
+  try {
+    routed = ichimokuWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ICHIMOKU', ichimokuJs(prices, options));
   }
   return ichimokuJs(prices, options);
 }
@@ -145,6 +145,9 @@ function ichimokuWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outTenkanSen !== undefined || o.outKijunSen !== undefined || o.outSenkouSpanA !== undefined || o.outSenkouSpanB !== undefined) {

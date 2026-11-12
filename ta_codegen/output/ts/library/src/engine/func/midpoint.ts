@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/midpoint.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Midpoint over a period: the average of the highest and lowest input values
  * within the lookback window. A single-series overlap smoother (use MIDPRICE for
@@ -81,19 +83,17 @@ export * from '../../func/midpoint.ts';
  * @see [`min`](https://ta-lib.org/functions/min)
  */
 export function midpoint(real: ArrayLike<number>, options?: MidpointOptions): MidpointResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MidpointResult | null;
-    try {
-      routed = midpointWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MIDPOINT', midpointJs(real, options));
-    }
+  let routed: MidpointResult | null;
+  try {
+    routed = midpointWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MIDPOINT', midpointJs(real, options));
   }
   return midpointJs(real, options);
 }
@@ -102,6 +102,9 @@ function midpointWasm(real: ArrayLike<number>, options: MidpointOptions | undefi
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/midprice.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Midpoint of the price range over a rolling window: the average of the highest
  * high and lowest low across the last timePeriod bars. An overlap-study line
@@ -83,19 +85,17 @@ export * from '../../func/midprice.ts';
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  */
 export function midprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MidpriceOptions): MidpriceResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MidpriceResult | null;
-    try {
-      routed = midpriceWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MIDPRICE', midpriceJs(prices, options));
-    }
+  let routed: MidpriceResult | null;
+  try {
+    routed = midpriceWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MIDPRICE', midpriceJs(prices, options));
   }
   return midpriceJs(prices, options);
 }
@@ -109,6 +109,9 @@ function midpriceWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

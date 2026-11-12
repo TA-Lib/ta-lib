@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/sqzmom.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014.
  * Volatility compression is read by comparing the Bollinger Bands against a
@@ -123,19 +125,17 @@ export * from '../../func/sqzmom.ts';
  * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
  */
 export function sqzmom(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SqzmomOptions): SqzmomResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SqzmomResult | null;
-    try {
-      routed = sqzmomWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SQZMOM', sqzmomJs(prices, options));
-    }
+  let routed: SqzmomResult | null;
+  try {
+    routed = sqzmomWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SQZMOM', sqzmomJs(prices, options));
   }
   return sqzmomJs(prices, options);
 }
@@ -150,6 +150,9 @@ function sqzmomWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMomentum !== undefined || o.outSqueeze !== undefined) {

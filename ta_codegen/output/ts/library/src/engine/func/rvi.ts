@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rvi.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Relative Volatility Index: Donald Dorsey's volatility oscillator, built exactly
  * like RSI except that the quantity routed to the up and down buckets is the
@@ -96,19 +98,17 @@ export * from '../../func/rvi.ts';
  * @see [`cmo`](https://ta-lib.org/functions/cmo)
  */
 export function rvi(real: ArrayLike<number>, options?: RviOptions): RviResult {
-  if (engineRoute.mode !== 0) {
-    let routed: RviResult | null;
-    try {
-      routed = rviWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('RVI', rviJs(real, options));
-    }
+  let routed: RviResult | null;
+  try {
+    routed = rviWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('RVI', rviJs(real, options));
   }
   return rviJs(real, options);
 }
@@ -117,6 +117,9 @@ function rviWasm(real: ArrayLike<number>, options: RviOptions | undefined): RviR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

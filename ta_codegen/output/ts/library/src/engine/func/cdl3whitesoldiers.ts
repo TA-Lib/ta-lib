@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3whitesoldiers.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * A three-candle pattern of consecutive white candles with progressively higher
  * closes, each opening within/near the prior body and each with a very short upper
@@ -94,19 +96,17 @@ export * from '../../func/cdl3whitesoldiers.ts';
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  */
 export function cdl3whitesoldiers(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdl3whitesoldiersResult | null;
-    try {
-      routed = cdl3whitesoldiersWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDL3WHITESOLDIERS', cdl3whitesoldiersJs(prices, options));
-    }
+  let routed: Cdl3whitesoldiersResult | null;
+  try {
+    routed = cdl3whitesoldiersWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDL3WHITESOLDIERS', cdl3whitesoldiersJs(prices, options));
   }
   return cdl3whitesoldiersJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdl3whitesoldiersWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

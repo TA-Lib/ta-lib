@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/accbands.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Acceleration Bands: three overlap lines around price. The middle band is an SMA
  * of the close; the upper/lower bands are SMAs of the high/low scaled by an
@@ -89,19 +91,17 @@ export * from '../../func/accbands.ts';
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  */
 export function accbands(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AccbandsOptions): AccbandsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AccbandsResult | null;
-    try {
-      routed = accbandsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ACCBANDS', accbandsJs(prices, options));
-    }
+  let routed: AccbandsResult | null;
+  try {
+    routed = accbandsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ACCBANDS', accbandsJs(prices, options));
   }
   return accbandsJs(prices, options);
 }
@@ -116,6 +116,9 @@ function accbandsWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outUpperBand !== undefined || o.outMiddleBand !== undefined || o.outLowerBand !== undefined) {

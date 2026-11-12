@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3linestrike.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A four-candle pattern: three same-color candles with consecutively higher (or
  * lower) closes, each opening within or near the prior real body, then a fourth
@@ -102,19 +104,17 @@ export * from '../../func/cdl3linestrike.ts';
  * @see [`cdl3blackcrows`](https://ta-lib.org/functions/cdl3blackcrows)
  */
 export function cdl3linestrike(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdl3linestrikeResult | null;
-    try {
-      routed = cdl3linestrikeWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDL3LINESTRIKE', cdl3linestrikeJs(prices, options));
-    }
+  let routed: Cdl3linestrikeResult | null;
+  try {
+    routed = cdl3linestrikeWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDL3LINESTRIKE', cdl3linestrikeJs(prices, options));
   }
   return cdl3linestrikeJs(prices, options);
 }
@@ -130,6 +130,9 @@ function cdl3linestrikeWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

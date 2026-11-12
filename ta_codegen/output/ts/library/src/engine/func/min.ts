@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/min.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Rolling minimum: the lowest input value over the trailing period.
  *
@@ -79,19 +81,17 @@ export * from '../../func/min.ts';
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  */
 export function min(real: ArrayLike<number>, options?: MinOptions): MinResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MinResult | null;
-    try {
-      routed = minWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MIN', minJs(real, options));
-    }
+  let routed: MinResult | null;
+  try {
+    routed = minWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MIN', minJs(real, options));
   }
   return minJs(real, options);
 }
@@ -100,6 +100,9 @@ function minWasm(real: ArrayLike<number>, options: MinOptions | undefined): MinR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/pvo.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Percentage Volume Oscillator: a variation of the [Percentage Price
  * Oscillator](https://ta-lib.org/functions/ppo) (PPO, created by Gerald Appel)
@@ -99,19 +101,17 @@ export * from '../../func/pvo.ts';
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
 export function pvo(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PvoOptions): PvoResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PvoResult | null;
-    try {
-      routed = pvoWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PVO', pvoJs(prices, options));
-    }
+  let routed: PvoResult | null;
+  try {
+    routed = pvoWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PVO', pvoJs(prices, options));
   }
   return pvoJs(prices, options);
 }
@@ -124,6 +124,9 @@ function pvoWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   const n = seriesLength(inVolumeArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

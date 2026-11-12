@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/macdv.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a
  * slow EMA of the close over the Average True Range, times 100. Like MACD it comes
@@ -118,19 +120,17 @@ export * from '../../func/macdv.ts';
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  */
 export function macdv(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MacdvOptions): MacdvResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MacdvResult | null;
-    try {
-      routed = macdvWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MACDV', macdvJs(prices, options));
-    }
+  let routed: MacdvResult | null;
+  try {
+    routed = macdvWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MACDV', macdvJs(prices, options));
   }
   return macdvJs(prices, options);
 }
@@ -145,6 +145,9 @@ function macdvWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMacdv !== undefined || o.outMacdvSignal !== undefined || o.outMacdvHist !== undefined) {

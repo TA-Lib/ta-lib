@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdladvanceblock.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Three-candle bearish reversal pattern: three white candles with consecutively
  * higher closes whose advance weakens (progressively smaller bodies and/or
@@ -93,19 +95,17 @@ export * from '../../func/cdladvanceblock.ts';
  * @see [`cdlstalledpattern`](https://ta-lib.org/functions/cdlstalledpattern)
  */
 export function cdladvanceblock(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdladvanceblockOptions): CdladvanceblockResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdladvanceblockResult | null;
-    try {
-      routed = cdladvanceblockWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLADVANCEBLOCK', cdladvanceblockJs(prices, options));
-    }
+  let routed: CdladvanceblockResult | null;
+  try {
+    routed = cdladvanceblockWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLADVANCEBLOCK', cdladvanceblockJs(prices, options));
   }
   return cdladvanceblockJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdladvanceblockWasm(prices: { open: ArrayLike<number>; high: ArrayLike<
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

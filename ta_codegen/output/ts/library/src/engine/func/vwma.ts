@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/vwma.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * Volume Weighted Moving Average: the mean price over a trailing window of
  * `timePeriod` bars, each bar weighted by its own volume. Heavily traded bars pull
@@ -104,19 +106,17 @@ export * from '../../func/vwma.ts';
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
 export function vwma(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: VwmaOptions): VwmaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: VwmaResult | null;
-    try {
-      routed = vwmaWasm(real, prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('VWMA', vwmaJs(real, prices, options));
-    }
+  let routed: VwmaResult | null;
+  try {
+    routed = vwmaWasm(real, prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('VWMA', vwmaJs(real, prices, options));
   }
   return vwmaJs(real, prices, options);
 }
@@ -129,6 +129,9 @@ function vwmaWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

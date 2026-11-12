@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhammer.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Single-candle pattern: a small real body at the top of the range with a long
  * lower shadow and little or no upper shadow, sitting at or near the prior
@@ -93,19 +95,17 @@ export * from '../../func/cdlhammer.ts';
  * @see [`cdltakuri`](https://ta-lib.org/functions/cdltakuri)
  */
 export function cdlhammer(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhammerOptions): CdlhammerResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlhammerResult | null;
-    try {
-      routed = cdlhammerWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHAMMER', cdlhammerJs(prices, options));
-    }
+  let routed: CdlhammerResult | null;
+  try {
+    routed = cdlhammerWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHAMMER', cdlhammerJs(prices, options));
   }
   return cdlhammerJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdlhammerWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

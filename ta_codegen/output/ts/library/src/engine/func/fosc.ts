@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/fosc.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Forecast Oscillator: the percentage by which the close deviates from the Time
  * Series Forecast that was made one bar earlier for the current bar. Positive
@@ -95,19 +97,17 @@ export * from '../../func/fosc.ts';
  * @see [`cmou`](https://ta-lib.org/functions/cmou)
  */
 export function fosc(real: ArrayLike<number>, options?: FoscOptions): FoscResult {
-  if (engineRoute.mode !== 0) {
-    let routed: FoscResult | null;
-    try {
-      routed = foscWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('FOSC', foscJs(real, options));
-    }
+  let routed: FoscResult | null;
+  try {
+    routed = foscWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('FOSC', foscJs(real, options));
   }
   return foscJs(real, options);
 }
@@ -116,6 +116,9 @@ function foscWasm(real: ArrayLike<number>, options: FoscOptions | undefined): Fo
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

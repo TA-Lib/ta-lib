@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/sarext.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Extended Parabolic SAR (stop and reverse) giving the caller full control over
  * the initial state and separate acceleration factors for long and short
@@ -94,19 +96,17 @@ export * from '../../func/sarext.ts';
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
  */
 export function sarext(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarextOptions): SarextResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SarextResult | null;
-    try {
-      routed = sarextWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SAREXT', sarextJs(prices, options));
-    }
+  let routed: SarextResult | null;
+  try {
+    routed = sarextWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SAREXT', sarextJs(prices, options));
   }
   return sarextJs(prices, options);
 }
@@ -120,6 +120,9 @@ function sarextWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

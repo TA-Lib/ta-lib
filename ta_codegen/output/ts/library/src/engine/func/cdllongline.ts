@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdllongline.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * A single-candle pattern: a long real body with short upper and short lower
  * shadow. The signal direction follows the candle color (bullish if white, bearish
@@ -87,19 +89,17 @@ export * from '../../func/cdllongline.ts';
  * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
  */
 export function cdllongline(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdllonglineOptions): CdllonglineResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdllonglineResult | null;
-    try {
-      routed = cdllonglineWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLLONGLINE', cdllonglineJs(prices, options));
-    }
+  let routed: CdllonglineResult | null;
+  try {
+    routed = cdllonglineWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLLONGLINE', cdllonglineJs(prices, options));
   }
   return cdllonglineJs(prices, options);
 }
@@ -115,6 +115,9 @@ function cdllonglineWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numb
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

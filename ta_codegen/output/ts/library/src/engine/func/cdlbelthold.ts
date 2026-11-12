@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlbelthold.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Single-candle pattern with a long real body that opens at (or near) its extreme.
  * A bullish belt-hold is a long white candle with no/very short lower shadow; a
@@ -96,19 +98,17 @@ export * from '../../func/cdlbelthold.ts';
  * @see [`cdllongline`](https://ta-lib.org/functions/cdllongline)
  */
 export function cdlbelthold(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlbeltholdOptions): CdlbeltholdResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlbeltholdResult | null;
-    try {
-      routed = cdlbeltholdWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLBELTHOLD', cdlbeltholdJs(prices, options));
-    }
+  let routed: CdlbeltholdResult | null;
+  try {
+    routed = cdlbeltholdWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLBELTHOLD', cdlbeltholdJs(prices, options));
   }
   return cdlbeltholdJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdlbeltholdWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numb
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

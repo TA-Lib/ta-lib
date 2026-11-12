@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/tsi.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * True Strength Index: William Blau's double-smoothed momentum oscillator. The
  * one-bar price change is smoothed twice with exponential averages, and the same
@@ -109,19 +111,17 @@ export * from '../../func/tsi.ts';
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
 export function tsi(real: ArrayLike<number>, options?: TsiOptions): TsiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: TsiResult | null;
-    try {
-      routed = tsiWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('TSI', tsiJs(real, options));
-    }
+  let routed: TsiResult | null;
+  try {
+    routed = tsiWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('TSI', tsiJs(real, options));
   }
   return tsiJs(real, options);
 }
@@ -130,6 +130,9 @@ function tsiWasm(real: ArrayLike<number>, options: TsiOptions | undefined): TsiR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/tsf.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Time Series Forecast: fits a least-squares linear regression line over the last
  * N bars and projects it one x-step beyond LINEARREG. Same regression as LINEARREG
@@ -82,19 +84,17 @@ export * from '../../func/tsf.ts';
  * @see [`linearregAngle`](https://ta-lib.org/functions/linearreg_angle)
  */
 export function tsf(real: ArrayLike<number>, options?: TsfOptions): TsfResult {
-  if (engineRoute.mode !== 0) {
-    let routed: TsfResult | null;
-    try {
-      routed = tsfWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('TSF', tsfJs(real, options));
-    }
+  let routed: TsfResult | null;
+  try {
+    routed = tsfWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('TSF', tsfJs(real, options));
   }
   return tsfJs(real, options);
 }
@@ -103,6 +103,9 @@ function tsfWasm(real: ArrayLike<number>, options: TsfOptions | undefined): TsfR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

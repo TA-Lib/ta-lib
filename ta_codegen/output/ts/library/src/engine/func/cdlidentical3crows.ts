@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlidentical3crows.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * A three-candle bearish reversal pattern: three consecutive declining black
  * candles, each with a very short (or no) lower shadow, where each candle after
@@ -96,19 +98,17 @@ export * from '../../func/cdlidentical3crows.ts';
  * @see [`cdl2crows`](https://ta-lib.org/functions/cdl2crows)
  */
 export function cdlidentical3crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlidentical3crowsOptions): Cdlidentical3crowsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdlidentical3crowsResult | null;
-    try {
-      routed = cdlidentical3crowsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLIDENTICAL3CROWS', cdlidentical3crowsJs(prices, options));
-    }
+  let routed: Cdlidentical3crowsResult | null;
+  try {
+    routed = cdlidentical3crowsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLIDENTICAL3CROWS', cdlidentical3crowsJs(prices, options));
   }
   return cdlidentical3crowsJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdlidentical3crowsWasm(prices: { open: ArrayLike<number>; high: ArrayLi
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cvi.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily
  * trading range is widening or narrowing. The high-low spread is smoothed by an
@@ -116,19 +118,17 @@ export * from '../../func/cvi.ts';
  * @see [`rocp`](https://ta-lib.org/functions/rocp)
  */
 export function cvi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CviOptions): CviResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CviResult | null;
-    try {
-      routed = cviWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CVI', cviJs(prices, options));
-    }
+  let routed: CviResult | null;
+  try {
+    routed = cviWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CVI', cviJs(prices, options));
   }
   return cviJs(prices, options);
 }
@@ -142,6 +142,9 @@ function cviWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

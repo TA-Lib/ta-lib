@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/adosc.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the
  * Accumulation/Distribution line. Highlights momentum in accumulation/distribution
@@ -90,19 +92,17 @@ export * from '../../func/adosc.ts';
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
 export function adosc(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdoscOptions): AdoscResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AdoscResult | null;
-    try {
-      routed = adoscWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ADOSC', adoscJs(prices, options));
-    }
+  let routed: AdoscResult | null;
+  try {
+    routed = adoscWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ADOSC', adoscJs(prices, options));
   }
   return adoscJs(prices, options);
 }
@@ -118,6 +118,9 @@ function adoscWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

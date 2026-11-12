@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/massi.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Mass Index: Donald Dorsey's non-directional measure of how the trading range
  * itself is expanding or contracting. The high-low range is smoothed by an
@@ -115,19 +117,17 @@ export * from '../../func/massi.ts';
  * @see [`sum`](https://ta-lib.org/functions/sum)
  */
 export function massi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MassiOptions): MassiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MassiResult | null;
-    try {
-      routed = massiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MASSI', massiJs(prices, options));
-    }
+  let routed: MassiResult | null;
+  try {
+    routed = massiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MASSI', massiJs(prices, options));
   }
   return massiJs(prices, options);
 }
@@ -141,6 +141,9 @@ function massiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

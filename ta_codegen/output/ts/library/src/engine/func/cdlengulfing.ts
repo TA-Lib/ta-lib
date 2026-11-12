@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlengulfing.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * A two-candle reversal pattern where the second candle's real body engulfs the
  * first candle's opposite-colored real body. Bullish (white engulfs black) or
@@ -96,19 +98,17 @@ export * from '../../func/cdlengulfing.ts';
  * @see [`cdlharamicross`](https://ta-lib.org/functions/cdlharamicross)
  */
 export function cdlengulfing(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlengulfingOptions): CdlengulfingResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlengulfingResult | null;
-    try {
-      routed = cdlengulfingWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLENGULFING', cdlengulfingJs(prices, options));
-    }
+  let routed: CdlengulfingResult | null;
+  try {
+    routed = cdlengulfingWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLENGULFING', cdlengulfingJs(prices, options));
   }
   return cdlengulfingJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdlengulfingWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

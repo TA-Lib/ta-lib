@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/max.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Highest input value over a rolling window of the last timePeriod bars. A
  * moving-window maximum.
@@ -80,19 +82,17 @@ export * from '../../func/max.ts';
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  */
 export function max(real: ArrayLike<number>, options?: MaxOptions): MaxResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MaxResult | null;
-    try {
-      routed = maxWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MAX', maxJs(real, options));
-    }
+  let routed: MaxResult | null;
+  try {
+    routed = maxWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MAX', maxJs(real, options));
   }
   return maxJs(real, options);
 }
@@ -101,6 +101,9 @@ function maxWasm(real: ArrayLike<number>, options: MaxOptions | undefined): MaxR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

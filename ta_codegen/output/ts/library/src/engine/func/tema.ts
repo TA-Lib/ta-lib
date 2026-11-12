@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/tema.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Triple Exponential Moving Average: a smoothed price overlay built from three
  * successively-applied EMAs to reduce lag versus a plain EMA. Distinct from EMA3,
@@ -85,19 +87,17 @@ export * from '../../func/tema.ts';
  * @see [`t3`](https://ta-lib.org/functions/t3)
  */
 export function tema(real: ArrayLike<number>, options?: TemaOptions): TemaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: TemaResult | null;
-    try {
-      routed = temaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('TEMA', temaJs(real, options));
-    }
+  let routed: TemaResult | null;
+  try {
+    routed = temaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('TEMA', temaJs(real, options));
   }
   return temaJs(real, options);
 }
@@ -106,6 +106,9 @@ function temaWasm(real: ArrayLike<number>, options: TemaOptions | undefined): Te
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {
