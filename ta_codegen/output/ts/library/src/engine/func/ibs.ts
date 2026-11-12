@@ -148,8 +148,8 @@ function ibsWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.ibs_batch(first, last, inHighAt, inLowAt, inCloseAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

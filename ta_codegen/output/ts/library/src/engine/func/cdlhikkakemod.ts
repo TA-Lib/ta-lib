@@ -159,8 +159,8 @@ function cdlhikkakemodWasm(prices: { open: ArrayLike<number>; high: ArrayLike<nu
   let count: number;
   try {
     count = w.x.cdlhikkakemod_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outIntegerAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

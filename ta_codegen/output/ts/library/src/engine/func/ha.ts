@@ -186,8 +186,8 @@ function haWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low:
   let count: number;
   try {
     count = w.x.ha_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outHAOpenAt, outHAHighAt, outHALowAt, outHACloseAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

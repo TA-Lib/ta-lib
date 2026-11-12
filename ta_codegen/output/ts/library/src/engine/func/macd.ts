@@ -154,8 +154,8 @@ function macdWasm(real: ArrayLike<number>, options: MacdOptions | undefined): Ma
   let count: number;
   try {
     count = w.x.macd_batch(first, last, inRealAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

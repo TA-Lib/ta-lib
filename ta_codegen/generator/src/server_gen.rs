@@ -5277,7 +5277,7 @@ function reply(
     if (rc === RetCode.SUCCESS && nb > 0) {
       for (const a of outs) h = a instanceof Int32Array ? fuzzHashI32(h, a, nb) : fuzzHashF64(h, a, nb);
     }
-    return `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_hash":"${hex64(fuzzHashFin(h))}"${tail}${rideFields}}`;
+    return `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_hash":"${hex64(fuzzHashFin(h))}"${tail}${rideFields}${engineEvidence()}}`;
   }
   let s = `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_len":${outLen}${tail}`;
   if (int(p, 'no_output', 0) === 0) {
@@ -5288,7 +5288,7 @@ function reply(
         : `,"${keys[k]}":"${float64ArrayToHex(a, nb)}"`;
     }
   }
-  return s + `,"used_float":${usedFloat},"timing_ns":${elapsedNs}${rideFields}}`;
+  return s + `,"used_float":${usedFloat},"timing_ns":${elapsedNs}${rideFields}${engineEvidence()}}`;
 }
 
 function loadData(p: Params): string {
@@ -5359,6 +5359,123 @@ function fuzzInHash(p: Params): string {
   let h = fuzzHashInit();
   for (const x of a) h = fuzzHashF64(h, x, n);
   return `{"in_hash":"${hex64(fuzzHashFin(h))}"}`;
+}
+"#;
+
+/// `--engine=wasm`: the batch correctness calls go through the default entry
+/// with the engine forced, and each reply carries the `engine_*` evidence that
+/// ta_regtest's transport holds every call to.
+const TS_ENGINE_PRELUDE: &str = r#"let wasmEngine = false;
+for (const arg of process.argv.slice(2)) {
+  if (arg === '--engine=wasm') {
+    wasmEngine = true;
+  } else if (arg !== '--engine=js') {
+    process.stderr.write(`taCodegenServe: unknown argument ${arg}\n`);
+    process.exit(2);
+  }
+}
+if (wasmEngine) {
+  // The package's Node entry, which hands the engine its bytes.
+  await import('../library/src/engine/node.ts');
+  const status = await ready();
+  if (status.engine !== 'wasm') {
+    process.stderr.write(`taCodegenServe --engine=wasm: the default entry runs in ${status.engine} (${String(status.reason)})\n`);
+    process.exit(1);
+  }
+  setEngineMode('force');
+}
+
+const UNSUPPORTED_MODE = '{"retCode":0,"timing_ns":0,"unsupported_mode":1}';
+
+// Any setting off its default makes the call's Core non-default, which the
+// default entry never routes.
+function coreIsDefault(c: Core): boolean {
+  const d = Core.DEFAULT;
+  for (let i = 0; i < d.unstablePeriods.length; i++) {
+    if (c.unstablePeriods[i] !== d.unstablePeriods[i]) return false;
+  }
+  for (let i = 0; i < d.candleSettings.length; i++) {
+    const a = c.candleSettings[i];
+    const b = d.candleSettings[i];
+    if (a.settingType !== b.settingType || a.rangeType !== b.rangeType || a.avgPeriod !== b.avgPeriod || !Object.is(a.factor, b.factor)) return false;
+  }
+  return true;
+}
+
+// The one list of fall-throughs that are the engine's contract: the label a
+// fall-through is expected under, or null when it is a defect. A reason is
+// expected only where this call's own facts explain it; the engine's load
+// states ('not-loaded', 'compile', 'instantiate', 'fma', 'unavailable') never
+// are. This server passes no output buffer, so 'options' under the default
+// Core is a defect unless ta-lib/js rejects the call too.
+function expectedFallThrough(
+  reason: string, exported: boolean, declined: boolean, lengthsDiffer: boolean, coreDefault: boolean, rejected: boolean,
+): string | null {
+  if (!exported) return 'no-export';
+  if (reason === 'declined' && declined) return 'ma-type';
+  if (reason === 'options' && !coreDefault) return 'core';
+  if (reason === 'input' && lengthsDiffer) return 'lengths';
+  if (reason === 'budget') return 'budget';
+  const callShaped = ['options', 'parameter', 'input', 'range', 'rejected', 'declined', 'threw', 'trap'];
+  if (rejected && callShaped.includes(reason)) return 'js-rejects';
+  return null;
+}
+
+const tally = { calls: 0, exported: -1, wasm: 0, expected: 0, why: '', defects: 0, defectWhy: '' };
+
+function engineTallyReset(): void {
+  tally.calls = 0;
+  tally.exported = -1;
+  tally.wasm = 0;
+  tally.expected = 0;
+  tally.why = '';
+  tally.defects = 0;
+  tally.defectWhy = '';
+}
+
+function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boolean, call: (c: Core) => T): T {
+  const coreDefault = coreIsDefault(core);
+  const before = fallThroughCount();
+  let rejected = false;
+  tally.calls++;
+  tally.exported = exported ? 1 : 0;
+  try {
+    return call(coreDefault ? Core.DEFAULT : core);
+  } catch (e) {
+    rejected = e instanceof TALibError;
+    throw e;
+  } finally {
+    const fell = fallThroughCount() - before;
+    const status = engineStatus();
+    let defect: string | null = null;
+    if (status.engine !== 'wasm') {
+      defect = `engine-${status.engine}-${String(status.reason)}`;
+    } else if (fell > 1) {
+      defect = 'repeated-fall-through';
+    } else if (exported && fell === 0) {
+      tally.wasm++;
+    } else {
+      const reason = fell === 0 ? '' : lastFallThrough();
+      const why = expectedFallThrough(reason, exported, declined, lengthsDiffer, coreDefault, rejected);
+      if (why === null) {
+        defect = reason === '' ? 'no-fall-through-reason' : reason;
+      } else {
+        tally.expected++;
+        if (tally.why === '') tally.why = why;
+      }
+    }
+    if (defect !== null) {
+      tally.defects++;
+      if (tally.defectWhy === '') tally.defectWhy = defect;
+    }
+  }
+}
+
+function engineEvidence(): string {
+  if (!wasmEngine) return '';
+  return `,"engine_calls":${tally.calls},"engine_exported":${tally.exported},"engine_wasm":${tally.wasm}`
+    + `,"engine_expected":${tally.expected},"engine_why":"${tally.why}"`
+    + `,"engine_defects":${tally.defects},"engine_defect_why":${JSON.stringify(tally.defectWhy)}`;
 }
 "#;
 
@@ -5578,6 +5695,8 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str("import { RetCode, TALibError } from '../library/src/runtime/errors.ts';\n");
     s.push_str("import { MInteger } from '../library/src/runtime/mInteger.ts';\n");
     s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';\n");
+    s.push_str("import { engineStatus, fallThroughCount, lastFallThrough, ready, setEngineMode } from '../library/src/runtime/wasm.ts';\n");
+    s.push_str("import * as ENGINE from '../library/src/engine/index.ts';\n");
     let mut enum_types: Vec<&str> = funcs
         .iter()
         .flat_map(|f| f.optional_inputs.iter())
@@ -5601,6 +5720,8 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     }
     s.push('\n');
     s.push_str(TS_SERVER_PRELUDE);
+    s.push('\n');
+    s.push_str(TS_ENGINE_PRELUDE);
     s.push('\n');
     s.push_str(crate::backends::runtime_info::TS_SERVER_HANDLER);
     s.push_str(TS_ABSTRACT_HANDLERS);
@@ -5667,7 +5788,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         r
     };
     for func in funcs {
-        s.push_str(&ts_batch_handler(func, enums, &opt_reads(func, "  ")));
+        s.push_str(&ts_batch_handler(func, funcs, enums, &opt_reads(func, "  ")));
     }
 
     s.push_str("const FUNCTIONS = new Map<string, (p: Params) => string>([\n");
@@ -5680,6 +5801,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str("  const req = JSON.parse(line) as { method?: unknown; params?: unknown };\n");
     s.push_str("  const method = String(req.method);\n");
     s.push_str("  const p = (typeof req.params === 'object' && req.params !== null ? req.params : {}) as Params;\n");
+    s.push_str("  engineTallyReset();\n");
     s.push_str("  const fn = FUNCTIONS.get(method);\n");
     s.push_str("  if (fn !== undefined) return fn(p);\n");
     s.push_str("  switch (method) {\n");
@@ -5704,7 +5826,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         ("abstract_for_each_func", "absForEachFunc()", false),
         ("TA_FunctionDescriptionXML", "absDescriptionXml()", false),
         ("abstract_call", "absCall(p)", false),
-        ("stream_verify", "handleStreamVerify(p)", false),
+        ("stream_verify", "wasmEngine ? UNSUPPORTED_MODE : handleStreamVerify(p)", false),
     ] {
         let bump = if ambient { "rideGen++; " } else { "" };
         let _ = writeln!(s, "    case '{rpc}': {bump}return {call};");
@@ -5787,14 +5909,23 @@ impl<'a> TsPublic<'a> {
         format!("{{ {} }}", fields.join(", "))
     }
 
-    fn call(&self, name: &str, mut args: Vec<String>, options: String) -> String {
+    fn call(&self, name: &str, args: Vec<String>, options: String) -> String {
+        Self::call_in(&self.func.name, name, args, options)
+    }
+
+    fn call_in(ns: &str, name: &str, mut args: Vec<String>, options: String) -> String {
         args.push(options);
-        format!("{}.{name}({})", self.func.name, args.join(", "))
+        format!("{ns}.{name}({})", args.join(", "))
     }
 
     /// `<n>(ins, opts)`: `{ begIdx, <outputs> }`.
     pub(crate) fn batch<S: AsRef<str>, P: AsRef<str>>(&self, ins: &[S], params: &[P], range: (&str, &str), core: &str, outs: &[String]) -> String {
         self.call(&self.names.public, self.inputs(ins), self.options(params, Some(range), core, outs))
+    }
+
+    /// [`Self::batch`] through the module namespace `ns`, with no buffers.
+    pub(crate) fn batch_in<S: AsRef<str>, P: AsRef<str>>(&self, ns: &str, ins: &[S], params: &[P], range: (&str, &str), core: &str) -> String {
+        Self::call_in(ns, &self.names.public, self.inputs(ins), self.options(params, Some(range), core, &[]))
     }
 
     /// `<n>Lookback(opts)`.
@@ -5822,7 +5953,7 @@ impl<'a> TsPublic<'a> {
 /// `"timed":1` request calls `<n>Impl`, so nothing measured acquires the public
 /// function's argument checks.
 #[allow(clippy::too_many_lines)]
-fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads: &str) -> String {
+fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, opt_reads: &str) -> String {
     let n = crate::backends::ts::ts_names(&func.name);
     let m = &func.name;
     let input_names = expand_input_names(&func.inputs);
@@ -5863,6 +5994,7 @@ fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads:
     }
     s.push_str("  const iters = benchIters(p);\n");
     s.push_str("  const timed = int(p, 'timed', 0) !== 0;\n");
+    s.push_str("  if (wasmEngine && timed) return UNSUPPORTED_MODE;\n");
     s.push_str("  const outBegIdx = new MInteger();\n");
     s.push_str("  const outNBElement = new MInteger();\n");
     s.push_str("  let rc: number = RetCode.SUCCESS;\n");
@@ -5876,6 +6008,37 @@ fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads:
     impl_args.push("outBegIdx".into());
     impl_args.push("outNBElement".into());
     impl_args.extend(out_vars.iter().cloned());
+
+    let exported = crate::backends::wasm::exported(funcs).iter().any(|f| f.name == func.name);
+    let declined: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .filter_map(|o| {
+            let values = crate::backends::wasm::declined_values(o, funcs, enums);
+            (!values.is_empty()).then(|| format!("[{}].includes({})", values.iter().map(i32::to_string).collect::<Vec<_>>().join(", "), o.name))
+        })
+        .collect();
+    let declined = if declined.is_empty() { "false".to_string() } else { declined.join(" || ") };
+    let lengths_differ = if input_names.len() < 2 {
+        "false".to_string()
+    } else {
+        let eq: Vec<String> = input_names[1..].iter().map(|i| format!("{i}.length !== {}.length", input_names[0])).collect();
+        eq.join(" || ")
+    };
+    let engine_call = |ins: &[String], indent: &str| -> String {
+        let mut b = String::new();
+        let _ = writeln!(
+            b,
+            "{indent}const r = engineBatch({exported}, {declined}, {lengths_differ}, (c) => {});",
+            api.batch_in("ENGINE", ins, &opt_names, ("startIdx", "endIdx"), "c")
+        );
+        let _ = writeln!(b, "{indent}outBegIdx.value = r.begIdx;");
+        let _ = writeln!(b, "{indent}outNBElement.value = r.{first_result}.length;");
+        for (k, key) in api.result_keys().iter().enumerate() {
+            let _ = writeln!(b, "{indent}out{k}.set(r.{key});");
+        }
+        b
+    };
 
     // Iteration 0 is a discarded warm-up, and makes every correctness request an
     // idempotency check.
@@ -5900,6 +6063,9 @@ fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads:
     s.push_str("    try {\n");
     s.push_str("      if (timed) {\n");
     let _ = writeln!(s, "        rc = {m}.{}({});", n.body, impl_args.join(", "));
+    s.push_str("      } else if (wasmEngine) {\n");
+    s.push_str(&engine_call(&input_names, "        "));
+    s.push_str("        rc = RetCode.SUCCESS;\n");
     s.push_str("      } else {\n");
     let _ = writeln!(s, "        const r = {};", public_call(&input_names));
     s.push_str("        outBegIdx.value = r.begIdx;\n");
@@ -5919,9 +6085,13 @@ fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads:
     s.push_str("  if (int(p, 'use_float', 0) !== 0) {\n");
     let f_ins: Vec<String> = input_names.iter().map(|i| format!("Float32Array.from({i})")).collect();
     s.push_str("    try {\n");
-    let _ = writeln!(s, "      const r = {};", public_call(&f_ins));
-    s.push_str("      outBegIdx.value = r.begIdx;\n");
-    let _ = writeln!(s, "      outNBElement.value = r.{first_result}.length;");
+    s.push_str("      if (wasmEngine) {\n");
+    s.push_str(&engine_call(&f_ins, "        "));
+    s.push_str("      } else {\n");
+    let _ = writeln!(s, "        const r = {};", public_call(&f_ins));
+    s.push_str("        outBegIdx.value = r.begIdx;\n");
+    let _ = writeln!(s, "        outNBElement.value = r.{first_result}.length;");
+    s.push_str("      }\n");
     s.push_str("      rc = RetCode.SUCCESS;\n");
     s.push_str("    } catch (e) {\n");
     s.push_str("      rc = failureCode(e);\n");
@@ -5937,7 +6107,7 @@ fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads:
         ride_args.extend(opt_names.iter().map(|o| (*o).to_string()));
         let _ = writeln!(
             s,
-            "  const rideFields = ride{}({});",
+            "  const rideFields = wasmEngine ? '' : ride{}({});",
             crate::backends::common::pascal_words(&func.name),
             ride_args.join(", ")
         );

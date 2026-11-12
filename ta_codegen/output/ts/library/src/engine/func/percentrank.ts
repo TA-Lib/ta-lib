@@ -157,8 +157,8 @@ function percentrankWasm(real: ArrayLike<number>, options: PercentrankOptions | 
   let count: number;
   try {
     count = w.x.percentrank_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

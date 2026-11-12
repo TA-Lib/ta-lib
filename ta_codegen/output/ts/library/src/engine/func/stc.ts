@@ -154,8 +154,8 @@ function stcWasm(real: ArrayLike<number>, options: StcOptions | undefined): StcR
   let count: number;
   try {
     count = w.x.stc_batch(first, last, inRealAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInCyclePeriod === undefined ? Core.INTEGER_DEFAULT : optInCyclePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

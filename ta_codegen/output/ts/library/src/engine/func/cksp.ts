@@ -185,8 +185,8 @@ function ckspWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   let count: number;
   try {
     count = w.x.cksp_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInMultiplier === undefined ? Core.REAL_DEFAULT : optInMultiplier, optInStopPeriod === undefined ? Core.INTEGER_DEFAULT : optInStopPeriod, outHighStopAt, outLowStopAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

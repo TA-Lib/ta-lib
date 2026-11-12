@@ -152,8 +152,8 @@ function adWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   let count: number;
   try {
     count = w.x.ad_batch(first, last, inHighAt, inLowAt, inCloseAt, inVolumeAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

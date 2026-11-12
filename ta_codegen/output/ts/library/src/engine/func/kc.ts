@@ -182,8 +182,8 @@ function kcWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   let count: number;
   try {
     count = w.x.kc_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInATRPeriod === undefined ? Core.INTEGER_DEFAULT : optInATRPeriod, optInNbDev === undefined ? Core.REAL_DEFAULT : optInNbDev, outRealUpperBandAt, outRealMiddleBandAt, outRealLowerBandAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

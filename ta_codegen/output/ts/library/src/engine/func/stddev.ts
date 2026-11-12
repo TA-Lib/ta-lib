@@ -141,8 +141,8 @@ function stddevWasm(real: ArrayLike<number>, options: StddevOptions | undefined)
   let count: number;
   try {
     count = w.x.stddev_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInNbDev === undefined ? Core.REAL_DEFAULT : optInNbDev, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

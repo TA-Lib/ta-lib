@@ -142,8 +142,8 @@ function smaWasm(real: ArrayLike<number>, options: SmaOptions | undefined): SmaR
   let count: number;
   try {
     count = w.x.sma_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

@@ -194,8 +194,8 @@ function kvoWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.kvo_batch(first, last, inHighAt, inLowAt, inCloseAt, inVolumeAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outKVOAt, outKVOSignalAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

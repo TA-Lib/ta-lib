@@ -183,8 +183,8 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
   let count: number;
   try {
     count = w.x.kstext_batch(first, last, inRealAt, n, optInROC1Period === undefined ? Core.INTEGER_DEFAULT : optInROC1Period, optInROC2Period === undefined ? Core.INTEGER_DEFAULT : optInROC2Period, optInROC3Period === undefined ? Core.INTEGER_DEFAULT : optInROC3Period, optInROC4Period === undefined ? Core.INTEGER_DEFAULT : optInROC4Period, optInMA1Period === undefined ? Core.INTEGER_DEFAULT : optInMA1Period, optInMA2Period === undefined ? Core.INTEGER_DEFAULT : optInMA2Period, optInMA3Period === undefined ? Core.INTEGER_DEFAULT : optInMA3Period, optInMA4Period === undefined ? Core.INTEGER_DEFAULT : optInMA4Period, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, optInROCMAType === undefined ? Core.INTEGER_DEFAULT : optInROCMAType, optInSignalMAType === undefined ? Core.INTEGER_DEFAULT : optInSignalMAType, outKSTAt, outKSTSignalAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

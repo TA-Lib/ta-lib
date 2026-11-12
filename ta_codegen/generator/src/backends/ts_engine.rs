@@ -169,7 +169,7 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
     let export = format!("{}_batch", super::common::snake_words(&func.name));
     let _ = writeln!(
         b,
-        "  let count: number;\n  try {{\n    count = w.x.{export}({});\n  }} catch {{\n    return trapped(w);\n  }}\n  \
+        "  let count: number;\n  try {{\n    count = w.x.{export}({});\n  }} catch (e) {{\n    return trapped(w, e);\n  }}\n  \
          if (count < 0) {{\n    return refused(count);\n  }}",
         call.join(", ")
     );

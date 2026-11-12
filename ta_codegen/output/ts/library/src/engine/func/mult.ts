@@ -134,8 +134,8 @@ function multWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: M
   let count: number;
   try {
     count = w.x.mult_batch(first, last, inReal0At, inReal1At, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

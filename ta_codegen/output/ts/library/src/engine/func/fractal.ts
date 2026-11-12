@@ -174,8 +174,8 @@ function fractalWasm(prices: { open?: ArrayLike<number> | undefined; high: Array
   let count: number;
   try {
     count = w.x.fractal_batch(first, last, inHighAt, inLowAt, n, optInLeftBars === undefined ? Core.INTEGER_DEFAULT : optInLeftBars, optInRightBars === undefined ? Core.INTEGER_DEFAULT : optInRightBars, outSwingHighAt, outSwingLowAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

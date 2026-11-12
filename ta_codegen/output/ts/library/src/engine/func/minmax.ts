@@ -140,8 +140,8 @@ function minmaxWasm(real: ArrayLike<number>, options: MinmaxOptions | undefined)
   let count: number;
   try {
     count = w.x.minmax_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outMinAt, outMaxAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

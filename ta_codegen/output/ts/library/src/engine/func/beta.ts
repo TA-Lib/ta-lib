@@ -144,8 +144,8 @@ function betaWasm(real0: ArrayLike<number>, real1: ArrayLike<number>, options: B
   let count: number;
   try {
     count = w.x.beta_batch(first, last, inReal0At, inReal1At, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

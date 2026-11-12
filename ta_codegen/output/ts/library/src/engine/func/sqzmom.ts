@@ -197,8 +197,8 @@ function sqzmomWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   let count: number;
   try {
     count = w.x.sqzmom_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInBBPeriod === undefined ? Core.INTEGER_DEFAULT : optInBBPeriod, optInNbDev === undefined ? Core.REAL_DEFAULT : optInNbDev, optInKCPeriod === undefined ? Core.INTEGER_DEFAULT : optInKCPeriod, optInFactorWide === undefined ? Core.REAL_DEFAULT : optInFactorWide, optInFactorNormal === undefined ? Core.REAL_DEFAULT : optInFactorNormal, optInFactorNarrow === undefined ? Core.REAL_DEFAULT : optInFactorNarrow, outMomentumAt, outSqueezeAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

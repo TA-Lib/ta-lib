@@ -161,8 +161,8 @@ function cdlharamicrossWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   let count: number;
   try {
     count = w.x.cdlharamicross_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outIntegerAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

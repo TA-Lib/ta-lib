@@ -135,8 +135,8 @@ function minWasm(real: ArrayLike<number>, options: MinOptions | undefined): MinR
   let count: number;
   try {
     count = w.x.min_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

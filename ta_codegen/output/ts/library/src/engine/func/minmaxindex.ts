@@ -145,8 +145,8 @@ function minmaxindexWasm(real: ArrayLike<number>, options: MinmaxindexOptions | 
   let count: number;
   try {
     count = w.x.minmaxindex_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outMinIdxAt, outMaxIdxAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

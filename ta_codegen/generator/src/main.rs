@@ -1487,6 +1487,19 @@ fn build_ts(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
             ts_out.to_str().unwrap(),
         ]),
     ));
+    if steps.last().is_some_and(|s| s.ok) {
+        // `--engine=wasm` loads the engine through the Node entry, which imports
+        // the bytes module from beside the compiled runtime.
+        let root = out_base.parent().and_then(Path::parent).expect("ta_codegen/output sits two levels below the root");
+        steps.push(run_build_step(
+            "TypeScript server's WASM bytes module from bin/ta_lib.wasm",
+            "node",
+            std::process::Command::new("node")
+                .arg(root.join("scripts/ts_wasm_bytes.mjs"))
+                .arg(ts_root.join("library"))
+                .arg(ts_out.join("library/src")),
+        ));
+    }
     steps
 }
 

@@ -172,8 +172,8 @@ function doscWasm(real: ArrayLike<number>, options: DoscOptions | undefined): Do
   let count: number;
   try {
     count = w.x.dosc_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInFirstPeriod === undefined ? Core.INTEGER_DEFAULT : optInFirstPeriod, optInSecondPeriod === undefined ? Core.INTEGER_DEFAULT : optInSecondPeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

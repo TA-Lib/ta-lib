@@ -225,6 +225,10 @@ def main():
     # 4. compile servers (only if something was regenerated)
     did_generate = not no_gen_ind or not no_gen_srv
     if did_generate:
+        # The TypeScript server's build refuses a stale bin/ta_lib.wasm.
+        if 'ts' in (backend_filter or 'ts').split(','):
+            pool.run([sys.executable, os.path.join(root, "scripts", "build.py"), "wasm"],
+                     check=True, cwd=root)
         print("\n=== Compiling servers ===")
         cmd = ["cargo", "run", "--release", "--", "build"]
         if backend_filter:

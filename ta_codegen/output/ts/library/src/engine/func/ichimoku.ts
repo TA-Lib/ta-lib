@@ -188,8 +188,8 @@ function ichimokuWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   let count: number;
   try {
     count = w.x.ichimoku_batch(first, last, inHighAt, inLowAt, n, optInTenkanPeriod === undefined ? Core.INTEGER_DEFAULT : optInTenkanPeriod, optInKijunPeriod === undefined ? Core.INTEGER_DEFAULT : optInKijunPeriod, optInSenkouBPeriod === undefined ? Core.INTEGER_DEFAULT : optInSenkouBPeriod, outTenkanSenAt, outKijunSenAt, outSenkouSpanAAt, outSenkouSpanBAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

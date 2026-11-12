@@ -182,8 +182,8 @@ function kstWasm(real: ArrayLike<number>, options: KstOptions | undefined): KstR
   let count: number;
   try {
     count = w.x.kst_batch(first, last, inRealAt, n, optInROC1Period === undefined ? Core.INTEGER_DEFAULT : optInROC1Period, optInROC2Period === undefined ? Core.INTEGER_DEFAULT : optInROC2Period, optInROC3Period === undefined ? Core.INTEGER_DEFAULT : optInROC3Period, optInROC4Period === undefined ? Core.INTEGER_DEFAULT : optInROC4Period, optInSMA1Period === undefined ? Core.INTEGER_DEFAULT : optInSMA1Period, optInSMA2Period === undefined ? Core.INTEGER_DEFAULT : optInSMA2Period, optInSMA3Period === undefined ? Core.INTEGER_DEFAULT : optInSMA3Period, optInSMA4Period === undefined ? Core.INTEGER_DEFAULT : optInSMA4Period, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outKSTAt, outKSTSignalAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

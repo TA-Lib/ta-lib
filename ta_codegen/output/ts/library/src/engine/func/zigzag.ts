@@ -205,8 +205,8 @@ function zigzagWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   let count: number;
   try {
     count = w.x.zigzag_batch(first, last, inHighAt, inLowAt, n, optInSensitivity === undefined ? Core.REAL_DEFAULT : optInSensitivity, optInMinTrendLength === undefined ? Core.INTEGER_DEFAULT : optInMinTrendLength, outZigZagAt, outTrendAt, outPivotIdxAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

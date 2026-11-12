@@ -158,8 +158,8 @@ function maWasm(real: ArrayLike<number>, options: MaOptions | undefined): MaResu
   let count: number;
   try {
     count = w.x.ma_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInMAType === undefined ? Core.INTEGER_DEFAULT : optInMAType, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

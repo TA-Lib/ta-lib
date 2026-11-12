@@ -181,8 +181,8 @@ function cviWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.cvi_batch(first, last, inHighAt, inLowAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInROCPeriod === undefined ? Core.INTEGER_DEFAULT : optInROCPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

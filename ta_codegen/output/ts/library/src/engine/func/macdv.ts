@@ -190,8 +190,8 @@ function macdvWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   let count: number;
   try {
     count = w.x.macdv_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outMACDVAt, outMACDVSignalAt, outMACDVHistAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

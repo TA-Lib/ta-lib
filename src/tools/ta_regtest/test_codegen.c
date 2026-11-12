@@ -51,8 +51,8 @@ static int  g_floatCapableLangTested = 0;
 /* ---- Language definitions ---- */
 
 typedef struct {
-    const char *name;           /* "rust", "c", "java", "csharp", "ts" */
-    const char *display;        /* "Rust", "C", "Java", "C#", "TypeScript" */
+    const char *name;           /* "rust", "c", "java", "csharp", "ts", "tswasm" */
+    const char *display;        /* "Rust", "C", "Java", "C#", "TypeScript", "TS-WASM" */
     const char *const *argv;    /* NULL-terminated command array */
 } CodegenLanguage;
 
@@ -61,12 +61,14 @@ static const char *const argv_c[]     = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_java[]  = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
 static const char *const argv_csharp[]= {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
 static const char *const argv_ts[]    = {"node", "ta_codegen_ts/tools/taCodegenServe.js", NULL};
+static const char *const argv_tswasm[]= {"node", "ta_codegen_ts/tools/taCodegenServe.js", "--engine=wasm", NULL};
 static const CodegenLanguage ALL_LANGUAGES[] = {
     {"c",      "C",            argv_c},
     {"rust",   "Rust",         argv_rust},
     {"java",   "Java",         argv_java},
     {"csharp", "C#",           argv_csharp},
     {"ts",     "TypeScript",   argv_ts},
+    {"tswasm", "TS-WASM",      argv_tswasm},
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
@@ -137,7 +139,7 @@ double codegen_lang_transcendental_tol(const char *lang)
     if( !lang ) return 0.0;
     if( strcmp(lang, "java") == 0 || strcmp(lang, "csharp") == 0 )
         return CODEGEN_TRANSCENDENTAL_TOL;
-    if( strcmp(lang, "ts") == 0 )
+    if( strcmp(lang, "ts") == 0 || strcmp(lang, "tswasm") == 0 )
         return CODEGEN_TRANSCENDENTAL_TOL_TS;
     return 0.0;
 }
@@ -5180,7 +5182,8 @@ static ErrorNumber test_codegen_for_language(
         if( strcmp(lang->name, "rust") == 0 )
             printf(" (is ./ta_codegen built?)");
         else
-            printf(" (run: ta_codegen build --backend=%s)", lang->name);
+            printf(" (run: ta_codegen build --backend=%s)",
+                   strcmp(lang->name, "tswasm") == 0 ? "ts" : lang->name);
         printf("\n");
         return errNb;
     }
@@ -5320,7 +5323,10 @@ static ErrorNumber test_codegen_for_language(
      * answers an unknown-function probe with "not_streamable"; anything
      * else (unknown method, loose foreign dispatch) would misfire on the
      * real requests, so the pass is skipped for that server. */
-    if( ctx.error == TA_TEST_PASS )
+    /* Streams are the ./js ones in both TypeScript entries; "ts" verifies them. */
+    if( ctx.error == TA_TEST_PASS && strcmp(lang->name, "tswasm") == 0 )
+        printf("  Stream verify: not run (the default entry's streams are ts's)\n");
+    else if( ctx.error == TA_TEST_PASS )
     {
         ErrorNumber probeErr;
         codegen_appendf(requestBuf, JSON_BUF_SIZE, 0,
@@ -9626,6 +9632,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         {"java",   "Java",       argv_java,   0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
         {"csharp", "C#",         argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
         {"ts",     "TypeScript", argv_ts,     0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
+        {"tswasm", "TS-WASM",    argv_tswasm, 0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
@@ -9682,7 +9689,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( nrequested == 0 )
     {
         printf("FAIL — no language server matched --language=%s "
-               "(valid: rust, java, csharp, ts; C is the in-process golden).\n",
+               "(valid: rust, java, csharp, ts, tswasm; C is the in-process golden).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         free(ctx.tierReqBuf); free(ctx.tierRespBuf);

@@ -167,8 +167,8 @@ function cdlcounterattackWasm(prices: { open: ArrayLike<number>; high: ArrayLike
   let count: number;
   try {
     count = w.x.cdlcounterattack_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outIntegerAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

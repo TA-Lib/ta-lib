@@ -163,8 +163,8 @@ function sortinoWasm(real: ArrayLike<number>, options: SortinoOptions | undefine
   let count: number;
   try {
     count = w.x.sortino_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInMAR === undefined ? Core.REAL_DEFAULT : optInMAR, optInAnnualization === undefined ? Core.REAL_DEFAULT : optInAnnualization, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

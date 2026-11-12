@@ -46,8 +46,8 @@
  */
 
 // The engine's failure paths, over modules built here byte by byte: each has
-// the exports the loader requires, and `sma_batch` either traps or is never
-// reached.
+// the exports the loader requires, and `sma_batch` traps, is missing or is
+// never reached.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -77,7 +77,7 @@ const name = (s: string): number[] => [...leb(s.length), ...Buffer.from(s, 'lati
 const body = (code: number[]): number[] => [...leb(code.length + 2), 0, ...code, 0x0b];
 
 /** `fma_probe` answers the fused product when `fused`, else `a * b + c` rounded twice. */
-function engineBytes(fused: boolean): string {
+function engineBytes(fused: boolean, withBatch = true): string {
   const fusedValue = [...new Uint8Array(new Float64Array([2 ** -29 + 2 ** -60]).buffer)];
   const probe = fused ? [0x44, ...fusedValue] : [0x20, 0, 0x20, 1, 0xa2, 0x20, 2, 0xa0];
   const types = vec([
@@ -91,7 +91,7 @@ function engineBytes(fused: boolean): string {
     [...name('scratch'), 0, 0],
     [...name('out_range'), 0, 1],
     [...name('fma_probe'), 0, 2],
-    [...name('sma_batch'), 0, 3],
+    ...(withBatch ? [[...name('sma_batch'), 0, 3]] : []),
   ]);
   const code = vec([body([0x41, ...leb(1024)]), body([0x41, 0]), body(probe), body([0x00])]);
   const module = [
@@ -106,7 +106,7 @@ function engineBytes(fused: boolean): string {
 }
 
 type Ctor = new (...args: unknown[]) => object;
-const wasm = (globalThis as unknown as { WebAssembly: { Instance: Ctor } }).WebAssembly;
+const wasm = (globalThis as unknown as { WebAssembly: { Instance: Ctor; RuntimeError: new () => Error } }).WebAssembly;
 
 function bits(a: Float64Array): string {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('hex');
@@ -117,6 +117,11 @@ function answersAsJs(where: string): void {
   const want = js.sma(close, { timePeriod: 5 });
   assert.equal(got.begIdx, want.begIdx, where);
   assert.equal(bits(got.values), bits(want.values), where);
+}
+
+function trappedInWasm(where: string): void {
+  assert.equal(hooks.lastFallThrough(), 'trap', where);
+  assert.ok(hooks.lastTrapError() instanceof wasm.RuntimeError, `${where}: the call threw ${String(hooks.lastTrapError())}, not a WebAssembly trap`);
 }
 
 test('a trap is answered from ta-lib/js and the engine instantiated again, until the limit gives it up', () => {
@@ -134,15 +139,16 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
   hooks.setEngineMode('force');
   try {
     answersAsJs('first trap');
+    trappedInWasm('first trap');
     assert.equal(instances, 1);
     assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
     let calls = 1;
-    while (hooks.engineStatus().engine === 'wasm') {
+    while (hooks.engineStatus().engine === 'wasm' && calls < hooks.MAX_TRAPS) {
       answersAsJs(`trap ${++calls}`);
+      trappedInWasm(`trap ${calls}`);
       assert.equal(instances, calls, 'a call after a trap did not instantiate the engine again');
-      assert.ok(calls < 100, 'the engine is never given up');
     }
-    assert.ok(calls > 1);
+    assert.equal(calls, hooks.MAX_TRAPS);
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'trap' });
     answersAsJs('given up');
     assert.equal(instances, calls);
@@ -150,6 +156,22 @@ test('a trap is answered from ta-lib/js and the engine instantiated again, until
   } finally {
     hooks.setEngineMode('table');
     wasm.Instance = Instance;
+    hooks.resetEngine();
+  }
+});
+
+test('a call that throws in the glue, not in the module, is not reported as a trap', () => {
+  hooks.resetEngine();
+  hooks.provideWasmBytes(engineBytes(true, false));
+  hooks.resetFallThroughs();
+  hooks.setEngineMode('force');
+  try {
+    answersAsJs('missing export');
+    assert.equal(hooks.lastFallThrough(), 'threw');
+    assert.ok(hooks.lastTrapError() instanceof TypeError, `the call threw ${String(hooks.lastTrapError())}`);
+    assert.equal(hooks.fallThroughCount(), 1);
+  } finally {
+    hooks.setEngineMode('table');
     hooks.resetEngine();
   }
 });

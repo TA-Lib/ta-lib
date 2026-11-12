@@ -165,8 +165,8 @@ function sarextWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   let count: number;
   try {
     count = w.x.sarext_batch(first, last, inHighAt, inLowAt, n, optInStartValue === undefined ? Core.REAL_DEFAULT : optInStartValue, optInOffsetOnReverse === undefined ? Core.REAL_DEFAULT : optInOffsetOnReverse, optInAccelerationInitLong === undefined ? Core.REAL_DEFAULT : optInAccelerationInitLong, optInAccelerationLong === undefined ? Core.REAL_DEFAULT : optInAccelerationLong, optInAccelerationMaxLong === undefined ? Core.REAL_DEFAULT : optInAccelerationMaxLong, optInAccelerationInitShort === undefined ? Core.REAL_DEFAULT : optInAccelerationInitShort, optInAccelerationShort === undefined ? Core.REAL_DEFAULT : optInAccelerationShort, optInAccelerationMaxShort === undefined ? Core.REAL_DEFAULT : optInAccelerationMaxShort, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

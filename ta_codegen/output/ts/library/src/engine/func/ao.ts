@@ -160,8 +160,8 @@ function aoWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   let count: number;
   try {
     count = w.x.ao_batch(first, last, inHighAt, inLowAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

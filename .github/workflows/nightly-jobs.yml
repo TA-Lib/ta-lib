@@ -780,6 +780,14 @@ jobs:
           node_modules/.bin/tsc -p library
           node_modules/.bin/tsc -p library/test --noEmit
 
+      # The default entry imports the engine's bytes module, which only a build writes.
+      - name: Build the WASM engine and write its bytes module into dist/
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build.py wasm
+          node scripts/ts_wasm_bytes.mjs ta_codegen/output/ts/library
+
       - name: Run the source-tree suites, then the rest against the installed tarball
         shell: bash
         working-directory: ta_codegen/output/ts/library

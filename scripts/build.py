@@ -242,8 +242,10 @@ def show_help():
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
                         these backends (c, rust, java, csharp, ts), and require
-                        only their toolchains. A machine with no JDK, .NET SDK
-                        or Node can still run `servers --language=c,rust`. Omit
+                        only their toolchains (tswasm builds ts and selects
+                        ta_regtest's WASM-engine run of its server). A machine
+                        with no JDK, .NET SDK or Node can still run
+                        `servers --language=c,rust`. Omit
                         it and every backend is built, which needs all three.
     --node=all          For libraries: run the TypeScript suite once per listed
                         Node major, each from scripts/node_toolchain.py (fetched
@@ -304,6 +306,9 @@ def build_servers(root_dir: str, lang_filter=None, alongside=None):
     backends = backends_for_languages(lang_filter)
     extra = [f'--backend={backends}'] if backends else []
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', *extra)
+    # The TypeScript server's build refuses a stale bin/ta_lib.wasm.
+    if 'ts' in (backends or 'ts').split(',') and build_wasm(root_dir) != 0:
+        sys.exit(1)
     if alongside is None:
         run_codegen(root_dir, 'run', '--release', '--', 'build', *extra)
         return
@@ -380,10 +385,15 @@ WASM_RUSTFLAGS = ('-C target-feature=+simd128,+relaxed-simd '
 
 def build_wasm(root_dir: str) -> int:
     """Builds bin/ta_lib.wasm from the committed crate and checks it."""
-    sysroot = subprocess.run(['rustc', '--print', 'sysroot'], cwd=root_dir,
-                             capture_output=True, text=True)
-    if sysroot.returncode != 0 or not os.path.isdir(
-            os.path.join(sysroot.stdout.strip(), 'lib', 'rustlib', WASM_TARGET, 'lib')):
+    def target_installed():
+        sysroot = subprocess.run(['rustc', '--print', 'sysroot'], cwd=root_dir,
+                                 capture_output=True, text=True)
+        return sysroot.returncode == 0 and os.path.isdir(
+            os.path.join(sysroot.stdout.strip(), 'lib', 'rustlib', WASM_TARGET, 'lib'))
+    # A toolchain installed before rust-toolchain.toml listed the target lacks it.
+    if not target_installed() and shutil.which('rustup'):
+        subprocess.run(['rustup', 'target', 'add', WASM_TARGET], cwd=root_dir)
+    if not target_installed():
         print(f"Error: the Rust target {WASM_TARGET} is not installed for the toolchain "
               f"rust-toolchain.toml pins. Install it with 'rustup target add {WASM_TARGET}' "
               f"from the repository root.", flush=True)
@@ -516,14 +526,16 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
             if b in ('rust', 'java', 'csharp', 'ts')]
     if not rows:
         print(f"Error: --language={lang_filter} selects no xlang-hash row "
-              f"(valid: rust, java, csharp, ts; C is the in-process golden).", flush=True)
+              f"(valid: rust, java, csharp, ts, tswasm; C is the in-process golden).", flush=True)
         return 2
     backends = ','.join(rows)
+    servers = ','.join(t for t in dict.fromkeys(s.strip().lower() for s in (lang_filter or '').split(','))
+                       if t in ('rust', 'java', 'csharp', 'ts', 'tswasm'))
     if lang_filter:
         # flush: this script's stdout is block-buffered when CI captures it,
         # while the cargo/ta_regtest subprocesses write straight to the pipe —
         # without it these lines land after the output they are labelling.
-        print(f"=== xlang-hash limited to: {backends} ===", flush=True)
+        print(f"=== xlang-hash limited to: {servers} ===", flush=True)
     # 1. Generate + compile the language servers into bin/ — plus the C server
     #    for the array-transport leg (see the note above). --servers-only
     #    because the C backend arm otherwise also builds ta_bench_cg and
@@ -532,6 +544,8 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     #    fail the parity nightly.
     built = backends if lang_filter else backends + ',c'
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', f'--backend={built}')
+    if 'ts' in rows and build_wasm(root_dir) != 0:
+        return 1
     run_codegen(root_dir, 'run', '--release', '--', 'build', f'--backend={built}',
                 '--servers-only')
     # 2. The C test runner links the in-process C golden; stage it into bin/.
@@ -540,7 +554,7 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     print("=== Running ta_regtest --xlang-hash ===", flush=True)
     cmd = [os.path.join(root_dir, "bin", "ta_regtest"), "--xlang-hash"]
     if lang_filter:
-        cmd.append(f"--language={backends}")
+        cmd.append(f"--language={servers}")
     return subprocess.run(cmd, cwd=os.path.join(root_dir, "bin")).returncode
 
 # The two cargo workspaces with a committed Cargo.lock. Both manifests are

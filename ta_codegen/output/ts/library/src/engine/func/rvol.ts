@@ -160,8 +160,8 @@ function rvolWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLi
   let count: number;
   try {
     count = w.x.rvol_batch(first, last, inVolumeAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

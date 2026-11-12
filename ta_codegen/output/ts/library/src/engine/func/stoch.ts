@@ -169,8 +169,8 @@ function stochWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   let count: number;
   try {
     count = w.x.stoch_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInFastK_Period === undefined ? Core.INTEGER_DEFAULT : optInFastK_Period, optInSlowK_Period === undefined ? Core.INTEGER_DEFAULT : optInSlowK_Period, optInSlowK_MAType === undefined ? Core.INTEGER_DEFAULT : optInSlowK_MAType, optInSlowD_Period === undefined ? Core.INTEGER_DEFAULT : optInSlowD_Period, optInSlowD_MAType === undefined ? Core.INTEGER_DEFAULT : optInSlowD_MAType, outSlowKAt, outSlowDAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

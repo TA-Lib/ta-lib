@@ -150,8 +150,8 @@ function macdfixWasm(real: ArrayLike<number>, options: MacdfixOptions | undefine
   let count: number;
   try {
     count = w.x.macdfix_batch(first, last, inRealAt, n, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

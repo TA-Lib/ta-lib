@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "ta_abstract.h"
+
 /* The ride-along verdict rides on EVERY response, but the codegen driver reads it
  * at one of its ~31 call sites, so a divergence found by the parameter sweep or
  * the large-period pass was computed by the server and then overwritten by the
@@ -46,6 +48,182 @@ void codegen_ride_reset(void)
     for( i = 0; i < CODEGEN_RIDE_SKIP_N; i++ ) g_rideSkips[i] = 0;
 }
 
+static int json_int_field(const char *s, const char *key, int dflt)
+{
+    const char *p = strstr(s, key);
+    return p ? atoi(p + strlen(key)) : dflt;
+}
+
+/* "key":"value" -> value, "" when absent. */
+static void json_str_field(const char *s, const char *key, char *out, int outSize)
+{
+    const char *p = strstr(s, key);
+    int i = 0;
+    out[0] = '\0';
+    if( !p ) return;
+    p += strlen(key);
+    if( *p != '"' ) return;
+    p++;
+    while( i < outSize - 1 && p[i] && p[i] != '"' ) { out[i] = p[i]; i++; }
+    out[i] = '\0';
+}
+
+#define ENGINE_MAX_FUNCS 512
+typedef struct {
+    char name[48];
+    int  exported;
+    long ok;        /* successful batch replies */
+    long wasm;      /* calls that ran in WASM */
+    char why[24];   /* the first expected fall-through label */
+} EngineFunc;
+static EngineFunc g_engineFunc[ENGINE_MAX_FUNCS];
+static int        g_engineFuncCount;
+static long       g_engineFuncDropped;
+static int        g_enginePipes;
+static long       g_engineReplies;
+static long       g_engineWasm;
+static long       g_engineDefects;
+static long       g_engineExitFailures;
+
+/* The labels the server's expectedFallThrough answers with. */
+static const char *const ENGINE_WHY[] = { "no-export", "ma-type", "core", "lengths", "budget", "js-rejects" };
+#define ENGINE_NWHY ((int)(sizeof(ENGINE_WHY) / sizeof(ENGINE_WHY[0])))
+static long g_engineExpected[ENGINE_NWHY];
+
+static void engine_defect(const char *fn, const char *what, const char *detail)
+{
+    if( g_engineDefects++ < 20 )
+        printf("  ENGINE DEFECT [TA_%s]: %s%s%s\n", fn, what, detail[0] ? ": " : "", detail);
+}
+
+static EngineFunc *engine_func(const char *fn, int exported)
+{
+    int i;
+    for( i = 0; i < g_engineFuncCount; i++ )
+        if( strcmp(g_engineFunc[i].name, fn) == 0 ) return &g_engineFunc[i];
+    if( g_engineFuncCount == ENGINE_MAX_FUNCS ) { g_engineFuncDropped++; return NULL; }
+    memset(&g_engineFunc[i], 0, sizeof(g_engineFunc[i]));
+    snprintf(g_engineFunc[i].name, sizeof(g_engineFunc[i].name), "%s", fn);
+    g_engineFunc[i].exported = exported;
+    g_engineFuncCount++;
+    return &g_engineFunc[i];
+}
+
+/* Every reply to a batch call of a WASM-engine server, whichever pass made it.
+ * `timed` and the stream warm-up arms (`bench_mode`) are not batch calls. */
+static void engine_scan(const CodegenPipe *cp, const char *request, const char *response)
+{
+    const TA_FuncHandle *handle;
+    const TA_FuncInfo *info;
+    const char *m;
+    char fn[48], why[24], defectWhy[96];
+    int i = 0, exported, calls, wasm, expected, defects, w;
+    EngineFunc *f;
+
+    if( !cp->engineWasm ) return;
+    m = strstr(request, "\"method\":\"TA_");
+    if( !m ) return;
+    m += 13;
+    while( i < (int)sizeof(fn) - 1 && m[i] && m[i] != '"' ) { fn[i] = m[i]; i++; }
+    fn[i] = '\0';
+    if( TA_GetFuncHandle(fn, &handle) != TA_SUCCESS || TA_GetFuncInfo(handle, &info) != TA_SUCCESS )
+        return;
+    if( json_int_field(request, "\"timed\":", 0) != 0 || json_int_field(request, "\"bench_mode\":", 0) != 0 )
+        return;
+
+    exported = (info->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL) == 0;
+    f = engine_func(fn, exported);
+    g_engineReplies++;
+    if( strncmp(response, "{\"error\"", 8) == 0 )
+    {
+        engine_defect(fn, "the server answered an error", response);
+        return;
+    }
+    calls    = json_int_field(response, "\"engine_calls\":", -1);
+    wasm     = json_int_field(response, "\"engine_wasm\":", 0);
+    expected = json_int_field(response, "\"engine_expected\":", 0);
+    defects  = json_int_field(response, "\"engine_defects\":", 0);
+    if( calls < 1 )
+    {
+        engine_defect(fn, "a batch reply without engine evidence", "");
+        return;
+    }
+    if( json_int_field(response, "\"engine_exported\":", -1) != exported )
+        engine_defect(fn, exported ? "the server calls it not exported, but the library flags no transcendental"
+                                   : "the server calls it exported, but the library flags it transcendental", "");
+    if( defects > 0 )
+    {
+        json_str_field(response, "\"engine_defect_why\":", defectWhy, (int)sizeof(defectWhy));
+        engine_defect(fn, "fell through for a reason that is not the engine's contract", defectWhy);
+    }
+    json_str_field(response, "\"engine_why\":", why, (int)sizeof(why));
+    if( expected > 0 )
+    {
+        for( w = 0; w < ENGINE_NWHY; w++ )
+            if( strcmp(why, ENGINE_WHY[w]) == 0 ) break;
+        if( w == ENGINE_NWHY )
+            engine_defect(fn, "an expected fall-through under an unknown label", why);
+        else
+            g_engineExpected[w] += expected;
+    }
+    g_engineWasm += wasm;
+    if( f && json_int_field(response, "\"retCode\":", -1) == 0 )
+    {
+        f->ok++;
+        f->wasm += wasm;
+        if( !f->why[0] && expected > 0 )
+            snprintf(f->why, sizeof(f->why), "%s", why);
+    }
+}
+
+int codegen_engine_report(void)
+{
+    int failures = (int)(g_engineDefects + g_engineExitFailures + (g_engineFuncDropped > 0));
+    int covered = 0, i, w;
+    long never[ENGINE_NWHY + 1];
+
+    if( g_enginePipes == 0 ) return 0;
+    memset(never, 0, sizeof(never));
+    for( i = 0; i < g_engineFuncCount; i++ )
+    {
+        const EngineFunc *f = &g_engineFunc[i];
+        if( f->wasm > 0 ) { covered++; continue; }
+        if( f->ok == 0 ) continue;
+        if( f->exported )
+        {
+            printf("  ENGINE VACUOUS [TA_%s]: exported, %ld successful batch call(s), none ran in "
+                   "WASM (first fall-through: %s)\n", f->name, f->ok, f->why[0] ? f->why : "none");
+            failures++;
+            continue;
+        }
+        for( w = 0; w < ENGINE_NWHY; w++ )
+            if( strcmp(f->why, ENGINE_WHY[w]) == 0 ) break;
+        never[w]++;
+    }
+    if( g_engineReplies == 0 )
+    {
+        printf("  ENGINE VACUOUS: %d WASM-engine server(s) ran and answered no batch call\n",
+               g_enginePipes);
+        failures++;
+    }
+    if( g_engineFuncDropped > 0 )
+        printf("  ENGINE TABLE FULL: %ld reply(ies) of functions past %d went unrecorded\n",
+               g_engineFuncDropped, ENGINE_MAX_FUNCS);
+    if( g_engineDefects > 20 )
+        printf("  (%ld engine defect(s) in all; the first 20 are above)\n", g_engineDefects);
+
+    printf("  wasm engine: %ld call(s) ran in WASM, over %d function(s); expected fall-throughs:",
+           g_engineWasm, covered);
+    for( w = 0; w < ENGINE_NWHY; w++ )
+        printf(" %s=%ld", ENGINE_WHY[w], g_engineExpected[w]);
+    printf("\n  wasm engine: functions that never ran in WASM, by first fall-through:");
+    for( w = 0; w < ENGINE_NWHY; w++ )
+        if( never[w] ) printf(" %s=%ld", ENGINE_WHY[w], never[w]);
+    if( never[ENGINE_NWHY] ) printf(" other=%ld", never[ENGINE_NWHY]);
+    printf("\n");
+    return failures;
+}
+
 #if defined(WIN32) || defined(_WIN32)
 
 /* Subprocess JSON-RPC pipes are not implemented for Windows yet.
@@ -55,6 +233,7 @@ void codegen_ride_reset(void)
 ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
 {
     (void)argv;
+    cp->engineWasm = 0;
     cp->to_child_fd = -1;
     cp->from_child_fd = -1;
     cp->child_pid = -1;
@@ -102,6 +281,12 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
 
     cp->rbuf = NULL;    /* before any early return: close() frees this */
     cp->rpos = cp->rlen = 0;
+    cp->engineWasm = 0;
+    {
+        int a;
+        for( a = 1; argv[a]; a++ )
+            if( strcmp(argv[a], "--engine=wasm") == 0 ) cp->engineWasm = 1;
+    }
     cp->to_child_fd = -1;
     cp->from_child_fd = -1;
     cp->child_pid = -1;
@@ -166,6 +351,7 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     cp->to_child_fd = parent_to_child[1];
     cp->from_child_fd = child_to_parent[0];
     cp->child_pid = (int)pid;
+    if( cp->engineWasm ) g_enginePipes++;
     cp->rpos = cp->rlen = 0;
     cp->rbuf = (char *)malloc(CODEGEN_PIPE_RBUF);
     if( !cp->rbuf )
@@ -356,6 +542,7 @@ ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                 response[idx] = '\0';
                 ride_scan(request, response);
                 tail_scan(request, response);
+                engine_scan(cp, request, response);
                 return TA_TEST_PASS;
             }
         }
@@ -397,6 +584,14 @@ void codegen_pipe_close(CodegenPipe *cp)
                 kill(cp->child_pid, SIGTERM);
                 waitpid(cp->child_pid, &status, 0);
             }
+        }
+        /* A WASM-engine server that could not start the engine exits non-zero. */
+        if( cp->engineWasm && result == (pid_t)cp->child_pid &&
+            WIFEXITED(status) && WEXITSTATUS(status) != 0 )
+        {
+            printf("  ENGINE DEFECT: the WASM-engine server (pid %d) exited with status %d\n",
+                   cp->child_pid, WEXITSTATUS(status));
+            g_engineExitFailures++;
         }
         cp->child_pid = -1;
     }

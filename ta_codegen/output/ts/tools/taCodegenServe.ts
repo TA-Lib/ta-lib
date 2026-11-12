@@ -6,6 +6,8 @@ import { Core, type CoreBuilder, type CandleSettingType, RangeType } from '../li
 import { RetCode, TALibError } from '../library/src/runtime/errors.ts';
 import { MInteger } from '../library/src/runtime/mInteger.ts';
 import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';
+import { engineStatus, fallThroughCount, lastFallThrough, ready, setEngineMode } from '../library/src/runtime/wasm.ts';
+import * as ENGINE from '../library/src/engine/index.ts';
 import { FuncUnstId, MAType } from '../library/src/enums.ts';
 import * as AC from '../library/src/func/ac.ts';
 import * as ACCBANDS from '../library/src/func/accbands.ts';
@@ -366,7 +368,7 @@ function reply(
     if (rc === RetCode.SUCCESS && nb > 0) {
       for (const a of outs) h = a instanceof Int32Array ? fuzzHashI32(h, a, nb) : fuzzHashF64(h, a, nb);
     }
-    return `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_hash":"${hex64(fuzzHashFin(h))}"${tail}${rideFields}}`;
+    return `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_hash":"${hex64(fuzzHashFin(h))}"${tail}${rideFields}${engineEvidence()}}`;
   }
   let s = `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_len":${outLen}${tail}`;
   if (int(p, 'no_output', 0) === 0) {
@@ -377,7 +379,7 @@ function reply(
         : `,"${keys[k]}":"${float64ArrayToHex(a, nb)}"`;
     }
   }
-  return s + `,"used_float":${usedFloat},"timing_ns":${elapsedNs}${rideFields}}`;
+  return s + `,"used_float":${usedFloat},"timing_ns":${elapsedNs}${rideFields}${engineEvidence()}}`;
 }
 
 function loadData(p: Params): string {
@@ -448,6 +450,119 @@ function fuzzInHash(p: Params): string {
   let h = fuzzHashInit();
   for (const x of a) h = fuzzHashF64(h, x, n);
   return `{"in_hash":"${hex64(fuzzHashFin(h))}"}`;
+}
+
+let wasmEngine = false;
+for (const arg of process.argv.slice(2)) {
+  if (arg === '--engine=wasm') {
+    wasmEngine = true;
+  } else if (arg !== '--engine=js') {
+    process.stderr.write(`taCodegenServe: unknown argument ${arg}\n`);
+    process.exit(2);
+  }
+}
+if (wasmEngine) {
+  // The package's Node entry, which hands the engine its bytes.
+  await import('../library/src/engine/node.ts');
+  const status = await ready();
+  if (status.engine !== 'wasm') {
+    process.stderr.write(`taCodegenServe --engine=wasm: the default entry runs in ${status.engine} (${String(status.reason)})\n`);
+    process.exit(1);
+  }
+  setEngineMode('force');
+}
+
+const UNSUPPORTED_MODE = '{"retCode":0,"timing_ns":0,"unsupported_mode":1}';
+
+// Any setting off its default makes the call's Core non-default, which the
+// default entry never routes.
+function coreIsDefault(c: Core): boolean {
+  const d = Core.DEFAULT;
+  for (let i = 0; i < d.unstablePeriods.length; i++) {
+    if (c.unstablePeriods[i] !== d.unstablePeriods[i]) return false;
+  }
+  for (let i = 0; i < d.candleSettings.length; i++) {
+    const a = c.candleSettings[i];
+    const b = d.candleSettings[i];
+    if (a.settingType !== b.settingType || a.rangeType !== b.rangeType || a.avgPeriod !== b.avgPeriod || !Object.is(a.factor, b.factor)) return false;
+  }
+  return true;
+}
+
+// The one list of fall-throughs that are the engine's contract: the label a
+// fall-through is expected under, or null when it is a defect. A reason is
+// expected only where this call's own facts explain it; the engine's load
+// states ('not-loaded', 'compile', 'instantiate', 'fma', 'unavailable') never
+// are. This server passes no output buffer, so 'options' under the default
+// Core is a defect unless ta-lib/js rejects the call too.
+function expectedFallThrough(
+  reason: string, exported: boolean, declined: boolean, lengthsDiffer: boolean, coreDefault: boolean, rejected: boolean,
+): string | null {
+  if (!exported) return 'no-export';
+  if (reason === 'declined' && declined) return 'ma-type';
+  if (reason === 'options' && !coreDefault) return 'core';
+  if (reason === 'input' && lengthsDiffer) return 'lengths';
+  if (reason === 'budget') return 'budget';
+  const callShaped = ['options', 'parameter', 'input', 'range', 'rejected', 'declined', 'threw', 'trap'];
+  if (rejected && callShaped.includes(reason)) return 'js-rejects';
+  return null;
+}
+
+const tally = { calls: 0, exported: -1, wasm: 0, expected: 0, why: '', defects: 0, defectWhy: '' };
+
+function engineTallyReset(): void {
+  tally.calls = 0;
+  tally.exported = -1;
+  tally.wasm = 0;
+  tally.expected = 0;
+  tally.why = '';
+  tally.defects = 0;
+  tally.defectWhy = '';
+}
+
+function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boolean, call: (c: Core) => T): T {
+  const coreDefault = coreIsDefault(core);
+  const before = fallThroughCount();
+  let rejected = false;
+  tally.calls++;
+  tally.exported = exported ? 1 : 0;
+  try {
+    return call(coreDefault ? Core.DEFAULT : core);
+  } catch (e) {
+    rejected = e instanceof TALibError;
+    throw e;
+  } finally {
+    const fell = fallThroughCount() - before;
+    const status = engineStatus();
+    let defect: string | null = null;
+    if (status.engine !== 'wasm') {
+      defect = `engine-${status.engine}-${String(status.reason)}`;
+    } else if (fell > 1) {
+      defect = 'repeated-fall-through';
+    } else if (exported && fell === 0) {
+      tally.wasm++;
+    } else {
+      const reason = fell === 0 ? '' : lastFallThrough();
+      const why = expectedFallThrough(reason, exported, declined, lengthsDiffer, coreDefault, rejected);
+      if (why === null) {
+        defect = reason === '' ? 'no-fall-through-reason' : reason;
+      } else {
+        tally.expected++;
+        if (tally.why === '') tally.why = why;
+      }
+    }
+    if (defect !== null) {
+      tally.defects++;
+      if (tally.defectWhy === '') tally.defectWhy = defect;
+    }
+  }
+}
+
+function engineEvidence(): string {
+  if (!wasmEngine) return '';
+  return `,"engine_calls":${tally.calls},"engine_exported":${tally.exported},"engine_wasm":${tally.wasm}`
+    + `,"engine_expected":${tally.expected},"engine_why":"${tally.why}"`
+    + `,"engine_defects":${tally.defects},"engine_defect_why":${JSON.stringify(tally.defectWhy)}`;
 }
 
 function handleGetRuntimeInfo(p: Params): string {
@@ -936,6 +1051,7 @@ function handle_AC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -960,6 +1076,12 @@ function handle_AC(p: Params): string {
     try {
       if (timed) {
         rc = AC.acImpl(core, startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ac({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AC.ac({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -976,9 +1098,16 @@ function handle_AC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AC.ac({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ac({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AC.ac({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -987,7 +1116,7 @@ function handle_AC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAc(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideAc(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1009,6 +1138,7 @@ function handle_ACCBANDS(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1033,6 +1163,14 @@ function handle_ACCBANDS(p: Params): string {
     try {
       if (timed) {
         rc = ACCBANDS.accbandsImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.accbands({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ACCBANDS.accbands({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
         outBegIdx.value = r.begIdx;
@@ -1049,9 +1187,18 @@ function handle_ACCBANDS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ACCBANDS.accbands({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outUpperBand.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.accbands({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+      } else {
+        const r = ACCBANDS.accbands({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1060,7 +1207,7 @@ function handle_ACCBANDS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAccbands(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAccbands(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1075,6 +1222,7 @@ function handle_ACOS(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1099,6 +1247,12 @@ function handle_ACOS(p: Params): string {
     try {
       if (timed) {
         rc = ACOS.acosImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.acos(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ACOS.acos(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1115,9 +1269,16 @@ function handle_ACOS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ACOS.acos(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.acos(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ACOS.acos(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1126,7 +1287,7 @@ function handle_ACOS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAcos(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideAcos(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1147,6 +1308,7 @@ function handle_AD(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1171,6 +1333,12 @@ function handle_AD(p: Params): string {
     try {
       if (timed) {
         rc = AD.adImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.ad({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AD.ad({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1187,9 +1355,16 @@ function handle_AD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AD.ad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.ad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AD.ad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1198,7 +1373,7 @@ function handle_AD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAd(core, p, endIdx, inHigh, inLow, inClose, inVolume);
+  const rideFields = wasmEngine ? '' : rideAd(core, p, endIdx, inHigh, inLow, inClose, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1215,6 +1390,7 @@ function handle_ADD(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1239,6 +1415,12 @@ function handle_ADD(p: Params): string {
     try {
       if (timed) {
         rc = ADD.addImpl(core, startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.add(inReal0, inReal1, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ADD.add(inReal0, inReal1, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1255,9 +1437,16 @@ function handle_ADD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ADD.add(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.add(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ADD.add(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1266,7 +1455,7 @@ function handle_ADD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAdd(core, p, endIdx, inReal0, inReal1);
+  const rideFields = wasmEngine ? '' : rideAdd(core, p, endIdx, inReal0, inReal1);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1289,6 +1478,7 @@ function handle_ADOSC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1313,6 +1503,12 @@ function handle_ADOSC(p: Params): string {
     try {
       if (timed) {
         rc = ADOSC.adoscImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.adosc({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ADOSC.adosc({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1329,9 +1525,16 @@ function handle_ADOSC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ADOSC.adosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.adosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ADOSC.adosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1340,7 +1543,7 @@ function handle_ADOSC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAdosc(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod);
+  const rideFields = wasmEngine ? '' : rideAdosc(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1358,6 +1561,7 @@ function handle_ADR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1382,6 +1586,12 @@ function handle_ADR(p: Params): string {
     try {
       if (timed) {
         rc = ADR.adrImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.adr({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ADR.adr({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1398,9 +1608,16 @@ function handle_ADR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ADR.adr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.adr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ADR.adr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1409,7 +1626,7 @@ function handle_ADR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAdr(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAdr(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1430,6 +1647,7 @@ function handle_ADX(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1454,6 +1672,12 @@ function handle_ADX(p: Params): string {
     try {
       if (timed) {
         rc = ADX.adxImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.adx({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ADX.adx({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1470,9 +1694,16 @@ function handle_ADX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ADX.adx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.adx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ADX.adx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1481,7 +1712,7 @@ function handle_ADX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAdx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAdx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1501,6 +1732,7 @@ function handle_ADXR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1525,6 +1757,12 @@ function handle_ADXR(p: Params): string {
     try {
       if (timed) {
         rc = ADXR.adxrImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.adxr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ADXR.adxr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1541,9 +1779,16 @@ function handle_ADXR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ADXR.adxr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.adxr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ADXR.adxr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1552,7 +1797,7 @@ function handle_ADXR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAdxr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAdxr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1577,6 +1822,7 @@ function handle_ALLIGATOR(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1601,6 +1847,14 @@ function handle_ALLIGATOR(p: Params): string {
     try {
       if (timed) {
         rc = ALLIGATOR.alligatorImpl(core, startIdx, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.alligator({ high: inHigh, low: inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outJaw.length;
+        out0.set(r.outJaw);
+        out1.set(r.outTeeth);
+        out2.set(r.outLips);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ALLIGATOR.alligator({ high: inHigh, low: inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outJaw: out0, outTeeth: out1, outLips: out2 });
         outBegIdx.value = r.begIdx;
@@ -1617,9 +1871,18 @@ function handle_ALLIGATOR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ALLIGATOR.alligator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outJaw: out0, outTeeth: out1, outLips: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outJaw.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.alligator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outJaw.length;
+        out0.set(r.outJaw);
+        out1.set(r.outTeeth);
+        out2.set(r.outLips);
+      } else {
+        const r = ALLIGATOR.alligator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outJaw: out0, outTeeth: out1, outLips: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outJaw.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1628,7 +1891,7 @@ function handle_ALLIGATOR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAlligator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
+  const rideFields = wasmEngine ? '' : rideAlligator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1646,6 +1909,7 @@ function handle_ALMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1670,6 +1934,12 @@ function handle_ALMA(p: Params): string {
     try {
       if (timed) {
         rc = ALMA.almaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.alma(inReal, { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ALMA.alma(inReal, { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1686,9 +1956,16 @@ function handle_ALMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ALMA.alma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.alma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ALMA.alma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, sigma: optInSigma, offset: optInOffset, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1697,7 +1974,7 @@ function handle_ALMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAlma(core, p, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset);
+  const rideFields = wasmEngine ? '' : rideAlma(core, p, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1716,6 +1993,7 @@ function handle_AO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1740,6 +2018,12 @@ function handle_AO(p: Params): string {
     try {
       if (timed) {
         rc = AO.aoImpl(core, startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ao({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AO.ao({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1756,9 +2040,16 @@ function handle_AO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AO.ao({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ao({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AO.ao({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1767,7 +2058,7 @@ function handle_AO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAo(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod);
+  const rideFields = wasmEngine ? '' : rideAo(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1785,6 +2076,7 @@ function handle_APO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1809,6 +2101,12 @@ function handle_APO(p: Params): string {
     try {
       if (timed) {
         rc = APO.apoImpl(core, startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.apo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = APO.apo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1825,9 +2123,16 @@ function handle_APO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = APO.apo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.apo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = APO.apo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1836,7 +2141,7 @@ function handle_APO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideApo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+  const rideFields = wasmEngine ? '' : rideApo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1855,6 +2160,7 @@ function handle_AROON(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1879,6 +2185,13 @@ function handle_AROON(p: Params): string {
     try {
       if (timed) {
         rc = AROON.aroonImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.aroon({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outAroonDown.length;
+        out0.set(r.outAroonDown);
+        out1.set(r.outAroonUp);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AROON.aroon({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outAroonDown: out0, outAroonUp: out1 });
         outBegIdx.value = r.begIdx;
@@ -1895,9 +2208,17 @@ function handle_AROON(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AROON.aroon({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outAroonDown: out0, outAroonUp: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outAroonDown.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.aroon({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outAroonDown.length;
+        out0.set(r.outAroonDown);
+        out1.set(r.outAroonUp);
+      } else {
+        const r = AROON.aroon({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outAroonDown: out0, outAroonUp: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outAroonDown.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1906,7 +2227,7 @@ function handle_AROON(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAroon(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAroon(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1924,6 +2245,7 @@ function handle_AROONOSC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -1948,6 +2270,12 @@ function handle_AROONOSC(p: Params): string {
     try {
       if (timed) {
         rc = AROONOSC.aroonoscImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.aroonosc({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AROONOSC.aroonosc({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -1964,9 +2292,16 @@ function handle_AROONOSC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AROONOSC.aroonosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.aroonosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AROONOSC.aroonosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -1975,7 +2310,7 @@ function handle_AROONOSC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAroonosc(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAroonosc(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -1997,6 +2332,7 @@ function handle_ASI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2021,6 +2357,12 @@ function handle_ASI(p: Params): string {
     try {
       if (timed) {
         rc = ASI.asiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.asi({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { limitMove: optInLimitMove, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ASI.asi({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2037,9 +2379,16 @@ function handle_ASI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ASI.asi({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.asi({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ASI.asi({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2048,7 +2397,7 @@ function handle_ASI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAsi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove);
+  const rideFields = wasmEngine ? '' : rideAsi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2063,6 +2412,7 @@ function handle_ASIN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2087,6 +2437,12 @@ function handle_ASIN(p: Params): string {
     try {
       if (timed) {
         rc = ASIN.asinImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.asin(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ASIN.asin(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2103,9 +2459,16 @@ function handle_ASIN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ASIN.asin(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.asin(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ASIN.asin(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2114,7 +2477,7 @@ function handle_ASIN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAsin(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideAsin(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2129,6 +2492,7 @@ function handle_ATAN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2153,6 +2517,12 @@ function handle_ATAN(p: Params): string {
     try {
       if (timed) {
         rc = ATAN.atanImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.atan(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ATAN.atan(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2169,9 +2539,16 @@ function handle_ATAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ATAN.atan(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.atan(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ATAN.atan(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2180,7 +2557,7 @@ function handle_ATAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAtan(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideAtan(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2201,6 +2578,7 @@ function handle_ATR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2225,6 +2603,12 @@ function handle_ATR(p: Params): string {
     try {
       if (timed) {
         rc = ATR.atrImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.atr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ATR.atr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2241,9 +2625,16 @@ function handle_ATR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ATR.atr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.atr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ATR.atr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2252,7 +2643,7 @@ function handle_ATR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAtr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAtr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2268,6 +2659,7 @@ function handle_AVGDEV(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2292,6 +2684,12 @@ function handle_AVGDEV(p: Params): string {
     try {
       if (timed) {
         rc = AVGDEV.avgdevImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.avgdev(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AVGDEV.avgdev(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2308,9 +2706,16 @@ function handle_AVGDEV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AVGDEV.avgdev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.avgdev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AVGDEV.avgdev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2319,7 +2724,7 @@ function handle_AVGDEV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAvgdev(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideAvgdev(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2340,6 +2745,7 @@ function handle_AVGPRICE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2364,6 +2770,12 @@ function handle_AVGPRICE(p: Params): string {
     try {
       if (timed) {
         rc = AVGPRICE.avgpriceImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.avgprice({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = AVGPRICE.avgprice({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2380,9 +2792,16 @@ function handle_AVGPRICE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = AVGPRICE.avgprice({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.avgprice({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = AVGPRICE.avgprice({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2391,7 +2810,7 @@ function handle_AVGPRICE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideAvgprice(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideAvgprice(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2412,6 +2831,7 @@ function handle_BBANDS(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2436,6 +2856,14 @@ function handle_BBANDS(p: Params): string {
     try {
       if (timed) {
         rc = BBANDS.bbandsImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.bbands(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+        rc = RetCode.SUCCESS;
       } else {
         const r = BBANDS.bbands(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
         outBegIdx.value = r.begIdx;
@@ -2452,9 +2880,18 @@ function handle_BBANDS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = BBANDS.bbands(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outUpperBand.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.bbands(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+      } else {
+        const r = BBANDS.bbands(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2463,7 +2900,7 @@ function handle_BBANDS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideBbands(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  const rideFields = wasmEngine ? '' : rideBbands(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2482,6 +2919,7 @@ function handle_BBW(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2506,6 +2944,12 @@ function handle_BBW(p: Params): string {
     try {
       if (timed) {
         rc = BBW.bbwImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.bbw(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = BBW.bbw(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2522,9 +2966,16 @@ function handle_BBW(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = BBW.bbw(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.bbw(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = BBW.bbw(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2533,7 +2984,7 @@ function handle_BBW(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideBbw(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  const rideFields = wasmEngine ? '' : rideBbw(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2551,6 +3002,7 @@ function handle_BETA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2575,6 +3027,12 @@ function handle_BETA(p: Params): string {
     try {
       if (timed) {
         rc = BETA.betaImpl(core, startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.beta(inReal0, inReal1, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = BETA.beta(inReal0, inReal1, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2591,9 +3049,16 @@ function handle_BETA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = BETA.beta(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.beta(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = BETA.beta(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2602,7 +3067,7 @@ function handle_BETA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideBeta(core, p, endIdx, inReal0, inReal1, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideBeta(core, p, endIdx, inReal0, inReal1, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2623,6 +3088,7 @@ function handle_BOP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2647,6 +3113,12 @@ function handle_BOP(p: Params): string {
     try {
       if (timed) {
         rc = BOP.bopImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.bop({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = BOP.bop({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2663,9 +3135,16 @@ function handle_BOP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = BOP.bop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.bop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = BOP.bop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2674,7 +3153,7 @@ function handle_BOP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideBop(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideBop(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2694,6 +3173,7 @@ function handle_CCI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2718,6 +3198,12 @@ function handle_CCI(p: Params): string {
     try {
       if (timed) {
         rc = CCI.cciImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.cci({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CCI.cci({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -2734,9 +3220,16 @@ function handle_CCI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CCI.cci({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.cci({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CCI.cci({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2745,7 +3238,7 @@ function handle_CCI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCci(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCci(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2766,6 +3259,7 @@ function handle_CDL2CROWS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2790,6 +3284,12 @@ function handle_CDL2CROWS(p: Params): string {
     try {
       if (timed) {
         rc = CDL2CROWS.cdl2crowsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl2crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL2CROWS.cdl2crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -2806,9 +3306,16 @@ function handle_CDL2CROWS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL2CROWS.cdl2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL2CROWS.cdl2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2817,7 +3324,7 @@ function handle_CDL2CROWS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2838,6 +3345,7 @@ function handle_CDL3BLACKCROWS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2862,6 +3370,12 @@ function handle_CDL3BLACKCROWS(p: Params): string {
     try {
       if (timed) {
         rc = CDL3BLACKCROWS.cdl3blackcrowsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3blackcrows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3BLACKCROWS.cdl3blackcrows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -2878,9 +3392,16 @@ function handle_CDL3BLACKCROWS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3BLACKCROWS.cdl3blackcrows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3blackcrows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3BLACKCROWS.cdl3blackcrows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2889,7 +3410,7 @@ function handle_CDL3BLACKCROWS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3blackcrows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3blackcrows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2910,6 +3431,7 @@ function handle_CDL3INSIDE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -2934,6 +3456,12 @@ function handle_CDL3INSIDE(p: Params): string {
     try {
       if (timed) {
         rc = CDL3INSIDE.cdl3insideImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3inside({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3INSIDE.cdl3inside({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -2950,9 +3478,16 @@ function handle_CDL3INSIDE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3INSIDE.cdl3inside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3inside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3INSIDE.cdl3inside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -2961,7 +3496,7 @@ function handle_CDL3INSIDE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3inside(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3inside(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -2982,6 +3517,7 @@ function handle_CDL3LINESTRIKE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3006,6 +3542,12 @@ function handle_CDL3LINESTRIKE(p: Params): string {
     try {
       if (timed) {
         rc = CDL3LINESTRIKE.cdl3linestrikeImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3linestrike({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3LINESTRIKE.cdl3linestrike({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3022,9 +3564,16 @@ function handle_CDL3LINESTRIKE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3LINESTRIKE.cdl3linestrike({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3linestrike({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3LINESTRIKE.cdl3linestrike({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3033,7 +3582,7 @@ function handle_CDL3LINESTRIKE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3linestrike(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3linestrike(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3054,6 +3603,7 @@ function handle_CDL3OUTSIDE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3078,6 +3628,12 @@ function handle_CDL3OUTSIDE(p: Params): string {
     try {
       if (timed) {
         rc = CDL3OUTSIDE.cdl3outsideImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3outside({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3OUTSIDE.cdl3outside({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3094,9 +3650,16 @@ function handle_CDL3OUTSIDE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3OUTSIDE.cdl3outside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3outside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3OUTSIDE.cdl3outside({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3105,7 +3668,7 @@ function handle_CDL3OUTSIDE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3outside(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3outside(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3126,6 +3689,7 @@ function handle_CDL3STARSINSOUTH(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3150,6 +3714,12 @@ function handle_CDL3STARSINSOUTH(p: Params): string {
     try {
       if (timed) {
         rc = CDL3STARSINSOUTH.cdl3starsinsouthImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3starsinsouth({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3STARSINSOUTH.cdl3starsinsouth({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3166,9 +3736,16 @@ function handle_CDL3STARSINSOUTH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3STARSINSOUTH.cdl3starsinsouth({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3starsinsouth({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3STARSINSOUTH.cdl3starsinsouth({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3177,7 +3754,7 @@ function handle_CDL3STARSINSOUTH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3starsinsouth(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3starsinsouth(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3198,6 +3775,7 @@ function handle_CDL3WHITESOLDIERS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3222,6 +3800,12 @@ function handle_CDL3WHITESOLDIERS(p: Params): string {
     try {
       if (timed) {
         rc = CDL3WHITESOLDIERS.cdl3whitesoldiersImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3whitesoldiers({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDL3WHITESOLDIERS.cdl3whitesoldiers({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3238,9 +3822,16 @@ function handle_CDL3WHITESOLDIERS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDL3WHITESOLDIERS.cdl3whitesoldiers({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdl3whitesoldiers({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDL3WHITESOLDIERS.cdl3whitesoldiers({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3249,7 +3840,7 @@ function handle_CDL3WHITESOLDIERS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdl3whitesoldiers(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdl3whitesoldiers(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3271,6 +3862,7 @@ function handle_CDLABANDONEDBABY(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3295,6 +3887,12 @@ function handle_CDLABANDONEDBABY(p: Params): string {
     try {
       if (timed) {
         rc = CDLABANDONEDBABY.cdlabandonedbabyImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlabandonedbaby({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLABANDONEDBABY.cdlabandonedbaby({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3311,9 +3909,16 @@ function handle_CDLABANDONEDBABY(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLABANDONEDBABY.cdlabandonedbaby({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlabandonedbaby({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLABANDONEDBABY.cdlabandonedbaby({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3322,7 +3927,7 @@ function handle_CDLABANDONEDBABY(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlabandonedbaby(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdlabandonedbaby(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3343,6 +3948,7 @@ function handle_CDLADVANCEBLOCK(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3367,6 +3973,12 @@ function handle_CDLADVANCEBLOCK(p: Params): string {
     try {
       if (timed) {
         rc = CDLADVANCEBLOCK.cdladvanceblockImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdladvanceblock({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLADVANCEBLOCK.cdladvanceblock({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3383,9 +3995,16 @@ function handle_CDLADVANCEBLOCK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLADVANCEBLOCK.cdladvanceblock({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdladvanceblock({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLADVANCEBLOCK.cdladvanceblock({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3394,7 +4013,7 @@ function handle_CDLADVANCEBLOCK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdladvanceblock(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdladvanceblock(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3415,6 +4034,7 @@ function handle_CDLBELTHOLD(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3439,6 +4059,12 @@ function handle_CDLBELTHOLD(p: Params): string {
     try {
       if (timed) {
         rc = CDLBELTHOLD.cdlbeltholdImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlbelthold({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLBELTHOLD.cdlbelthold({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3455,9 +4081,16 @@ function handle_CDLBELTHOLD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLBELTHOLD.cdlbelthold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlbelthold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLBELTHOLD.cdlbelthold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3466,7 +4099,7 @@ function handle_CDLBELTHOLD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlbelthold(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlbelthold(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3487,6 +4120,7 @@ function handle_CDLBREAKAWAY(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3511,6 +4145,12 @@ function handle_CDLBREAKAWAY(p: Params): string {
     try {
       if (timed) {
         rc = CDLBREAKAWAY.cdlbreakawayImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlbreakaway({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLBREAKAWAY.cdlbreakaway({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3527,9 +4167,16 @@ function handle_CDLBREAKAWAY(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLBREAKAWAY.cdlbreakaway({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlbreakaway({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLBREAKAWAY.cdlbreakaway({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3538,7 +4185,7 @@ function handle_CDLBREAKAWAY(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlbreakaway(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlbreakaway(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3559,6 +4206,7 @@ function handle_CDLCLOSINGMARUBOZU(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3583,6 +4231,12 @@ function handle_CDLCLOSINGMARUBOZU(p: Params): string {
     try {
       if (timed) {
         rc = CDLCLOSINGMARUBOZU.cdlclosingmarubozuImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlclosingmarubozu({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLCLOSINGMARUBOZU.cdlclosingmarubozu({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3599,9 +4253,16 @@ function handle_CDLCLOSINGMARUBOZU(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLCLOSINGMARUBOZU.cdlclosingmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlclosingmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLCLOSINGMARUBOZU.cdlclosingmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3610,7 +4271,7 @@ function handle_CDLCLOSINGMARUBOZU(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlclosingmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlclosingmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3631,6 +4292,7 @@ function handle_CDLCONCEALBABYSWALL(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3655,6 +4317,12 @@ function handle_CDLCONCEALBABYSWALL(p: Params): string {
     try {
       if (timed) {
         rc = CDLCONCEALBABYSWALL.cdlconcealbabyswallImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlconcealbabyswall({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLCONCEALBABYSWALL.cdlconcealbabyswall({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3671,9 +4339,16 @@ function handle_CDLCONCEALBABYSWALL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLCONCEALBABYSWALL.cdlconcealbabyswall({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlconcealbabyswall({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLCONCEALBABYSWALL.cdlconcealbabyswall({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3682,7 +4357,7 @@ function handle_CDLCONCEALBABYSWALL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlconcealbabyswall(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlconcealbabyswall(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3703,6 +4378,7 @@ function handle_CDLCOUNTERATTACK(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3727,6 +4403,12 @@ function handle_CDLCOUNTERATTACK(p: Params): string {
     try {
       if (timed) {
         rc = CDLCOUNTERATTACK.cdlcounterattackImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlcounterattack({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLCOUNTERATTACK.cdlcounterattack({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3743,9 +4425,16 @@ function handle_CDLCOUNTERATTACK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLCOUNTERATTACK.cdlcounterattack({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlcounterattack({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLCOUNTERATTACK.cdlcounterattack({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3754,7 +4443,7 @@ function handle_CDLCOUNTERATTACK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlcounterattack(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlcounterattack(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3776,6 +4465,7 @@ function handle_CDLDARKCLOUDCOVER(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3800,6 +4490,12 @@ function handle_CDLDARKCLOUDCOVER(p: Params): string {
     try {
       if (timed) {
         rc = CDLDARKCLOUDCOVER.cdldarkcloudcoverImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldarkcloudcover({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLDARKCLOUDCOVER.cdldarkcloudcover({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3816,9 +4512,16 @@ function handle_CDLDARKCLOUDCOVER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLDARKCLOUDCOVER.cdldarkcloudcover({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldarkcloudcover({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLDARKCLOUDCOVER.cdldarkcloudcover({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3827,7 +4530,7 @@ function handle_CDLDARKCLOUDCOVER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdldarkcloudcover(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdldarkcloudcover(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3848,6 +4551,7 @@ function handle_CDLDOJI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3872,6 +4576,12 @@ function handle_CDLDOJI(p: Params): string {
     try {
       if (timed) {
         rc = CDLDOJI.cdldojiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLDOJI.cdldoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3888,9 +4598,16 @@ function handle_CDLDOJI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLDOJI.cdldoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLDOJI.cdldoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3899,7 +4616,7 @@ function handle_CDLDOJI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdldoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdldoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3920,6 +4637,7 @@ function handle_CDLDOJISTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -3944,6 +4662,12 @@ function handle_CDLDOJISTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLDOJISTAR.cdldojistarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLDOJISTAR.cdldojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -3960,9 +4684,16 @@ function handle_CDLDOJISTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLDOJISTAR.cdldojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLDOJISTAR.cdldojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -3971,7 +4702,7 @@ function handle_CDLDOJISTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdldojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdldojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -3992,6 +4723,7 @@ function handle_CDLDRAGONFLYDOJI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4016,6 +4748,12 @@ function handle_CDLDRAGONFLYDOJI(p: Params): string {
     try {
       if (timed) {
         rc = CDLDRAGONFLYDOJI.cdldragonflydojiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldragonflydoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLDRAGONFLYDOJI.cdldragonflydoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4032,9 +4770,16 @@ function handle_CDLDRAGONFLYDOJI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLDRAGONFLYDOJI.cdldragonflydoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdldragonflydoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLDRAGONFLYDOJI.cdldragonflydoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4043,7 +4788,7 @@ function handle_CDLDRAGONFLYDOJI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdldragonflydoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdldragonflydoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4064,6 +4809,7 @@ function handle_CDLENGULFING(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4088,6 +4834,12 @@ function handle_CDLENGULFING(p: Params): string {
     try {
       if (timed) {
         rc = CDLENGULFING.cdlengulfingImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlengulfing({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLENGULFING.cdlengulfing({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4104,9 +4856,16 @@ function handle_CDLENGULFING(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLENGULFING.cdlengulfing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlengulfing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLENGULFING.cdlengulfing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4115,7 +4874,7 @@ function handle_CDLENGULFING(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlengulfing(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlengulfing(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4137,6 +4896,7 @@ function handle_CDLEVENINGDOJISTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4161,6 +4921,12 @@ function handle_CDLEVENINGDOJISTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLEVENINGDOJISTAR.cdleveningdojistarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdleveningdojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLEVENINGDOJISTAR.cdleveningdojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4177,9 +4943,16 @@ function handle_CDLEVENINGDOJISTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLEVENINGDOJISTAR.cdleveningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdleveningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLEVENINGDOJISTAR.cdleveningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4188,7 +4961,7 @@ function handle_CDLEVENINGDOJISTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdleveningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdleveningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4210,6 +4983,7 @@ function handle_CDLEVENINGSTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4234,6 +5008,12 @@ function handle_CDLEVENINGSTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLEVENINGSTAR.cdleveningstarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdleveningstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLEVENINGSTAR.cdleveningstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4250,9 +5030,16 @@ function handle_CDLEVENINGSTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLEVENINGSTAR.cdleveningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdleveningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLEVENINGSTAR.cdleveningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4261,7 +5048,7 @@ function handle_CDLEVENINGSTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdleveningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdleveningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4282,6 +5069,7 @@ function handle_CDLGAPSIDESIDEWHITE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4306,6 +5094,12 @@ function handle_CDLGAPSIDESIDEWHITE(p: Params): string {
     try {
       if (timed) {
         rc = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhiteImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlgapsidesidewhite({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhite({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4322,9 +5116,16 @@ function handle_CDLGAPSIDESIDEWHITE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhite({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlgapsidesidewhite({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLGAPSIDESIDEWHITE.cdlgapsidesidewhite({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4333,7 +5134,7 @@ function handle_CDLGAPSIDESIDEWHITE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlgapsidesidewhite(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlgapsidesidewhite(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4354,6 +5155,7 @@ function handle_CDLGRAVESTONEDOJI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4378,6 +5180,12 @@ function handle_CDLGRAVESTONEDOJI(p: Params): string {
     try {
       if (timed) {
         rc = CDLGRAVESTONEDOJI.cdlgravestonedojiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlgravestonedoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLGRAVESTONEDOJI.cdlgravestonedoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4394,9 +5202,16 @@ function handle_CDLGRAVESTONEDOJI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLGRAVESTONEDOJI.cdlgravestonedoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlgravestonedoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLGRAVESTONEDOJI.cdlgravestonedoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4405,7 +5220,7 @@ function handle_CDLGRAVESTONEDOJI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlgravestonedoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlgravestonedoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4426,6 +5241,7 @@ function handle_CDLHAMMER(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4450,6 +5266,12 @@ function handle_CDLHAMMER(p: Params): string {
     try {
       if (timed) {
         rc = CDLHAMMER.cdlhammerImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhammer({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHAMMER.cdlhammer({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4466,9 +5288,16 @@ function handle_CDLHAMMER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHAMMER.cdlhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHAMMER.cdlhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4477,7 +5306,7 @@ function handle_CDLHAMMER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4498,6 +5327,7 @@ function handle_CDLHANGINGMAN(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4522,6 +5352,12 @@ function handle_CDLHANGINGMAN(p: Params): string {
     try {
       if (timed) {
         rc = CDLHANGINGMAN.cdlhangingmanImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhangingman({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHANGINGMAN.cdlhangingman({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4538,9 +5374,16 @@ function handle_CDLHANGINGMAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHANGINGMAN.cdlhangingman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhangingman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHANGINGMAN.cdlhangingman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4549,7 +5392,7 @@ function handle_CDLHANGINGMAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhangingman(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhangingman(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4570,6 +5413,7 @@ function handle_CDLHARAMI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4594,6 +5438,12 @@ function handle_CDLHARAMI(p: Params): string {
     try {
       if (timed) {
         rc = CDLHARAMI.cdlharamiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlharami({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHARAMI.cdlharami({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4610,9 +5460,16 @@ function handle_CDLHARAMI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHARAMI.cdlharami({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlharami({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHARAMI.cdlharami({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4621,7 +5478,7 @@ function handle_CDLHARAMI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlharami(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlharami(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4642,6 +5499,7 @@ function handle_CDLHARAMICROSS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4666,6 +5524,12 @@ function handle_CDLHARAMICROSS(p: Params): string {
     try {
       if (timed) {
         rc = CDLHARAMICROSS.cdlharamicrossImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlharamicross({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHARAMICROSS.cdlharamicross({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4682,9 +5546,16 @@ function handle_CDLHARAMICROSS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHARAMICROSS.cdlharamicross({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlharamicross({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHARAMICROSS.cdlharamicross({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4693,7 +5564,7 @@ function handle_CDLHARAMICROSS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlharamicross(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlharamicross(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4714,6 +5585,7 @@ function handle_CDLHIGHWAVE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4738,6 +5610,12 @@ function handle_CDLHIGHWAVE(p: Params): string {
     try {
       if (timed) {
         rc = CDLHIGHWAVE.cdlhighwaveImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhighwave({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHIGHWAVE.cdlhighwave({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4754,9 +5632,16 @@ function handle_CDLHIGHWAVE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHIGHWAVE.cdlhighwave({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhighwave({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHIGHWAVE.cdlhighwave({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4765,7 +5650,7 @@ function handle_CDLHIGHWAVE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhighwave(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhighwave(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4786,6 +5671,7 @@ function handle_CDLHIKKAKE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4810,6 +5696,12 @@ function handle_CDLHIKKAKE(p: Params): string {
     try {
       if (timed) {
         rc = CDLHIKKAKE.cdlhikkakeImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhikkake({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHIKKAKE.cdlhikkake({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4826,9 +5718,16 @@ function handle_CDLHIKKAKE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHIKKAKE.cdlhikkake({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhikkake({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHIKKAKE.cdlhikkake({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4837,7 +5736,7 @@ function handle_CDLHIKKAKE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhikkake(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhikkake(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4858,6 +5757,7 @@ function handle_CDLHIKKAKEMOD(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4882,6 +5782,12 @@ function handle_CDLHIKKAKEMOD(p: Params): string {
     try {
       if (timed) {
         rc = CDLHIKKAKEMOD.cdlhikkakemodImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhikkakemod({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHIKKAKEMOD.cdlhikkakemod({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4898,9 +5804,16 @@ function handle_CDLHIKKAKEMOD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHIKKAKEMOD.cdlhikkakemod({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhikkakemod({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHIKKAKEMOD.cdlhikkakemod({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4909,7 +5822,7 @@ function handle_CDLHIKKAKEMOD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhikkakemod(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhikkakemod(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -4930,6 +5843,7 @@ function handle_CDLHOMINGPIGEON(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -4954,6 +5868,12 @@ function handle_CDLHOMINGPIGEON(p: Params): string {
     try {
       if (timed) {
         rc = CDLHOMINGPIGEON.cdlhomingpigeonImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhomingpigeon({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLHOMINGPIGEON.cdlhomingpigeon({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -4970,9 +5890,16 @@ function handle_CDLHOMINGPIGEON(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLHOMINGPIGEON.cdlhomingpigeon({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlhomingpigeon({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLHOMINGPIGEON.cdlhomingpigeon({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -4981,7 +5908,7 @@ function handle_CDLHOMINGPIGEON(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlhomingpigeon(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlhomingpigeon(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5002,6 +5929,7 @@ function handle_CDLIDENTICAL3CROWS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5026,6 +5954,12 @@ function handle_CDLIDENTICAL3CROWS(p: Params): string {
     try {
       if (timed) {
         rc = CDLIDENTICAL3CROWS.cdlidentical3crowsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlidentical3crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLIDENTICAL3CROWS.cdlidentical3crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5042,9 +5976,16 @@ function handle_CDLIDENTICAL3CROWS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLIDENTICAL3CROWS.cdlidentical3crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlidentical3crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLIDENTICAL3CROWS.cdlidentical3crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5053,7 +5994,7 @@ function handle_CDLIDENTICAL3CROWS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlidentical3crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlidentical3crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5074,6 +6015,7 @@ function handle_CDLINNECK(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5098,6 +6040,12 @@ function handle_CDLINNECK(p: Params): string {
     try {
       if (timed) {
         rc = CDLINNECK.cdlinneckImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlinneck({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLINNECK.cdlinneck({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5114,9 +6062,16 @@ function handle_CDLINNECK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLINNECK.cdlinneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlinneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLINNECK.cdlinneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5125,7 +6080,7 @@ function handle_CDLINNECK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlinneck(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlinneck(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5146,6 +6101,7 @@ function handle_CDLINVERTEDHAMMER(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5170,6 +6126,12 @@ function handle_CDLINVERTEDHAMMER(p: Params): string {
     try {
       if (timed) {
         rc = CDLINVERTEDHAMMER.cdlinvertedhammerImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlinvertedhammer({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLINVERTEDHAMMER.cdlinvertedhammer({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5186,9 +6148,16 @@ function handle_CDLINVERTEDHAMMER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLINVERTEDHAMMER.cdlinvertedhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlinvertedhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLINVERTEDHAMMER.cdlinvertedhammer({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5197,7 +6166,7 @@ function handle_CDLINVERTEDHAMMER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlinvertedhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlinvertedhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5218,6 +6187,7 @@ function handle_CDLKICKING(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5242,6 +6212,12 @@ function handle_CDLKICKING(p: Params): string {
     try {
       if (timed) {
         rc = CDLKICKING.cdlkickingImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlkicking({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLKICKING.cdlkicking({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5258,9 +6234,16 @@ function handle_CDLKICKING(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLKICKING.cdlkicking({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlkicking({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLKICKING.cdlkicking({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5269,7 +6252,7 @@ function handle_CDLKICKING(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlkicking(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlkicking(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5290,6 +6273,7 @@ function handle_CDLKICKINGBYLENGTH(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5314,6 +6298,12 @@ function handle_CDLKICKINGBYLENGTH(p: Params): string {
     try {
       if (timed) {
         rc = CDLKICKINGBYLENGTH.cdlkickingbylengthImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlkickingbylength({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLKICKINGBYLENGTH.cdlkickingbylength({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5330,9 +6320,16 @@ function handle_CDLKICKINGBYLENGTH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLKICKINGBYLENGTH.cdlkickingbylength({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlkickingbylength({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLKICKINGBYLENGTH.cdlkickingbylength({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5341,7 +6338,7 @@ function handle_CDLKICKINGBYLENGTH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlkickingbylength(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlkickingbylength(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5362,6 +6359,7 @@ function handle_CDLLADDERBOTTOM(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5386,6 +6384,12 @@ function handle_CDLLADDERBOTTOM(p: Params): string {
     try {
       if (timed) {
         rc = CDLLADDERBOTTOM.cdlladderbottomImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlladderbottom({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLLADDERBOTTOM.cdlladderbottom({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5402,9 +6406,16 @@ function handle_CDLLADDERBOTTOM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLLADDERBOTTOM.cdlladderbottom({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlladderbottom({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLLADDERBOTTOM.cdlladderbottom({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5413,7 +6424,7 @@ function handle_CDLLADDERBOTTOM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlladderbottom(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlladderbottom(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5434,6 +6445,7 @@ function handle_CDLLONGLEGGEDDOJI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5458,6 +6470,12 @@ function handle_CDLLONGLEGGEDDOJI(p: Params): string {
     try {
       if (timed) {
         rc = CDLLONGLEGGEDDOJI.cdllongleggeddojiImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdllongleggeddoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLLONGLEGGEDDOJI.cdllongleggeddoji({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5474,9 +6492,16 @@ function handle_CDLLONGLEGGEDDOJI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLLONGLEGGEDDOJI.cdllongleggeddoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdllongleggeddoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLLONGLEGGEDDOJI.cdllongleggeddoji({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5485,7 +6510,7 @@ function handle_CDLLONGLEGGEDDOJI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdllongleggeddoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdllongleggeddoji(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5506,6 +6531,7 @@ function handle_CDLLONGLINE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5530,6 +6556,12 @@ function handle_CDLLONGLINE(p: Params): string {
     try {
       if (timed) {
         rc = CDLLONGLINE.cdllonglineImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdllongline({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLLONGLINE.cdllongline({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5546,9 +6578,16 @@ function handle_CDLLONGLINE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLLONGLINE.cdllongline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdllongline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLLONGLINE.cdllongline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5557,7 +6596,7 @@ function handle_CDLLONGLINE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdllongline(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdllongline(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5578,6 +6617,7 @@ function handle_CDLMARUBOZU(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5602,6 +6642,12 @@ function handle_CDLMARUBOZU(p: Params): string {
     try {
       if (timed) {
         rc = CDLMARUBOZU.cdlmarubozuImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmarubozu({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLMARUBOZU.cdlmarubozu({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5618,9 +6664,16 @@ function handle_CDLMARUBOZU(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLMARUBOZU.cdlmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLMARUBOZU.cdlmarubozu({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5629,7 +6682,7 @@ function handle_CDLMARUBOZU(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5650,6 +6703,7 @@ function handle_CDLMATCHINGLOW(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5674,6 +6728,12 @@ function handle_CDLMATCHINGLOW(p: Params): string {
     try {
       if (timed) {
         rc = CDLMATCHINGLOW.cdlmatchinglowImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmatchinglow({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLMATCHINGLOW.cdlmatchinglow({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5690,9 +6750,16 @@ function handle_CDLMATCHINGLOW(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLMATCHINGLOW.cdlmatchinglow({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmatchinglow({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLMATCHINGLOW.cdlmatchinglow({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5701,7 +6768,7 @@ function handle_CDLMATCHINGLOW(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlmatchinglow(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlmatchinglow(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5723,6 +6790,7 @@ function handle_CDLMATHOLD(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5747,6 +6815,12 @@ function handle_CDLMATHOLD(p: Params): string {
     try {
       if (timed) {
         rc = CDLMATHOLD.cdlmatholdImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmathold({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLMATHOLD.cdlmathold({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5763,9 +6837,16 @@ function handle_CDLMATHOLD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLMATHOLD.cdlmathold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmathold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLMATHOLD.cdlmathold({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5774,7 +6855,7 @@ function handle_CDLMATHOLD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlmathold(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdlmathold(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5796,6 +6877,7 @@ function handle_CDLMORNINGDOJISTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5820,6 +6902,12 @@ function handle_CDLMORNINGDOJISTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLMORNINGDOJISTAR.cdlmorningdojistarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmorningdojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLMORNINGDOJISTAR.cdlmorningdojistar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5836,9 +6924,16 @@ function handle_CDLMORNINGDOJISTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLMORNINGDOJISTAR.cdlmorningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmorningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLMORNINGDOJISTAR.cdlmorningdojistar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5847,7 +6942,7 @@ function handle_CDLMORNINGDOJISTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlmorningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdlmorningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5869,6 +6964,7 @@ function handle_CDLMORNINGSTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5893,6 +6989,12 @@ function handle_CDLMORNINGSTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLMORNINGSTAR.cdlmorningstarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmorningstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLMORNINGSTAR.cdlmorningstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5909,9 +7011,16 @@ function handle_CDLMORNINGSTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLMORNINGSTAR.cdlmorningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlmorningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLMORNINGSTAR.cdlmorningstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { penetration: optInPenetration, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5920,7 +7029,7 @@ function handle_CDLMORNINGSTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlmorningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
+  const rideFields = wasmEngine ? '' : rideCdlmorningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -5941,6 +7050,7 @@ function handle_CDLONNECK(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -5965,6 +7075,12 @@ function handle_CDLONNECK(p: Params): string {
     try {
       if (timed) {
         rc = CDLONNECK.cdlonneckImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlonneck({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLONNECK.cdlonneck({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -5981,9 +7097,16 @@ function handle_CDLONNECK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLONNECK.cdlonneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlonneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLONNECK.cdlonneck({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -5992,7 +7115,7 @@ function handle_CDLONNECK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlonneck(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlonneck(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6013,6 +7136,7 @@ function handle_CDLPIERCING(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6037,6 +7161,12 @@ function handle_CDLPIERCING(p: Params): string {
     try {
       if (timed) {
         rc = CDLPIERCING.cdlpiercingImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlpiercing({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLPIERCING.cdlpiercing({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6053,9 +7183,16 @@ function handle_CDLPIERCING(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLPIERCING.cdlpiercing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlpiercing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLPIERCING.cdlpiercing({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6064,7 +7201,7 @@ function handle_CDLPIERCING(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlpiercing(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlpiercing(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6085,6 +7222,7 @@ function handle_CDLRICKSHAWMAN(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6109,6 +7247,12 @@ function handle_CDLRICKSHAWMAN(p: Params): string {
     try {
       if (timed) {
         rc = CDLRICKSHAWMAN.cdlrickshawmanImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlrickshawman({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLRICKSHAWMAN.cdlrickshawman({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6125,9 +7269,16 @@ function handle_CDLRICKSHAWMAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLRICKSHAWMAN.cdlrickshawman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlrickshawman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLRICKSHAWMAN.cdlrickshawman({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6136,7 +7287,7 @@ function handle_CDLRICKSHAWMAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlrickshawman(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlrickshawman(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6157,6 +7308,7 @@ function handle_CDLRISEFALL3METHODS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6181,6 +7333,12 @@ function handle_CDLRISEFALL3METHODS(p: Params): string {
     try {
       if (timed) {
         rc = CDLRISEFALL3METHODS.cdlrisefall3methodsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlrisefall3methods({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLRISEFALL3METHODS.cdlrisefall3methods({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6197,9 +7355,16 @@ function handle_CDLRISEFALL3METHODS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLRISEFALL3METHODS.cdlrisefall3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlrisefall3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLRISEFALL3METHODS.cdlrisefall3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6208,7 +7373,7 @@ function handle_CDLRISEFALL3METHODS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlrisefall3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlrisefall3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6229,6 +7394,7 @@ function handle_CDLSEPARATINGLINES(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6253,6 +7419,12 @@ function handle_CDLSEPARATINGLINES(p: Params): string {
     try {
       if (timed) {
         rc = CDLSEPARATINGLINES.cdlseparatinglinesImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlseparatinglines({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSEPARATINGLINES.cdlseparatinglines({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6269,9 +7441,16 @@ function handle_CDLSEPARATINGLINES(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSEPARATINGLINES.cdlseparatinglines({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlseparatinglines({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSEPARATINGLINES.cdlseparatinglines({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6280,7 +7459,7 @@ function handle_CDLSEPARATINGLINES(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlseparatinglines(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlseparatinglines(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6301,6 +7480,7 @@ function handle_CDLSHOOTINGSTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6325,6 +7505,12 @@ function handle_CDLSHOOTINGSTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLSHOOTINGSTAR.cdlshootingstarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlshootingstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSHOOTINGSTAR.cdlshootingstar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6341,9 +7527,16 @@ function handle_CDLSHOOTINGSTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSHOOTINGSTAR.cdlshootingstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlshootingstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSHOOTINGSTAR.cdlshootingstar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6352,7 +7545,7 @@ function handle_CDLSHOOTINGSTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlshootingstar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlshootingstar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6373,6 +7566,7 @@ function handle_CDLSHORTLINE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6397,6 +7591,12 @@ function handle_CDLSHORTLINE(p: Params): string {
     try {
       if (timed) {
         rc = CDLSHORTLINE.cdlshortlineImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlshortline({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSHORTLINE.cdlshortline({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6413,9 +7613,16 @@ function handle_CDLSHORTLINE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSHORTLINE.cdlshortline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlshortline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSHORTLINE.cdlshortline({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6424,7 +7631,7 @@ function handle_CDLSHORTLINE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlshortline(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlshortline(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6445,6 +7652,7 @@ function handle_CDLSPINNINGTOP(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6469,6 +7677,12 @@ function handle_CDLSPINNINGTOP(p: Params): string {
     try {
       if (timed) {
         rc = CDLSPINNINGTOP.cdlspinningtopImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlspinningtop({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSPINNINGTOP.cdlspinningtop({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6485,9 +7699,16 @@ function handle_CDLSPINNINGTOP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSPINNINGTOP.cdlspinningtop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlspinningtop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSPINNINGTOP.cdlspinningtop({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6496,7 +7717,7 @@ function handle_CDLSPINNINGTOP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlspinningtop(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlspinningtop(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6517,6 +7738,7 @@ function handle_CDLSTALLEDPATTERN(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6541,6 +7763,12 @@ function handle_CDLSTALLEDPATTERN(p: Params): string {
     try {
       if (timed) {
         rc = CDLSTALLEDPATTERN.cdlstalledpatternImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlstalledpattern({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSTALLEDPATTERN.cdlstalledpattern({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6557,9 +7785,16 @@ function handle_CDLSTALLEDPATTERN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSTALLEDPATTERN.cdlstalledpattern({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlstalledpattern({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSTALLEDPATTERN.cdlstalledpattern({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6568,7 +7803,7 @@ function handle_CDLSTALLEDPATTERN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlstalledpattern(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlstalledpattern(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6589,6 +7824,7 @@ function handle_CDLSTICKSANDWICH(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6613,6 +7849,12 @@ function handle_CDLSTICKSANDWICH(p: Params): string {
     try {
       if (timed) {
         rc = CDLSTICKSANDWICH.cdlsticksandwichImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlsticksandwich({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLSTICKSANDWICH.cdlsticksandwich({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6629,9 +7871,16 @@ function handle_CDLSTICKSANDWICH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLSTICKSANDWICH.cdlsticksandwich({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlsticksandwich({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLSTICKSANDWICH.cdlsticksandwich({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6640,7 +7889,7 @@ function handle_CDLSTICKSANDWICH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlsticksandwich(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlsticksandwich(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6661,6 +7910,7 @@ function handle_CDLTAKURI(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6685,6 +7935,12 @@ function handle_CDLTAKURI(p: Params): string {
     try {
       if (timed) {
         rc = CDLTAKURI.cdltakuriImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltakuri({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLTAKURI.cdltakuri({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6701,9 +7957,16 @@ function handle_CDLTAKURI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLTAKURI.cdltakuri({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltakuri({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLTAKURI.cdltakuri({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6712,7 +7975,7 @@ function handle_CDLTAKURI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdltakuri(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdltakuri(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6733,6 +7996,7 @@ function handle_CDLTASUKIGAP(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6757,6 +8021,12 @@ function handle_CDLTASUKIGAP(p: Params): string {
     try {
       if (timed) {
         rc = CDLTASUKIGAP.cdltasukigapImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltasukigap({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLTASUKIGAP.cdltasukigap({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6773,9 +8043,16 @@ function handle_CDLTASUKIGAP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLTASUKIGAP.cdltasukigap({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltasukigap({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLTASUKIGAP.cdltasukigap({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6784,7 +8061,7 @@ function handle_CDLTASUKIGAP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdltasukigap(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdltasukigap(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6805,6 +8082,7 @@ function handle_CDLTHRUSTING(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6829,6 +8107,12 @@ function handle_CDLTHRUSTING(p: Params): string {
     try {
       if (timed) {
         rc = CDLTHRUSTING.cdlthrustingImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlthrusting({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLTHRUSTING.cdlthrusting({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6845,9 +8129,16 @@ function handle_CDLTHRUSTING(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLTHRUSTING.cdlthrusting({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlthrusting({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLTHRUSTING.cdlthrusting({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6856,7 +8147,7 @@ function handle_CDLTHRUSTING(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlthrusting(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlthrusting(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6877,6 +8168,7 @@ function handle_CDLTRISTAR(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6901,6 +8193,12 @@ function handle_CDLTRISTAR(p: Params): string {
     try {
       if (timed) {
         rc = CDLTRISTAR.cdltristarImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltristar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLTRISTAR.cdltristar({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6917,9 +8215,16 @@ function handle_CDLTRISTAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLTRISTAR.cdltristar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdltristar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLTRISTAR.cdltristar({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -6928,7 +8233,7 @@ function handle_CDLTRISTAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdltristar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdltristar(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -6949,6 +8254,7 @@ function handle_CDLUNIQUE3RIVER(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -6973,6 +8279,12 @@ function handle_CDLUNIQUE3RIVER(p: Params): string {
     try {
       if (timed) {
         rc = CDLUNIQUE3RIVER.cdlunique3riverImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlunique3river({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLUNIQUE3RIVER.cdlunique3river({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -6989,9 +8301,16 @@ function handle_CDLUNIQUE3RIVER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLUNIQUE3RIVER.cdlunique3river({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlunique3river({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLUNIQUE3RIVER.cdlunique3river({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7000,7 +8319,7 @@ function handle_CDLUNIQUE3RIVER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlunique3river(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlunique3river(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7021,6 +8340,7 @@ function handle_CDLUPSIDEGAP2CROWS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7045,6 +8365,12 @@ function handle_CDLUPSIDEGAP2CROWS(p: Params): string {
     try {
       if (timed) {
         rc = CDLUPSIDEGAP2CROWS.cdlupsidegap2crowsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlupsidegap2crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLUPSIDEGAP2CROWS.cdlupsidegap2crows({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -7061,9 +8387,16 @@ function handle_CDLUPSIDEGAP2CROWS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLUPSIDEGAP2CROWS.cdlupsidegap2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlupsidegap2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLUPSIDEGAP2CROWS.cdlupsidegap2crows({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7072,7 +8405,7 @@ function handle_CDLUPSIDEGAP2CROWS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlupsidegap2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlupsidegap2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7093,6 +8426,7 @@ function handle_CDLXSIDEGAP3METHODS(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7117,6 +8451,12 @@ function handle_CDLXSIDEGAP3METHODS(p: Params): string {
     try {
       if (timed) {
         rc = CDLXSIDEGAP3METHODS.cdlxsidegap3methodsImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlxsidegap3methods({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CDLXSIDEGAP3METHODS.cdlxsidegap3methods({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -7133,9 +8473,16 @@ function handle_CDLXSIDEGAP3METHODS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CDLXSIDEGAP3METHODS.cdlxsidegap3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.cdlxsidegap3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CDLXSIDEGAP3METHODS.cdlxsidegap3methods({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7144,7 +8491,7 @@ function handle_CDLXSIDEGAP3METHODS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCdlxsidegap3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideCdlxsidegap3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7166,6 +8513,7 @@ function handle_CE(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7190,6 +8538,13 @@ function handle_CE(p: Params): string {
     try {
       if (timed) {
         rc = CE.ceImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ce({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outLong.length;
+        out0.set(r.outLong);
+        out1.set(r.outShort);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CE.ce({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outLong: out0, outShort: out1 });
         outBegIdx.value = r.begIdx;
@@ -7206,9 +8561,17 @@ function handle_CE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CE.ce({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outLong: out0, outShort: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outLong.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ce({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outLong.length;
+        out0.set(r.outLong);
+        out1.set(r.outShort);
+      } else {
+        const r = CE.ce({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outLong: out0, outShort: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outLong.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7217,7 +8580,7 @@ function handle_CE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCe(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier);
+  const rideFields = wasmEngine ? '' : rideCe(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7232,6 +8595,7 @@ function handle_CEIL(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7256,6 +8620,12 @@ function handle_CEIL(p: Params): string {
     try {
       if (timed) {
         rc = CEIL.ceilImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.ceil(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CEIL.ceil(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7272,9 +8642,16 @@ function handle_CEIL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CEIL.ceil(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.ceil(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CEIL.ceil(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7283,7 +8660,7 @@ function handle_CEIL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCeil(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideCeil(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7299,6 +8676,7 @@ function handle_CG(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7323,6 +8701,12 @@ function handle_CG(p: Params): string {
     try {
       if (timed) {
         rc = CG.cgImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cg(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CG.cg(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7339,9 +8723,16 @@ function handle_CG(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CG.cg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CG.cg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7350,7 +8741,7 @@ function handle_CG(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCg(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCg(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7370,6 +8761,7 @@ function handle_CHOP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7394,6 +8786,12 @@ function handle_CHOP(p: Params): string {
     try {
       if (timed) {
         rc = CHOP.chopImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.chop({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CHOP.chop({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7410,9 +8808,16 @@ function handle_CHOP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CHOP.chop({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.chop({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CHOP.chop({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7421,7 +8826,7 @@ function handle_CHOP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideChop(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideChop(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7441,6 +8846,7 @@ function handle_CHOPTR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7465,6 +8871,12 @@ function handle_CHOPTR(p: Params): string {
     try {
       if (timed) {
         rc = CHOPTR.choptrImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.choptr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CHOPTR.choptr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7481,9 +8893,16 @@ function handle_CHOPTR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CHOPTR.choptr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.choptr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CHOPTR.choptr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7492,7 +8911,7 @@ function handle_CHOPTR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideChoptr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideChoptr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7515,6 +8934,7 @@ function handle_CKSP(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7539,6 +8959,13 @@ function handle_CKSP(p: Params): string {
     try {
       if (timed) {
         rc = CKSP.ckspImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.cksp({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHighStop.length;
+        out0.set(r.outHighStop);
+        out1.set(r.outLowStop);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CKSP.cksp({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, startIdx, endIdx, core, outHighStop: out0, outLowStop: out1 });
         outBegIdx.value = r.begIdx;
@@ -7555,9 +8982,17 @@ function handle_CKSP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CKSP.cksp({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, startIdx, endIdx, core, outHighStop: out0, outLowStop: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outHighStop.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.cksp({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHighStop.length;
+        out0.set(r.outHighStop);
+        out1.set(r.outLowStop);
+      } else {
+        const r = CKSP.cksp({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, stopPeriod: optInStopPeriod, startIdx, endIdx, core, outHighStop: out0, outLowStop: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHighStop.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7566,7 +9001,7 @@ function handle_CKSP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCksp(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod);
+  const rideFields = wasmEngine ? '' : rideCksp(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7588,6 +9023,7 @@ function handle_CMF(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7612,6 +9048,12 @@ function handle_CMF(p: Params): string {
     try {
       if (timed) {
         rc = CMF.cmfImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.cmf({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CMF.cmf({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7628,9 +9070,16 @@ function handle_CMF(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CMF.cmf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.cmf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CMF.cmf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7639,7 +9088,7 @@ function handle_CMF(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCmf(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCmf(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7656,6 +9105,7 @@ function handle_CMO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7680,6 +9130,12 @@ function handle_CMO(p: Params): string {
     try {
       if (timed) {
         rc = CMO.cmoImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cmo(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CMO.cmo(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7696,9 +9152,16 @@ function handle_CMO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CMO.cmo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cmo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CMO.cmo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7707,7 +9170,7 @@ function handle_CMO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCmo(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCmo(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7723,6 +9186,7 @@ function handle_CMOU(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7747,6 +9211,12 @@ function handle_CMOU(p: Params): string {
     try {
       if (timed) {
         rc = CMOU.cmouImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cmou(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CMOU.cmou(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7763,9 +9233,16 @@ function handle_CMOU(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CMOU.cmou(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cmou(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CMOU.cmou(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7774,7 +9251,7 @@ function handle_CMOU(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCmou(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCmou(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7792,6 +9269,7 @@ function handle_COPPOCK(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7816,6 +9294,12 @@ function handle_COPPOCK(p: Params): string {
     try {
       if (timed) {
         rc = COPPOCK.coppockImpl(core, startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.coppock(inReal, { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = COPPOCK.coppock(inReal, { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7832,9 +9316,16 @@ function handle_COPPOCK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = COPPOCK.coppock(Float32Array.from(inReal), { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.coppock(Float32Array.from(inReal), { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = COPPOCK.coppock(Float32Array.from(inReal), { wmaPeriod: optInWMAPeriod, roc1Period: optInROC1Period, roc2Period: optInROC2Period, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7843,7 +9334,7 @@ function handle_COPPOCK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCoppock(core, p, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period);
+  const rideFields = wasmEngine ? '' : rideCoppock(core, p, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7861,6 +9352,7 @@ function handle_CORREL(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7885,6 +9377,12 @@ function handle_CORREL(p: Params): string {
     try {
       if (timed) {
         rc = CORREL.correlImpl(core, startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.correl(inReal0, inReal1, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CORREL.correl(inReal0, inReal1, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7901,9 +9399,16 @@ function handle_CORREL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CORREL.correl(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.correl(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CORREL.correl(Float32Array.from(inReal0), Float32Array.from(inReal1), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7912,7 +9417,7 @@ function handle_CORREL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCorrel(core, p, endIdx, inReal0, inReal1, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCorrel(core, p, endIdx, inReal0, inReal1, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7927,6 +9432,7 @@ function handle_COS(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -7951,6 +9457,12 @@ function handle_COS(p: Params): string {
     try {
       if (timed) {
         rc = COS.cosImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.cos(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = COS.cos(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -7967,9 +9479,16 @@ function handle_COS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = COS.cos(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.cos(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = COS.cos(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -7978,7 +9497,7 @@ function handle_COS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCos(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideCos(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -7993,6 +9512,7 @@ function handle_COSH(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8017,6 +9537,12 @@ function handle_COSH(p: Params): string {
     try {
       if (timed) {
         rc = COSH.coshImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.cosh(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = COSH.cosh(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8033,9 +9559,16 @@ function handle_COSH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = COSH.cosh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.cosh(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = COSH.cosh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8044,7 +9577,7 @@ function handle_COSH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCosh(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideCosh(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8062,6 +9595,7 @@ function handle_CRSI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8086,6 +9620,12 @@ function handle_CRSI(p: Params): string {
     try {
       if (timed) {
         rc = CRSI.crsiImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.crsi(inReal, { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CRSI.crsi(inReal, { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8102,9 +9642,16 @@ function handle_CRSI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CRSI.crsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.crsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CRSI.crsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, streakPeriod: optInStreakPeriod, rankPeriod: optInRankPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8113,7 +9660,7 @@ function handle_CRSI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCrsi(core, p, endIdx, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod);
+  const rideFields = wasmEngine ? '' : rideCrsi(core, p, endIdx, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8129,6 +9676,7 @@ function handle_CTI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8153,6 +9701,12 @@ function handle_CTI(p: Params): string {
     try {
       if (timed) {
         rc = CTI.ctiImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cti(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CTI.cti(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8169,9 +9723,16 @@ function handle_CTI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CTI.cti(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cti(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CTI.cti(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8180,7 +9741,7 @@ function handle_CTI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCti(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideCti(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8195,6 +9756,7 @@ function handle_CUMSUM(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8219,6 +9781,12 @@ function handle_CUMSUM(p: Params): string {
     try {
       if (timed) {
         rc = CUMSUM.cumsumImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cumsum(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CUMSUM.cumsum(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8235,9 +9803,16 @@ function handle_CUMSUM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CUMSUM.cumsum(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.cumsum(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CUMSUM.cumsum(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8246,7 +9821,7 @@ function handle_CUMSUM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCumsum(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideCumsum(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8265,6 +9840,7 @@ function handle_CVI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8289,6 +9865,12 @@ function handle_CVI(p: Params): string {
     try {
       if (timed) {
         rc = CVI.cviImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.cvi({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = CVI.cvi({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8305,9 +9887,16 @@ function handle_CVI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = CVI.cvi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.cvi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = CVI.cvi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, rocPeriod: optInROCPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8316,7 +9905,7 @@ function handle_CVI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideCvi(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod);
+  const rideFields = wasmEngine ? '' : rideCvi(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8332,6 +9921,7 @@ function handle_DEMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8356,6 +9946,12 @@ function handle_DEMA(p: Params): string {
     try {
       if (timed) {
         rc = DEMA.demaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DEMA.dema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8372,9 +9968,16 @@ function handle_DEMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DEMA.dema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = DEMA.dema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8383,7 +9986,7 @@ function handle_DEMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDema(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideDema(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8400,6 +10003,7 @@ function handle_DIV(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8424,6 +10028,12 @@ function handle_DIV(p: Params): string {
     try {
       if (timed) {
         rc = DIV.divImpl(core, startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.div(inReal0, inReal1, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DIV.div(inReal0, inReal1, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8440,9 +10050,16 @@ function handle_DIV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DIV.div(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.div(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = DIV.div(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8451,7 +10068,7 @@ function handle_DIV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDiv(core, p, endIdx, inReal0, inReal1);
+  const rideFields = wasmEngine ? '' : rideDiv(core, p, endIdx, inReal0, inReal1);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8471,6 +10088,7 @@ function handle_DONCHIAN(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8495,6 +10113,14 @@ function handle_DONCHIAN(p: Params): string {
     try {
       if (timed) {
         rc = DONCHIAN.donchianImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.donchian({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DONCHIAN.donchian({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
         outBegIdx.value = r.begIdx;
@@ -8511,9 +10137,18 @@ function handle_DONCHIAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DONCHIAN.donchian({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outUpperBand.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.donchian({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+      } else {
+        const r = DONCHIAN.donchian({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8522,7 +10157,7 @@ function handle_DONCHIAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDonchian(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideDonchian(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8541,6 +10176,7 @@ function handle_DOSC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8565,6 +10201,12 @@ function handle_DOSC(p: Params): string {
     try {
       if (timed) {
         rc = DOSC.doscImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dosc(inReal, { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DOSC.dosc(inReal, { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8581,9 +10223,16 @@ function handle_DOSC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DOSC.dosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = DOSC.dosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8592,7 +10241,7 @@ function handle_DOSC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDosc(core, p, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideDosc(core, p, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8608,6 +10257,7 @@ function handle_DPO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8632,6 +10282,12 @@ function handle_DPO(p: Params): string {
     try {
       if (timed) {
         rc = DPO.dpoImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dpo(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DPO.dpo(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8648,9 +10304,16 @@ function handle_DPO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DPO.dpo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.dpo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = DPO.dpo(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8659,7 +10322,7 @@ function handle_DPO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDpo(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideDpo(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8680,6 +10343,7 @@ function handle_DX(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8704,6 +10368,12 @@ function handle_DX(p: Params): string {
     try {
       if (timed) {
         rc = DX.dxImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.dx({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = DX.dx({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8720,9 +10390,16 @@ function handle_DX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = DX.dx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.dx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = DX.dx({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8731,7 +10408,7 @@ function handle_DX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideDx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideDx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8749,6 +10426,7 @@ function handle_EFI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8773,6 +10451,12 @@ function handle_EFI(p: Params): string {
     try {
       if (timed) {
         rc = EFI.efiImpl(core, startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.efi({ close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = EFI.efi({ close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8789,9 +10473,16 @@ function handle_EFI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = EFI.efi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.efi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = EFI.efi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8800,7 +10491,7 @@ function handle_EFI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideEfi(core, p, endIdx, inClose, inVolume, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideEfi(core, p, endIdx, inClose, inVolume, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8817,6 +10508,7 @@ function handle_EMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8841,6 +10533,12 @@ function handle_EMA(p: Params): string {
     try {
       if (timed) {
         rc = EMA.emaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.ema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = EMA.ema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8857,9 +10555,16 @@ function handle_EMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = EMA.ema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.ema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = EMA.ema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8868,7 +10573,7 @@ function handle_EMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideEma(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideEma(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8889,6 +10594,7 @@ function handle_EMV(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8913,6 +10619,12 @@ function handle_EMV(p: Params): string {
     try {
       if (timed) {
         rc = EMV.emvImpl(core, startIdx, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.emv({ high: inHigh, low: inLow, volume: inVolume }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = EMV.emv({ high: inHigh, low: inLow, volume: inVolume }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8929,9 +10641,16 @@ function handle_EMV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = EMV.emv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.emv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = EMV.emv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, volumeDivisor: optInVolumeDivisor, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -8940,7 +10659,7 @@ function handle_EMV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideEmv(core, p, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor);
+  const rideFields = wasmEngine ? '' : rideEmv(core, p, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -8956,6 +10675,7 @@ function handle_ER(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -8980,6 +10700,12 @@ function handle_ER(p: Params): string {
     try {
       if (timed) {
         rc = ER.erImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.er(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ER.er(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -8996,9 +10722,16 @@ function handle_ER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ER.er(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.er(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ER.er(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9007,7 +10740,7 @@ function handle_ER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideEr(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideEr(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9028,6 +10761,7 @@ function handle_ERI(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9052,6 +10786,13 @@ function handle_ERI(p: Params): string {
     try {
       if (timed) {
         rc = ERI.eriImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.eri({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outBullPower.length;
+        out0.set(r.outBullPower);
+        out1.set(r.outBearPower);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ERI.eri({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outBullPower: out0, outBearPower: out1 });
         outBegIdx.value = r.begIdx;
@@ -9068,9 +10809,17 @@ function handle_ERI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ERI.eri({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outBullPower: out0, outBearPower: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outBullPower.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.eri({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outBullPower.length;
+        out0.set(r.outBullPower);
+        out1.set(r.outBearPower);
+      } else {
+        const r = ERI.eri({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outBullPower: out0, outBearPower: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outBullPower.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9079,7 +10828,7 @@ function handle_ERI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideEri(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideEri(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9094,6 +10843,7 @@ function handle_EXP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9118,6 +10868,12 @@ function handle_EXP(p: Params): string {
     try {
       if (timed) {
         rc = EXP.expImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.exp(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = EXP.exp(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9134,9 +10890,16 @@ function handle_EXP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = EXP.exp(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.exp(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = EXP.exp(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9145,7 +10908,7 @@ function handle_EXP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideExp(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideExp(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9165,6 +10928,7 @@ function handle_FISHER(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9189,6 +10953,13 @@ function handle_FISHER(p: Params): string {
     try {
       if (timed) {
         rc = FISHER.fisherImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length, (c) => ENGINE.fisher({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFisher.length;
+        out0.set(r.outFisher);
+        out1.set(r.outTrigger);
+        rc = RetCode.SUCCESS;
       } else {
         const r = FISHER.fisher({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outFisher: out0, outTrigger: out1 });
         outBegIdx.value = r.begIdx;
@@ -9205,9 +10976,17 @@ function handle_FISHER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = FISHER.fisher({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outFisher: out0, outTrigger: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outFisher.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length, (c) => ENGINE.fisher({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFisher.length;
+        out0.set(r.outFisher);
+        out1.set(r.outTrigger);
+      } else {
+        const r = FISHER.fisher({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outFisher: out0, outTrigger: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFisher.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9216,7 +10995,7 @@ function handle_FISHER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideFisher(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideFisher(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9231,6 +11010,7 @@ function handle_FLOOR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9255,6 +11035,12 @@ function handle_FLOOR(p: Params): string {
     try {
       if (timed) {
         rc = FLOOR.floorImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.floor(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = FLOOR.floor(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9271,9 +11057,16 @@ function handle_FLOOR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = FLOOR.floor(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.floor(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = FLOOR.floor(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9282,7 +11075,7 @@ function handle_FLOOR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideFloor(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideFloor(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9298,6 +11091,7 @@ function handle_FOSC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9322,6 +11116,12 @@ function handle_FOSC(p: Params): string {
     try {
       if (timed) {
         rc = FOSC.foscImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.fosc(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = FOSC.fosc(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9338,9 +11138,16 @@ function handle_FOSC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = FOSC.fosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.fosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = FOSC.fosc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9349,7 +11156,7 @@ function handle_FOSC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideFosc(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideFosc(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9369,6 +11176,7 @@ function handle_FRACTAL(p: Params): string {
   const out1 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9393,6 +11201,13 @@ function handle_FRACTAL(p: Params): string {
     try {
       if (timed) {
         rc = FRACTAL.fractalImpl(core, startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.fractal({ high: inHigh, low: inLow }, { leftBars: optInLeftBars, rightBars: optInRightBars, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSwingHigh.length;
+        out0.set(r.outSwingHigh);
+        out1.set(r.outSwingLow);
+        rc = RetCode.SUCCESS;
       } else {
         const r = FRACTAL.fractal({ high: inHigh, low: inLow }, { leftBars: optInLeftBars, rightBars: optInRightBars, startIdx, endIdx, core, outSwingHigh: out0, outSwingLow: out1 });
         outBegIdx.value = r.begIdx;
@@ -9409,9 +11224,17 @@ function handle_FRACTAL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = FRACTAL.fractal({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { leftBars: optInLeftBars, rightBars: optInRightBars, startIdx, endIdx, core, outSwingHigh: out0, outSwingLow: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outSwingHigh.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.fractal({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { leftBars: optInLeftBars, rightBars: optInRightBars, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSwingHigh.length;
+        out0.set(r.outSwingHigh);
+        out1.set(r.outSwingLow);
+      } else {
+        const r = FRACTAL.fractal({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { leftBars: optInLeftBars, rightBars: optInRightBars, startIdx, endIdx, core, outSwingHigh: out0, outSwingLow: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSwingHigh.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9420,7 +11243,7 @@ function handle_FRACTAL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideFractal(core, p, endIdx, inHigh, inLow, optInLeftBars, optInRightBars);
+  const rideFields = wasmEngine ? '' : rideFractal(core, p, endIdx, inHigh, inLow, optInLeftBars, optInRightBars);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger', 'outInteger1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9439,6 +11262,7 @@ function handle_FRAMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9463,6 +11287,12 @@ function handle_FRAMA(p: Params): string {
     try {
       if (timed) {
         rc = FRAMA.framaImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length, (c) => ENGINE.frama({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = FRAMA.frama({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9479,9 +11309,16 @@ function handle_FRAMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = FRAMA.frama({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length, (c) => ENGINE.frama({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = FRAMA.frama({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9490,7 +11327,7 @@ function handle_FRAMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideFrama(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideFrama(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9514,6 +11351,7 @@ function handle_GATOR(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9538,6 +11376,13 @@ function handle_GATOR(p: Params): string {
     try {
       if (timed) {
         rc = GATOR.gatorImpl(core, startIdx, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.gator({ high: inHigh, low: inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpper.length;
+        out0.set(r.outUpper);
+        out1.set(r.outLower);
+        rc = RetCode.SUCCESS;
       } else {
         const r = GATOR.gator({ high: inHigh, low: inLow }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outUpper: out0, outLower: out1 });
         outBegIdx.value = r.begIdx;
@@ -9554,9 +11399,17 @@ function handle_GATOR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = GATOR.gator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outUpper: out0, outLower: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outUpper.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.gator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpper.length;
+        out0.set(r.outUpper);
+        out1.set(r.outLower);
+      } else {
+        const r = GATOR.gator({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { jawPeriod: optInJawPeriod, jawShift: optInJawShift, teethPeriod: optInTeethPeriod, teethShift: optInTeethShift, lipsPeriod: optInLipsPeriod, lipsShift: optInLipsShift, startIdx, endIdx, core, outUpper: out0, outLower: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpper.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9565,7 +11418,7 @@ function handle_GATOR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideGator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
+  const rideFields = wasmEngine ? '' : rideGator(core, p, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9590,6 +11443,7 @@ function handle_HA(p: Params): string {
   const out3 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9614,6 +11468,15 @@ function handle_HA(p: Params): string {
     try {
       if (timed) {
         rc = HA.haImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, out0, out1, out2, out3);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.ha({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHaOpen.length;
+        out0.set(r.outHaOpen);
+        out1.set(r.outHaHigh);
+        out2.set(r.outHaLow);
+        out3.set(r.outHaClose);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HA.ha({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outHaOpen: out0, outHaHigh: out1, outHaLow: out2, outHaClose: out3 });
         outBegIdx.value = r.begIdx;
@@ -9630,9 +11493,19 @@ function handle_HA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HA.ha({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outHaOpen: out0, outHaHigh: out1, outHaLow: out2, outHaClose: out3 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outHaOpen.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.ha({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHaOpen.length;
+        out0.set(r.outHaOpen);
+        out1.set(r.outHaHigh);
+        out2.set(r.outHaLow);
+        out3.set(r.outHaClose);
+      } else {
+        const r = HA.ha({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outHaOpen: out0, outHaHigh: out1, outHaLow: out2, outHaClose: out3 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outHaOpen.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9641,7 +11514,7 @@ function handle_HA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHa(core, p, endIdx, inOpen, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideHa(core, p, endIdx, inOpen, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2', 'outReal3'], [out0, out1, out2, out3], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9657,6 +11530,7 @@ function handle_HMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9681,6 +11555,12 @@ function handle_HMA(p: Params): string {
     try {
       if (timed) {
         rc = HMA.hmaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.hma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HMA.hma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9697,9 +11577,16 @@ function handle_HMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HMA.hma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.hma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = HMA.hma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9708,7 +11595,7 @@ function handle_HMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHma(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideHma(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9724,6 +11611,7 @@ function handle_HT_DCPERIOD(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9748,6 +11636,12 @@ function handle_HT_DCPERIOD(p: Params): string {
     try {
       if (timed) {
         rc = HT_DCPERIOD.htDcperiodImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htDcperiod(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_DCPERIOD.htDcperiod(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9764,9 +11658,16 @@ function handle_HT_DCPERIOD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_DCPERIOD.htDcperiod(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htDcperiod(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = HT_DCPERIOD.htDcperiod(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9775,7 +11676,7 @@ function handle_HT_DCPERIOD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtDcperiod(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtDcperiod(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9791,6 +11692,7 @@ function handle_HT_DCPHASE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9815,6 +11717,12 @@ function handle_HT_DCPHASE(p: Params): string {
     try {
       if (timed) {
         rc = HT_DCPHASE.htDcphaseImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htDcphase(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_DCPHASE.htDcphase(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -9831,9 +11739,16 @@ function handle_HT_DCPHASE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_DCPHASE.htDcphase(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htDcphase(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = HT_DCPHASE.htDcphase(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9842,7 +11757,7 @@ function handle_HT_DCPHASE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtDcphase(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtDcphase(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9859,6 +11774,7 @@ function handle_HT_PHASOR(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9883,6 +11799,13 @@ function handle_HT_PHASOR(p: Params): string {
     try {
       if (timed) {
         rc = HT_PHASOR.htPhasorImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htPhasor(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outInPhase.length;
+        out0.set(r.outInPhase);
+        out1.set(r.outQuadrature);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_PHASOR.htPhasor(inReal, { startIdx, endIdx, core, outInPhase: out0, outQuadrature: out1 });
         outBegIdx.value = r.begIdx;
@@ -9899,9 +11822,17 @@ function handle_HT_PHASOR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_PHASOR.htPhasor(Float32Array.from(inReal), { startIdx, endIdx, core, outInPhase: out0, outQuadrature: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outInPhase.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htPhasor(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outInPhase.length;
+        out0.set(r.outInPhase);
+        out1.set(r.outQuadrature);
+      } else {
+        const r = HT_PHASOR.htPhasor(Float32Array.from(inReal), { startIdx, endIdx, core, outInPhase: out0, outQuadrature: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outInPhase.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9910,7 +11841,7 @@ function handle_HT_PHASOR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtPhasor(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtPhasor(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9927,6 +11858,7 @@ function handle_HT_SINE(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -9951,6 +11883,13 @@ function handle_HT_SINE(p: Params): string {
     try {
       if (timed) {
         rc = HT_SINE.htSineImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htSine(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSine.length;
+        out0.set(r.outSine);
+        out1.set(r.outLeadSine);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_SINE.htSine(inReal, { startIdx, endIdx, core, outSine: out0, outLeadSine: out1 });
         outBegIdx.value = r.begIdx;
@@ -9967,9 +11906,17 @@ function handle_HT_SINE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_SINE.htSine(Float32Array.from(inReal), { startIdx, endIdx, core, outSine: out0, outLeadSine: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outSine.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htSine(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSine.length;
+        out0.set(r.outSine);
+        out1.set(r.outLeadSine);
+      } else {
+        const r = HT_SINE.htSine(Float32Array.from(inReal), { startIdx, endIdx, core, outSine: out0, outLeadSine: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSine.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -9978,7 +11925,7 @@ function handle_HT_SINE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtSine(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtSine(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -9994,6 +11941,7 @@ function handle_HT_TRENDLINE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10018,6 +11966,12 @@ function handle_HT_TRENDLINE(p: Params): string {
     try {
       if (timed) {
         rc = HT_TRENDLINE.htTrendlineImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htTrendline(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_TRENDLINE.htTrendline(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10034,9 +11988,16 @@ function handle_HT_TRENDLINE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_TRENDLINE.htTrendline(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htTrendline(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = HT_TRENDLINE.htTrendline(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10045,7 +12006,7 @@ function handle_HT_TRENDLINE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtTrendline(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtTrendline(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10061,6 +12022,7 @@ function handle_HT_TRENDMODE(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10085,6 +12047,12 @@ function handle_HT_TRENDMODE(p: Params): string {
     try {
       if (timed) {
         rc = HT_TRENDMODE.htTrendmodeImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htTrendmode(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = HT_TRENDMODE.htTrendmode(inReal, { startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -10101,9 +12069,16 @@ function handle_HT_TRENDMODE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = HT_TRENDMODE.htTrendmode(Float32Array.from(inReal), { startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.htTrendmode(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = HT_TRENDMODE.htTrendmode(Float32Array.from(inReal), { startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10112,7 +12087,7 @@ function handle_HT_TRENDMODE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideHtTrendmode(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideHtTrendmode(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10131,6 +12106,7 @@ function handle_IBS(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10155,6 +12131,12 @@ function handle_IBS(p: Params): string {
     try {
       if (timed) {
         rc = IBS.ibsImpl(core, startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ibs({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = IBS.ibs({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10171,9 +12153,16 @@ function handle_IBS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = IBS.ibs({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ibs({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = IBS.ibs({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10182,7 +12171,7 @@ function handle_IBS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideIbs(core, p, endIdx, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideIbs(core, p, endIdx, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10205,6 +12194,7 @@ function handle_ICHIMOKU(p: Params): string {
   const out3 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10229,6 +12219,15 @@ function handle_ICHIMOKU(p: Params): string {
     try {
       if (timed) {
         rc = ICHIMOKU.ichimokuImpl(core, startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, out0, out1, out2, out3);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ichimoku({ high: inHigh, low: inLow }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outTenkanSen.length;
+        out0.set(r.outTenkanSen);
+        out1.set(r.outKijunSen);
+        out2.set(r.outSenkouSpanA);
+        out3.set(r.outSenkouSpanB);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ICHIMOKU.ichimoku({ high: inHigh, low: inLow }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, startIdx, endIdx, core, outTenkanSen: out0, outKijunSen: out1, outSenkouSpanA: out2, outSenkouSpanB: out3 });
         outBegIdx.value = r.begIdx;
@@ -10245,9 +12244,19 @@ function handle_ICHIMOKU(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ICHIMOKU.ichimoku({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, startIdx, endIdx, core, outTenkanSen: out0, outKijunSen: out1, outSenkouSpanA: out2, outSenkouSpanB: out3 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outTenkanSen.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.ichimoku({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outTenkanSen.length;
+        out0.set(r.outTenkanSen);
+        out1.set(r.outKijunSen);
+        out2.set(r.outSenkouSpanA);
+        out3.set(r.outSenkouSpanB);
+      } else {
+        const r = ICHIMOKU.ichimoku({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { tenkanPeriod: optInTenkanPeriod, kijunPeriod: optInKijunPeriod, senkouBPeriod: optInSenkouBPeriod, startIdx, endIdx, core, outTenkanSen: out0, outKijunSen: out1, outSenkouSpanA: out2, outSenkouSpanB: out3 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outTenkanSen.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10256,7 +12265,7 @@ function handle_ICHIMOKU(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+  const rideFields = wasmEngine ? '' : rideIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2', 'outReal3'], [out0, out1, out2, out3], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10274,6 +12283,7 @@ function handle_IMI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10298,6 +12308,12 @@ function handle_IMI(p: Params): string {
     try {
       if (timed) {
         rc = IMI.imiImpl(core, startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inClose.length !== inOpen.length, (c) => ENGINE.imi({ open: inOpen, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = IMI.imi({ open: inOpen, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10314,9 +12330,16 @@ function handle_IMI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = IMI.imi({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inClose.length !== inOpen.length, (c) => ENGINE.imi({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = IMI.imi({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10325,7 +12348,7 @@ function handle_IMI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideImi(core, p, endIdx, inOpen, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideImi(core, p, endIdx, inOpen, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10342,6 +12365,7 @@ function handle_KAMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10366,6 +12390,12 @@ function handle_KAMA(p: Params): string {
     try {
       if (timed) {
         rc = KAMA.kamaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kama(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KAMA.kama(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10382,9 +12412,16 @@ function handle_KAMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KAMA.kama(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kama(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = KAMA.kama(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10393,7 +12430,7 @@ function handle_KAMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKama(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideKama(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10417,6 +12454,7 @@ function handle_KC(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10441,6 +12479,14 @@ function handle_KC(p: Params): string {
     try {
       if (timed) {
         rc = KC.kcImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.kc({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KC.kc({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
         outBegIdx.value = r.begIdx;
@@ -10457,9 +12503,18 @@ function handle_KC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KC.kc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outUpperBand.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.kc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+        out0.set(r.outUpperBand);
+        out1.set(r.outMiddleBand);
+        out2.set(r.outLowerBand);
+      } else {
+        const r = KC.kc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, atrPeriod: optInATRPeriod, nbDev: optInNbDev, startIdx, endIdx, core, outUpperBand: out0, outMiddleBand: out1, outLowerBand: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outUpperBand.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10468,7 +12523,7 @@ function handle_KC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev);
+  const rideFields = wasmEngine ? '' : rideKc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10494,6 +12549,7 @@ function handle_KDJ(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10518,6 +12574,14 @@ function handle_KDJ(p: Params): string {
     try {
       if (timed) {
         rc = KDJ.kdjImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.kdj({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outK.length;
+        out0.set(r.outK);
+        out1.set(r.outD);
+        out2.set(r.outJ);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KDJ.kdj({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outK: out0, outD: out1, outJ: out2 });
         outBegIdx.value = r.begIdx;
@@ -10534,9 +12598,18 @@ function handle_KDJ(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KDJ.kdj({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outK: out0, outD: out1, outJ: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outK.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.kdj({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outK.length;
+        out0.set(r.outK);
+        out1.set(r.outD);
+        out2.set(r.outJ);
+      } else {
+        const r = KDJ.kdj({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outK: out0, outD: out1, outJ: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outK.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10545,7 +12618,7 @@ function handle_KDJ(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKdj(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+  const rideFields = wasmEngine ? '' : rideKdj(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10570,6 +12643,7 @@ function handle_KST(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10594,6 +12668,13 @@ function handle_KST(p: Params): string {
     try {
       if (timed) {
         rc = KST.kstImpl(core, startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kst(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+        out0.set(r.outKst);
+        out1.set(r.outKstSignal);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KST.kst(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
         outBegIdx.value = r.begIdx;
@@ -10610,9 +12691,17 @@ function handle_KST(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KST.kst(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outKst.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kst(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+        out0.set(r.outKst);
+        out1.set(r.outKstSignal);
+      } else {
+        const r = KST.kst(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, sma1Period: optInSMA1Period, sma2Period: optInSMA2Period, sma3Period: optInSMA3Period, sma4Period: optInSMA4Period, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10621,7 +12710,7 @@ function handle_KST(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKst(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideKst(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10648,6 +12737,7 @@ function handle_KSTEXT(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10672,6 +12762,13 @@ function handle_KSTEXT(p: Params): string {
     try {
       if (timed) {
         rc = KSTEXT.kstextImpl(core, startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInROCMAType) || [7, 15].includes(optInSignalMAType), false, (c) => ENGINE.kstext(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+        out0.set(r.outKst);
+        out1.set(r.outKstSignal);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KSTEXT.kstext(inReal, { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
         outBegIdx.value = r.begIdx;
@@ -10688,9 +12785,17 @@ function handle_KSTEXT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KSTEXT.kstext(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outKst.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInROCMAType) || [7, 15].includes(optInSignalMAType), false, (c) => ENGINE.kstext(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+        out0.set(r.outKst);
+        out1.set(r.outKstSignal);
+      } else {
+        const r = KSTEXT.kstext(Float32Array.from(inReal), { roc1Period: optInROC1Period, roc2Period: optInROC2Period, roc3Period: optInROC3Period, roc4Period: optInROC4Period, ma1Period: optInMA1Period, ma2Period: optInMA2Period, ma3Period: optInMA3Period, ma4Period: optInMA4Period, signalPeriod: optInSignalPeriod, rocMaType: optInROCMAType, signalMaType: optInSignalMAType, startIdx, endIdx, core, outKst: out0, outKstSignal: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKst.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10699,7 +12804,7 @@ function handle_KSTEXT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+  const rideFields = wasmEngine ? '' : rideKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10715,6 +12820,7 @@ function handle_KURTOSIS(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10739,6 +12845,12 @@ function handle_KURTOSIS(p: Params): string {
     try {
       if (timed) {
         rc = KURTOSIS.kurtosisImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kurtosis(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KURTOSIS.kurtosis(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10755,9 +12867,16 @@ function handle_KURTOSIS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KURTOSIS.kurtosis(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.kurtosis(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = KURTOSIS.kurtosis(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10766,7 +12885,7 @@ function handle_KURTOSIS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKurtosis(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideKurtosis(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10791,6 +12910,7 @@ function handle_KVO(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10815,6 +12935,13 @@ function handle_KVO(p: Params): string {
     try {
       if (timed) {
         rc = KVO.kvoImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.kvo({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKvo.length;
+        out0.set(r.outKvo);
+        out1.set(r.outKvoSignal);
+        rc = RetCode.SUCCESS;
       } else {
         const r = KVO.kvo({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKvo: out0, outKvoSignal: out1 });
         outBegIdx.value = r.begIdx;
@@ -10831,9 +12958,17 @@ function handle_KVO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = KVO.kvo({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKvo: out0, outKvoSignal: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outKvo.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.kvo({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKvo.length;
+        out0.set(r.outKvo);
+        out1.set(r.outKvoSignal);
+      } else {
+        const r = KVO.kvo({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outKvo: out0, outKvoSignal: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outKvo.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10842,7 +12977,7 @@ function handle_KVO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideKvo(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideKvo(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10858,6 +12993,7 @@ function handle_LINEARREG(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10882,6 +13018,12 @@ function handle_LINEARREG(p: Params): string {
     try {
       if (timed) {
         rc = LINEARREG.linearregImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearreg(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LINEARREG.linearreg(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10898,9 +13040,16 @@ function handle_LINEARREG(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LINEARREG.linearreg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearreg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LINEARREG.linearreg(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10909,7 +13058,7 @@ function handle_LINEARREG(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLinearreg(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideLinearreg(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10925,6 +13074,7 @@ function handle_LINEARREG_ANGLE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -10949,6 +13099,12 @@ function handle_LINEARREG_ANGLE(p: Params): string {
     try {
       if (timed) {
         rc = LINEARREG_ANGLE.linearregAngleImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.linearregAngle(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LINEARREG_ANGLE.linearregAngle(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -10965,9 +13121,16 @@ function handle_LINEARREG_ANGLE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LINEARREG_ANGLE.linearregAngle(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.linearregAngle(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LINEARREG_ANGLE.linearregAngle(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -10976,7 +13139,7 @@ function handle_LINEARREG_ANGLE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLinearregAngle(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideLinearregAngle(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -10992,6 +13155,7 @@ function handle_LINEARREG_INTERCEPT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11016,6 +13180,12 @@ function handle_LINEARREG_INTERCEPT(p: Params): string {
     try {
       if (timed) {
         rc = LINEARREG_INTERCEPT.linearregInterceptImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearregIntercept(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LINEARREG_INTERCEPT.linearregIntercept(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11032,9 +13202,16 @@ function handle_LINEARREG_INTERCEPT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LINEARREG_INTERCEPT.linearregIntercept(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearregIntercept(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LINEARREG_INTERCEPT.linearregIntercept(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11043,7 +13220,7 @@ function handle_LINEARREG_INTERCEPT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLinearregIntercept(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideLinearregIntercept(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11059,6 +13236,7 @@ function handle_LINEARREG_SLOPE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11083,6 +13261,12 @@ function handle_LINEARREG_SLOPE(p: Params): string {
     try {
       if (timed) {
         rc = LINEARREG_SLOPE.linearregSlopeImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearregSlope(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LINEARREG_SLOPE.linearregSlope(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11099,9 +13283,16 @@ function handle_LINEARREG_SLOPE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LINEARREG_SLOPE.linearregSlope(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.linearregSlope(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LINEARREG_SLOPE.linearregSlope(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11110,7 +13301,7 @@ function handle_LINEARREG_SLOPE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLinearregSlope(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideLinearregSlope(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11125,6 +13316,7 @@ function handle_LN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11149,6 +13341,12 @@ function handle_LN(p: Params): string {
     try {
       if (timed) {
         rc = LN.lnImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.ln(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LN.ln(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11165,9 +13363,16 @@ function handle_LN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LN.ln(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.ln(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LN.ln(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11176,7 +13381,7 @@ function handle_LN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLn(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideLn(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11191,6 +13396,7 @@ function handle_LOG10(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11215,6 +13421,12 @@ function handle_LOG10(p: Params): string {
     try {
       if (timed) {
         rc = LOG10.log10Impl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.log10(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = LOG10.log10(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11231,9 +13443,16 @@ function handle_LOG10(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = LOG10.log10(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.log10(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = LOG10.log10(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11242,7 +13461,7 @@ function handle_LOG10(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideLog10(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideLog10(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11259,6 +13478,7 @@ function handle_MA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11283,6 +13503,12 @@ function handle_MA(p: Params): string {
     try {
       if (timed) {
         rc = MA.maImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.ma(inReal, { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MA.ma(inReal, { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11299,9 +13525,16 @@ function handle_MA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MA.ma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.ma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MA.ma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11310,7 +13543,7 @@ function handle_MA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMa(core, p, endIdx, inReal, optInTimePeriod, optInMAType);
+  const rideFields = wasmEngine ? '' : rideMa(core, p, endIdx, inReal, optInTimePeriod, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11330,6 +13563,7 @@ function handle_MACD(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11354,6 +13588,14 @@ function handle_MACD(p: Params): string {
     try {
       if (timed) {
         rc = MACD.macdImpl(core, startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.macd(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MACD.macd(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
         outBegIdx.value = r.begIdx;
@@ -11370,9 +13612,18 @@ function handle_MACD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MACD.macd(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMacd.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.macd(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+      } else {
+        const r = MACD.macd(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11381,7 +13632,7 @@ function handle_MACD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMacd(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideMacd(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11404,6 +13655,7 @@ function handle_MACDEXT(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11428,6 +13680,14 @@ function handle_MACDEXT(p: Params): string {
     try {
       if (timed) {
         rc = MACDEXT.macdextImpl(core, startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastMAType) || [7, 15].includes(optInSlowMAType) || [7, 15].includes(optInSignalMAType), false, (c) => ENGINE.macdext(inReal, { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MACDEXT.macdext(inReal, { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
         outBegIdx.value = r.begIdx;
@@ -11444,9 +13704,18 @@ function handle_MACDEXT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MACDEXT.macdext(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMacd.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastMAType) || [7, 15].includes(optInSlowMAType) || [7, 15].includes(optInSignalMAType), false, (c) => ENGINE.macdext(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+      } else {
+        const r = MACDEXT.macdext(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, fastMaType: optInFastMAType, slowPeriod: optInSlowPeriod, slowMaType: optInSlowMAType, signalPeriod: optInSignalPeriod, signalMaType: optInSignalMAType, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11455,7 +13724,7 @@ function handle_MACDEXT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMacdext(core, p, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+  const rideFields = wasmEngine ? '' : rideMacdext(core, p, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11473,6 +13742,7 @@ function handle_MACDFIX(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11497,6 +13767,14 @@ function handle_MACDFIX(p: Params): string {
     try {
       if (timed) {
         rc = MACDFIX.macdfixImpl(core, startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.macdfix(inReal, { signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MACDFIX.macdfix(inReal, { signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
         outBegIdx.value = r.begIdx;
@@ -11513,9 +13791,18 @@ function handle_MACDFIX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MACDFIX.macdfix(Float32Array.from(inReal), { signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMacd.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.macdfix(Float32Array.from(inReal), { signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+        out0.set(r.outMacd);
+        out1.set(r.outMacdSignal);
+        out2.set(r.outMacdHist);
+      } else {
+        const r = MACDFIX.macdfix(Float32Array.from(inReal), { signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacd: out0, outMacdSignal: out1, outMacdHist: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacd.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11524,7 +13811,7 @@ function handle_MACDFIX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMacdfix(core, p, endIdx, inReal, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideMacdfix(core, p, endIdx, inReal, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11548,6 +13835,7 @@ function handle_MACDV(p: Params): string {
   const out2 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11572,6 +13860,14 @@ function handle_MACDV(p: Params): string {
     try {
       if (timed) {
         rc = MACDV.macdvImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.macdv({ high: inHigh, low: inLow, close: inClose }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacdv.length;
+        out0.set(r.outMacdv);
+        out1.set(r.outMacdvSignal);
+        out2.set(r.outMacdvHist);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MACDV.macdv({ high: inHigh, low: inLow, close: inClose }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacdv: out0, outMacdvSignal: out1, outMacdvHist: out2 });
         outBegIdx.value = r.begIdx;
@@ -11588,9 +13884,18 @@ function handle_MACDV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MACDV.macdv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacdv: out0, outMacdvSignal: out1, outMacdvHist: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMacdv.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.macdv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacdv.length;
+        out0.set(r.outMacdv);
+        out1.set(r.outMacdvSignal);
+        out2.set(r.outMacdvHist);
+      } else {
+        const r = MACDV.macdv({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outMacdv: out0, outMacdvSignal: out1, outMacdvHist: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMacdv.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11599,7 +13904,7 @@ function handle_MACDV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMacdv(core, p, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideMacdv(core, p, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1', 'outReal2'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11618,6 +13923,7 @@ function handle_MAMA(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11642,6 +13948,13 @@ function handle_MAMA(p: Params): string {
     try {
       if (timed) {
         rc = MAMA.mamaImpl(core, startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.mama(inReal, { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMama.length;
+        out0.set(r.outMama);
+        out1.set(r.outFama);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MAMA.mama(inReal, { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, startIdx, endIdx, core, outMama: out0, outFama: out1 });
         outBegIdx.value = r.begIdx;
@@ -11658,9 +13971,17 @@ function handle_MAMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MAMA.mama(Float32Array.from(inReal), { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, startIdx, endIdx, core, outMama: out0, outFama: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMama.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.mama(Float32Array.from(inReal), { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMama.length;
+        out0.set(r.outMama);
+        out1.set(r.outFama);
+      } else {
+        const r = MAMA.mama(Float32Array.from(inReal), { fastLimit: optInFastLimit, slowLimit: optInSlowLimit, startIdx, endIdx, core, outMama: out0, outFama: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMama.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11669,7 +13990,7 @@ function handle_MAMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMama(core, p, endIdx, inReal, optInFastLimit, optInSlowLimit);
+  const rideFields = wasmEngine ? '' : rideMama(core, p, endIdx, inReal, optInFastLimit, optInSlowLimit);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11688,6 +14009,7 @@ function handle_MARKETFI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11712,6 +14034,12 @@ function handle_MARKETFI(p: Params): string {
     try {
       if (timed) {
         rc = MARKETFI.marketfiImpl(core, startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.marketfi({ high: inHigh, low: inLow, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MARKETFI.marketfi({ high: inHigh, low: inLow, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11728,9 +14056,16 @@ function handle_MARKETFI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MARKETFI.marketfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.marketfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MARKETFI.marketfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11739,7 +14074,7 @@ function handle_MARKETFI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMarketfi(core, p, endIdx, inHigh, inLow, inVolume);
+  const rideFields = wasmEngine ? '' : rideMarketfi(core, p, endIdx, inHigh, inLow, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11758,6 +14093,7 @@ function handle_MASSI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11782,6 +14118,12 @@ function handle_MASSI(p: Params): string {
     try {
       if (timed) {
         rc = MASSI.massiImpl(core, startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.massi({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MASSI.massi({ high: inHigh, low: inLow }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11798,9 +14140,16 @@ function handle_MASSI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MASSI.massi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.massi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MASSI.massi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11809,7 +14158,7 @@ function handle_MASSI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMassi(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod);
+  const rideFields = wasmEngine ? '' : rideMassi(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11829,6 +14178,7 @@ function handle_MAVP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11853,6 +14203,12 @@ function handle_MAVP(p: Params): string {
     try {
       if (timed) {
         rc = MAVP.mavpImpl(core, startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), inReal1.length !== inReal0.length, (c) => ENGINE.mavp(inReal0, inReal1, { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MAVP.mavp(inReal0, inReal1, { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11869,9 +14225,16 @@ function handle_MAVP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MAVP.mavp(Float32Array.from(inReal0), Float32Array.from(inReal1), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), inReal1.length !== inReal0.length, (c) => ENGINE.mavp(Float32Array.from(inReal0), Float32Array.from(inReal1), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MAVP.mavp(Float32Array.from(inReal0), Float32Array.from(inReal1), { minPeriod: optInMinPeriod, maxPeriod: optInMaxPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11880,7 +14243,7 @@ function handle_MAVP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMavp(core, p, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
+  const rideFields = wasmEngine ? '' : rideMavp(core, p, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11896,6 +14259,7 @@ function handle_MAX(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11920,6 +14284,12 @@ function handle_MAX(p: Params): string {
     try {
       if (timed) {
         rc = MAX.maxImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.max(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MAX.max(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -11936,9 +14306,16 @@ function handle_MAX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MAX.max(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.max(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MAX.max(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -11947,7 +14324,7 @@ function handle_MAX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMax(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMax(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -11963,6 +14340,7 @@ function handle_MAXINDEX(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -11987,6 +14365,12 @@ function handle_MAXINDEX(p: Params): string {
     try {
       if (timed) {
         rc = MAXINDEX.maxindexImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.maxindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MAXINDEX.maxindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -12003,9 +14387,16 @@ function handle_MAXINDEX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MAXINDEX.maxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.maxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MAXINDEX.maxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12014,7 +14405,7 @@ function handle_MAXINDEX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMaxindex(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMaxindex(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12031,6 +14422,7 @@ function handle_MCGD(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12055,6 +14447,12 @@ function handle_MCGD(p: Params): string {
     try {
       if (timed) {
         rc = MCGD.mcgdImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.mcgd(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MCGD.mcgd(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12071,9 +14469,16 @@ function handle_MCGD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MCGD.mcgd(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.mcgd(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MCGD.mcgd(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12082,7 +14487,7 @@ function handle_MCGD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMcgd(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMcgd(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12098,6 +14503,7 @@ function handle_MEDIAN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12122,6 +14528,12 @@ function handle_MEDIAN(p: Params): string {
     try {
       if (timed) {
         rc = MEDIAN.medianImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.median(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MEDIAN.median(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12138,9 +14550,16 @@ function handle_MEDIAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MEDIAN.median(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.median(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MEDIAN.median(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12149,7 +14568,7 @@ function handle_MEDIAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMedian(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMedian(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12166,6 +14585,7 @@ function handle_MEDPRICE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12190,6 +14610,12 @@ function handle_MEDPRICE(p: Params): string {
     try {
       if (timed) {
         rc = MEDPRICE.medpriceImpl(core, startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.medprice({ high: inHigh, low: inLow }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MEDPRICE.medprice({ high: inHigh, low: inLow }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12206,9 +14632,16 @@ function handle_MEDPRICE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MEDPRICE.medprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.medprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MEDPRICE.medprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12217,7 +14650,7 @@ function handle_MEDPRICE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMedprice(core, p, endIdx, inHigh, inLow);
+  const rideFields = wasmEngine ? '' : rideMedprice(core, p, endIdx, inHigh, inLow);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12239,6 +14672,7 @@ function handle_MFI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12263,6 +14697,12 @@ function handle_MFI(p: Params): string {
     try {
       if (timed) {
         rc = MFI.mfiImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.mfi({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MFI.mfi({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12279,9 +14719,16 @@ function handle_MFI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MFI.mfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.mfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MFI.mfi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12290,7 +14737,7 @@ function handle_MFI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMfi(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMfi(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12306,6 +14753,7 @@ function handle_MIDPOINT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12330,6 +14778,12 @@ function handle_MIDPOINT(p: Params): string {
     try {
       if (timed) {
         rc = MIDPOINT.midpointImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.midpoint(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MIDPOINT.midpoint(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12346,9 +14800,16 @@ function handle_MIDPOINT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MIDPOINT.midpoint(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.midpoint(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MIDPOINT.midpoint(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12357,7 +14818,7 @@ function handle_MIDPOINT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMidpoint(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMidpoint(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12375,6 +14836,7 @@ function handle_MIDPRICE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12399,6 +14861,12 @@ function handle_MIDPRICE(p: Params): string {
     try {
       if (timed) {
         rc = MIDPRICE.midpriceImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.midprice({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MIDPRICE.midprice({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12415,9 +14883,16 @@ function handle_MIDPRICE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MIDPRICE.midprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.midprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MIDPRICE.midprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12426,7 +14901,7 @@ function handle_MIDPRICE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMidprice(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMidprice(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12442,6 +14917,7 @@ function handle_MIN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12466,6 +14942,12 @@ function handle_MIN(p: Params): string {
     try {
       if (timed) {
         rc = MIN.minImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.min(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MIN.min(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12482,9 +14964,16 @@ function handle_MIN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MIN.min(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.min(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MIN.min(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12493,7 +14982,7 @@ function handle_MIN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMin(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMin(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12509,6 +14998,7 @@ function handle_MININDEX(p: Params): string {
   const out0 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12533,6 +15023,12 @@ function handle_MININDEX(p: Params): string {
     try {
       if (timed) {
         rc = MININDEX.minindexImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MININDEX.minindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
         outBegIdx.value = r.begIdx;
@@ -12549,9 +15045,16 @@ function handle_MININDEX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MININDEX.minindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MININDEX.minindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outInteger: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12560,7 +15063,7 @@ function handle_MININDEX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMinindex(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMinindex(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12577,6 +15080,7 @@ function handle_MINMAX(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12601,6 +15105,13 @@ function handle_MINMAX(p: Params): string {
     try {
       if (timed) {
         rc = MINMAX.minmaxImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minmax(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMin.length;
+        out0.set(r.outMin);
+        out1.set(r.outMax);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MINMAX.minmax(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMin: out0, outMax: out1 });
         outBegIdx.value = r.begIdx;
@@ -12617,9 +15128,17 @@ function handle_MINMAX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MINMAX.minmax(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMin: out0, outMax: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMin.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minmax(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMin.length;
+        out0.set(r.outMin);
+        out1.set(r.outMax);
+      } else {
+        const r = MINMAX.minmax(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMin: out0, outMax: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMin.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12628,7 +15147,7 @@ function handle_MINMAX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMinmax(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMinmax(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12645,6 +15164,7 @@ function handle_MINMAXINDEX(p: Params): string {
   const out1 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12669,6 +15189,13 @@ function handle_MINMAXINDEX(p: Params): string {
     try {
       if (timed) {
         rc = MINMAXINDEX.minmaxindexImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minmaxindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMinIdx.length;
+        out0.set(r.outMinIdx);
+        out1.set(r.outMaxIdx);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MINMAXINDEX.minmaxindex(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMinIdx: out0, outMaxIdx: out1 });
         outBegIdx.value = r.begIdx;
@@ -12685,9 +15212,17 @@ function handle_MINMAXINDEX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MINMAXINDEX.minmaxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMinIdx: out0, outMaxIdx: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMinIdx.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.minmaxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMinIdx.length;
+        out0.set(r.outMinIdx);
+        out1.set(r.outMaxIdx);
+      } else {
+        const r = MINMAXINDEX.minmaxindex(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outMinIdx: out0, outMaxIdx: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMinIdx.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12696,7 +15231,7 @@ function handle_MINMAXINDEX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMinmaxindex(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMinmaxindex(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outInteger', 'outInteger1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12717,6 +15252,7 @@ function handle_MINUS_DI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12741,6 +15277,12 @@ function handle_MINUS_DI(p: Params): string {
     try {
       if (timed) {
         rc = MINUS_DI.minusDiImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.minusDi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MINUS_DI.minusDi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12757,9 +15299,16 @@ function handle_MINUS_DI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MINUS_DI.minusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.minusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MINUS_DI.minusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12768,7 +15317,7 @@ function handle_MINUS_DI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMinusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMinusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12787,6 +15336,7 @@ function handle_MINUS_DM(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12811,6 +15361,12 @@ function handle_MINUS_DM(p: Params): string {
     try {
       if (timed) {
         rc = MINUS_DM.minusDmImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.minusDm({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MINUS_DM.minusDm({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12827,9 +15383,16 @@ function handle_MINUS_DM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MINUS_DM.minusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.minusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MINUS_DM.minusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12838,7 +15401,7 @@ function handle_MINUS_DM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMinusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMinusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12854,6 +15417,7 @@ function handle_MOM(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12878,6 +15442,12 @@ function handle_MOM(p: Params): string {
     try {
       if (timed) {
         rc = MOM.momImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.mom(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MOM.mom(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12894,9 +15464,16 @@ function handle_MOM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MOM.mom(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.mom(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MOM.mom(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12905,7 +15482,7 @@ function handle_MOM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMom(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideMom(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12922,6 +15499,7 @@ function handle_MULT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -12946,6 +15524,12 @@ function handle_MULT(p: Params): string {
     try {
       if (timed) {
         rc = MULT.multImpl(core, startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.mult(inReal0, inReal1, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = MULT.mult(inReal0, inReal1, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -12962,9 +15546,16 @@ function handle_MULT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = MULT.mult(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.mult(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = MULT.mult(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -12973,7 +15564,7 @@ function handle_MULT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideMult(core, p, endIdx, inReal0, inReal1);
+  const rideFields = wasmEngine ? '' : rideMult(core, p, endIdx, inReal0, inReal1);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -12994,6 +15585,7 @@ function handle_NATR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13018,6 +15610,12 @@ function handle_NATR(p: Params): string {
     try {
       if (timed) {
         rc = NATR.natrImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.natr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = NATR.natr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13034,9 +15632,16 @@ function handle_NATR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = NATR.natr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.natr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = NATR.natr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13045,7 +15650,7 @@ function handle_NATR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideNatr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideNatr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13062,6 +15667,7 @@ function handle_NVI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13086,6 +15692,12 @@ function handle_NVI(p: Params): string {
     try {
       if (timed) {
         rc = NVI.nviImpl(core, startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.nvi({ close: inClose, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = NVI.nvi({ close: inClose, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13102,9 +15714,16 @@ function handle_NVI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = NVI.nvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.nvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = NVI.nvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13113,7 +15732,7 @@ function handle_NVI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideNvi(core, p, endIdx, inClose, inVolume);
+  const rideFields = wasmEngine ? '' : rideNvi(core, p, endIdx, inClose, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13130,6 +15749,7 @@ function handle_OBV(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13154,6 +15774,12 @@ function handle_OBV(p: Params): string {
     try {
       if (timed) {
         rc = OBV.obvImpl(core, startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inReal.length, (c) => ENGINE.obv(inReal, { volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = OBV.obv(inReal, { volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13170,9 +15796,16 @@ function handle_OBV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = OBV.obv(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inReal.length, (c) => ENGINE.obv(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = OBV.obv(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13181,7 +15814,7 @@ function handle_OBV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideObv(core, p, endIdx, inReal, inVolume);
+  const rideFields = wasmEngine ? '' : rideObv(core, p, endIdx, inReal, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13200,6 +15833,7 @@ function handle_PERCENTB(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13224,6 +15858,12 @@ function handle_PERCENTB(p: Params): string {
     try {
       if (timed) {
         rc = PERCENTB.percentbImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.percentb(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PERCENTB.percentb(inReal, { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13240,9 +15880,16 @@ function handle_PERCENTB(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PERCENTB.percentb(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.percentb(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PERCENTB.percentb(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDevUp: optInNbDevUp, nbDevDn: optInNbDevDn, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13251,7 +15898,7 @@ function handle_PERCENTB(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePercentb(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  const rideFields = wasmEngine ? '' : ridePercentb(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13268,6 +15915,7 @@ function handle_PERCENTILE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13292,6 +15940,12 @@ function handle_PERCENTILE(p: Params): string {
     try {
       if (timed) {
         rc = PERCENTILE.percentileImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.percentile(inReal, { timePeriod: optInTimePeriod, percentile: optInPercentile, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PERCENTILE.percentile(inReal, { timePeriod: optInTimePeriod, percentile: optInPercentile, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13308,9 +15962,16 @@ function handle_PERCENTILE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PERCENTILE.percentile(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentile: optInPercentile, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.percentile(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentile: optInPercentile, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PERCENTILE.percentile(Float32Array.from(inReal), { timePeriod: optInTimePeriod, percentile: optInPercentile, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13319,7 +15980,7 @@ function handle_PERCENTILE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePercentile(core, p, endIdx, inReal, optInTimePeriod, optInPercentile);
+  const rideFields = wasmEngine ? '' : ridePercentile(core, p, endIdx, inReal, optInTimePeriod, optInPercentile);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13335,6 +15996,7 @@ function handle_PERCENTRANK(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13359,6 +16021,12 @@ function handle_PERCENTRANK(p: Params): string {
     try {
       if (timed) {
         rc = PERCENTRANK.percentrankImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.percentrank(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PERCENTRANK.percentrank(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13375,9 +16043,16 @@ function handle_PERCENTRANK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PERCENTRANK.percentrank(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.percentrank(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PERCENTRANK.percentrank(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13386,7 +16061,7 @@ function handle_PERCENTRANK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePercentrank(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : ridePercentrank(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13407,6 +16082,7 @@ function handle_PLUS_DI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13431,6 +16107,12 @@ function handle_PLUS_DI(p: Params): string {
     try {
       if (timed) {
         rc = PLUS_DI.plusDiImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.plusDi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PLUS_DI.plusDi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13447,9 +16129,16 @@ function handle_PLUS_DI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PLUS_DI.plusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.plusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PLUS_DI.plusDi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13458,7 +16147,7 @@ function handle_PLUS_DI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePlusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : ridePlusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13477,6 +16166,7 @@ function handle_PLUS_DM(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13501,6 +16191,12 @@ function handle_PLUS_DM(p: Params): string {
     try {
       if (timed) {
         rc = PLUS_DM.plusDmImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.plusDm({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PLUS_DM.plusDm({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13517,9 +16213,16 @@ function handle_PLUS_DM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PLUS_DM.plusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.plusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PLUS_DM.plusDm({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13528,7 +16231,7 @@ function handle_PLUS_DM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePlusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : ridePlusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13546,6 +16249,7 @@ function handle_PPO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13570,6 +16274,12 @@ function handle_PPO(p: Params): string {
     try {
       if (timed) {
         rc = PPO.ppoImpl(core, startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.ppo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PPO.ppo(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13586,9 +16296,16 @@ function handle_PPO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PPO.ppo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.ppo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PPO.ppo(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13597,7 +16314,7 @@ function handle_PPO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePpo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+  const rideFields = wasmEngine ? '' : ridePpo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13618,6 +16335,7 @@ function handle_PSO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13642,6 +16360,12 @@ function handle_PSO(p: Params): string {
     try {
       if (timed) {
         rc = PSO.psoImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.pso({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PSO.pso({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13658,9 +16382,16 @@ function handle_PSO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PSO.pso({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.pso({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PSO.pso({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, emaPeriod: optInEMAPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13669,7 +16400,7 @@ function handle_PSO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePso(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod);
+  const rideFields = wasmEngine ? '' : ridePso(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13686,6 +16417,7 @@ function handle_PVI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13710,6 +16442,12 @@ function handle_PVI(p: Params): string {
     try {
       if (timed) {
         rc = PVI.pviImpl(core, startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.pvi({ close: inClose, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PVI.pvi({ close: inClose, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13726,9 +16464,16 @@ function handle_PVI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PVI.pvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.pvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PVI.pvi({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13737,7 +16482,7 @@ function handle_PVI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePvi(core, p, endIdx, inClose, inVolume);
+  const rideFields = wasmEngine ? '' : ridePvi(core, p, endIdx, inClose, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13755,6 +16500,7 @@ function handle_PVO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13779,6 +16525,12 @@ function handle_PVO(p: Params): string {
     try {
       if (timed) {
         rc = PVO.pvoImpl(core, startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.pvo({ volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PVO.pvo({ volume: inVolume }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13795,9 +16547,16 @@ function handle_PVO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PVO.pvo({ volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInMAType), false, (c) => ENGINE.pvo({ volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PVO.pvo({ volume: Float32Array.from(inVolume) }, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, maType: optInMAType, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13806,7 +16565,7 @@ function handle_PVO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePvo(core, p, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
+  const rideFields = wasmEngine ? '' : ridePvo(core, p, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13823,6 +16582,7 @@ function handle_PVT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13847,6 +16607,12 @@ function handle_PVT(p: Params): string {
     try {
       if (timed) {
         rc = PVT.pvtImpl(core, startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.pvt({ close: inClose, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = PVT.pvt({ close: inClose, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13863,9 +16629,16 @@ function handle_PVT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = PVT.pvt({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inClose.length, (c) => ENGINE.pvt({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = PVT.pvt({ close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13874,7 +16647,7 @@ function handle_PVT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = ridePvt(core, p, endIdx, inClose, inVolume);
+  const rideFields = wasmEngine ? '' : ridePvt(core, p, endIdx, inClose, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13892,6 +16665,7 @@ function handle_QSTICK(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13916,6 +16690,12 @@ function handle_QSTICK(p: Params): string {
     try {
       if (timed) {
         rc = QSTICK.qstickImpl(core, startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inClose.length !== inOpen.length, (c) => ENGINE.qstick({ open: inOpen, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = QSTICK.qstick({ open: inOpen, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -13932,9 +16712,16 @@ function handle_QSTICK(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = QSTICK.qstick({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inClose.length !== inOpen.length, (c) => ENGINE.qstick({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = QSTICK.qstick({ open: Float32Array.from(inOpen), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -13943,7 +16730,7 @@ function handle_QSTICK(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideQstick(core, p, endIdx, inOpen, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideQstick(core, p, endIdx, inOpen, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -13960,6 +16747,7 @@ function handle_RMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -13984,6 +16772,12 @@ function handle_RMA(p: Params): string {
     try {
       if (timed) {
         rc = RMA.rmaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = RMA.rma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14000,9 +16794,16 @@ function handle_RMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = RMA.rma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = RMA.rma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14011,7 +16812,7 @@ function handle_RMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRma(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRma(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14027,6 +16828,7 @@ function handle_ROC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14051,6 +16853,12 @@ function handle_ROC(p: Params): string {
     try {
       if (timed) {
         rc = ROC.rocImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.roc(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ROC.roc(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14067,9 +16875,16 @@ function handle_ROC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ROC.roc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.roc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ROC.roc(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14078,7 +16893,7 @@ function handle_ROC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRoc(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRoc(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14094,6 +16909,7 @@ function handle_ROCP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14118,6 +16934,12 @@ function handle_ROCP(p: Params): string {
     try {
       if (timed) {
         rc = ROCP.rocpImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocp(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ROCP.rocp(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14134,9 +16956,16 @@ function handle_ROCP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ROCP.rocp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ROCP.rocp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14145,7 +16974,7 @@ function handle_ROCP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRocp(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRocp(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14161,6 +16990,7 @@ function handle_ROCR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14185,6 +17015,12 @@ function handle_ROCR(p: Params): string {
     try {
       if (timed) {
         rc = ROCR.rocrImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocr(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ROCR.rocr(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14201,9 +17037,16 @@ function handle_ROCR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ROCR.rocr(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocr(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ROCR.rocr(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14212,7 +17055,7 @@ function handle_ROCR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRocr(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRocr(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14228,6 +17071,7 @@ function handle_ROCR100(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14252,6 +17096,12 @@ function handle_ROCR100(p: Params): string {
     try {
       if (timed) {
         rc = ROCR100.rocr100Impl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocr100(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ROCR100.rocr100(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14268,9 +17118,16 @@ function handle_ROCR100(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ROCR100.rocr100(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rocr100(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ROCR100.rocr100(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14279,7 +17136,7 @@ function handle_ROCR100(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRocr100(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRocr100(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14302,6 +17159,7 @@ function handle_ROGERSSATCHELL(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14326,6 +17184,12 @@ function handle_ROGERSSATCHELL(p: Params): string {
     try {
       if (timed) {
         rc = ROGERSSATCHELL.rogerssatchellImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.rogerssatchell({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ROGERSSATCHELL.rogerssatchell({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14342,9 +17206,16 @@ function handle_ROGERSSATCHELL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ROGERSSATCHELL.rogerssatchell({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.rogerssatchell({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ROGERSSATCHELL.rogerssatchell({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14353,7 +17224,7 @@ function handle_ROGERSSATCHELL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRogerssatchell(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization);
+  const rideFields = wasmEngine ? '' : rideRogerssatchell(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14370,6 +17241,7 @@ function handle_RSI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14394,6 +17266,12 @@ function handle_RSI(p: Params): string {
     try {
       if (timed) {
         rc = RSI.rsiImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rsi(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = RSI.rsi(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14410,9 +17288,16 @@ function handle_RSI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = RSI.rsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = RSI.rsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14421,7 +17306,7 @@ function handle_RSI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRsi(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRsi(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14439,6 +17324,7 @@ function handle_RVI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14463,6 +17349,12 @@ function handle_RVI(p: Params): string {
     try {
       if (timed) {
         rc = RVI.rviImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rvi(inReal, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = RVI.rvi(inReal, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14479,9 +17371,16 @@ function handle_RVI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = RVI.rvi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rvi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = RVI.rvi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14490,7 +17389,7 @@ function handle_RVI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRvi(core, p, endIdx, inReal, optInTimePeriod, optInStdDevPeriod);
+  const rideFields = wasmEngine ? '' : rideRvi(core, p, endIdx, inReal, optInTimePeriod, optInStdDevPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14509,6 +17408,7 @@ function handle_RVIR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14533,6 +17433,12 @@ function handle_RVIR(p: Params): string {
     try {
       if (timed) {
         rc = RVIR.rvirImpl(core, startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.rvir({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = RVIR.rvir({ high: inHigh, low: inLow }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14549,9 +17455,16 @@ function handle_RVIR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = RVIR.rvir({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.rvir({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = RVIR.rvir({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { timePeriod: optInTimePeriod, stdDevPeriod: optInStdDevPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14560,7 +17473,7 @@ function handle_RVIR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRvir(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod);
+  const rideFields = wasmEngine ? '' : rideRvir(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14576,6 +17489,7 @@ function handle_RVOL(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14600,6 +17514,12 @@ function handle_RVOL(p: Params): string {
     try {
       if (timed) {
         rc = RVOL.rvolImpl(core, startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rvol({ volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = RVOL.rvol({ volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14616,9 +17536,16 @@ function handle_RVOL(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = RVOL.rvol({ volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.rvol({ volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = RVOL.rvol({ volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14627,7 +17554,7 @@ function handle_RVOL(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideRvol(core, p, endIdx, inVolume, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideRvol(core, p, endIdx, inVolume, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14646,6 +17573,7 @@ function handle_SAR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14670,6 +17598,12 @@ function handle_SAR(p: Params): string {
     try {
       if (timed) {
         rc = SAR.sarImpl(core, startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.sar({ high: inHigh, low: inLow }, { acceleration: optInAcceleration, maximum: optInMaximum, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SAR.sar({ high: inHigh, low: inLow }, { acceleration: optInAcceleration, maximum: optInMaximum, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14686,9 +17620,16 @@ function handle_SAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SAR.sar({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { acceleration: optInAcceleration, maximum: optInMaximum, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.sar({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { acceleration: optInAcceleration, maximum: optInMaximum, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SAR.sar({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { acceleration: optInAcceleration, maximum: optInMaximum, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14697,7 +17638,7 @@ function handle_SAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSar(core, p, endIdx, inHigh, inLow, optInAcceleration, optInMaximum);
+  const rideFields = wasmEngine ? '' : rideSar(core, p, endIdx, inHigh, inLow, optInAcceleration, optInMaximum);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14722,6 +17663,7 @@ function handle_SAREXT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14746,6 +17688,12 @@ function handle_SAREXT(p: Params): string {
     try {
       if (timed) {
         rc = SAREXT.sarextImpl(core, startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.sarext({ high: inHigh, low: inLow }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SAREXT.sarext({ high: inHigh, low: inLow }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14762,9 +17710,16 @@ function handle_SAREXT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SAREXT.sarext({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.sarext({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SAREXT.sarext({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14773,7 +17728,7 @@ function handle_SAREXT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSarext(core, p, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+  const rideFields = wasmEngine ? '' : rideSarext(core, p, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14791,6 +17746,7 @@ function handle_SHARPE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14815,6 +17771,12 @@ function handle_SHARPE(p: Params): string {
     try {
       if (timed) {
         rc = SHARPE.sharpeImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sharpe(inReal, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SHARPE.sharpe(inReal, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14831,9 +17793,16 @@ function handle_SHARPE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SHARPE.sharpe(Float32Array.from(inReal), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sharpe(Float32Array.from(inReal), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SHARPE.sharpe(Float32Array.from(inReal), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14842,7 +17811,7 @@ function handle_SHARPE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSharpe(core, p, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+  const rideFields = wasmEngine ? '' : rideSharpe(core, p, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14864,6 +17833,7 @@ function handle_SI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14888,6 +17858,12 @@ function handle_SI(p: Params): string {
     try {
       if (timed) {
         rc = SI.siImpl(core, startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.si({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { limitMove: optInLimitMove, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SI.si({ open: inOpen, high: inHigh, low: inLow, close: inClose }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14904,9 +17880,16 @@ function handle_SI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SI.si({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length, (c) => ENGINE.si({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SI.si({ open: Float32Array.from(inOpen), high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { limitMove: optInLimitMove, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14915,7 +17898,7 @@ function handle_SI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove);
+  const rideFields = wasmEngine ? '' : rideSi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14930,6 +17913,7 @@ function handle_SIN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -14954,6 +17938,12 @@ function handle_SIN(p: Params): string {
     try {
       if (timed) {
         rc = SIN.sinImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.sin(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SIN.sin(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -14970,9 +17960,16 @@ function handle_SIN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SIN.sin(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.sin(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SIN.sin(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -14981,7 +17978,7 @@ function handle_SIN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSin(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideSin(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -14996,6 +17993,7 @@ function handle_SINH(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15020,6 +18018,12 @@ function handle_SINH(p: Params): string {
     try {
       if (timed) {
         rc = SINH.sinhImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.sinh(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SINH.sinh(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15036,9 +18040,16 @@ function handle_SINH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SINH.sinh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.sinh(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SINH.sinh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15047,7 +18058,7 @@ function handle_SINH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSinh(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideSinh(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15063,6 +18074,7 @@ function handle_SKEW(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15087,6 +18099,12 @@ function handle_SKEW(p: Params): string {
     try {
       if (timed) {
         rc = SKEW.skewImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.skew(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SKEW.skew(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15103,9 +18121,16 @@ function handle_SKEW(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SKEW.skew(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.skew(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SKEW.skew(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15114,7 +18139,7 @@ function handle_SKEW(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSkew(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSkew(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15130,6 +18155,7 @@ function handle_SMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15154,6 +18180,12 @@ function handle_SMA(p: Params): string {
     try {
       if (timed) {
         rc = SMA.smaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SMA.sma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15170,9 +18202,16 @@ function handle_SMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SMA.sma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SMA.sma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15181,7 +18220,7 @@ function handle_SMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSma(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSma(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15205,6 +18244,7 @@ function handle_SMI(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15229,6 +18269,13 @@ function handle_SMI(p: Params): string {
     try {
       if (timed) {
         rc = SMI.smiImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.smi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSmi.length;
+        out0.set(r.outSmi);
+        out1.set(r.outSmiSignal);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SMI.smi({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outSmi: out0, outSmiSignal: out1 });
         outBegIdx.value = r.begIdx;
@@ -15245,9 +18292,17 @@ function handle_SMI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SMI.smi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outSmi: out0, outSmiSignal: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outSmi.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.smi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSmi.length;
+        out0.set(r.outSmi);
+        out1.set(r.outSmiSignal);
+      } else {
+        const r = SMI.smi({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outSmi: out0, outSmiSignal: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSmi.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15256,7 +18311,7 @@ function handle_SMI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSmi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideSmi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15274,6 +18329,7 @@ function handle_SORTINO(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15298,6 +18354,12 @@ function handle_SORTINO(p: Params): string {
     try {
       if (timed) {
         rc = SORTINO.sortinoImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInMAR, optInAnnualization, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sortino(inReal, { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SORTINO.sortino(inReal, { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15314,9 +18376,16 @@ function handle_SORTINO(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SORTINO.sortino(Float32Array.from(inReal), { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sortino(Float32Array.from(inReal), { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SORTINO.sortino(Float32Array.from(inReal), { timePeriod: optInTimePeriod, mar: optInMAR, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15325,7 +18394,7 @@ function handle_SORTINO(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSortino(core, p, endIdx, inReal, optInTimePeriod, optInMAR, optInAnnualization);
+  const rideFields = wasmEngine ? '' : rideSortino(core, p, endIdx, inReal, optInTimePeriod, optInMAR, optInAnnualization);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15340,6 +18409,7 @@ function handle_SQRT(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15364,6 +18434,12 @@ function handle_SQRT(p: Params): string {
     try {
       if (timed) {
         rc = SQRT.sqrtImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sqrt(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SQRT.sqrt(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15380,9 +18456,16 @@ function handle_SQRT(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SQRT.sqrt(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sqrt(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SQRT.sqrt(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15391,7 +18474,7 @@ function handle_SQRT(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSqrt(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideSqrt(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15417,6 +18500,7 @@ function handle_SQZMOM(p: Params): string {
   const out1 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15441,6 +18525,13 @@ function handle_SQZMOM(p: Params): string {
     try {
       if (timed) {
         rc = SQZMOM.sqzmomImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.sqzmom({ high: inHigh, low: inLow, close: inClose }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMomentum.length;
+        out0.set(r.outMomentum);
+        out1.set(r.outSqueeze);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SQZMOM.sqzmom({ high: inHigh, low: inLow, close: inClose }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, startIdx, endIdx, core, outMomentum: out0, outSqueeze: out1 });
         outBegIdx.value = r.begIdx;
@@ -15457,9 +18548,17 @@ function handle_SQZMOM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SQZMOM.sqzmom({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, startIdx, endIdx, core, outMomentum: out0, outSqueeze: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outMomentum.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.sqzmom({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMomentum.length;
+        out0.set(r.outMomentum);
+        out1.set(r.outSqueeze);
+      } else {
+        const r = SQZMOM.sqzmom({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { bbPeriod: optInBBPeriod, nbDev: optInNbDev, kcPeriod: optInKCPeriod, factorWide: optInFactorWide, factorNormal: optInFactorNormal, factorNarrow: optInFactorNarrow, startIdx, endIdx, core, outMomentum: out0, outSqueeze: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outMomentum.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15468,7 +18567,7 @@ function handle_SQZMOM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSqzmom(core, p, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+  const rideFields = wasmEngine ? '' : rideSqzmom(core, p, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outInteger'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15487,6 +18586,7 @@ function handle_STC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15511,6 +18611,12 @@ function handle_STC(p: Params): string {
     try {
       if (timed) {
         rc = STC.stcImpl(core, startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.stc(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = STC.stc(inReal, { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15527,9 +18633,16 @@ function handle_STC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = STC.stc(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.stc(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = STC.stc(Float32Array.from(inReal), { fastPeriod: optInFastPeriod, slowPeriod: optInSlowPeriod, cyclePeriod: optInCyclePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15538,7 +18651,7 @@ function handle_STC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideStc(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+  const rideFields = wasmEngine ? '' : rideStc(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15555,6 +18668,7 @@ function handle_STDDEV(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15579,6 +18693,12 @@ function handle_STDDEV(p: Params): string {
     try {
       if (timed) {
         rc = STDDEV.stddevImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.stddev(inReal, { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = STDDEV.stddev(inReal, { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15595,9 +18715,16 @@ function handle_STDDEV(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = STDDEV.stddev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.stddev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = STDDEV.stddev(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15606,7 +18733,7 @@ function handle_STDDEV(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideStddev(core, p, endIdx, inReal, optInTimePeriod, optInNbDev);
+  const rideFields = wasmEngine ? '' : rideStddev(core, p, endIdx, inReal, optInTimePeriod, optInNbDev);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15631,6 +18758,7 @@ function handle_STOCH(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15655,6 +18783,13 @@ function handle_STOCH(p: Params): string {
     try {
       if (timed) {
         rc = STOCH.stochImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.stoch({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSlowK.length;
+        out0.set(r.outSlowK);
+        out1.set(r.outSlowD);
+        rc = RetCode.SUCCESS;
       } else {
         const r = STOCH.stoch({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outSlowK: out0, outSlowD: out1 });
         outBegIdx.value = r.begIdx;
@@ -15671,9 +18806,17 @@ function handle_STOCH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = STOCH.stoch({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outSlowK: out0, outSlowD: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outSlowK.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInSlowK_MAType) || [7, 15].includes(optInSlowD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.stoch({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSlowK.length;
+        out0.set(r.outSlowK);
+        out1.set(r.outSlowD);
+      } else {
+        const r = STOCH.stoch({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, slowKPeriod: optInSlowK_Period, slowKMaType: optInSlowK_MAType, slowDPeriod: optInSlowD_Period, slowDMaType: optInSlowD_MAType, startIdx, endIdx, core, outSlowK: out0, outSlowD: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSlowK.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15682,7 +18825,7 @@ function handle_STOCH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideStoch(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+  const rideFields = wasmEngine ? '' : rideStoch(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15705,6 +18848,7 @@ function handle_STOCHF(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15729,6 +18873,13 @@ function handle_STOCHF(p: Params): string {
     try {
       if (timed) {
         rc = STOCHF.stochfImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.stochf({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+        out0.set(r.outFastK);
+        out1.set(r.outFastD);
+        rc = RetCode.SUCCESS;
       } else {
         const r = STOCHF.stochf({ high: inHigh, low: inLow, close: inClose }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
         outBegIdx.value = r.begIdx;
@@ -15745,9 +18896,17 @@ function handle_STOCHF(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = STOCHF.stochf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outFastK.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastD_MAType), inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.stochf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+        out0.set(r.outFastK);
+        out1.set(r.outFastD);
+      } else {
+        const r = STOCHF.stochf({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15756,7 +18915,7 @@ function handle_STOCHF(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideStochf(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  const rideFields = wasmEngine ? '' : rideStochf(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15776,6 +18935,7 @@ function handle_STOCHRSI(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15800,6 +18960,13 @@ function handle_STOCHRSI(p: Params): string {
     try {
       if (timed) {
         rc = STOCHRSI.stochrsiImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastD_MAType), false, (c) => ENGINE.stochrsi(inReal, { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+        out0.set(r.outFastK);
+        out1.set(r.outFastD);
+        rc = RetCode.SUCCESS;
       } else {
         const r = STOCHRSI.stochrsi(inReal, { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
         outBegIdx.value = r.begIdx;
@@ -15816,9 +18983,17 @@ function handle_STOCHRSI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = STOCHRSI.stochrsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outFastK.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, [7, 15].includes(optInFastD_MAType), false, (c) => ENGINE.stochrsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+        out0.set(r.outFastK);
+        out1.set(r.outFastD);
+      } else {
+        const r = STOCHRSI.stochrsi(Float32Array.from(inReal), { timePeriod: optInTimePeriod, fastKPeriod: optInFastK_Period, fastDPeriod: optInFastD_Period, fastDMaType: optInFastD_MAType, startIdx, endIdx, core, outFastK: out0, outFastD: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outFastK.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15827,7 +19002,7 @@ function handle_STOCHRSI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideStochrsi(core, p, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  const rideFields = wasmEngine ? '' : rideStochrsi(core, p, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15844,6 +19019,7 @@ function handle_SUB(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15868,6 +19044,12 @@ function handle_SUB(p: Params): string {
     try {
       if (timed) {
         rc = SUB.subImpl(core, startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.sub(inReal0, inReal1, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SUB.sub(inReal0, inReal1, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15884,9 +19066,16 @@ function handle_SUB(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SUB.sub(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inReal1.length !== inReal0.length, (c) => ENGINE.sub(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SUB.sub(Float32Array.from(inReal0), Float32Array.from(inReal1), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15895,7 +19084,7 @@ function handle_SUB(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSub(core, p, endIdx, inReal0, inReal1);
+  const rideFields = wasmEngine ? '' : rideSub(core, p, endIdx, inReal0, inReal1);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15911,6 +19100,7 @@ function handle_SUM(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -15935,6 +19125,12 @@ function handle_SUM(p: Params): string {
     try {
       if (timed) {
         rc = SUM.sumImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sum(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SUM.sum(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -15951,9 +19147,16 @@ function handle_SUM(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SUM.sum(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.sum(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SUM.sum(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -15962,7 +19165,7 @@ function handle_SUM(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSum(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSum(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -15984,6 +19187,7 @@ function handle_SUPERTREND(p: Params): string {
   const out1 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16008,6 +19212,13 @@ function handle_SUPERTREND(p: Params): string {
     try {
       if (timed) {
         rc = SUPERTREND.supertrendImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.supertrend({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSupertrend.length;
+        out0.set(r.outSupertrend);
+        out1.set(r.outTrend);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SUPERTREND.supertrend({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outSupertrend: out0, outTrend: out1 });
         outBegIdx.value = r.begIdx;
@@ -16024,9 +19235,17 @@ function handle_SUPERTREND(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SUPERTREND.supertrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outSupertrend: out0, outTrend: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outSupertrend.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.supertrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSupertrend.length;
+        out0.set(r.outSupertrend);
+        out1.set(r.outTrend);
+      } else {
+        const r = SUPERTREND.supertrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, multiplier: optInMultiplier, startIdx, endIdx, core, outSupertrend: out0, outTrend: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outSupertrend.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16035,7 +19254,7 @@ function handle_SUPERTREND(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSupertrend(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier);
+  const rideFields = wasmEngine ? '' : rideSupertrend(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outInteger'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16052,6 +19271,7 @@ function handle_SWAK_2PHP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16076,6 +19296,12 @@ function handle_SWAK_2PHP(p: Params): string {
     try {
       if (timed) {
         rc = SWAK_2PHP.swak2phpImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swak2php(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SWAK_2PHP.swak2php(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16092,9 +19318,16 @@ function handle_SWAK_2PHP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SWAK_2PHP.swak2php(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swak2php(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SWAK_2PHP.swak2php(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16103,7 +19336,7 @@ function handle_SWAK_2PHP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSwak2php(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSwak2php(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16121,6 +19354,7 @@ function handle_SWAK_BP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16145,6 +19379,12 @@ function handle_SWAK_BP(p: Params): string {
     try {
       if (timed) {
         rc = SWAK_BP.swakBpImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInDelta, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakBp(inReal, { timePeriod: optInTimePeriod, delta: optInDelta, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SWAK_BP.swakBp(inReal, { timePeriod: optInTimePeriod, delta: optInDelta, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16161,9 +19401,16 @@ function handle_SWAK_BP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SWAK_BP.swakBp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, delta: optInDelta, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakBp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, delta: optInDelta, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SWAK_BP.swakBp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, delta: optInDelta, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16172,7 +19419,7 @@ function handle_SWAK_BP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSwakBp(core, p, endIdx, inReal, optInTimePeriod, optInDelta);
+  const rideFields = wasmEngine ? '' : rideSwakBp(core, p, endIdx, inReal, optInTimePeriod, optInDelta);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16189,6 +19436,7 @@ function handle_SWAK_BUTTER(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16213,6 +19461,12 @@ function handle_SWAK_BUTTER(p: Params): string {
     try {
       if (timed) {
         rc = SWAK_BUTTER.swakButterImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakButter(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SWAK_BUTTER.swakButter(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16229,9 +19483,16 @@ function handle_SWAK_BUTTER(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SWAK_BUTTER.swakButter(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakButter(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SWAK_BUTTER.swakButter(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16240,7 +19501,7 @@ function handle_SWAK_BUTTER(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSwakButter(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSwakButter(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16257,6 +19518,7 @@ function handle_SWAK_GAUSS(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16281,6 +19543,12 @@ function handle_SWAK_GAUSS(p: Params): string {
     try {
       if (timed) {
         rc = SWAK_GAUSS.swakGaussImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakGauss(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SWAK_GAUSS.swakGauss(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16297,9 +19565,16 @@ function handle_SWAK_GAUSS(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SWAK_GAUSS.swakGauss(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakGauss(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SWAK_GAUSS.swakGauss(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16308,7 +19583,7 @@ function handle_SWAK_GAUSS(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSwakGauss(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSwakGauss(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16325,6 +19600,7 @@ function handle_SWAK_HP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16349,6 +19625,12 @@ function handle_SWAK_HP(p: Params): string {
     try {
       if (timed) {
         rc = SWAK_HP.swakHpImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakHp(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = SWAK_HP.swakHp(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16365,9 +19647,16 @@ function handle_SWAK_HP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = SWAK_HP.swakHp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.swakHp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = SWAK_HP.swakHp(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16376,7 +19665,7 @@ function handle_SWAK_HP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideSwakHp(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideSwakHp(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16394,6 +19683,7 @@ function handle_T3(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16418,6 +19708,12 @@ function handle_T3(p: Params): string {
     try {
       if (timed) {
         rc = T3.t3Impl(core, startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.t3(inReal, { timePeriod: optInTimePeriod, vFactor: optInVFactor, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = T3.t3(inReal, { timePeriod: optInTimePeriod, vFactor: optInVFactor, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16434,9 +19730,16 @@ function handle_T3(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = T3.t3(Float32Array.from(inReal), { timePeriod: optInTimePeriod, vFactor: optInVFactor, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.t3(Float32Array.from(inReal), { timePeriod: optInTimePeriod, vFactor: optInVFactor, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = T3.t3(Float32Array.from(inReal), { timePeriod: optInTimePeriod, vFactor: optInVFactor, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16445,7 +19748,7 @@ function handle_T3(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideT3(core, p, endIdx, inReal, optInTimePeriod, optInVFactor);
+  const rideFields = wasmEngine ? '' : rideT3(core, p, endIdx, inReal, optInTimePeriod, optInVFactor);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16460,6 +19763,7 @@ function handle_TAN(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16484,6 +19788,12 @@ function handle_TAN(p: Params): string {
     try {
       if (timed) {
         rc = TAN.tanImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.tan(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TAN.tan(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16500,9 +19810,16 @@ function handle_TAN(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TAN.tan(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.tan(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TAN.tan(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16511,7 +19828,7 @@ function handle_TAN(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTan(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideTan(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16526,6 +19843,7 @@ function handle_TANH(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16550,6 +19868,12 @@ function handle_TANH(p: Params): string {
     try {
       if (timed) {
         rc = TANH.tanhImpl(core, startIdx, endIdx, inReal, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.tanh(inReal, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TANH.tanh(inReal, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16566,9 +19890,16 @@ function handle_TANH(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TANH.tanh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(false, false, false, (c) => ENGINE.tanh(Float32Array.from(inReal), { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TANH.tanh(Float32Array.from(inReal), { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16577,7 +19908,7 @@ function handle_TANH(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTanh(core, p, endIdx, inReal);
+  const rideFields = wasmEngine ? '' : rideTanh(core, p, endIdx, inReal);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16593,6 +19924,7 @@ function handle_TEMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16617,6 +19949,12 @@ function handle_TEMA(p: Params): string {
     try {
       if (timed) {
         rc = TEMA.temaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TEMA.tema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16633,9 +19971,16 @@ function handle_TEMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TEMA.tema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TEMA.tema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16644,7 +19989,7 @@ function handle_TEMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTema(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideTema(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16663,6 +20008,7 @@ function handle_TRANGE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16687,6 +20033,12 @@ function handle_TRANGE(p: Params): string {
     try {
       if (timed) {
         rc = TRANGE.trangeImpl(core, startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.trange({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TRANGE.trange({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16703,9 +20055,16 @@ function handle_TRANGE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TRANGE.trange({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.trange({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TRANGE.trange({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16714,7 +20073,7 @@ function handle_TRANGE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTrange(core, p, endIdx, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideTrange(core, p, endIdx, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16730,6 +20089,7 @@ function handle_TRIMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16754,6 +20114,12 @@ function handle_TRIMA(p: Params): string {
     try {
       if (timed) {
         rc = TRIMA.trimaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.trima(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TRIMA.trima(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16770,9 +20136,16 @@ function handle_TRIMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TRIMA.trima(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.trima(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TRIMA.trima(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16781,7 +20154,7 @@ function handle_TRIMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTrima(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideTrima(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16797,6 +20170,7 @@ function handle_TRIX(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16821,6 +20195,12 @@ function handle_TRIX(p: Params): string {
     try {
       if (timed) {
         rc = TRIX.trixImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.trix(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TRIX.trix(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16837,9 +20217,16 @@ function handle_TRIX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TRIX.trix(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.trix(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TRIX.trix(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16848,7 +20235,7 @@ function handle_TRIX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTrix(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideTrix(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16864,6 +20251,7 @@ function handle_TSF(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16888,6 +20276,12 @@ function handle_TSF(p: Params): string {
     try {
       if (timed) {
         rc = TSF.tsfImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tsf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TSF.tsf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16904,9 +20298,16 @@ function handle_TSF(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TSF.tsf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tsf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TSF.tsf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16915,7 +20316,7 @@ function handle_TSF(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTsf(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideTsf(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -16932,6 +20333,7 @@ function handle_TSI(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -16956,6 +20358,12 @@ function handle_TSI(p: Params): string {
     try {
       if (timed) {
         rc = TSI.tsiImpl(core, startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tsi(inReal, { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TSI.tsi(inReal, { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -16972,9 +20380,16 @@ function handle_TSI(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TSI.tsi(Float32Array.from(inReal), { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.tsi(Float32Array.from(inReal), { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TSI.tsi(Float32Array.from(inReal), { firstPeriod: optInFirstPeriod, secondPeriod: optInSecondPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -16983,7 +20398,7 @@ function handle_TSI(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTsi(core, p, endIdx, inReal, optInFirstPeriod, optInSecondPeriod);
+  const rideFields = wasmEngine ? '' : rideTsi(core, p, endIdx, inReal, optInFirstPeriod, optInSecondPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17002,6 +20417,7 @@ function handle_TYPPRICE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17026,6 +20442,12 @@ function handle_TYPPRICE(p: Params): string {
     try {
       if (timed) {
         rc = TYPPRICE.typpriceImpl(core, startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.typprice({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = TYPPRICE.typprice({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17042,9 +20464,16 @@ function handle_TYPPRICE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = TYPPRICE.typprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.typprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = TYPPRICE.typprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17053,7 +20482,7 @@ function handle_TYPPRICE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideTypprice(core, p, endIdx, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideTypprice(core, p, endIdx, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17075,6 +20504,7 @@ function handle_ULTOSC(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17099,6 +20529,12 @@ function handle_ULTOSC(p: Params): string {
     try {
       if (timed) {
         rc = ULTOSC.ultoscImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ultosc({ high: inHigh, low: inLow, close: inClose }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ULTOSC.ultosc({ high: inHigh, low: inLow, close: inClose }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17115,9 +20551,16 @@ function handle_ULTOSC(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ULTOSC.ultosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.ultosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ULTOSC.ultosc({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod1: optInTimePeriod1, timePeriod2: optInTimePeriod2, timePeriod3: optInTimePeriod3, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17126,7 +20569,7 @@ function handle_ULTOSC(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideUltosc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+  const rideFields = wasmEngine ? '' : rideUltosc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17143,6 +20586,7 @@ function handle_VAR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17167,6 +20611,12 @@ function handle_VAR(p: Params): string {
     try {
       if (timed) {
         rc = VAR.varImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.var_(inReal, { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VAR.var_(inReal, { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17183,9 +20633,16 @@ function handle_VAR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VAR.var_(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.var_(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = VAR.var_(Float32Array.from(inReal), { timePeriod: optInTimePeriod, nbDev: optInNbDev, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17194,7 +20651,7 @@ function handle_VAR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVar(core, p, endIdx, inReal, optInTimePeriod, optInNbDev);
+  const rideFields = wasmEngine ? '' : rideVar(core, p, endIdx, inReal, optInTimePeriod, optInNbDev);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17210,6 +20667,7 @@ function handle_VHF(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17234,6 +20692,12 @@ function handle_VHF(p: Params): string {
     try {
       if (timed) {
         rc = VHF.vhfImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.vhf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VHF.vhf(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17250,9 +20714,16 @@ function handle_VHF(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VHF.vhf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.vhf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = VHF.vhf(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17261,7 +20732,7 @@ function handle_VHF(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVhf(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideVhf(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17279,6 +20750,7 @@ function handle_VIDYA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17303,6 +20775,12 @@ function handle_VIDYA(p: Params): string {
     try {
       if (timed) {
         rc = VIDYA.vidyaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.vidya(inReal, { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VIDYA.vidya(inReal, { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17319,9 +20797,16 @@ function handle_VIDYA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VIDYA.vidya(Float32Array.from(inReal), { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.vidya(Float32Array.from(inReal), { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = VIDYA.vidya(Float32Array.from(inReal), { timePeriod: optInTimePeriod, cmoPeriod: optInCMOPeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17330,7 +20815,7 @@ function handle_VIDYA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVidya(core, p, endIdx, inReal, optInTimePeriod, optInCMOPeriod);
+  const rideFields = wasmEngine ? '' : rideVidya(core, p, endIdx, inReal, optInTimePeriod, optInCMOPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17351,6 +20836,7 @@ function handle_VORTEX(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17375,6 +20861,13 @@ function handle_VORTEX(p: Params): string {
     try {
       if (timed) {
         rc = VORTEX.vortexImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.vortex({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outPlusVi.length;
+        out0.set(r.outPlusVi);
+        out1.set(r.outMinusVi);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VORTEX.vortex({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outPlusVi: out0, outMinusVi: out1 });
         outBegIdx.value = r.begIdx;
@@ -17391,9 +20884,17 @@ function handle_VORTEX(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VORTEX.vortex({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outPlusVi: out0, outMinusVi: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outPlusVi.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.vortex({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outPlusVi.length;
+        out0.set(r.outPlusVi);
+        out1.set(r.outMinusVi);
+      } else {
+        const r = VORTEX.vortex({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outPlusVi: out0, outMinusVi: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outPlusVi.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17402,7 +20903,7 @@ function handle_VORTEX(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVortex(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideVortex(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17423,6 +20924,7 @@ function handle_VWAP(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17447,6 +20949,12 @@ function handle_VWAP(p: Params): string {
     try {
       if (timed) {
         rc = VWAP.vwapImpl(core, startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.vwap({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VWAP.vwap({ high: inHigh, low: inLow, close: inClose, volume: inVolume }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17463,9 +20971,16 @@ function handle_VWAP(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VWAP.vwap({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length || inVolume.length !== inHigh.length, (c) => ENGINE.vwap({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = VWAP.vwap({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose), volume: Float32Array.from(inVolume) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17474,7 +20989,7 @@ function handle_VWAP(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVwap(core, p, endIdx, inHigh, inLow, inClose, inVolume);
+  const rideFields = wasmEngine ? '' : rideVwap(core, p, endIdx, inHigh, inLow, inClose, inVolume);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17492,6 +21007,7 @@ function handle_VWMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17516,6 +21032,12 @@ function handle_VWMA(p: Params): string {
     try {
       if (timed) {
         rc = VWMA.vwmaImpl(core, startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inReal.length, (c) => ENGINE.vwma(inReal, { volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = VWMA.vwma(inReal, { volume: inVolume }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17532,9 +21054,16 @@ function handle_VWMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = VWMA.vwma(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inVolume.length !== inReal.length, (c) => ENGINE.vwma(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = VWMA.vwma(Float32Array.from(inReal), { volume: Float32Array.from(inVolume) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17543,7 +21072,7 @@ function handle_VWMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideVwma(core, p, endIdx, inReal, inVolume, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideVwma(core, p, endIdx, inReal, inVolume, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17562,6 +21091,7 @@ function handle_WAD(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17586,6 +21116,12 @@ function handle_WAD(p: Params): string {
     try {
       if (timed) {
         rc = WAD.wadImpl(core, startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wad({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = WAD.wad({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17602,9 +21138,16 @@ function handle_WAD(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = WAD.wad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = WAD.wad({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17613,7 +21156,7 @@ function handle_WAD(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideWad(core, p, endIdx, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideWad(core, p, endIdx, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17636,6 +21179,7 @@ function handle_WAVETREND(p: Params): string {
   const out1 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17660,6 +21204,13 @@ function handle_WAVETREND(p: Params): string {
     try {
       if (timed) {
         rc = WAVETREND.wavetrendImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, out0, out1);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wavetrend({ high: inHigh, low: inLow, close: inClose }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outWt1.length;
+        out0.set(r.outWt1);
+        out1.set(r.outWt2);
+        rc = RetCode.SUCCESS;
       } else {
         const r = WAVETREND.wavetrend({ high: inHigh, low: inLow, close: inClose }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outWt1: out0, outWt2: out1 });
         outBegIdx.value = r.begIdx;
@@ -17676,9 +21227,17 @@ function handle_WAVETREND(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = WAVETREND.wavetrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outWt1: out0, outWt2: out1 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outWt1.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wavetrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outWt1.length;
+        out0.set(r.outWt1);
+        out1.set(r.outWt2);
+      } else {
+        const r = WAVETREND.wavetrend({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { channelPeriod: optInChannelPeriod, averagePeriod: optInAveragePeriod, signalPeriod: optInSignalPeriod, startIdx, endIdx, core, outWt1: out0, outWt2: out1 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outWt1.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17687,7 +21246,7 @@ function handle_WAVETREND(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideWavetrend(core, p, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+  const rideFields = wasmEngine ? '' : rideWavetrend(core, p, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outReal1'], [out0, out1], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17706,6 +21265,7 @@ function handle_WCLPRICE(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17730,6 +21290,12 @@ function handle_WCLPRICE(p: Params): string {
     try {
       if (timed) {
         rc = WCLPRICE.wclpriceImpl(core, startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wclprice({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = WCLPRICE.wclprice({ high: inHigh, low: inLow, close: inClose }, { startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17746,9 +21312,16 @@ function handle_WCLPRICE(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = WCLPRICE.wclprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.wclprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = WCLPRICE.wclprice({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17757,7 +21330,7 @@ function handle_WCLPRICE(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideWclprice(core, p, endIdx, inHigh, inLow, inClose);
+  const rideFields = wasmEngine ? '' : rideWclprice(core, p, endIdx, inHigh, inLow, inClose);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17777,6 +21350,7 @@ function handle_WILLR(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17801,6 +21375,12 @@ function handle_WILLR(p: Params): string {
     try {
       if (timed) {
         rc = WILLR.willrImpl(core, startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.willr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = WILLR.willr({ high: inHigh, low: inLow, close: inClose }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17817,9 +21397,16 @@ function handle_WILLR(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = WILLR.willr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length || inClose.length !== inHigh.length, (c) => ENGINE.willr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = WILLR.willr({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow), close: Float32Array.from(inClose) }, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17828,7 +21415,7 @@ function handle_WILLR(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideWillr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideWillr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17844,6 +21431,7 @@ function handle_WMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17868,6 +21456,12 @@ function handle_WMA(p: Params): string {
     try {
       if (timed) {
         rc = WMA.wmaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.wma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = WMA.wma(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -17884,9 +21478,16 @@ function handle_WMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = WMA.wma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.wma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = WMA.wma(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17895,7 +21496,7 @@ function handle_WMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideWma(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideWma(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17916,6 +21517,7 @@ function handle_ZIGZAG(p: Params): string {
   const out2 = i32Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -17940,6 +21542,14 @@ function handle_ZIGZAG(p: Params): string {
     try {
       if (timed) {
         rc = ZIGZAG.zigzagImpl(core, startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, out0, out1, out2);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.zigzag({ high: inHigh, low: inLow }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outZigZag.length;
+        out0.set(r.outZigZag);
+        out1.set(r.outTrend);
+        out2.set(r.outPivotIdx);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ZIGZAG.zigzag({ high: inHigh, low: inLow }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, startIdx, endIdx, core, outZigZag: out0, outTrend: out1, outPivotIdx: out2 });
         outBegIdx.value = r.begIdx;
@@ -17956,9 +21566,18 @@ function handle_ZIGZAG(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ZIGZAG.zigzag({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, startIdx, endIdx, core, outZigZag: out0, outTrend: out1, outPivotIdx: out2 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.outZigZag.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, inLow.length !== inHigh.length, (c) => ENGINE.zigzag({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outZigZag.length;
+        out0.set(r.outZigZag);
+        out1.set(r.outTrend);
+        out2.set(r.outPivotIdx);
+      } else {
+        const r = ZIGZAG.zigzag({ high: Float32Array.from(inHigh), low: Float32Array.from(inLow) }, { sensitivity: optInSensitivity, minTrendLength: optInMinTrendLength, startIdx, endIdx, core, outZigZag: out0, outTrend: out1, outPivotIdx: out2 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.outZigZag.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -17967,7 +21586,7 @@ function handle_ZIGZAG(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideZigzag(core, p, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength);
+  const rideFields = wasmEngine ? '' : rideZigzag(core, p, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal', 'outInteger', 'outInteger1'], [out0, out1, out2], usedFloat, elapsedNs, rideFields);
 }
 
@@ -17983,6 +21602,7 @@ function handle_ZLEMA(p: Params): string {
   const out0 = f64Out(outLen);
   const iters = benchIters(p);
   const timed = int(p, 'timed', 0) !== 0;
+  if (wasmEngine && timed) return UNSUPPORTED_MODE;
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   let rc: number = RetCode.SUCCESS;
@@ -18007,6 +21627,12 @@ function handle_ZLEMA(p: Params): string {
     try {
       if (timed) {
         rc = ZLEMA.zlemaImpl(core, startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, out0);
+      } else if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.zlema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+        rc = RetCode.SUCCESS;
       } else {
         const r = ZLEMA.zlema(inReal, { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
         outBegIdx.value = r.begIdx;
@@ -18023,9 +21649,16 @@ function handle_ZLEMA(p: Params): string {
   let usedFloat = 0;
   if (int(p, 'use_float', 0) !== 0) {
     try {
-      const r = ZLEMA.zlema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
-      outBegIdx.value = r.begIdx;
-      outNBElement.value = r.values.length;
+      if (wasmEngine) {
+        const r = engineBatch(true, false, false, (c) => ENGINE.zlema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core: c }));
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        out0.set(r.values);
+      } else {
+        const r = ZLEMA.zlema(Float32Array.from(inReal), { timePeriod: optInTimePeriod, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+      }
       rc = RetCode.SUCCESS;
     } catch (e) {
       rc = failureCode(e);
@@ -18034,7 +21667,7 @@ function handle_ZLEMA(p: Params): string {
     }
     usedFloat = 1;
   }
-  const rideFields = rideZlema(core, p, endIdx, inReal, optInTimePeriod);
+  const rideFields = wasmEngine ? '' : rideZlema(core, p, endIdx, inReal, optInTimePeriod);
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
@@ -18289,6 +21922,7 @@ function handleRequest(line: string): string {
   const req = JSON.parse(line) as { method?: unknown; params?: unknown };
   const method = String(req.method);
   const p = (typeof req.params === 'object' && req.params !== null ? req.params : {}) as Params;
+  engineTallyReset();
   const fn = FUNCTIONS.get(method);
   if (fn !== undefined) return fn(p);
   switch (method) {
@@ -18310,7 +21944,7 @@ function handleRequest(line: string): string {
     case 'abstract_for_each_func': return absForEachFunc();
     case 'TA_FunctionDescriptionXML': return absDescriptionXml();
     case 'abstract_call': return absCall(p);
-    case 'stream_verify': return handleStreamVerify(p);
+    case 'stream_verify': return wasmEngine ? UNSUPPORTED_MODE : handleStreamVerify(p);
     default: return `{"error":${JSON.stringify('Unknown method: ' + method)}}`;
   }
 }

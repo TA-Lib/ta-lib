@@ -180,8 +180,8 @@ function massiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   let count: number;
   try {
     count = w.x.massi_batch(first, last, inHighAt, inLowAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

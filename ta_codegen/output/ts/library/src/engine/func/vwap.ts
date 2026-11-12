@@ -182,8 +182,8 @@ function vwapWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   let count: number;
   try {
     count = w.x.vwap_batch(first, last, inHighAt, inLowAt, inCloseAt, inVolumeAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

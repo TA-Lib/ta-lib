@@ -141,8 +141,8 @@ function cumsumWasm(real: ArrayLike<number>, options: CumsumOptions | undefined)
   let count: number;
   try {
     count = w.x.cumsum_batch(first, last, inRealAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

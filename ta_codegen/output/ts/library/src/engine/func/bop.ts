@@ -150,8 +150,8 @@ function bopWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low
   let count: number;
   try {
     count = w.x.bop_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

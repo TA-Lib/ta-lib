@@ -30,6 +30,8 @@ ta_codegen/output/       per-language products: library/ (shipped) + tools/ (ser
                                    server from disk
   csharp/library/ + tools/         shipped TA-Lib package incl. src/metadata/
   ts/library/ + tools/             the npm package; tools/ compiles ../library/src
+  wasm/                            the WASM engine's crate over rust/library, built
+                                   by `scripts/build.py wasm` into bin/ta_lib.wasm
 ```
 
 **Hand-written library templates** live under `templates/` — the generator's own
@@ -47,6 +49,9 @@ assets, kept out of `input/` (indicator definitions only) and out of `output/`
   the only thing that runs them — `clippy --all-targets` compiles the test target
   without executing it, and `--tests` rather than `--lib` because it must also
   reach `library/tests/`.
+- `templates/wasm/runtime.rs` — the WASM crate's state and the checks every
+  export shares, copied verbatim into `output/wasm/src/`; the rest of
+  `output/wasm/` is generated.
 - `templates/c/ta_retcode.c.template` — spliced with `ta_retcode.csv`.
 - `templates/c/ta_abstract_serve.c` — abstract-serve handlers `#include`d into
   the C server.
@@ -83,6 +88,15 @@ that names no indicator.
 | `backends/docs_site.rs` | The ta-lib.org pages, written into `website/`, not `output/` |
 | `server_gen`, `bench_gen` | JSON-RPC servers; direct-call benchmark binaries |
 | `registry` | Which indicators exist, and each backend's spelling of a name |
+
+**The npm package's WASM engine.** `ts/library/src/runtime/wasm.ts` (loading,
+traps, the fall-through counter and its reasons) is hand-written, like the rest
+of `runtime/`; `src/engine/`, the per-function glue that calls it, is
+`backends/ts_engine.rs`'s. The TypeScript server's `--engine=wasm` classes every
+fall-through in one function, `expectedFallThrough` in `server_gen.rs`: a new
+reason the glue or runtime gives is a defect in ta_regtest's `tswasm` run until
+it is classified there, and it is expected only where the call's own facts
+explain it.
 
 **Emission helpers stay per backend.** Factor a repeated prologue or validation
 emitter within its own backend file, not into `backends/common.rs`: the backends

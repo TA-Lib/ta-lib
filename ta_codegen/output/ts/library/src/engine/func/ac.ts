@@ -167,8 +167,8 @@ function acWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   let count: number;
   try {
     count = w.x.ac_batch(first, last, inHighAt, inLowAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

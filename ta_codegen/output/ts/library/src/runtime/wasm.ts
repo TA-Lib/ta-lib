@@ -68,6 +68,7 @@ declare const WebAssembly: {
   readonly Module: new (bytes: Uint8Array) => WasmModule;
   readonly Instance: new (module: WasmModule, imports: object) => WasmInstance;
   readonly Memory: abstract new (...args: never[]) => WasmMemory;
+  readonly RuntimeError: abstract new (...args: never[]) => Error;
   compile(bytes: Uint8Array): Promise<WasmModule>;
   instantiate(module: WasmModule, imports: object): Promise<WasmInstance>;
 };
@@ -78,7 +79,8 @@ export type WasmBatch = (...args: number[]) => number;
 
 const BUDGET = 1 << 28;
 const HIGH_WATER = 1 << 29;
-const MAX_TRAPS = 3;
+/** @internal Calls that threw inside the module before the engine is given up. */
+export const MAX_TRAPS = 3;
 const DECLINED = -2147483648;
 /** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
@@ -120,6 +122,7 @@ let loading: Promise<EngineStatus> | null = null;
 let generation = 0;
 let fallThroughs = 0;
 let lastReason = '';
+let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
 
 /** @internal The live instance: its exports, and views over its memory that a call re-derives before use. */
@@ -206,6 +209,17 @@ export function fallThroughCount(): number {
 export function resetFallThroughs(): void {
   fallThroughs = 0;
   lastReason = '';
+  lastThrown = undefined;
+}
+
+/** @internal The reason the latest fall-through gave; `''` when none since the last reset. */
+export function lastFallThrough(): string {
+  return lastReason;
+}
+
+/** @internal What the latest call that threw inside the module threw. */
+export function lastTrapError(): unknown {
+  return lastThrown;
 }
 
 /** @internal */
@@ -465,23 +479,29 @@ export function wasmFrame(bytes: number): WasmEngine | null {
   }
   try {
     engine.base = engine.x.scratch(bytes) >>> 0;
-  } catch {
-    return trapped(engine);
+  } catch (e) {
+    return trapped(engine, e);
   }
   engine.refresh();
   return engine;
 }
 
-/** @internal A call that threw inside the module: the instance is dropped, and after MAX_TRAPS the engine. */
-export function trapped(engine: WasmEngine): null {
+/**
+ * @internal A call into the module that threw: the instance is dropped, and
+ * after MAX_TRAPS the engine. The reason is `'trap'` only for a WebAssembly
+ * trap; anything else thrown there, such as the `TypeError` of a missing
+ * export, is `'threw'`.
+ */
+export function trapped(engine: WasmEngine, error: unknown): null {
   if (live === engine) {
     live = null;
   }
+  lastThrown = error;
   traps++;
   if (traps >= MAX_TRAPS) {
     failure = 'trap';
   }
-  return fellThrough('trap');
+  return fellThrough(error instanceof WebAssembly.RuntimeError ? 'trap' : 'threw');
 }
 
 /** @internal */

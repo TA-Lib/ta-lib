@@ -161,8 +161,8 @@ function pvoWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   let count: number;
   try {
     count = w.x.pvo_batch(first, last, inVolumeAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInMAType === undefined ? Core.INTEGER_DEFAULT : optInMAType, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

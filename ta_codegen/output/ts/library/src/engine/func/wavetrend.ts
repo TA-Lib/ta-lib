@@ -186,8 +186,8 @@ function wavetrendWasm(prices: { open?: ArrayLike<number> | undefined; high: Arr
   let count: number;
   try {
     count = w.x.wavetrend_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInChannelPeriod === undefined ? Core.INTEGER_DEFAULT : optInChannelPeriod, optInAveragePeriod === undefined ? Core.INTEGER_DEFAULT : optInAveragePeriod, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, outWT1At, outWT2At, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

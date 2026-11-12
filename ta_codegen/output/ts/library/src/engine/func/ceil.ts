@@ -127,8 +127,8 @@ function ceilWasm(real: ArrayLike<number>, options: CeilOptions | undefined): Ce
   let count: number;
   try {
     count = w.x.ceil_batch(first, last, inRealAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

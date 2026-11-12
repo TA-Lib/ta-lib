@@ -167,8 +167,8 @@ function vwmaWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | 
   let count: number;
   try {
     count = w.x.vwma_batch(first, last, inRealAt, inVolumeAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

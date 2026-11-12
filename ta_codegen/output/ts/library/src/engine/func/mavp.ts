@@ -156,8 +156,8 @@ function mavpWasm(real: ArrayLike<number>, periods: ArrayLike<number>, options: 
   let count: number;
   try {
     count = w.x.mavp_batch(first, last, inRealAt, inPeriodsAt, n, optInMinPeriod === undefined ? Core.INTEGER_DEFAULT : optInMinPeriod, optInMaxPeriod === undefined ? Core.INTEGER_DEFAULT : optInMaxPeriod, optInMAType === undefined ? Core.INTEGER_DEFAULT : optInMAType, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

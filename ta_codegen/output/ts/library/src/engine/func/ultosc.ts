@@ -165,8 +165,8 @@ function ultoscWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   let count: number;
   try {
     count = w.x.ultosc_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod1 === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod1, optInTimePeriod2 === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod2, optInTimePeriod3 === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod3, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

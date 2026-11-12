@@ -154,8 +154,8 @@ function willrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   let count: number;
   try {
     count = w.x.willr_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

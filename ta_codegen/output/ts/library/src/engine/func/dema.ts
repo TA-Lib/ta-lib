@@ -140,8 +140,8 @@ function demaWasm(real: ArrayLike<number>, options: DemaOptions | undefined): De
   let count: number;
   try {
     count = w.x.dema_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

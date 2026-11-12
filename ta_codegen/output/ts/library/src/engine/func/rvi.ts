@@ -153,8 +153,8 @@ function rviWasm(real: ArrayLike<number>, options: RviOptions | undefined): RviR
   let count: number;
   try {
     count = w.x.rvi_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInStdDevPeriod === undefined ? Core.INTEGER_DEFAULT : optInStdDevPeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

@@ -161,8 +161,8 @@ function bbwWasm(real: ArrayLike<number>, options: BbwOptions | undefined): BbwR
   let count: number;
   try {
     count = w.x.bbw_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInNbDevUp === undefined ? Core.REAL_DEFAULT : optInNbDevUp, optInNbDevDn === undefined ? Core.REAL_DEFAULT : optInNbDevDn, optInMAType === undefined ? Core.INTEGER_DEFAULT : optInMAType, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

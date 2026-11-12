@@ -52,7 +52,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import check_prerequisites, LIBRARY_PREREQS
 
-LANGS = 5  # C, Rust, Java, C#, TypeScript — one --codegen tally line each
+LANGS = 6  # C, Rust, Java, C#, TypeScript, TS-WASM — one --codegen tally line each
 
 
 # Held for the life of the process: an flock lives on the descriptor, so this
@@ -301,7 +301,7 @@ def main():
         # The internal assertion is why a per-language tally is enough now:
         # ta_regtest fails itself if a leg goes uncovered.
         tally = re.findall(
-            r"^  (C|Rust|Java|C#|TypeScript): (\d+) passed, (\d+) failed, (\d+) skipped",
+            r"^  (C|Rust|Java|C#|TypeScript|TS-WASM): (\d+) passed, (\d+) failed, (\d+) skipped",
             out1, re.M)
         if len(tally) != LANGS:
             sys.exit(f"synth_gate: VACUOUS — {len(tally)} per-language tally "

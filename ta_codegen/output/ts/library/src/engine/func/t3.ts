@@ -143,8 +143,8 @@ function t3Wasm(real: ArrayLike<number>, options: T3Options | undefined): T3Resu
   let count: number;
   try {
     count = w.x.t3_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInVFactor === undefined ? Core.REAL_DEFAULT : optInVFactor, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

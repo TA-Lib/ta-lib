@@ -187,8 +187,8 @@ function ceWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   let count: number;
   try {
     count = w.x.ce_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInMultiplier === undefined ? Core.REAL_DEFAULT : optInMultiplier, outRealLongAt, outRealShortAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

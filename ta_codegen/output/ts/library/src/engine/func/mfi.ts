@@ -170,8 +170,8 @@ function mfiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.mfi_batch(first, last, inHighAt, inLowAt, inCloseAt, inVolumeAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

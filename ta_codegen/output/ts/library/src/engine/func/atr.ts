@@ -154,8 +154,8 @@ function atrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.atr_batch(first, last, inHighAt, inLowAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

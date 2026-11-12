@@ -152,8 +152,8 @@ function apoWasm(real: ArrayLike<number>, options: ApoOptions | undefined): ApoR
   let count: number;
   try {
     count = w.x.apo_batch(first, last, inRealAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInMAType === undefined ? Core.INTEGER_DEFAULT : optInMAType, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

@@ -251,8 +251,10 @@ LIBRARY_PREREQS = {
 }
 
 # The ta_codegen `--backend=` tokens, which are 1:1 with the --language= ones
-# (backends::all_names() == ["c", "rust", "java", "csharp", "ts"]).
+# (backends::all_names() == ["c", "rust", "java", "csharp", "ts"]) bar the
+# ta_regtest entries that run one backend's server another way.
 CODEGEN_BACKENDS = ("c", "rust", "java", "csharp", "ts")
+LANGUAGE_BACKEND = {"tswasm": "ts"}
 
 
 def prereqs_for_languages(lang_filter):
@@ -283,8 +285,8 @@ def backends_for_languages(lang_filter):
     missing server binary makes ta_regtest reuse a stale one and read green."""
     if not lang_filter:
         return None
-    picked = [t for t in (s.strip().lower() for s in lang_filter.split(","))
-              if t in CODEGEN_BACKENDS]
+    picked = [LANGUAGE_BACKEND.get(t, t) for t in (s.strip().lower() for s in lang_filter.split(","))]
+    picked = [t for t in picked if t in CODEGEN_BACKENDS]
     return ",".join(dict.fromkeys(picked)) if picked else None
 
 def is_wix_installed() -> bool:

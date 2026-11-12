@@ -264,7 +264,7 @@ fn the_ride_along_is_emitted_after_the_timed_region() {
         ("rust", "let elapsed_ns =", "ride_", "(&core, params", "ride_body"),
         ("java", "long elapsedNs =", "ride", "(core, json", "rideBody"),
         ("csharp", "long elapsedNs =", "Ride", "(core, p", "RideBody"),
-        ("ts", "const elapsedNs =", "const rideFields = ride", "(core, p", "rideBody"),
+        ("ts", "const elapsedNs =", "const rideFields = wasmEngine ? '' : ride", "(core, p", "rideBody"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, timer, call_prefix, call_args, inner) = probes

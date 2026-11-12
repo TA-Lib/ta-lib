@@ -159,8 +159,8 @@ function sharpeWasm(real: ArrayLike<number>, options: SharpeOptions | undefined)
   let count: number;
   try {
     count = w.x.sharpe_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInRiskFreeRate === undefined ? Core.REAL_DEFAULT : optInRiskFreeRate, optInAnnualization === undefined ? Core.REAL_DEFAULT : optInAnnualization, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

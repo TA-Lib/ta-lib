@@ -153,8 +153,8 @@ function sarWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.sar_batch(first, last, inHighAt, inLowAt, n, optInAcceleration === undefined ? Core.REAL_DEFAULT : optInAcceleration, optInMaximum === undefined ? Core.REAL_DEFAULT : optInMaximum, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

@@ -151,8 +151,8 @@ function qstickWasm(prices: { open: ArrayLike<number>; high?: ArrayLike<number> 
   let count: number;
   try {
     count = w.x.qstick_batch(first, last, inOpenAt, inCloseAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

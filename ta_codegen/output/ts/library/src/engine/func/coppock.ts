@@ -152,8 +152,8 @@ function coppockWasm(real: ArrayLike<number>, options: CoppockOptions | undefine
   let count: number;
   try {
     count = w.x.coppock_batch(first, last, inRealAt, n, optInWMAPeriod === undefined ? Core.INTEGER_DEFAULT : optInWMAPeriod, optInROC1Period === undefined ? Core.INTEGER_DEFAULT : optInROC1Period, optInROC2Period === undefined ? Core.INTEGER_DEFAULT : optInROC2Period, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

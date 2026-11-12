@@ -182,8 +182,8 @@ function alligatorWasm(prices: { open?: ArrayLike<number> | undefined; high: Arr
   let count: number;
   try {
     count = w.x.alligator_batch(first, last, inHighAt, inLowAt, n, optInJawPeriod === undefined ? Core.INTEGER_DEFAULT : optInJawPeriod, optInJawShift === undefined ? Core.INTEGER_DEFAULT : optInJawShift, optInTeethPeriod === undefined ? Core.INTEGER_DEFAULT : optInTeethPeriod, optInTeethShift === undefined ? Core.INTEGER_DEFAULT : optInTeethShift, optInLipsPeriod === undefined ? Core.INTEGER_DEFAULT : optInLipsPeriod, optInLipsShift === undefined ? Core.INTEGER_DEFAULT : optInLipsShift, outJawAt, outTeethAt, outLipsAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

@@ -162,8 +162,8 @@ function percentileWasm(real: ArrayLike<number>, options: PercentileOptions | un
   let count: number;
   try {
     count = w.x.percentile_batch(first, last, inRealAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInPercentile === undefined ? Core.REAL_DEFAULT : optInPercentile, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

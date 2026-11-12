@@ -165,8 +165,8 @@ function cdlupsidegap2crowsWasm(prices: { open: ArrayLike<number>; high: ArrayLi
   let count: number;
   try {
     count = w.x.cdlupsidegap2crows_batch(first, last, inOpenAt, inHighAt, inLowAt, inCloseAt, n, outIntegerAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

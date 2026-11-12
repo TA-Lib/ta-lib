@@ -142,7 +142,8 @@ test('a call made while ready() compiles falls through without compiling, and re
   let status: EngineStatus;
   try {
     const pending = lib.ready();
-    await started;
+    const first = await Promise.race([started.then(() => 'compile'), pending.then(() => 'settled')]);
+    assert.equal(first, 'compile', 'ready() settled without reaching WebAssembly.compile');
     assert.equal(forced(), 1);
     assert.equal(syncCompiles, 0, 'a routed call compiled the module while ready() was compiling it');
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' });

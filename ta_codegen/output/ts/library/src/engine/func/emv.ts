@@ -176,8 +176,8 @@ function emvWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   let count: number;
   try {
     count = w.x.emv_batch(first, last, inHighAt, inLowAt, inVolumeAt, n, optInTimePeriod === undefined ? Core.INTEGER_DEFAULT : optInTimePeriod, optInVolumeDivisor === undefined ? Core.REAL_DEFAULT : optInVolumeDivisor, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

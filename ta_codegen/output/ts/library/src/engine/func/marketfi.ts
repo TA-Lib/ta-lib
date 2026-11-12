@@ -156,8 +156,8 @@ function marketfiWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   let count: number;
   try {
     count = w.x.marketfi_batch(first, last, inHighAt, inLowAt, inVolumeAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

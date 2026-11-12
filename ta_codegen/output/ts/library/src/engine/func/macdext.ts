@@ -172,8 +172,8 @@ function macdextWasm(real: ArrayLike<number>, options: MacdextOptions | undefine
   let count: number;
   try {
     count = w.x.macdext_batch(first, last, inRealAt, n, optInFastPeriod === undefined ? Core.INTEGER_DEFAULT : optInFastPeriod, optInFastMAType === undefined ? Core.INTEGER_DEFAULT : optInFastMAType, optInSlowPeriod === undefined ? Core.INTEGER_DEFAULT : optInSlowPeriod, optInSlowMAType === undefined ? Core.INTEGER_DEFAULT : optInSlowMAType, optInSignalPeriod === undefined ? Core.INTEGER_DEFAULT : optInSignalPeriod, optInSignalMAType === undefined ? Core.INTEGER_DEFAULT : optInSignalMAType, outMACDAt, outMACDSignalAt, outMACDHistAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);

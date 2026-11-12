@@ -227,6 +227,17 @@ int main( int argc, char **argv )
       rideRet = TA_CODEGEN_OUTPUT_MISMATCH;
    }
 
+   {
+      int engineFailures = codegen_engine_report();
+      if( engineFailures > 0 && rideRet == TA_TEST_PASS )
+      {
+         printf( "\nFAILED: %d WASM-engine failure(s) -- a call did not run in WASM for a "
+                 "reason the engine's contract does not give (the ENGINE lines above).\n",
+                 engineFailures );
+         rideRet = TA_CODEGEN_ENGINE_FALL_THROUGH;
+      }
+   }
+
    /* Exit 0 or 1, never the ErrorNumber: the status keeps only its low 8 bits,
     * and `make check` reads 77 as SKIP and 99 as ERROR. */
    if( rideRet != TA_TEST_PASS )
@@ -1125,12 +1136,13 @@ static void printUsage(void)
       printf( "\n" );
       printf( "    --codegen[=LANG[,LANG,...]]\n" );
       printf( "       After normal tests, verify ta_codegen output against C reference.\n" );
-      printf( "       Languages: rust, c, java, csharp, ts (default: all)\n" );
+      printf( "       Languages: rust, c, java, csharp, ts, tswasm (default: all)\n" );
       printf( "       Example: --codegen=rust,java\n" );
       printf( "\n" );
       printf( "    --language=LANG[,LANG,...]\n" );
       printf( "       Filter which language servers to test with --codegen.\n" );
-      printf( "       Valid values: rust, c, java, csharp, ts (default: all)\n" );
+      printf( "       Valid values: rust, c, java, csharp, ts, tswasm (default: all)\n" );
+      printf( "       tswasm is the TypeScript server with the WASM engine forced.\n" );
       printf( "       Example: --language=c,rust\n" );
       printf( "\n" );
       printf( "       Requires language server binaries in the bin directory.\n" );
@@ -1141,7 +1153,7 @@ static void printUsage(void)
       printf( "       language server against the in-process C library on\n" );
       printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
       printf( "       with no tolerance. Honors --function and --language (rust, java,\n" );
-      printf( "       csharp, ts).\n" );
+      printf( "       csharp, ts, tswasm).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
       printf( "\n" );
       printf( "    --ref=X_Y_Z\n" );

@@ -138,8 +138,8 @@ function obvWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | u
   let count: number;
   try {
     count = w.x.obv_batch(first, last, inRealAt, inVolumeAt, n, outRealAt, outLen);
-  } catch {
-    return trapped(w);
+  } catch (e) {
+    return trapped(w, e);
   }
   if (count < 0) {
     return refused(count);
