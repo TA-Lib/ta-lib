@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  102304 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  111126 MF,CC  Test the shadow gaps and colors first, as an else-if chain of pre-checks
  *
  */
 
@@ -99,30 +100,39 @@ TA_RetCode cdlabandonedbaby(int startIdx, int endIdx,
    outIdx = 0;
    do
    {
-      if( ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
-         ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyDojiPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&        // 2nd: doji
-         ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&           // 3rd: longer than short
-         ( ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 &&                                                         // 1st white
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                          // 3rd black
-         inClose[i] < inClose[i-2] - ta_realbody(inClose[i-2], inOpen[i-2]) * optInPenetration &&                  // 3rd closes well within 1st rb
-         ta_candlegapup(inLow[i-1], inHigh[i-2]) &&                                                          // upside gap between 1st and 2nd
-         ta_candlegapdown(inHigh[i], inLow[i-1])                                                             // downside gap between 2nd and 3rd
-      )
-         ||
-         (
-         ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                                                        // 1st black
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                                           // 3rd white
-         inClose[i] > inClose[i-2] + ta_realbody(inClose[i-2], inOpen[i-2]) * optInPenetration &&                  // 3rd closes well within 1st rb
-         ta_candlegapdown(inHigh[i-1], inLow[i-2]) &&                                                        // downside gap between 1st and 2nd
-         ta_candlegapup(inLow[i], inHigh[i-1])                                                               // upside gap between 2nd and 3rd
-      )
-      )
-      )
-      {
-         outInteger[outIdx++] = ta_candlecolor(inClose[i], inOpen[i]) * 100;
+      if( ta_candlegapup(inLow[i-1], inHigh[i-2]) &&                                                          // upside gap between 1st and 2nd
+         ta_candlegapdown(inHigh[i], inLow[i-1]) &&   // downside gap between 2nd and 3rd
+         ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 &&   // 1st white
+         ta_candlecolor(inClose[i], inOpen[i]) == -1   // 3rd black
+      ) {
+         if( ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
+            ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyDojiPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&        // 2nd: doji
+            ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&           // 3rd: longer than short
+            inClose[i] < inClose[i-2] - ta_realbody(inClose[i-2], inOpen[i-2]) * optInPenetration                   // 3rd closes well within 1st rb
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i], inOpen[i]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
-      else
-      {
+      else if( ta_candlegapdown(inHigh[i-1], inLow[i-2]) &&                                                   // downside gap between 1st and 2nd
+         ta_candlegapup(inLow[i], inHigh[i-1]) &&   // upside gap between 2nd and 3rd
+         ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&   // 1st black
+         ta_candlecolor(inClose[i], inOpen[i]) == 1   // 3rd white
+      ) {
+         if( ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
+            ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyDojiPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&        // 2nd: doji
+            ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&           // 3rd: longer than short
+            inClose[i] > inClose[i-2] + ta_realbody(inClose[i-2], inOpen[i-2]) * optInPenetration                   // 3rd closes well within 1st rb
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i], inOpen[i]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
+      }
+      else {
          outInteger[outIdx++] = 0;
       }
 

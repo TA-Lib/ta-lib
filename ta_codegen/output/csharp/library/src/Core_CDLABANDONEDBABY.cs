@@ -57,6 +57,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  102304 AC     Creation
     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+    *  111126 MF,CC  Test the shadow gaps and colors first, as an else-if chain of pre-checks
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlabandonedbaby</c> consumes before it
@@ -213,21 +214,34 @@ public partial class Core
           */
          outIdx = 0;
          do {
-            if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
-                Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
-                Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 3rd black */
-                  inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-                  (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
-                  (inHigh[i] < inLow[i - 1]) ||                        /* downside gap between 2nd and 3rd */
-                 ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&         /* 3rd white */
-                  inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-                  (inHigh[i - 1] < inLow[i - 2]) &&                    /* downside gap between 1st and 2nd */
-                  (inLow[i] > inHigh[i - 1])) )                        /* upside gap between 2nd and 3rd */
+            if( (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
+                (inHigh[i] < inLow[i - 1]) &&                        /* downside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 && /* 1st white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 3rd black */
             {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
+                   inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
+            } else if( (inHigh[i - 1] < inLow[i - 2]) &&                     /* downside gap between 1st and 2nd */
+                (inLow[i] > inHigh[i - 1]) &&                         /* upside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 3rd white */
+            {
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
+                   inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
             } else {
                outInteger[outIdx++] = 0;
             }
@@ -285,21 +299,34 @@ public partial class Core
           */
          outIdx = 0;
          do {
-            if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
-                Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-                Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 3rd black */
-                  inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-                  (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
-                  (inHigh[i] < inLow[i - 1]) ||                        /* downside gap between 2nd and 3rd */
-                 ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&         /* 3rd white */
-                  inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-                  (inHigh[i - 1] < inLow[i - 2]) &&                    /* downside gap between 1st and 2nd */
-                  (inLow[i] > inHigh[i - 1])) )                        /* upside gap between 2nd and 3rd */
+            if( (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
+                (inHigh[i] < inLow[i - 1]) &&                        /* downside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 && /* 1st white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 3rd black */
             {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                   inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
+            } else if( (inHigh[i - 1] < inLow[i - 2]) &&                     /* downside gap between 1st and 2nd */
+                (inLow[i] > inHigh[i - 1]) &&                         /* upside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 3rd white */
+            {
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                   inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
             } else {
                outInteger[outIdx++] = 0;
             }
@@ -399,8 +426,18 @@ public partial class Core
          i = startIdx;
          outIdx = 0;
          do {
-            if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((double)inHigh[i - 1] - (double)inLow[i - 1])) / 1.0))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs((double)inClose[i] - (double)inOpen[i]))) / 1.0))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inClose[i] < (double)inClose[i - 2] - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inClose[i] > Math.FusedMultiplyAdd(Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
-               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            if( ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 ) {
+               if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((double)inHigh[i - 1] - (double)inLow[i - 1])) / 1.0))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs((double)inClose[i] - (double)inOpen[i]))) / 1.0))) && (double)inClose[i] < (double)inClose[i - 2] - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration ) {
+                  outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
+            } else if( ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1]) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 ) {
+               if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]))) / 1.0))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((double)inHigh[i - 1] - (double)inLow[i - 1])) / 1.0))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs((double)inClose[i] - (double)inOpen[i]))) / 1.0))) && (double)inClose[i] > Math.FusedMultiplyAdd(Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) ) {
+                  outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
             } else {
                outInteger[outIdx++] = 0;
             }
@@ -440,8 +477,18 @@ public partial class Core
          i = startIdx;
          outIdx = 0;
          do {
-            if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inClose[i] < (double)inClose[i - 2] - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration && ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inClose[i] > Math.FusedMultiplyAdd(Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) && ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1])) ) {
-               outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+            if( ((double)inLow[i - 1] > (double)inHigh[i - 2]) && ((double)inHigh[i] < (double)inLow[i - 1]) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 ) {
+               if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] < (double)inClose[i - 2] - Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) * optInPenetration ) {
+                  outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
+            } else if( ((double)inHigh[i - 1] < (double)inLow[i - 2]) && ((double)inLow[i] > (double)inHigh[i - 1]) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 ) {
+               if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (double)inClose[i] > Math.FusedMultiplyAdd(Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]), optInPenetration, (double)inClose[i - 2]) ) {
+                  outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++] = 0;
+               }
             } else {
                outInteger[outIdx++] = 0;
             }
@@ -841,21 +888,34 @@ public partial class Core
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
          int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
          double BodyShort_factor = sp.cs_BodyShort_factor;
-         if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
-             Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-             Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
-             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 &&  /* 1st white */
-               ((inClose >= inOpen) ? 1 : -1) == -1 &&                /* 3rd black */
-               inClose < sp.lag2_inClose - Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) * sp.optInPenetration && /* 3rd closes well within 1st rb */
-               (sp.lag1_inLow > sp.lag2_inHigh) &&                    /* upside gap between 1st and 2nd */
-               (inHigh < sp.lag1_inLow) ||                            /* downside gap between 2nd and 3rd */
-              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
-               ((inClose >= inOpen) ? 1 : -1) == 1 &&                 /* 3rd white */
-               inClose > Math.FusedMultiplyAdd(Math.Abs(sp.lag2_inClose - sp.lag2_inOpen), sp.optInPenetration, sp.lag2_inClose) && /* 3rd closes well within 1st rb */
-               (sp.lag1_inHigh < sp.lag2_inLow) &&                    /* downside gap between 1st and 2nd */
-               (inLow > sp.lag1_inHigh)) )                            /* upside gap between 2nd and 3rd */
+         if( (sp.lag1_inLow > sp.lag2_inHigh) &&                    /* upside gap between 1st and 2nd */
+             (inHigh < sp.lag1_inLow) &&                            /* downside gap between 2nd and 3rd */
+             ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 && /* 1st white */
+             ((inClose >= inOpen) ? 1 : -1) == -1 )                 /* 3rd black */
          {
-            cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+            if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                inClose < sp.lag2_inClose - Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) * sp.optInPenetration ) /* 3rd closes well within 1st rb */
+            {
+               cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+            } else {
+               cur_outInteger = 0;
+            }
+         } else if( (sp.lag1_inHigh < sp.lag2_inLow) &&                     /* downside gap between 1st and 2nd */
+             (inLow > sp.lag1_inHigh) &&                             /* upside gap between 2nd and 3rd */
+             ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
+             ((inClose >= inOpen) ? 1 : -1) == 1 )                   /* 3rd white */
+         {
+            if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                inClose > Math.FusedMultiplyAdd(Math.Abs(sp.lag2_inClose - sp.lag2_inOpen), sp.optInPenetration, sp.lag2_inClose) ) /* 3rd closes well within 1st rb */
+            {
+               cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+            } else {
+               cur_outInteger = 0;
+            }
          } else {
             cur_outInteger = 0;
          }
@@ -902,21 +962,34 @@ public partial class Core
       if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
          sp.ring_BodyShortTrailingIdx_derived[0] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
-      if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
-          Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-          Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
-          (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 &&  /* 1st white */
-            ((inClose >= inOpen) ? 1 : -1) == -1 &&                /* 3rd black */
-            inClose < sp.lag2_inClose - Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) * sp.optInPenetration && /* 3rd closes well within 1st rb */
-            (sp.lag1_inLow > sp.lag2_inHigh) &&                    /* upside gap between 1st and 2nd */
-            (inHigh < sp.lag1_inLow) ||                            /* downside gap between 2nd and 3rd */
-           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
-            ((inClose >= inOpen) ? 1 : -1) == 1 &&                 /* 3rd white */
-            inClose > Math.FusedMultiplyAdd(Math.Abs(sp.lag2_inClose - sp.lag2_inOpen), sp.optInPenetration, sp.lag2_inClose) && /* 3rd closes well within 1st rb */
-            (sp.lag1_inHigh < sp.lag2_inLow) &&                    /* downside gap between 1st and 2nd */
-            (inLow > sp.lag1_inHigh)) )                            /* upside gap between 2nd and 3rd */
+      if( (sp.lag1_inLow > sp.lag2_inHigh) &&                    /* upside gap between 1st and 2nd */
+          (inHigh < sp.lag1_inLow) &&                            /* downside gap between 2nd and 3rd */
+          ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == 1 && /* 1st white */
+          ((inClose >= inOpen) ? 1 : -1) == -1 )                 /* 3rd black */
       {
-         sp.cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+         if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+             inClose < sp.lag2_inClose - Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) * sp.optInPenetration ) /* 3rd closes well within 1st rb */
+         {
+            sp.cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+         } else {
+            sp.cur_outInteger = 0;
+         }
+      } else if( (sp.lag1_inHigh < sp.lag2_inLow) &&                     /* downside gap between 1st and 2nd */
+          (inLow > sp.lag1_inHigh) &&                             /* upside gap between 2nd and 3rd */
+          ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
+          ((inClose >= inOpen) ? 1 : -1) == 1 )                   /* 3rd white */
+      {
+         if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.Abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+             inClose > Math.FusedMultiplyAdd(Math.Abs(sp.lag2_inClose - sp.lag2_inOpen), sp.optInPenetration, sp.lag2_inClose) ) /* 3rd closes well within 1st rb */
+         {
+            sp.cur_outInteger = ((inClose >= inOpen) ? 1 : -1) * 100;
+         } else {
+            sp.cur_outInteger = 0;
+         }
       } else {
          sp.cur_outInteger = 0;
       }
@@ -1052,21 +1125,34 @@ public partial class Core
           */
          outIdx = 0;
          do {
-            if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
-                Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
-                Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 3rd black */
-                  inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-                  (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
-                  (inHigh[i] < inLow[i - 1]) ||                        /* downside gap between 2nd and 3rd */
-                 ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&         /* 3rd white */
-                  inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-                  (inHigh[i - 1] < inLow[i - 2]) &&                    /* downside gap between 1st and 2nd */
-                  (inLow[i] > inHigh[i - 1])) )                        /* upside gap between 2nd and 3rd */
+            if( (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
+                (inHigh[i] < inLow[i - 1]) &&                        /* downside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 && /* 1st white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 3rd black */
             {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
+                   inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++ * outStride] = 0;
+               }
+            } else if( (inHigh[i - 1] < inLow[i - 2]) &&                     /* downside gap between 1st and 2nd */
+                (inLow[i] > inHigh[i - 1]) &&                         /* upside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 3rd white */
+            {
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : (Math.Abs(inClose[i - 2] - inOpen[i - 2]))) / 1.0))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : (Math.Abs(inClose[i] - inOpen[i]))) / 1.0))) && /* 3rd: longer than short */
+                   inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++ * outStride] = 0;
+               }
             } else {
                outInteger[outIdx++ * outStride] = 0;
             }
@@ -1182,21 +1268,34 @@ public partial class Core
           */
          outIdx = 0;
          do {
-            if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
-                Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-                Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 3rd black */
-                  inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-                  (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
-                  (inHigh[i] < inLow[i - 1]) ||                        /* downside gap between 2nd and 3rd */
-                 ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-                  ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&         /* 3rd white */
-                  inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-                  (inHigh[i - 1] < inLow[i - 2]) &&                    /* downside gap between 1st and 2nd */
-                  (inLow[i] > inHigh[i - 1])) )                        /* upside gap between 2nd and 3rd */
+            if( (inLow[i - 1] > inHigh[i - 2]) &&                    /* upside gap between 1st and 2nd */
+                (inHigh[i] < inLow[i - 1]) &&                        /* downside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 && /* 1st white */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 3rd black */
             {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                   inClose[i] < inClose[i - 2] - Math.Abs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++ * outStride] = 0;
+               }
+            } else if( (inHigh[i - 1] < inLow[i - 2]) &&                     /* downside gap between 1st and 2nd */
+                (inLow[i] > inHigh[i - 1]) &&                         /* upside gap between 2nd and 3rd */
+                ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
+                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 3rd white */
+            {
+               if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+                   Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+                   Math.Abs(inClose[i] - inOpen[i]) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+                   inClose[i] > Math.FusedMultiplyAdd(Math.Abs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) ) /* 3rd closes well within 1st rb */
+               {
+                  outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+               } else {
+                  outInteger[outIdx++ * outStride] = 0;
+               }
             } else {
                outInteger[outIdx++ * outStride] = 0;
             }
