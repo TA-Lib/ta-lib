@@ -26,8 +26,8 @@ The two outputs are independent flags rather than one signed value, because an o
 
 **Outputs**
 
-* `outSwingHigh`: `line` · `display_shift` · `pattern_bool` · `zero` · `positive`
-* `outSwingLow`: `line` · `display_shift` · `pattern_bool` · `zero` · `positive`
+* `outSwingHigh`: `display_shift` · `pattern_bool` · `zero` · `positive`
+* `outSwingLow`: `display_shift` · `pattern_bool` · `zero` · `positive`
 
 :::
 

@@ -12,7 +12,7 @@ A three-candle pattern of consecutive white candles with progressively higher cl
 
 ## Chart
 
-<ta-chart src="/functions/cdl3whitesoldiers.svg" ratio="720:274" label="CDL3WHITESOLDIERS over WBTC/USDC (Uniswap v3), daily, 2021" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdl3whitesoldiers.svg" ratio="720:274" label="CDL3WHITESOLDIERS over WBTC/USDC (Uniswap v3), daily, 2021" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A three-candle pattern of consecutive white candles with progressively higher cl
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

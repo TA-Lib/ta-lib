@@ -160,6 +160,7 @@ What a function assumes of its input, and what can be said of the values it writ
 | `TA_OUT_ZERO` | 0 occurs ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_BOOL` | A two-state pattern output: 0 or non-zero ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is the pattern's call ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_COLOR` | A pattern output whose sign is the bar's color ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_WEAK` | Level 80 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_CONFIRM` | Level 200 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_BAR_INDEX` | The value is an absolute index into the input arrays. |

@@ -12,7 +12,7 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 ## Chart
 
-<ta-chart src="/functions/cdlidentical3crows.svg" ratio="720:274" label="CDLIDENTICAL3CROWS over LINK/WETH (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlidentical3crows.svg" ratio="720:274" label="CDLIDENTICAL3CROWS over LINK/WETH (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+* `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 

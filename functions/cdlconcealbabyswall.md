@@ -12,7 +12,7 @@ A four-candle pattern: two black marubozus, then a black candle that gaps down b
 
 ## Chart
 
-<ta-chart src="/functions/cdlconcealbabyswall.svg" ratio="720:274" label="CDLCONCEALBABYSWALL over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlconcealbabyswall.svg" ratio="720:274" label="CDLCONCEALBABYSWALL over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A four-candle pattern: two black marubozus, then a black candle that gaps down b
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

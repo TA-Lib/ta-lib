@@ -12,7 +12,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 ## Chart
 
-<ta-chart src="/functions/cdlhikkakemod.svg" ratio="720:274" label="CDLHIKKAKEMOD over WBTC/USDC (Uniswap v3), daily, 2022-2023" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a confirmed call (200) ringed."></ta-chart>
+<ta-chart src="/functions/cdlhikkakemod.svg" ratio="720:274" label="CDLHIKKAKEMOD over WBTC/USDC (Uniswap v3), daily, 2022-2023" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one, a confirmed call (200) with a double head."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative` · `pattern_confirm`
 
 :::
 

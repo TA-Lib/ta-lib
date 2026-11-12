@@ -12,7 +12,7 @@ Two-candle pattern: a long black candle followed by a small black candle whose r
 
 ## Chart
 
-<ta-chart src="/functions/cdlhomingpigeon.svg" ratio="720:274" label="CDLHOMINGPIGEON over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlhomingpigeon.svg" ratio="720:274" label="CDLHOMINGPIGEON over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ Two-candle pattern: a long black candle followed by a small black candle whose r
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

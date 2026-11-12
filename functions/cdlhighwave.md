@@ -12,7 +12,7 @@ Single-candle pattern: a short real body with both a very long upper and a very 
 
 ## Chart
 
-<ta-chart src="/functions/cdlhighwave.svg" ratio="720:274" label="CDLHIGHWAVE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles by sign (the candle's colour), ▲ above the high for + and ▼ below the low for −."></ta-chart>
+<ta-chart src="/functions/cdlhighwave.svg" ratio="720:274" label="CDLHIGHWAVE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as an arrow up from the bottom of the pane to below the low of every bar it flags, either sign (the candle's colour shows which)."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ Single-candle pattern: a short real body with both a very long upper and a very 
 
 **Outputs**
 
-* `outInteger`: `line` · `zero` · `positive` · `negative`
+* `outInteger`: `pattern_color` · `zero` · `positive` · `negative`
 
 :::
 

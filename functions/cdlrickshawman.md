@@ -12,7 +12,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 ## Chart
 
-<ta-chart src="/functions/cdlrickshawman.svg" ratio="720:274" label="CDLRICKSHAWMAN over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
+<ta-chart src="/functions/cdlrickshawman.svg" ratio="720:274" label="CDLRICKSHAWMAN over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as an arrow up from the bottom of the pane to below the low of every bar it flags."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bool` · `zero` · `positive`
+* `outInteger`: `pattern_bool` · `zero` · `positive`
 
 :::
 

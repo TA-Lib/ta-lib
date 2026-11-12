@@ -12,7 +12,7 @@ A two-candle pattern of two opposite-color marubozu (long body, very short shado
 
 ## Chart
 
-<ta-chart src="/functions/cdlkickingbylength.svg" ratio="720:274" label="CDLKICKINGBYLENGTH over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdlkickingbylength.svg" ratio="720:274" label="CDLKICKINGBYLENGTH over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A two-candle pattern of two opposite-color marubozu (long body, very short shado
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

@@ -2988,7 +2988,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Pattern outputs {#patterns}
 
-<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL` or `TA_OUT_PATTERN_BULL_BEAR`, or any integer output of a `TA_FUNC_FLG_CANDLESTICK` function. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+<a id="rw7"></a>**rW7** A pattern output is an output carrying `TA_OUT_PATTERN_BOOL`, `TA_OUT_PATTERN_BULL_BEAR` or `TA_OUT_PATTERN_COLOR`, exactly one of them, and no drawing style (`TA_OUT_LINE`, `TA_OUT_DOT_LINE`, `TA_OUT_DASH_LINE`, `TA_OUT_DOT` or `TA_OUT_HISTO`): a chart marks the bars it flags. Every integer output of a `TA_FUNC_FLG_CANDLESTICK` function is one. It writes 0 (no pattern) or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
 * **The values.** The flags list every value the output can write, and it writes no other:
 
@@ -3006,7 +3006,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 * **The sign.**
   * With `TA_OUT_PATTERN_BOOL` the output has two states, 0 for no pattern and non-zero for the pattern.
   * With `TA_OUT_PATTERN_BULL_BEAR` it is the pattern's call: + bullish, - bearish.
-  * With neither, it is the color of the bar the value is for: + when close >= open, - otherwise.
+  * With `TA_OUT_PATTERN_COLOR` it is the color of the bar the value is for: + when close >= open, - otherwise. It is never a call.
 
 * **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 is not a new pattern: it confirms the output's live pattern, which has the same sign. The live pattern is the output's most recent value of level 100 or 80, provided no 200 came after it: a pattern is confirmed at most once. The live pattern can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on.
 
@@ -3416,6 +3416,7 @@ What a function assumes of its input, and what can be said of the values it writ
 | `TA_OUT_ZERO` | 0 occurs ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_BOOL` | A two-state pattern output: 0 or non-zero ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is the pattern's call ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_COLOR` | A pattern output whose sign is the bar's color ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_WEAK` | Level 80 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_PATTERN_CONFIRM` | Level 200 occurs too ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_BAR_INDEX` | The value is an absolute index into the input arrays. |
@@ -3654,10 +3655,6 @@ description: >-
 # Functions
 
 All technical-analysis functions, grouped by category. Each page documents the formula, inputs, outputs, and links to the C / Rust / Java / C# / TypeScript source.
-
-## Reference data
-
-Each page charts the function at default parameters over one fixed price series (IBM, daily, 1999, the series `ta_regtest` ships), or over a synthetic input the page names for the Math Transform and Math Operators functions, and links a CSV of the inputs and every output, computed by the C library. Running TA-Lib over the CSV's own input columns from its first row reproduces the output columns. [Compare with a tolerance](/spec/versions/#tolerance) rather than bit for bit.
 
 ## Cycle Indicators
 

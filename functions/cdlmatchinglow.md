@@ -12,7 +12,7 @@ A two-candle pattern of two consecutive black (bearish) candles with equal close
 
 ## Chart
 
-<ta-chart src="/functions/cdlmatchinglow.svg" ratio="720:274" label="CDLMATCHINGLOW over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlmatchinglow.svg" ratio="720:274" label="CDLMATCHINGLOW over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A two-candle pattern of two consecutive black (bearish) candles with equal close
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 
@@ -200,4 +200,4 @@ Matching Low
 
 ## See Also
 
-CDLMATCHINGHIGH · [CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)
+[CDLHOMINGPIGEON](/functions/cdlhomingpigeon.md)

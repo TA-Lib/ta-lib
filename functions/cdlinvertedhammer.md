@@ -12,7 +12,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Chart
 
-<ta-chart src="/functions/cdlinvertedhammer.svg" ratio="720:274" label="CDLINVERTEDHAMMER over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlinvertedhammer.svg" ratio="720:274" label="CDLINVERTEDHAMMER over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

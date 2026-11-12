@@ -13,7 +13,7 @@ A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwic
 
 ## Chart
 
-<ta-chart src="/functions/cdlsticksandwich.svg" ratio="720:274" label="CDLSTICKSANDWICH over WBTC/USDC (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call."></ta-chart>
+<ta-chart src="/functions/cdlsticksandwich.svg" ratio="720:274" label="CDLSTICKSANDWICH over WBTC/USDC (Uniswap v3), daily, 2024" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -25,7 +25,7 @@ A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwic
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive`
 
 :::
 

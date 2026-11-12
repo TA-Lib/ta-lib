@@ -13,7 +13,7 @@ A three-candle pattern: a real-body-gapping candle followed by an opposite-color
 
 ## Chart
 
-<ta-chart src="/functions/cdltasukigap.svg" ratio="720:274" label="CDLTASUKIGAP over WBTC/USDC (Uniswap v3), daily, 2023" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdltasukigap.svg" ratio="720:274" label="CDLTASUKIGAP over WBTC/USDC (Uniswap v3), daily, 2023" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow up from the bottom of the pane to below the low for a bullish call and an arrow down from the top of the pane to above the high for a bearish one."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -25,7 +25,7 @@ A three-candle pattern: a real-body-gapping candle followed by an opposite-color
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `positive` · `negative`
+* `outInteger`: `pattern_bull_bear` · `zero` · `positive` · `negative`
 
 :::
 

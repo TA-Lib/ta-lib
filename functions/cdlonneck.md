@@ -12,7 +12,7 @@ A two-candle on-neck pattern: a long black candle followed by a white candle tha
 
 ## Chart
 
-<ta-chart src="/functions/cdlonneck.svg" ratio="720:274" label="CDLONNECK over LINK/WETH (Uniswap v3), daily, 2025" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call."></ta-chart>
+<ta-chart src="/functions/cdlonneck.svg" ratio="720:274" label="CDLONNECK over LINK/WETH (Uniswap v3), daily, 2025" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, an arrow down from the top of the pane to above the high for a bearish call."></ta-chart>
 
 <div class="ta-chart-links">
 
@@ -24,7 +24,7 @@ A two-candle on-neck pattern: a long black candle followed by a white candle tha
 
 **Outputs**
 
-* `outInteger`: `line` · `pattern_bull_bear` · `zero` · `negative`
+* `outInteger`: `pattern_bull_bear` · `zero` · `negative`
 
 :::
 
@@ -200,4 +200,4 @@ On-Neck Pattern, On-Neck Line
 
 ## See Also
 
-[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · CDLMEETINGLINES
+[CDLINNECK](/functions/cdlinneck.md) · [CDLTHRUSTING](/functions/cdlthrusting.md) · [CDLCOUNTERATTACK](/functions/cdlcounterattack.md)
