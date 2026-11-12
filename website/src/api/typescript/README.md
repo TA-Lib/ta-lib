@@ -1,6 +1,6 @@
 ---
 title: TypeScript Core API
-description: "ta-lib for TypeScript and JavaScript: a pure TypeScript port compiled to standard ES modules, with no WASM and no native addon, indicators as functions over typed arrays, bit-identical to the reference C library apart from last-bit rounding in the math library."
+description: "ta-lib for TypeScript and JavaScript: a native port compiled to standard ES modules, with no native addon, indicators as functions over typed arrays, bit-identical to the reference C library apart from last-bit rounding in the math library. WebAssembly-accelerated, with automatic TypeScript fallback."
 toc: false
 ---
 
@@ -11,6 +11,10 @@ The TypeScript library is not on npm yet. Until it is, build it from source ([2.
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>
+
+<blockquote>
+<p><a href="#wasm">2.1 WebAssembly</a></p>
+</blockquote>
 
 <p><a href="#ta_func">3.0 Calling into TA-Lib</a></p>
 
@@ -36,7 +40,7 @@ The TypeScript library is not on npm yet. Until it is, build it from source ([2.
 
 ## 1.0 Introduction {#intro}
 
-The TypeScript library is a native port of TA-Lib: pure TypeScript compiled to standard ES modules, with no WASM, no native addon and no dependencies. Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
+The TypeScript library is a native port of TA-Lib: TypeScript compiled to standard ES modules, with no native addon and no dependencies. WebAssembly-accelerated, with automatic TypeScript fallback ([2.1](#wasm)). Every indicator is a function exported by the `ta-lib` package. It reads its series from arrays you pass in, returns its results in typed arrays, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), the JavaScript engine's `Math` functions can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -51,12 +55,14 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 
 ## 2.0 Add it to your project {#build}
 
-The package is not on npm yet. Until it is, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib):
+The package is not on npm yet. Until it is, build it from a clone of the [repository](https://github.com/TA-Lib/ta-lib), with Rust installed for the WebAssembly engine:
 
 ```bash
+scripts/build.py wasm
 cd ta_codegen/output/ts
 npm ci
 node_modules/.bin/tsc -p library
+node ../../../scripts/ts_wasm_bytes.mjs library
 ```
 
 Then depend on the built directory from your project's `package.json`:
@@ -68,6 +74,22 @@ Then depend on the built directory from your project's `package.json`:
 ```
 
 The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
+
+### 2.1 WebAssembly {#wasm}
+
+WebAssembly-accelerated, with automatic TypeScript fallback. The `ta-lib` entry runs each batch call in its WebAssembly engine or in TypeScript, choosing by function and series length, and the results are the same either way: bit for bit on finite inputs, with the exception in [1.0](#intro) unchanged.
+
+There is nothing to configure. In Node.js, Bun and Deno the engine loads on the first call that uses it. In a browser it loads once you call `ready()`, and calls made before that run in TypeScript:
+
+```ts
+import { ready } from 'ta-lib';
+
+const { engine, reason } = await ready();   // 'wasm', or 'js' and the reason
+```
+
+Where WebAssembly or the CPU feature the engine needs is unavailable, or a Content-Security-Policy forbids WebAssembly, the package runs its TypeScript code and raises no error. `ta-lib/js` is the same API with WebAssembly never loaded, for a page with a strict Content-Security-Policy or a bundle-size budget. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` is 1 while the engine runs and 0 otherwise, and `'wasm.reason'` says why ([run-time information](/spec/abstract/#runtime-info)).
+
+Streaming calls run in TypeScript today.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 

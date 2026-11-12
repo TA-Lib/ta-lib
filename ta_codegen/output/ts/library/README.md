@@ -1,15 +1,16 @@
 # TA-Lib for TypeScript and JavaScript
 
-[TA-Lib](https://ta-lib.org), the widely used technical-analysis library, as pure TypeScript
+[TA-Lib](https://ta-lib.org), the widely used technical-analysis library, as TypeScript
 compiled to standard ES modules: 200+ indicators covering moving averages, momentum
 oscillators (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR), volume, Hilbert
 Transform cycle analysis, statistics, price transforms and candlestick patterns.
+WebAssembly-accelerated, with automatic TypeScript fallback.
 
 Every function is generated from the same canonical definitions as the C library and is
 bit-identical to the C reference implementation over the same inputs, except where a
 calculation calls a transcendental math function such as `exp` or `log`: the JavaScript
 engine's `Math` functions can round their result differently from the C library in the last
-bit, which is beyond TA-Lib's control. No WASM, no native addon, no dependencies.
+bit, which is beyond TA-Lib's control. No native addon, no dependencies.
 
 ## Install
 
@@ -69,6 +70,29 @@ import { CoreBuilder, ema, FuncUnstId } from 'ta-lib';
 const core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 10).build();
 const { begIdx, values } = ema(close, { timePeriod: 30, core });
 ```
+
+## WebAssembly
+
+Each batch call runs in a WebAssembly engine or in TypeScript, chosen by function and series
+length, with the same results either way: bit for bit on finite inputs, with the exception
+above unchanged.
+
+Nothing to configure. In Node, Bun and Deno the engine loads on the first call that uses it.
+In a browser, one `await ready()` turns it on; calls made before that run in TypeScript.
+
+```ts
+import { ready } from 'ta-lib';
+
+const { engine, reason } = await ready(); // 'wasm', or 'js' and the reason
+```
+
+Where WebAssembly or the CPU feature the engine needs is unavailable, or a page's
+Content-Security-Policy forbids it, the package runs its TypeScript code with no error.
+`ta-lib/js` is the same API with WebAssembly never loaded, for strict-CSP pages and size
+budgets. `getRuntimeInfo('wasm.engine')` from `ta-lib/metadata` says which engine is running:
+1 for WebAssembly, 0 for TypeScript.
+
+Streaming calls run in TypeScript today.
 
 ## Live data
 
