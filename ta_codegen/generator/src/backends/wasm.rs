@@ -137,7 +137,7 @@ fn render_manifest(version: &str) -> String {
         "[package]\nname = \"ta-lib-wasm\"\nversion = \"{version}\"\nedition = \"2021\"\npublish = false\n\n\
          [lib]\ncrate-type = [\"cdylib\"]\npath = \"src/lib.rs\"\n\n\
          [dependencies]\nta-lib = {{ path = \"../rust/library\" }}\n\n\
-         [profile.release]\nopt-level = 3\nlto = \"fat\"\ncodegen-units = 1\npanic = \"abort\"\n\n\
+         [profile.release]\nopt-level = 3\nlto = \"fat\"\ncodegen-units = 1\npanic = \"abort\"\nstrip = true\n\n\
          [workspace]\n"
     )
 }

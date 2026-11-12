@@ -16,7 +16,7 @@
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
 #   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript libraries (cargo)
-#   scripts/build.py wasm           Build bin/ta_lib.wasm and check its instructions (cargo)
+#   scripts/build.py wasm           Build and check bin/ta_lib.wasm (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -380,8 +380,8 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
 
 WASM_TARGET = 'wasm32-unknown-unknown'
 # The no-vectorize flags are load-bearing for values, not a performance choice.
-WASM_RUSTFLAGS = ('-C target-feature=+simd128,+relaxed-simd '
-                  '-C no-vectorize-loops -C no-vectorize-slp')
+WASM_RUSTFLAGS = ['-C', 'target-feature=+simd128,+relaxed-simd',
+                  '-C', 'no-vectorize-loops', '-C', 'no-vectorize-slp']
 
 def build_wasm(root_dir: str) -> int:
     """Builds bin/ta_lib.wasm from the committed crate and checks it."""
@@ -399,7 +399,14 @@ def build_wasm(root_dir: str) -> int:
               f"from the repository root.", flush=True)
         return 1
     crate = os.path.join(root_dir, 'ta_codegen', 'output', 'wasm')
-    env = dict(JOBS.env, RUSTFLAGS=WASM_RUSTFLAGS)
+    # Panic locations embed source paths; the shipped module must not carry the build machine's.
+    rustflags = WASM_RUSTFLAGS + [f'--remap-path-prefix={root_dir}=/ta-lib']
+    env = dict(JOBS.env, CARGO_ENCODED_RUSTFLAGS='\x1f'.join(rustflags))
+    env.pop('RUSTFLAGS', None)
+    out = os.path.join(root_dir, 'bin', 'ta_lib.wasm')
+    # Whatever fails below, no earlier module stays behind looking fresher than the sources.
+    if os.path.exists(out):
+        os.remove(out)
     try:
         subprocess.run(['cargo', 'build', '--release', '--target', WASM_TARGET,
                         '--manifest-path', os.path.join(crate, 'Cargo.toml')],
@@ -407,12 +414,15 @@ def build_wasm(root_dir: str) -> int:
     except subprocess.CalledProcessError:
         return 1
     built = os.path.join(crate, 'target', WASM_TARGET, 'release', 'ta_lib_wasm.wasm')
-    out = os.path.join(root_dir, 'bin', 'ta_lib.wasm')
+    staged = out + '.tmp'
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    shutil.copyfile(built, out)
-    print(f"  {os.path.relpath(out, root_dir)}: {os.path.getsize(out)} bytes", flush=True)
-    return subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'check_wasm_module.py'),
-                           out]).returncode
+    shutil.copyfile(built, staged)
+    os.replace(staged, out)
+    rc = subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'check_wasm_module.py'),
+                         out]).returncode
+    if rc:
+        os.remove(out)
+    return rc
 
 def build_ref(root_dir: str, build_dir: str, jobs: int, versions, build_only: bool) -> int:
     """Builds the serve of every selected member of ta_ref/ (all by default),
