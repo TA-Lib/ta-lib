@@ -374,9 +374,7 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
     return 0
 
 WASM_TARGET = 'wasm32-unknown-unknown'
-# no-vectorize is load-bearing: with relaxed-simd on, LLVM turns vectorised
-# float selects into relaxed min/max, whose NaN and signed-zero answers vary by
-# engine. check_wasm_module.py fails the build if one appears.
+# The no-vectorize flags are load-bearing for values, not a performance choice.
 WASM_RUSTFLAGS = ('-C target-feature=+simd128,+relaxed-simd '
                   '-C no-vectorize-loops -C no-vectorize-slp')
 
@@ -717,7 +715,6 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/ts/library/src/func/sma.ts',
     'ta_codegen/output/ts/library/src/engine/func/sma.ts',
     'ta_codegen/output/wasm/src/lib.rs',
-    'ta_codegen/output/wasm/exports.json',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',
     'ta_codegen/output/java/tools/TaCodegenServe.java',
     'ta_codegen/output/csharp/tools/TaCodegenServe.cs',

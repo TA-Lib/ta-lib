@@ -46,7 +46,7 @@
  */
 
 
-import { float64 } from './checks.ts';
+import { float64, isOptionsObject } from './checks.ts';
 import { Core } from './core.ts';
 
 /** @internal */
@@ -80,9 +80,14 @@ const BUDGET = 1 << 28;
 const HIGH_WATER = 1 << 29;
 const MAX_TRAPS = 3;
 const DECLINED = -2147483648;
+/** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
 const NO_OPTIONS = Object.freeze({});
+/** A typed array's own element count, which an overridden `length` property cannot change. */
+const typedLength = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array.prototype), 'length')!.get as (
+  this: unknown,
+) => number;
 
 /**
  * Why the default entry runs its batch calls in TypeScript:
@@ -94,7 +99,7 @@ const NO_OPTIONS = Object.freeze({});
  * - `'instantiate'`: the engine compiled but could not be instantiated.
  * - `'fma'`: this runtime does not fuse the multiply-add the engine relies on, so
  *   its values would differ from the TypeScript engine's.
- * - `'trap'`: the engine failed during calls more than once and was given up.
+ * - `'trap'`: the engine failed during calls too many times and was given up.
  */
 export type EngineReason = 'not-loaded' | 'unavailable' | 'compile' | 'instantiate' | 'fma' | 'trap';
 
@@ -115,6 +120,7 @@ let loading: Promise<EngineStatus> | null = null;
 let generation = 0;
 let fallThroughs = 0;
 let lastReason = '';
+let highWater = HIGH_WATER;
 
 /** @internal The live instance: its exports, and views over its memory that a call re-derives before use. */
 export class WasmEngine {
@@ -173,7 +179,7 @@ export class WasmEngine {
 
   /** Linear memory never shrinks: an instance past the high-water mark is dropped once its results are copied out. */
   done(): void {
-    if (live === this && this.memory.buffer.byteLength > HIGH_WATER) {
+    if (live === this && this.memory.buffer.byteLength > highWater) {
       live = null;
     }
   }
@@ -216,6 +222,13 @@ export function resetEngine(): void {
   traps = 0;
   loading = null;
   generation++;
+}
+
+/** @internal Sets the linear-memory size past which an instance is dropped after its call; returns the previous one. */
+export function setHighWater(bytes: number): number {
+  const previous = highWater;
+  highWater = bytes;
+  return previous;
 }
 
 /** @internal */
@@ -266,7 +279,6 @@ async function load(): Promise<void> {
     if (epoch !== generation) {
       return;
     }
-    source ??= base64;
   }
   let module: WasmModule;
   let instance: WasmInstance;
@@ -329,7 +341,6 @@ function current(): WasmEngine | null {
   return adopt(instance);
 }
 
-/** The probe's operands are read from an array so that no compiler sees them as constants. */
 function adopt(instance: WasmInstance): WasmEngine | null {
   const x = instance.exports;
   const memory = x.memory;
@@ -377,16 +388,12 @@ export function strictFallThrough(funcName: string, _accepted: unknown): never {
   throw new StrictFallThrough(funcName, lastReason);
 }
 
-/** @internal An omitted options object, or a plain one; `null` for anything else. */
+/** @internal An omitted options object, or one `ta-lib/js` accepts; `null` for anything else. */
 export function routedOptions<T extends object>(options: T | undefined): T | null {
   if (options === undefined) {
     return NO_OPTIONS as T;
   }
-  if (typeof options !== 'object' || options === null) {
-    return null;
-  }
-  const proto: unknown = Object.getPrototypeOf(options);
-  return proto === Object.prototype || proto === null ? options : null;
+  return isOptionsObject(options) ? options : null;
 }
 
 /** @internal */
@@ -410,7 +417,18 @@ export function seriesLength(x: unknown): number {
     return -1;
   }
   const n: unknown = (x as { length?: unknown }).length;
-  return typeof n === 'number' && (n | 0) === n && n >= 0 && n <= Core.INDEX_MAX + 1 ? n : -1;
+  if (typeof n !== 'number' || (n | 0) !== n || n < 0 || n > Core.INDEX_MAX + 1) {
+    return -1;
+  }
+  return ArrayBuffer.isView(x) && ownLength(x) !== n ? -1 : n;
+}
+
+function ownLength(x: object): number {
+  try {
+    return typedLength.call(x);
+  } catch {
+    return -1;
+  }
 }
 
 /**
@@ -430,7 +448,7 @@ export function routedSeries(x: unknown, n: number): Float64Array | null {
   } catch {
     return null;
   }
-  return ArrayBuffer.isView(a) && a.length === n ? a : null;
+  return ArrayBuffer.isView(a) && ownLength(a) === n ? a : null;
 }
 
 /**

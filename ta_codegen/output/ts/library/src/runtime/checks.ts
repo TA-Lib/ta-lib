@@ -354,6 +354,11 @@ export function badSink(funcName: string, className: string): TALibError {
 
 const NO_OPTIONS = Object.freeze({});
 
+/** @internal What {@link optionsOf} accepts as an options object. */
+export function isOptionsObject(options: unknown): options is object {
+  return typeof options === 'object' && options !== null && !Array.isArray(options) && !ArrayBuffer.isView(options);
+}
+
 /**
  * @internal The options object of a public call: an omitted one has every
  * default. `null`, a primitive or an array is a caller error, not a request for
@@ -364,7 +369,7 @@ export function optionsOf<T extends object>(funcName: string, options: T | undef
   if (options === undefined) {
     return NO_OPTIONS as T;
   }
-  if (typeof options !== 'object' || options === null || Array.isArray(options) || ArrayBuffer.isView(options)) {
+  if (!isOptionsObject(options)) {
     const got = Array.isArray(options) ? 'an array' : ArrayBuffer.isView(options) ? 'a typed array or DataView' : show(options);
     throw new TALibError(RetCode.BAD_PARAM, `${funcName}: options must be a plain object, got ${got}`);
   }

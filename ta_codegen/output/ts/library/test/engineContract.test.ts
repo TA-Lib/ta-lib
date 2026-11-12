@@ -221,6 +221,70 @@ test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entr
   assert.equal(r.fellThrough, 0);
 });
 
+test('a Float64Array whose length property claims more elements than it has falls through', () => {
+  check('prime', () => ema(new Float64Array(400).fill(12345.5)), () => js.ema(new Float64Array(400).fill(12345.5)));
+  const a = Float64Array.from({ length: 10 }, (_, i) => i + 1);
+  Object.defineProperty(a, 'length', { value: 100 });
+  const r = check('length 100 over 10', () => routed.sma(a, { timePeriod: 5 }), () => js.sma(a, { timePeriod: 5 }));
+  assert.equal(r.fellThrough, 1);
+});
+
+test('a Float64Array whose length claims fewer elements than it has falls through, and later calls are unharmed', () => {
+  const b = new Float64Array(100_000).fill(-1e300);
+  Object.defineProperty(b, 'length', { value: 10 });
+  const r = check('length 10 over 100000', () => routed.sma(b, { timePeriod: 3 }), () => js.sma(b, { timePeriod: 3 }));
+  assert.equal(r.fellThrough, 1);
+  class Short extends Float64Array {}
+  Object.defineProperty(Short.prototype, 'length', { get: () => 10 });
+  const c = Short.from(close);
+  assert.equal(check('subclass length getter', () => routed.sma(c, { timePeriod: 3 }), () => js.sma(c, { timePeriod: 3 })).fellThrough, 1);
+  assert.equal(check('after', () => macd(close), () => js.macd(close)).fellThrough, 0);
+});
+
+test('the routed path accepts exactly the options objects ta-lib/js accepts', () => {
+  class Options {
+    timePeriod = 9;
+  }
+  const shapes: [string, unknown][] = [
+    ['plain object', { timePeriod: 9 }],
+    ['null-prototype object', Object.assign(Object.create(null) as object, { timePeriod: 9 })],
+    ['class instance', new Options()],
+    ['frozen object', Object.freeze({ timePeriod: 9 })],
+    ['array', [9]],
+    ['typed array', new Float64Array(3)],
+    ['null', null],
+    ['function', () => 9],
+    ['Proxy', new Proxy({ timePeriod: 9 }, {})],
+  ];
+  let accepted = 0;
+  for (const [where, options] of shapes) {
+    const opts = options as Parameters<typeof ema>[1];
+    const r = check(where, () => ema(close, opts), () => js.ema(close, opts));
+    const jsAccepts = r.got.error === undefined;
+    assert.equal(hooks.routedOptions(opts) !== null, jsAccepts, `${where}: the routed predicate disagrees with ta-lib/js`);
+    assert.equal(r.fellThrough, jsAccepts ? 0 : 1, where);
+    if (jsAccepts) accepted++;
+  }
+  assert.equal(accepted, 5);
+});
+
+test('an instance past the high-water mark is dropped after its call, and the next call still answers in WASM', () => {
+  assert.equal(check('warm-up', () => ema(close), () => js.ema(close)).fellThrough, 0);
+  assert.ok(hooks.wasmMemoryBytes() > 0);
+  const previous = hooks.setHighWater(0);
+  try {
+    for (const where of ['past the mark', 'after the reset']) {
+      assert.equal(check(where, () => ema(close, { timePeriod: 12 }), () => js.ema(close, { timePeriod: 12 })).fellThrough, 0, where);
+      assert.equal(hooks.wasmMemoryBytes(), 0, `${where}: the instance was kept`);
+    }
+  } finally {
+    hooks.setHighWater(previous);
+  }
+  assert.equal(check('below the mark', () => ema(close), () => js.ema(close)).fellThrough, 0);
+  assert.ok(hooks.wasmMemoryBytes() > 0);
+  assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
+});
+
 test('the two entries export the same names, and only the default entry has ready', async () => {
   const names = Object.keys(js).sort();
   assert.deepEqual(Object.keys(routed).sort(), [...names, 'ready'].sort());

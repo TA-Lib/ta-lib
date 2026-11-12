@@ -115,3 +115,49 @@ test('ready() imports the bytes and resolves to the WASM engine', async () => {
     hooks.setEngineMode('table');
   }
 });
+
+test('a call made while ready() compiles falls through without compiling, and ready() still ends in WASM', async () => {
+  type Api = { Module: unknown; compile: (bytes: Uint8Array) => Promise<unknown> };
+  const wasm = (globalThis as unknown as { WebAssembly: Api }).WebAssembly;
+  const { Module, compile } = wasm;
+  let syncCompiles = 0;
+  let release!: () => void;
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let compiling!: () => void;
+  const started = new Promise<void>((resolve) => {
+    compiling = resolve;
+  });
+  hooks.resetEngine();
+  wasm.Module = function refused(): never {
+    syncCompiles++;
+    throw new RangeError('WebAssembly.Module is disallowed on the main thread for a module this size');
+  };
+  wasm.compile = async (bytes: Uint8Array): Promise<unknown> => {
+    compiling();
+    await released;
+    return compile.call(wasm, bytes);
+  };
+  let status: EngineStatus;
+  try {
+    const pending = lib.ready();
+    await started;
+    assert.equal(forced(), 1);
+    assert.equal(syncCompiles, 0, 'a routed call compiled the module while ready() was compiling it');
+    assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' });
+    release();
+    status = await pending;
+  } finally {
+    wasm.Module = Module;
+    wasm.compile = compile;
+  }
+  assert.deepEqual(status, { engine: 'wasm', reason: null });
+  hooks.setEngineMode('strict');
+  try {
+    const got = lib.ema(close, { timePeriod: 12 });
+    assert.equal(bits(got.values), bits(js.ema(close, { timePeriod: 12 }).values));
+  } finally {
+    hooks.setEngineMode('table');
+  }
+});

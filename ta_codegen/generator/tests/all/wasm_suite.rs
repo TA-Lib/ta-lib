@@ -26,6 +26,13 @@ fn signature(text: &str, name: &str) -> Vec<(String, String)> {
         .collect()
 }
 
+/// The text of the export `<name>`, from its `fn` line to the line closing it.
+fn export_body<'a>(lib: &'a str, name: &str) -> &'a str {
+    let head = format!(" fn {name}(\n");
+    let start = lib.find(&head).unwrap_or_else(|| panic!("no `fn {name}(`"));
+    &lib[start..start + lib[start..].find("\n}\n").unwrap()]
+}
+
 /// The argument names of the `CORE.<snake>(...)` call in an export.
 fn call_args(lib: &str, snake: &str) -> Vec<String> {
     let head = format!("answer(CORE.{snake}(");
@@ -38,14 +45,11 @@ fn wasm_exports_exactly_the_functions_no_call_of_which_is_transcendental() {
     let funcs = corpus();
     let enums = load_enums();
     let lib = wasm::render_lib(&funcs, &enums);
-    let json: serde_json::Value = serde_json::from_str(&wasm::render_exports_json(&funcs, &enums)).unwrap();
 
     let exported: BTreeSet<String> = lib
         .lines()
         .filter_map(|l| l.strip_prefix("pub unsafe extern \"C\" fn ")?.strip_suffix('(').map(str::to_string))
         .collect();
-    let described: BTreeSet<String> =
-        json["functions"].as_array().unwrap().iter().map(|f| f["export"].as_str().unwrap().to_string()).collect();
     let (plain, flagged): (Vec<&FuncDef>, Vec<&FuncDef>) =
         funcs.iter().partition(|f| !f.flags.iter().any(|x| x == wasm::TRANSCENDENTAL_FLAG));
     let want: BTreeSet<String> =
@@ -54,9 +58,6 @@ fn wasm_exports_exactly_the_functions_no_call_of_which_is_transcendental() {
     assert!(!plain.is_empty() && !flagged.is_empty(), "{} exported, {} withheld", plain.len(), flagged.len());
     assert_eq!(plain.len() + flagged.len(), funcs.len());
     assert_eq!(exported, want, "lib.rs exports");
-    assert_eq!(described, want, "exports.json functions");
-    let withheld: BTreeSet<&str> = json["withheld"].as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect();
-    assert_eq!(withheld, flagged.iter().map(|f| f.name.as_str()).collect());
 }
 
 #[test]
@@ -64,9 +65,6 @@ fn wasm_export_parameters_match_the_rust_public_signature() {
     let funcs = corpus();
     let enums = load_enums();
     let lib = wasm::render_lib(&funcs, &enums);
-    let json: serde_json::Value = serde_json::from_str(&wasm::render_exports_json(&funcs, &enums)).unwrap();
-    let described: BTreeMap<&str, &serde_json::Value> =
-        json["functions"].as_array().unwrap().iter().map(|f| (f["name"].as_str().unwrap(), f)).collect();
     let abi = |t: &str| -> String {
         match t {
             "&[f64]" => "*const f64".into(),
@@ -91,13 +89,6 @@ fn wasm_export_parameters_match_the_rust_public_signature() {
         assert_eq!(got, want, "{}: export parameters", func.name);
         let names: Vec<String> = rust_sig.iter().map(|(n, _)| n.clone()).collect();
         assert_eq!(call_args(&lib, &snake), names, "{}: call arguments", func.name);
-
-        let d = described[func.name.as_str()];
-        let listed: Vec<String> = ["inputs", "params", "outputs"]
-            .iter()
-            .flat_map(|k| d[*k].as_array().unwrap().iter().map(|p| p["name"].as_str().unwrap().to_string()))
-            .collect();
-        assert_eq!(listed, names[2..], "{}: exports.json order", func.name);
         checked += 1;
     }
     assert!(checked > 0);
@@ -171,6 +162,7 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
     }
     assert!(arms_seen > 0, "no switch arm matched an enum member: the label spelling changed");
 
+    let lib = wasm::render_lib(&funcs, &enums);
     let mut params = 0;
     for func in wasm::exported(&funcs) {
         for opt in &func.optional_inputs {
@@ -183,7 +175,38 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
             let want = reaching.get(e).cloned().unwrap_or_default();
             assert!(!want.is_empty(), "{e}: no member reaches a transcendental function");
             assert_eq!(declined, want, "{}.{}: declined members", func.name, opt.name);
+            let emitted = export_body(&lib, &format!("{}_batch", backends::common::snake_words(&func.name)));
+            let all: Vec<String> = wasm::declined_values(opt, &funcs, &enums).iter().map(i32::to_string).collect();
+            let guard = format!("enum_param({}, &[{}])", opt.name, all.join(", "));
+            assert!(emitted.contains(&guard), "{}: lib.rs does not decline with `{guard}`", func.name);
         }
     }
     assert!(params > 0);
+}
+
+/// A routing-table entry, which the shipped table has none of. Under the
+/// threshold the call must go to `./js` without counting a fall-through (the
+/// strict gates read the counter) and without taking a frame (which loads the
+/// engine); from the threshold on it must route in table mode.
+#[test]
+fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
+    let funcs = corpus();
+    let enums = load_enums();
+    let sma = funcs.iter().find(|f| f.name == "SMA").unwrap();
+    let text = backends::ts_engine::render_routed(sma, &enums, make_registry(), Some(37));
+    assert!(text.contains("\nconst WASM_FROM_BARS = 37;\n"), "{text}");
+    let public = &text[text.find("export function sma(").unwrap()..text.find("function smaWasm(").unwrap()];
+    assert!(!public.contains("engineRoute.mode !== 0"), "a tabled function routes in table mode:\n{public}");
+    let body = &text[text.find("function smaWasm(").unwrap()..];
+    let gate = "  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {\n    return null;\n  }\n";
+    let at = body.find(gate).unwrap_or_else(|| panic!("no threshold check:\n{body}"));
+    assert_eq!(body.matches("WASM_FROM_BARS").count(), 1, "{body}");
+    assert!(body.find("const n = seriesLength(").unwrap() < at);
+    assert!(at < body.find("wasmFrame(").unwrap(), "the threshold check is below wasmFrame:\n{body}");
+    assert_eq!(body[..at].matches("fellThrough(").count(), 1, "only an empty input counts above the threshold check:\n{body}");
+    assert!(body[..at].contains("if (n < 1) {\n    return fellThrough('input');"), "{body}");
+
+    let untabled = backends::ts_engine::render_routed(sma, &enums, make_registry(), None);
+    assert!(!untabled.contains("WASM_FROM_BARS"));
+    assert!(untabled.contains("  if (engineRoute.mode !== 0) {\n"));
 }

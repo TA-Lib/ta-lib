@@ -37,8 +37,10 @@ root `global.json` pins, or a later patch of its band when the pin is not
 installed. Keep `rollForward` at `patch`: every other value but `disable`
 prefers a newer installed SDK over the pin, so CI would build with whichever
 newer SDK the runner has, and a different compiler can change the DLL.
-TypeScript needs **Node `>=22.18` and npm**: TypeScript and `@types/node` come
-from the committed `ta_codegen/output/ts/package-lock.json` through `npm ci`,
+TypeScript needs **Node `>=22.18`, npm and the Rust `wasm32-unknown-unknown`
+target**, which `rust-toolchain.toml` lists so rustup installs it with the pinned
+toolchain. TypeScript and `@types/node` come from the committed
+`ta_codegen/output/ts/package-lock.json` through `npm ci`,
 which the build runs itself whenever the lockfile's hash differs from the
 `node_modules` stamp, so only the first run needs the network. Never call bare
 `tsc` or `npx tsc` there: before `npm ci`, npx fetches an unrelated package named

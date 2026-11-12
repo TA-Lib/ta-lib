@@ -38,11 +38,6 @@ pub extern "C" fn scratch(bytes: usize) -> *mut f64 {
     buf.as_mut_ptr()
 }
 
-#[no_mangle]
-pub extern "C" fn scratch_capacity() -> usize {
-    SCRATCH.lock().unwrap_or_else(PoisonError::into_inner).len() * size_of::<f64>()
-}
-
 /// `a * b + c` on run-time operands, through the instruction the crate's fused
 /// sites use. Both arms must stay those of `fmadd!` in
 /// `templates/rust/c_math.rs`, or the load check vouches for another one.

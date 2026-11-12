@@ -33,6 +33,8 @@ RELAXED = {
     0x113: 'i32x4.relaxed_dot_i8x16_i7x16_add_s',
 }
 ALLOWED = 0x107
+SIMD_UNASSIGNED = {0x9a, 0xa2, 0xa5, 0xa6, 0xaf, 0xb0, 0xb2, 0xb3, 0xb4, 0xbb,
+                   0xc2, 0xc5, 0xc6, 0xcf, 0xd0, 0xd2, 0xd3, 0xd4, 0xe2, 0xee}
 
 
 class Reader:
@@ -128,14 +130,16 @@ def instruction(r, relaxed):
             r.byte()
         elif sub in RELAXED:
             relaxed[sub] = relaxed.get(sub, 0) + 1
-        elif sub > 0xff:
+        elif sub > 0xff or sub in SIMD_UNASSIGNED:
             raise ValueError(f'unknown opcode 0xfd {sub:#x} at offset {r.pos}')
     elif op == 0xfe:
         sub = r.u()
         if sub == 0x03:
             r.byte()
-        else:
+        elif sub <= 0x02 or 0x10 <= sub <= 0x4e:
             r.memarg()
+        else:
+            raise ValueError(f'unknown opcode 0xfe {sub:#x} at offset {r.pos}')
     elif op in (0x00, 0x01, 0x05, 0x0b, 0x0f, 0x19, 0x1a, 0x1b, 0xd1) or 0x45 <= op <= 0xc4:
         pass
     else:
