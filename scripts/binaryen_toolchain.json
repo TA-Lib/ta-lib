@@ -1,0 +1,11 @@
+{
+  "version": "133",
+  "tar_gz_sha256": {
+    "aarch64-linux": "89c07ea56faf38d0fbecf36ca8ec0721756716185f265b568e133d427f299bf8",
+    "arm64-macos": "ad66da82ac13f163e424b1643f16c6dfcccc98b5966296b43e52d3cab04f84a8",
+    "arm64-windows": "492a8e1847a0be1554bb9a7f384227981d60bc013aedc02d8ba1372c3943178c",
+    "x86_64-linux": "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489",
+    "x86_64-macos": "13a9b90be775c6389ce3d1f879cb8627bea56708ba8c122983941d53a8199b95",
+    "x86_64-windows": "17a2cbeac6b5693c5fbafab3838d3c65fd9c1eb38b05f5baec6c657e8c84995b"
+  }
+}

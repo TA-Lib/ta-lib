@@ -39,13 +39,17 @@ prefers a newer installed SDK over the pin, so CI would build with whichever
 newer SDK the runner has, and a different compiler can change the DLL.
 TypeScript needs **Node `>=22.18`, npm and the Rust `wasm32-unknown-unknown`
 target**, which `rust-toolchain.toml` lists so rustup installs it with the pinned
-toolchain. TypeScript and `@types/node` come from the committed
+toolchain. `scripts/build.py wasm` also runs Binaryen's `wasm-opt`, which
+`scripts/binaryen_toolchain.py` downloads, verifies and caches on first use.
+TypeScript, `@types/node` and esbuild come from the committed
 `ta_codegen/output/ts/package-lock.json` through `npm ci`,
 which the build runs itself whenever the lockfile's hash differs from the
 `node_modules` stamp, so only the first run needs the network. Never call bare
 `tsc` or `npx tsc` there: before `npm ci`, npx fetches an unrelated package named
 `tsc`. `build-libraries --backend=ts` tests the tarball `npm pack` makes, installed
-in a throwaway project. `scripts/node_toolchain.py <major>` supplies a pinned,
+in a throwaway project; `scripts/ts_browser_check.py` runs it in a headless
+Chrome or Chromium, found on `PATH` or named by `TA_BROWSER`, and fails without
+one. `scripts/node_toolchain.py <major>` supplies a pinned,
 verified Node of each CI major on a machine without one.
 
 Correctness is verified against three baselines: the in-process C library, which
