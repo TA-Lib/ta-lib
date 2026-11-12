@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/stc.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic,
  * each pass smoothed by half. Bounded 0 to 100, read against 25 and 75: turning up
@@ -96,19 +98,17 @@ export * from '../../func/stc.ts';
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  */
 export function stc(real: ArrayLike<number>, options?: StcOptions): StcResult {
-  if (engineRoute.mode !== 0) {
-    let routed: StcResult | null;
-    try {
-      routed = stcWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('STC', stcJs(real, options));
-    }
+  let routed: StcResult | null;
+  try {
+    routed = stcWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('STC', stcJs(real, options));
   }
   return stcJs(real, options);
 }
@@ -117,6 +117,9 @@ function stcWasm(real: ArrayLike<number>, options: StcOptions | undefined): StcR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

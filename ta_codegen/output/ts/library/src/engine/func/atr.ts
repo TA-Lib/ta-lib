@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/atr.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Wilder-smoothed average of the True Range over a period, measuring price
  * volatility regardless of direction. Higher ATR means greater volatility; no
@@ -86,19 +88,17 @@ export * from '../../func/atr.ts';
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
 export function atr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AtrOptions): AtrResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AtrResult | null;
-    try {
-      routed = atrWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ATR', atrJs(prices, options));
-    }
+  let routed: AtrResult | null;
+  try {
+    routed = atrWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ATR', atrJs(prices, options));
   }
   return atrJs(prices, options);
 }
@@ -113,6 +113,9 @@ function atrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlharamicross.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * A two-candle reversal pattern: a long real body followed by a doji whose real
  * body is contained within the first candle's real body (the doji variant of the
@@ -93,19 +95,17 @@ export * from '../../func/cdlharamicross.ts';
  * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
  */
 export function cdlharamicross(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamicrossOptions): CdlharamicrossResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlharamicrossResult | null;
-    try {
-      routed = cdlharamicrossWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHARAMICROSS', cdlharamicrossJs(prices, options));
-    }
+  let routed: CdlharamicrossResult | null;
+  try {
+    routed = cdlharamicrossWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHARAMICROSS', cdlharamicrossJs(prices, options));
   }
   return cdlharamicrossJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdlharamicrossWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

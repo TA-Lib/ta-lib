@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/macd.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Moving Average Convergence/Divergence: the difference between a fast and a slow
  * EMA of the input, plus an EMA-smoothed signal line and their histogram. MACD
@@ -94,19 +96,17 @@ export * from '../../func/macd.ts';
  * @see [`apo`](https://ta-lib.org/functions/apo)
  */
 export function macd(real: ArrayLike<number>, options?: MacdOptions): MacdResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MacdResult | null;
-    try {
-      routed = macdWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MACD', macdJs(real, options));
-    }
+  let routed: MacdResult | null;
+  try {
+    routed = macdWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MACD', macdJs(real, options));
   }
   return macdJs(real, options);
 }
@@ -115,6 +115,9 @@ function macdWasm(real: ArrayLike<number>, options: MacdOptions | undefined): Ma
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMacd !== undefined || o.outMacdSignal !== undefined || o.outMacdHist !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/percentb.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at
  * the lower band and 1 at the upper band. Values below 0 or above 1 mean the input
@@ -97,19 +99,17 @@ export * from '../../func/percentb.ts';
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  */
 export function percentb(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PercentbResult | null;
-    try {
-      routed = percentbWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PERCENTB', percentbJs(real, options));
-    }
+  let routed: PercentbResult | null;
+  try {
+    routed = percentbWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PERCENTB', percentbJs(real, options));
   }
   return percentbJs(real, options);
 }
@@ -118,6 +118,9 @@ function percentbWasm(real: ArrayLike<number>, options: PercentbOptions | undefi
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

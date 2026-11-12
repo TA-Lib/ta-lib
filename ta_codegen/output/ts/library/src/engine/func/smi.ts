@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/smi.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Stochastic Momentum Index: where the close sits relative to the **midpoint** of
  * the recent high/low range, double-smoothed. Lane's stochastic measures the close
@@ -111,19 +113,17 @@ export * from '../../func/smi.ts';
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
 export function smi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SmiOptions): SmiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SmiResult | null;
-    try {
-      routed = smiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SMI', smiJs(prices, options));
-    }
+  let routed: SmiResult | null;
+  try {
+    routed = smiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SMI', smiJs(prices, options));
   }
   return smiJs(prices, options);
 }
@@ -138,6 +138,9 @@ function smiWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outSmi !== undefined || o.outSmiSignal !== undefined) {

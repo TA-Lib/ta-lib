@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/wavetrend.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * WaveTrend Oscillator: how far the typical price sits from its own exponential
  * average, divided by an exponential average of that distance and by Lambert's CCI
@@ -115,19 +117,17 @@ export * from '../../func/wavetrend.ts';
  * @see [`tsi`](https://ta-lib.org/functions/tsi)
  */
 export function wavetrend(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WavetrendOptions): WavetrendResult {
-  if (engineRoute.mode !== 0) {
-    let routed: WavetrendResult | null;
-    try {
-      routed = wavetrendWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('WAVETREND', wavetrendJs(prices, options));
-    }
+  let routed: WavetrendResult | null;
+  try {
+    routed = wavetrendWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('WAVETREND', wavetrendJs(prices, options));
   }
   return wavetrendJs(prices, options);
 }
@@ -142,6 +142,9 @@ function wavetrendWasm(prices: { open?: ArrayLike<number> | undefined; high: Arr
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outWt1 !== undefined || o.outWt2 !== undefined) {

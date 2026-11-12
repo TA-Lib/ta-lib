@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/sar.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that
  * accelerates toward price via an acceleration factor. Signals trend direction and
@@ -88,19 +90,17 @@ export * from '../../func/sar.ts';
  * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
  */
 export function sar(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarOptions): SarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: SarResult | null;
-    try {
-      routed = sarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('SAR', sarJs(prices, options));
-    }
+  let routed: SarResult | null;
+  try {
+    routed = sarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('SAR', sarJs(prices, options));
   }
   return sarJs(prices, options);
 }
@@ -114,6 +114,9 @@ function sarWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

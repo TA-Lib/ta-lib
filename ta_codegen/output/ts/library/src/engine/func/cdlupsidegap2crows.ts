@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlupsidegap2crows.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A three-candle bearish reversal pattern: a long white candle, then a small black
  * candle gapping up (a gap between the real bodies), then a black candle that
@@ -97,19 +99,17 @@ export * from '../../func/cdlupsidegap2crows.ts';
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
 export function cdlupsidegap2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdlupsidegap2crowsResult | null;
-    try {
-      routed = cdlupsidegap2crowsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLUPSIDEGAP2CROWS', cdlupsidegap2crowsJs(prices, options));
-    }
+  let routed: Cdlupsidegap2crowsResult | null;
+  try {
+    routed = cdlupsidegap2crowsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLUPSIDEGAP2CROWS', cdlupsidegap2crowsJs(prices, options));
   }
   return cdlupsidegap2crowsJs(prices, options);
 }
@@ -125,6 +125,9 @@ function cdlupsidegap2crowsWasm(prices: { open: ArrayLike<number>; high: ArrayLi
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

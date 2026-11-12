@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rvir.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of his
  * own indicator, which runs the 1993 RVI over the daily highs and again over the
@@ -95,19 +97,17 @@ export * from '../../func/rvir.ts';
  * @see [`atr`](https://ta-lib.org/functions/atr)
  */
 export function rvir(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RvirOptions): RvirResult {
-  if (engineRoute.mode !== 0) {
-    let routed: RvirResult | null;
-    try {
-      routed = rvirWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('RVIR', rvirJs(prices, options));
-    }
+  let routed: RvirResult | null;
+  try {
+    routed = rvirWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('RVIR', rvirJs(prices, options));
   }
   return rvirJs(prices, options);
 }
@@ -121,6 +121,9 @@ function rvirWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

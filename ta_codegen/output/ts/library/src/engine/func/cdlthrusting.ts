@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlthrusting.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * A two-candle pattern: a long black candle followed by a white candle that opens
  * below the prior low and closes back into the prior body but below its midpoint.
@@ -97,19 +99,17 @@ export * from '../../func/cdlthrusting.ts';
  * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  */
 export function cdlthrusting(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlthrustingOptions): CdlthrustingResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlthrustingResult | null;
-    try {
-      routed = cdlthrustingWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLTHRUSTING', cdlthrustingJs(prices, options));
-    }
+  let routed: CdlthrustingResult | null;
+  try {
+    routed = cdlthrustingWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLTHRUSTING', cdlthrustingJs(prices, options));
   }
   return cdlthrustingJs(prices, options);
 }
@@ -125,6 +125,9 @@ function cdlthrustingWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

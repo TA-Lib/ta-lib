@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlshootingstar.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Single-candle pattern: a small real body with a long upper shadow and
  * little-to-no lower shadow that gaps up from the prior candle's real body.
@@ -94,19 +96,17 @@ export * from '../../func/cdlshootingstar.ts';
  * @see [`cdlgravestonedoji`](https://ta-lib.org/functions/cdlgravestonedoji)
  */
 export function cdlshootingstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlshootingstarOptions): CdlshootingstarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlshootingstarResult | null;
-    try {
-      routed = cdlshootingstarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLSHOOTINGSTAR', cdlshootingstarJs(prices, options));
-    }
+  let routed: CdlshootingstarResult | null;
+  try {
+    routed = cdlshootingstarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLSHOOTINGSTAR', cdlshootingstarJs(prices, options));
   }
   return cdlshootingstarJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdlshootingstarWasm(prices: { open: ArrayLike<number>; high: ArrayLike<
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

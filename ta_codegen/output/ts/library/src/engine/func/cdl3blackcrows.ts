@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3blackcrows.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * A four-bar pattern: a white candle followed by three consecutive black (down)
  * candles with successively lower closes, each opening inside the prior black's
@@ -95,19 +97,17 @@ export * from '../../func/cdl3blackcrows.ts';
  * @see [`cdladvanceblock`](https://ta-lib.org/functions/cdladvanceblock)
  */
 export function cdl3blackcrows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult {
-  if (engineRoute.mode !== 0) {
-    let routed: Cdl3blackcrowsResult | null;
-    try {
-      routed = cdl3blackcrowsWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDL3BLACKCROWS', cdl3blackcrowsJs(prices, options));
-    }
+  let routed: Cdl3blackcrowsResult | null;
+  try {
+    routed = cdl3blackcrowsWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDL3BLACKCROWS', cdl3blackcrowsJs(prices, options));
   }
   return cdl3blackcrowsJs(prices, options);
 }
@@ -123,6 +123,9 @@ function cdl3blackcrowsWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

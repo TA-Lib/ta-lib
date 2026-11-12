@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlconcealbabyswall.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * A four-candle pattern: two black marubozus, then a black candle that gaps down
  * but pokes its upper shadow into the prior body, then a larger black candle fully
@@ -96,19 +98,17 @@ export * from '../../func/cdlconcealbabyswall.ts';
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
  */
 export function cdlconcealbabyswall(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlconcealbabyswallResult | null;
-    try {
-      routed = cdlconcealbabyswallWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLCONCEALBABYSWALL', cdlconcealbabyswallJs(prices, options));
-    }
+  let routed: CdlconcealbabyswallResult | null;
+  try {
+    routed = cdlconcealbabyswallWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLCONCEALBABYSWALL', cdlconcealbabyswallJs(prices, options));
   }
   return cdlconcealbabyswallJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdlconcealbabyswallWasm(prices: { open: ArrayLike<number>; high: ArrayL
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

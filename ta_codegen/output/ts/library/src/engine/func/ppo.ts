@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/ppo.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Percentage Price Oscillator: the difference between a fast and slow moving
  * average expressed as a percentage of the slow MA. A normalized (scale-invariant)
@@ -98,19 +100,17 @@ export * from '../../func/ppo.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function ppo(real: ArrayLike<number>, options?: PpoOptions): PpoResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PpoResult | null;
-    try {
-      routed = ppoWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PPO', ppoJs(real, options));
-    }
+  let routed: PpoResult | null;
+  try {
+    routed = ppoWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PPO', ppoJs(real, options));
   }
   return ppoJs(real, options);
 }
@@ -119,6 +119,9 @@ function ppoWasm(real: ArrayLike<number>, options: PpoOptions | undefined): PpoR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

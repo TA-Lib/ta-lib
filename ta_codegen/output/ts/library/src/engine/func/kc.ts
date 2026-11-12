@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/kc.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Keltner Channels: three overlap lines around price. The centre line is an
  * exponential moving average of the typical price; the outer bands sit a multiple
@@ -110,19 +112,17 @@ export * from '../../func/kc.ts';
  * @see [`accbands`](https://ta-lib.org/functions/accbands)
  */
 export function kc(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KcOptions): KcResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KcResult | null;
-    try {
-      routed = kcWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KC', kcJs(prices, options));
-    }
+  let routed: KcResult | null;
+  try {
+    routed = kcWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KC', kcJs(prices, options));
   }
   return kcJs(prices, options);
 }
@@ -137,6 +137,9 @@ function kcWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outUpperBand !== undefined || o.outMiddleBand !== undefined || o.outLowerBand !== undefined) {

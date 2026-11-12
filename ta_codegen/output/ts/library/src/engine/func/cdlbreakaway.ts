@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlbreakaway.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * A five-candle reversal pattern: a long first candle, a same-colored second
  * candle that gaps away from it by its real body, two more candles extending the
@@ -98,19 +100,17 @@ export * from '../../func/cdlbreakaway.ts';
  * @see [`cdl3linestrike`](https://ta-lib.org/functions/cdl3linestrike)
  */
 export function cdlbreakaway(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlbreakawayOptions): CdlbreakawayResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlbreakawayResult | null;
-    try {
-      routed = cdlbreakawayWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLBREAKAWAY', cdlbreakawayJs(prices, options));
-    }
+  let routed: CdlbreakawayResult | null;
+  try {
+    routed = cdlbreakawayWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLBREAKAWAY', cdlbreakawayJs(prices, options));
   }
   return cdlbreakawayJs(prices, options);
 }
@@ -126,6 +126,9 @@ function cdlbreakawayWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

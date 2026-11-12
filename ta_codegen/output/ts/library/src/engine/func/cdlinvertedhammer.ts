@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlinvertedhammer.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Single-candle pattern: a small real body with a long upper shadow and
  * little-to-no lower shadow that gaps down from the prior candle. A hit flags a
@@ -94,19 +96,17 @@ export * from '../../func/cdlinvertedhammer.ts';
  * @see [`cdlhangingman`](https://ta-lib.org/functions/cdlhangingman)
  */
 export function cdlinvertedhammer(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlinvertedhammerResult | null;
-    try {
-      routed = cdlinvertedhammerWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLINVERTEDHAMMER', cdlinvertedhammerJs(prices, options));
-    }
+  let routed: CdlinvertedhammerResult | null;
+  try {
+    routed = cdlinvertedhammerWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLINVERTEDHAMMER', cdlinvertedhammerJs(prices, options));
   }
   return cdlinvertedhammerJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdlinvertedhammerWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

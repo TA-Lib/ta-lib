@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlonneck.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A two-candle on-neck pattern: a long black candle followed by a white candle
  * that opens below the prior candle's low and closes right at that low. Bearish
@@ -93,19 +95,17 @@ export * from '../../func/cdlonneck.ts';
  * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  */
 export function cdlonneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlonneckResult | null;
-    try {
-      routed = cdlonneckWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLONNECK', cdlonneckJs(prices, options));
-    }
+  let routed: CdlonneckResult | null;
+  try {
+    routed = cdlonneckWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLONNECK', cdlonneckJs(prices, options));
   }
   return cdlonneckJs(prices, options);
 }
@@ -121,6 +121,9 @@ function cdlonneckWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

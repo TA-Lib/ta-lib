@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlmarubozu.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Single candle with a long real body and no/very-short upper and lower shadows,
  * so open and close sit at the range extremes. Bullish (white) or bearish (black)
@@ -91,19 +93,17 @@ export * from '../../func/cdlmarubozu.ts';
  * @see [`cdlbelthold`](https://ta-lib.org/functions/cdlbelthold)
  */
 export function cdlmarubozu(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmarubozuOptions): CdlmarubozuResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlmarubozuResult | null;
-    try {
-      routed = cdlmarubozuWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLMARUBOZU', cdlmarubozuJs(prices, options));
-    }
+  let routed: CdlmarubozuResult | null;
+  try {
+    routed = cdlmarubozuWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLMARUBOZU', cdlmarubozuJs(prices, options));
   }
   return cdlmarubozuJs(prices, options);
 }
@@ -119,6 +119,9 @@ function cdlmarubozuWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numb
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

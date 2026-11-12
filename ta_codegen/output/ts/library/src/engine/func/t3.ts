@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/t3.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Tillson's T3: a low-lag moving average built from six chained EMAs, combined via
  * volume-factor-weighted coefficients. Not the same as EMA3, despite both being
@@ -86,19 +88,17 @@ export * from '../../func/t3.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function t3(real: ArrayLike<number>, options?: T3Options): T3Result {
-  if (engineRoute.mode !== 0) {
-    let routed: T3Result | null;
-    try {
-      routed = t3Wasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('T3', t3Js(real, options));
-    }
+  let routed: T3Result | null;
+  try {
+    routed = t3Wasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('T3', t3Js(real, options));
   }
   return t3Js(real, options);
 }
@@ -107,6 +107,9 @@ function t3Wasm(real: ArrayLike<number>, options: T3Options | undefined): T3Resu
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

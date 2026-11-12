@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlgravestonedoji.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Single-candle doji whose open and close sit at the low of the day, leaving a
  * long upper shadow and no lower shadow. A doji variant whose bullish/bearish
@@ -96,19 +98,17 @@ export * from '../../func/cdlgravestonedoji.ts';
  * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
  */
 export function cdlgravestonedoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlgravestonedojiResult | null;
-    try {
-      routed = cdlgravestonedojiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLGRAVESTONEDOJI', cdlgravestonedojiJs(prices, options));
-    }
+  let routed: CdlgravestonedojiResult | null;
+  try {
+    routed = cdlgravestonedojiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLGRAVESTONEDOJI', cdlgravestonedojiJs(prices, options));
   }
   return cdlgravestonedojiJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdlgravestonedojiWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

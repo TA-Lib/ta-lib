@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhangingman.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Single candle with a small real body, a long lower shadow, and little/no upper
  * shadow, sitting at or near the highs of the prior candle. Bearish reversal
@@ -95,19 +97,17 @@ export * from '../../func/cdlhangingman.ts';
  * @see [`cdltakuri`](https://ta-lib.org/functions/cdltakuri)
  */
 export function cdlhangingman(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhangingmanOptions): CdlhangingmanResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlhangingmanResult | null;
-    try {
-      routed = cdlhangingmanWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLHANGINGMAN', cdlhangingmanJs(prices, options));
-    }
+  let routed: CdlhangingmanResult | null;
+  try {
+    routed = cdlhangingmanWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLHANGINGMAN', cdlhangingmanJs(prices, options));
   }
   return cdlhangingmanJs(prices, options);
 }
@@ -123,6 +123,9 @@ function cdlhangingmanWasm(prices: { open: ArrayLike<number>; high: ArrayLike<nu
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

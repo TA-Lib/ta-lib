@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/stochrsi.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead of
  * price, measuring where RSI sits within its recent min/max range. Oscillates
@@ -93,19 +95,17 @@ export * from '../../func/stochrsi.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function stochrsi(real: ArrayLike<number>, options?: StochrsiOptions): StochrsiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: StochrsiResult | null;
-    try {
-      routed = stochrsiWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('STOCHRSI', stochrsiJs(real, options));
-    }
+  let routed: StochrsiResult | null;
+  try {
+    routed = stochrsiWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('STOCHRSI', stochrsiJs(real, options));
   }
   return stochrsiJs(real, options);
 }
@@ -114,6 +114,9 @@ function stochrsiWasm(real: ArrayLike<number>, options: StochrsiOptions | undefi
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outFastK !== undefined || o.outFastD !== undefined) {

@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlcounterattack.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * A two-candle pattern of two long, opposite-colored real bodies whose closing
  * prices are (nearly) equal. Emits a bullish signal when the second candle is
@@ -99,19 +101,17 @@ export * from '../../func/cdlcounterattack.ts';
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
 export function cdlcounterattack(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlcounterattackOptions): CdlcounterattackResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlcounterattackResult | null;
-    try {
-      routed = cdlcounterattackWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLCOUNTERATTACK', cdlcounterattackJs(prices, options));
-    }
+  let routed: CdlcounterattackResult | null;
+  try {
+    routed = cdlcounterattackWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLCOUNTERATTACK', cdlcounterattackJs(prices, options));
   }
   return cdlcounterattackJs(prices, options);
 }
@@ -127,6 +127,9 @@ function cdlcounterattackWasm(prices: { open: ArrayLike<number>; high: ArrayLike
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

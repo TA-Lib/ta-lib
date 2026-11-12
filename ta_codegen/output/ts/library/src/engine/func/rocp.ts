@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rocp.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Rate of change expressed as a fraction of the price timePeriod bars ago.
  * Normalized and centered at zero (positive or negative). >0 rising vs N bars ago,
@@ -89,19 +91,17 @@ export * from '../../func/rocp.ts';
  * @see [`mom`](https://ta-lib.org/functions/mom)
  */
 export function rocp(real: ArrayLike<number>, options?: RocpOptions): RocpResult {
-  if (engineRoute.mode !== 0) {
-    let routed: RocpResult | null;
-    try {
-      routed = rocpWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ROCP', rocpJs(real, options));
-    }
+  let routed: RocpResult | null;
+  try {
+    routed = rocpWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ROCP', rocpJs(real, options));
   }
   return rocpJs(real, options);
 }
@@ -110,6 +110,9 @@ function rocpWasm(real: ArrayLike<number>, options: RocpOptions | undefined): Ro
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

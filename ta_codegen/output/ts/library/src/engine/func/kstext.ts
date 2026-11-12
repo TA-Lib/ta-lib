@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kstext.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Know Sure Thing with selectable moving averages: Pring's weighted sum of four
  * smoothed rates of change, with a signal line. One MA type smooths the four legs
@@ -116,19 +118,17 @@ export * from '../../func/kstext.ts';
  * @see [`coppock`](https://ta-lib.org/functions/coppock)
  */
 export function kstext(real: ArrayLike<number>, options?: KstextOptions): KstextResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KstextResult | null;
-    try {
-      routed = kstextWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KSTEXT', kstextJs(real, options));
-    }
+  let routed: KstextResult | null;
+  try {
+    routed = kstextWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KSTEXT', kstextJs(real, options));
   }
   return kstextJs(real, options);
 }
@@ -137,6 +137,9 @@ function kstextWasm(real: ArrayLike<number>, options: KstextOptions | undefined)
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outKst !== undefined || o.outKstSignal !== undefined) {

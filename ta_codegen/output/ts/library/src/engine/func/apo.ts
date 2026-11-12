@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/apo.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Absolute Price Oscillator: the difference between a fast and a slow moving
  * average of the input, in price units. Measures short- vs long-term momentum.
@@ -94,19 +96,17 @@ export * from '../../func/apo.ts';
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
 export function apo(real: ArrayLike<number>, options?: ApoOptions): ApoResult {
-  if (engineRoute.mode !== 0) {
-    let routed: ApoResult | null;
-    try {
-      routed = apoWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('APO', apoJs(real, options));
-    }
+  let routed: ApoResult | null;
+  try {
+    routed = apoWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('APO', apoJs(real, options));
   }
   return apoJs(real, options);
 }
@@ -115,6 +115,9 @@ function apoWasm(real: ArrayLike<number>, options: ApoOptions | undefined): ApoR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

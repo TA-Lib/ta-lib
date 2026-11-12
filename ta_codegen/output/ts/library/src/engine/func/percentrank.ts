@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/percentrank.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Percent Rank: where the current value sits inside the distribution of the values
  * that came before it, as a percentage. Each bar is compared against the
@@ -101,19 +103,17 @@ export * from '../../func/percentrank.ts';
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
 export function percentrank(real: ArrayLike<number>, options?: PercentrankOptions): PercentrankResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PercentrankResult | null;
-    try {
-      routed = percentrankWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PERCENTRANK', percentrankJs(real, options));
-    }
+  let routed: PercentrankResult | null;
+  try {
+    routed = percentrankWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PERCENTRANK', percentrankJs(real, options));
   }
   return percentrankJs(real, options);
 }
@@ -122,6 +122,9 @@ function percentrankWasm(real: ArrayLike<number>, options: PercentrankOptions | 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/gator.ts';
 
+const WASM_FROM_BARS = 30;
+
 /**
  * Bill Williams' Gator Oscillator: how far apart the three Alligator lines are, as
  * two histograms. The upper bars are the gap between Jaw and Teeth, the lower bars
@@ -108,19 +110,17 @@ export * from '../../func/gator.ts';
  * @see [`rma`](https://ta-lib.org/functions/rma)
  */
 export function gator(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: GatorOptions): GatorResult {
-  if (engineRoute.mode !== 0) {
-    let routed: GatorResult | null;
-    try {
-      routed = gatorWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('GATOR', gatorJs(prices, options));
-    }
+  let routed: GatorResult | null;
+  try {
+    routed = gatorWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('GATOR', gatorJs(prices, options));
   }
   return gatorJs(prices, options);
 }
@@ -134,6 +134,9 @@ function gatorWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLi
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outUpper !== undefined || o.outLower !== undefined) {

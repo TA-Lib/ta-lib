@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/percentile.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Rolling percentile by the nearest-rank method: sort the trailing window
  * ascending and report the value whose 1-based ordinal rank is the P-th percentile
@@ -105,19 +107,17 @@ export * from '../../func/percentile.ts';
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
 export function percentile(real: ArrayLike<number>, options?: PercentileOptions): PercentileResult {
-  if (engineRoute.mode !== 0) {
-    let routed: PercentileResult | null;
-    try {
-      routed = percentileWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('PERCENTILE', percentileJs(real, options));
-    }
+  let routed: PercentileResult | null;
+  try {
+    routed = percentileWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('PERCENTILE', percentileJs(real, options));
   }
   return percentileJs(real, options);
 }
@@ -126,6 +126,9 @@ function percentileWasm(real: ArrayLike<number>, options: PercentileOptions | un
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

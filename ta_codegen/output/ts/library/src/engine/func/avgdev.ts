@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/avgdev.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Rolling average absolute deviation of a series from its own simple moving
  * average over the last N periods. Measures dispersion around the window mean.
@@ -82,19 +84,17 @@ export * from '../../func/avgdev.ts';
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
 export function avgdev(real: ArrayLike<number>, options?: AvgdevOptions): AvgdevResult {
-  if (engineRoute.mode !== 0) {
-    let routed: AvgdevResult | null;
-    try {
-      routed = avgdevWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('AVGDEV', avgdevJs(real, options));
-    }
+  let routed: AvgdevResult | null;
+  try {
+    routed = avgdevWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('AVGDEV', avgdevJs(real, options));
   }
   return avgdevJs(real, options);
 }
@@ -103,6 +103,9 @@ function avgdevWasm(real: ArrayLike<number>, options: AvgdevOptions | undefined)
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

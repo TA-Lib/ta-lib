@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/obv.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * On Balance Volume: a running cumulative total of volume, added on up-price bars
  * and subtracted on down-price bars. Relates volume flow to price direction.
@@ -79,19 +81,17 @@ export * from '../../func/obv.ts';
  * ```
  */
 export function obv(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvResult {
-  if (engineRoute.mode !== 0) {
-    let routed: ObvResult | null;
-    try {
-      routed = obvWasm(real, prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('OBV', obvJs(real, prices, options));
-    }
+  let routed: ObvResult | null;
+  try {
+    routed = obvWasm(real, prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('OBV', obvJs(real, prices, options));
   }
   return obvJs(real, prices, options);
 }
@@ -104,6 +104,9 @@ function obvWasm(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | u
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

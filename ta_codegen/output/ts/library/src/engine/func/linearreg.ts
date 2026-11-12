@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/linearreg.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Least-squares straight-line fit over the last timePeriod bars, reported as the
  * fitted line value at the window endpoint (b + m*(period-1)).
@@ -81,19 +83,17 @@ export * from '../../func/linearreg.ts';
  * @see [`tsf`](https://ta-lib.org/functions/tsf)
  */
 export function linearreg(real: ArrayLike<number>, options?: LinearregOptions): LinearregResult {
-  if (engineRoute.mode !== 0) {
-    let routed: LinearregResult | null;
-    try {
-      routed = linearregWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('LINEARREG', linearregJs(real, options));
-    }
+  let routed: LinearregResult | null;
+  try {
+    routed = linearregWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('LINEARREG', linearregJs(real, options));
   }
   return linearregJs(real, options);
 }
@@ -102,6 +102,9 @@ function linearregWasm(real: ArrayLike<number>, options: LinearregOptions | unde
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

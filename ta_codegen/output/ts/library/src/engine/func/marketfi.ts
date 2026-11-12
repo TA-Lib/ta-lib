@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/marketfi.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the price
  * range a bar travelled per unit of volume traded — how much movement the market
@@ -92,19 +94,17 @@ export * from '../../func/marketfi.ts';
  * @see [`pvi`](https://ta-lib.org/functions/pvi)
  */
 export function marketfi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: MarketfiOptions): MarketfiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: MarketfiResult | null;
-    try {
-      routed = marketfiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('MARKETFI', marketfiJs(prices, options));
-    }
+  let routed: MarketfiResult | null;
+  try {
+    routed = marketfiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('MARKETFI', marketfiJs(prices, options));
   }
   return marketfiJs(prices, options);
 }
@@ -119,6 +119,9 @@ function marketfiWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

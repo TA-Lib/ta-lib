@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdllongleggeddoji.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Single-candle doji (open ~ close) with at least one long shadow. Signals market
  * indecision, not a directional bias. Marks indecision/uncertainty; not inherently
@@ -94,19 +96,17 @@ export * from '../../func/cdllongleggeddoji.ts';
  * @see [`cdlrickshawman`](https://ta-lib.org/functions/cdlrickshawman)
  */
 export function cdllongleggeddoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdllongleggeddojiOptions): CdllongleggeddojiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdllongleggeddojiResult | null;
-    try {
-      routed = cdllongleggeddojiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLLONGLEGGEDDOJI', cdllongleggeddojiJs(prices, options));
-    }
+  let routed: CdllongleggeddojiResult | null;
+  try {
+    routed = cdllongleggeddojiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLLONGLEGGEDDOJI', cdllongleggeddojiJs(prices, options));
   }
   return cdllongleggeddojiJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdllongleggeddojiWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

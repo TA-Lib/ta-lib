@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdldoji.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Single-candle Doji recognizer: fires when the real body (|close-open|) is at or
  * below the BodyDoji threshold. Market indecision; neither bullish nor bearish on
@@ -86,19 +88,17 @@ export * from '../../func/cdldoji.ts';
  * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
  */
 export function cdldoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojiOptions): CdldojiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdldojiResult | null;
-    try {
-      routed = cdldojiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLDOJI', cdldojiJs(prices, options));
-    }
+  let routed: CdldojiResult | null;
+  try {
+    routed = cdldojiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLDOJI', cdldojiJs(prices, options));
   }
   return cdldojiJs(prices, options);
 }
@@ -114,6 +114,9 @@ function cdldojiWasm(prices: { open: ArrayLike<number>; high: ArrayLike<number>;
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

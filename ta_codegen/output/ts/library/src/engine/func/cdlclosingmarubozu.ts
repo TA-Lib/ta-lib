@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlclosingmarubozu.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Single-candle pattern: a long real body whose closing end has no or very short
  * shadow, so the close sits at the candle's extreme. A strong directional bar, not
@@ -91,19 +93,17 @@ export * from '../../func/cdlclosingmarubozu.ts';
  * @see [`cdlbelthold`](https://ta-lib.org/functions/cdlbelthold)
  */
 export function cdlclosingmarubozu(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlclosingmarubozuOptions): CdlclosingmarubozuResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlclosingmarubozuResult | null;
-    try {
-      routed = cdlclosingmarubozuWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLCLOSINGMARUBOZU', cdlclosingmarubozuJs(prices, options));
-    }
+  let routed: CdlclosingmarubozuResult | null;
+  try {
+    routed = cdlclosingmarubozuWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLCLOSINGMARUBOZU', cdlclosingmarubozuJs(prices, options));
   }
   return cdlclosingmarubozuJs(prices, options);
 }
@@ -119,6 +119,9 @@ function cdlclosingmarubozuWasm(prices: { open: ArrayLike<number>; high: ArrayLi
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

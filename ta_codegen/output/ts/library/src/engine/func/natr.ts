@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/natr.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Average True Range expressed as a percentage of the current close, making
  * volatility comparable across price levels and securities. Same computation as
@@ -92,19 +94,17 @@ export * from '../../func/natr.ts';
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
 export function natr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: NatrOptions): NatrResult {
-  if (engineRoute.mode !== 0) {
-    let routed: NatrResult | null;
-    try {
-      routed = natrWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('NATR', natrJs(prices, options));
-    }
+  let routed: NatrResult | null;
+  try {
+    routed = natrWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('NATR', natrJs(prices, options));
   }
   return natrJs(prices, options);
 }
@@ -119,6 +119,9 @@ function natrWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLik
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

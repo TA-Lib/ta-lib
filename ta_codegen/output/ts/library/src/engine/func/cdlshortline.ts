@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlshortline.ts';
 
+const WASM_FROM_BARS = 60;
+
 /**
  * Single-candle pattern: a short real body with short upper and lower shadows (a
  * small-range candle). Not a directional signal — the output sign encodes candle
@@ -85,19 +87,17 @@ export * from '../../func/cdlshortline.ts';
  * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
  */
 export function cdlshortline(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlshortlineOptions): CdlshortlineResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlshortlineResult | null;
-    try {
-      routed = cdlshortlineWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLSHORTLINE', cdlshortlineJs(prices, options));
-    }
+  let routed: CdlshortlineResult | null;
+  try {
+    routed = cdlshortlineWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLSHORTLINE', cdlshortlineJs(prices, options));
   }
   return cdlshortlineJs(prices, options);
 }
@@ -113,6 +113,9 @@ function cdlshortlineWasm(prices: { open: ArrayLike<number>; high: ArrayLike<num
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

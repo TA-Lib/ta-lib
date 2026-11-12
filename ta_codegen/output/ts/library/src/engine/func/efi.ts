@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/efi.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted
  * momentum. Each bar's close-to-close move is weighted by that bar's volume, and
@@ -95,19 +97,17 @@ export * from '../../func/efi.ts';
  * @see [`pvo`](https://ta-lib.org/functions/pvo)
  */
 export function efi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EfiOptions): EfiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: EfiResult | null;
-    try {
-      routed = efiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('EFI', efiJs(prices, options));
-    }
+  let routed: EfiResult | null;
+  try {
+    routed = efiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('EFI', efiJs(prices, options));
   }
   return efiJs(prices, options);
 }
@@ -121,6 +121,9 @@ function efiWasm(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLik
   const n = seriesLength(inCloseArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

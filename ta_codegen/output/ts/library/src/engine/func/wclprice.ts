@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/wclprice.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Weighted Close Price: a per-bar price average giving the close double weight
  * relative to high and low.
@@ -82,19 +84,17 @@ export * from '../../func/wclprice.ts';
  * @see [`avgprice`](https://ta-lib.org/functions/avgprice)
  */
 export function wclprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WclpriceOptions): WclpriceResult {
-  if (engineRoute.mode !== 0) {
-    let routed: WclpriceResult | null;
-    try {
-      routed = wclpriceWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('WCLPRICE', wclpriceJs(prices, options));
-    }
+  let routed: WclpriceResult | null;
+  try {
+    routed = wclpriceWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('WCLPRICE', wclpriceJs(prices, options));
   }
   return wclpriceJs(prices, options);
 }
@@ -109,6 +109,9 @@ function wclpriceWasm(prices: { open?: ArrayLike<number> | undefined; high: Arra
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/vidya.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is
  * scaled every bar by the absolute value of the Chande Momentum Oscillator. It
@@ -98,19 +100,17 @@ export * from '../../func/vidya.ts';
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
 export function vidya(real: ArrayLike<number>, options?: VidyaOptions): VidyaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: VidyaResult | null;
-    try {
-      routed = vidyaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('VIDYA', vidyaJs(real, options));
-    }
+  let routed: VidyaResult | null;
+  try {
+    routed = vidyaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('VIDYA', vidyaJs(real, options));
   }
   return vidyaJs(real, options);
 }
@@ -119,6 +119,9 @@ function vidyaWasm(real: ArrayLike<number>, options: VidyaOptions | undefined): 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

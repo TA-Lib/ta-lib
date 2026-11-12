@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlgapsidesidewhite.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * A three-candle pattern: a first candle followed by two white candles of similar
  * body size that both gap the same direction (up or down) from the first candle's
@@ -99,19 +101,17 @@ export * from '../../func/cdlgapsidesidewhite.ts';
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
 export function cdlgapsidesidewhite(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlgapsidesidewhiteResult | null;
-    try {
-      routed = cdlgapsidesidewhiteWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLGAPSIDESIDEWHITE', cdlgapsidesidewhiteJs(prices, options));
-    }
+  let routed: CdlgapsidesidewhiteResult | null;
+  try {
+    routed = cdlgapsidesidewhiteWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLGAPSIDESIDEWHITE', cdlgapsidesidewhiteJs(prices, options));
   }
   return cdlgapsidesidewhiteJs(prices, options);
 }
@@ -127,6 +127,9 @@ function cdlgapsidesidewhiteWasm(prices: { open: ArrayLike<number>; high: ArrayL
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

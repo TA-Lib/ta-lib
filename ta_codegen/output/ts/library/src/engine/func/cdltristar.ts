@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltristar.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A three-candle pattern of three consecutive doji where the middle doji is a star
  * (its body gaps away from the first). Bullish or bearish reversal signal.
@@ -99,19 +101,17 @@ export * from '../../func/cdltristar.ts';
  * @see [`cdleveningdojistar`](https://ta-lib.org/functions/cdleveningdojistar)
  */
 export function cdltristar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltristarOptions): CdltristarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdltristarResult | null;
-    try {
-      routed = cdltristarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLTRISTAR', cdltristarJs(prices, options));
-    }
+  let routed: CdltristarResult | null;
+  try {
+    routed = cdltristarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLTRISTAR', cdltristarJs(prices, options));
   }
   return cdltristarJs(prices, options);
 }
@@ -127,6 +127,9 @@ function cdltristarWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

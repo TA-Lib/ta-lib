@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdldarkcloudcover.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * A two-candle bearish reversal pattern: a long white candle followed by a black
  * candle that opens above the prior high and closes deep into the prior white body
@@ -94,19 +96,17 @@ export * from '../../func/cdldarkcloudcover.ts';
  * @see [`cdlonneck`](https://ta-lib.org/functions/cdlonneck)
  */
 export function cdldarkcloudcover(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldarkcloudcoverOptions): CdldarkcloudcoverResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdldarkcloudcoverResult | null;
-    try {
-      routed = cdldarkcloudcoverWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLDARKCLOUDCOVER', cdldarkcloudcoverJs(prices, options));
-    }
+  let routed: CdldarkcloudcoverResult | null;
+  try {
+    routed = cdldarkcloudcoverWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLDARKCLOUDCOVER', cdldarkcloudcoverJs(prices, options));
   }
   return cdldarkcloudcoverJs(prices, options);
 }
@@ -122,6 +122,9 @@ function cdldarkcloudcoverWasm(prices: { open: ArrayLike<number>; high: ArrayLik
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

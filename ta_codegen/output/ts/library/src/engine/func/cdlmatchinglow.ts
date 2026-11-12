@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlmatchinglow.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A two-candle pattern of two consecutive black (bearish) candles with equal
  * closes (within a tolerance). Treated as a bullish reversal signal. A hit signals
@@ -91,19 +93,17 @@ export * from '../../func/cdlmatchinglow.ts';
  * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)
  */
 export function cdlmatchinglow(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmatchinglowOptions): CdlmatchinglowResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlmatchinglowResult | null;
-    try {
-      routed = cdlmatchinglowWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLMATCHINGLOW', cdlmatchinglowJs(prices, options));
-    }
+  let routed: CdlmatchinglowResult | null;
+  try {
+    routed = cdlmatchinglowWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLMATCHINGLOW', cdlmatchinglowJs(prices, options));
   }
   return cdlmatchinglowJs(prices, options);
 }
@@ -119,6 +119,9 @@ function cdlmatchinglowWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

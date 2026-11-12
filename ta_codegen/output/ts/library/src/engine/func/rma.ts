@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rma.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * Wilder's smoothed moving average: an exponential average whose smoothing factor
  * is the reciprocal of the period rather than the `2/(n+1)` of a classic EMA,
@@ -118,19 +120,17 @@ export * from '../../func/rma.ts';
  * @see [`dema`](https://ta-lib.org/functions/dema)
  */
 export function rma(real: ArrayLike<number>, options?: RmaOptions): RmaResult {
-  if (engineRoute.mode !== 0) {
-    let routed: RmaResult | null;
-    try {
-      routed = rmaWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('RMA', rmaJs(real, options));
-    }
+  let routed: RmaResult | null;
+  try {
+    routed = rmaWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('RMA', rmaJs(real, options));
   }
   return rmaJs(real, options);
 }
@@ -139,6 +139,9 @@ function rmaWasm(real: ArrayLike<number>, options: RmaOptions | undefined): RmaR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

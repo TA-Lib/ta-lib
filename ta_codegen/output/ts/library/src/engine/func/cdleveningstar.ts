@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdleveningstar.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A three-candle bearish reversal pattern: a long white candle, a short-bodied
  * star gapping up, then a black candle closing well down into the first candle's
@@ -96,19 +98,17 @@ export * from '../../func/cdleveningstar.ts';
  * @see [`cdl3starsinsouth`](https://ta-lib.org/functions/cdl3starsinsouth)
  */
 export function cdleveningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningstarOptions): CdleveningstarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdleveningstarResult | null;
-    try {
-      routed = cdleveningstarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLEVENINGSTAR', cdleveningstarJs(prices, options));
-    }
+  let routed: CdleveningstarResult | null;
+  try {
+    routed = cdleveningstarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLEVENINGSTAR', cdleveningstarJs(prices, options));
   }
   return cdleveningstarJs(prices, options);
 }
@@ -124,6 +124,9 @@ function cdleveningstarWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

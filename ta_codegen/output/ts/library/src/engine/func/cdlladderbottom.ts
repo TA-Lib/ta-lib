@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlladderbottom.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Five-candle bullish reversal pattern: three consecutively lower black candles, a
  * fourth black candle with a non-very-short upper shadow, then a white candle that
@@ -98,19 +100,17 @@ export * from '../../func/cdlladderbottom.ts';
  * @see [`cdlbreakaway`](https://ta-lib.org/functions/cdlbreakaway)
  */
 export function cdlladderbottom(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlladderbottomOptions): CdlladderbottomResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlladderbottomResult | null;
-    try {
-      routed = cdlladderbottomWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLLADDERBOTTOM', cdlladderbottomJs(prices, options));
-    }
+  let routed: CdlladderbottomResult | null;
+  try {
+    routed = cdlladderbottomWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLLADDERBOTTOM', cdlladderbottomJs(prices, options));
   }
   return cdlladderbottomJs(prices, options);
 }
@@ -126,6 +126,9 @@ function cdlladderbottomWasm(prices: { open: ArrayLike<number>; high: ArrayLike<
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

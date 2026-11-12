@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kvo.ts';
 
+const WASM_FROM_BARS = 500;
+
 /**
  * Klinger Volume Oscillator: each bar's volume is signed by the direction of its
  * high-low-close sum and weighted by where the bar's own range sits inside the
@@ -119,19 +121,17 @@ export * from '../../func/kvo.ts';
  * @see [`ad`](https://ta-lib.org/functions/ad)
  */
 export function kvo(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: KvoOptions): KvoResult {
-  if (engineRoute.mode !== 0) {
-    let routed: KvoResult | null;
-    try {
-      routed = kvoWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('KVO', kvoJs(prices, options));
-    }
+  let routed: KvoResult | null;
+  try {
+    routed = kvoWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('KVO', kvoJs(prices, options));
   }
   return kvoJs(prices, options);
 }
@@ -147,6 +147,9 @@ function kvoWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outKvo !== undefined || o.outKvoSignal !== undefined) {

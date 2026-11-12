@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/trix.ts';
 
+const WASM_FROM_BARS = 125;
+
 /**
  * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator
  * that filters out price moves shorter than the chosen period. Oscillates around
@@ -90,19 +92,17 @@ export * from '../../func/trix.ts';
  * @see [`tema`](https://ta-lib.org/functions/tema)
  */
 export function trix(real: ArrayLike<number>, options?: TrixOptions): TrixResult {
-  if (engineRoute.mode !== 0) {
-    let routed: TrixResult | null;
-    try {
-      routed = trixWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('TRIX', trixJs(real, options));
-    }
+  let routed: TrixResult | null;
+  try {
+    routed = trixWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('TRIX', trixJs(real, options));
   }
   return trixJs(real, options);
 }
@@ -111,6 +111,9 @@ function trixWasm(real: ArrayLike<number>, options: TrixOptions | undefined): Tr
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

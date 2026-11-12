@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/ultosc.ts';
 
+const WASM_FROM_BARS = 2500;
+
 /**
  * Ultimate Oscillator: momentum indicator combining buying-pressure/true-range
  * ratios over three time periods into one 0-100 weighted average. Blends short-,
@@ -95,19 +97,17 @@ export * from '../../func/ultosc.ts';
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
 export function ultosc(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: UltoscOptions): UltoscResult {
-  if (engineRoute.mode !== 0) {
-    let routed: UltoscResult | null;
-    try {
-      routed = ultoscWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ULTOSC', ultoscJs(prices, options));
-    }
+  let routed: UltoscResult | null;
+  try {
+    routed = ultoscWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ULTOSC', ultoscJs(prices, options));
   }
   return ultoscJs(prices, options);
 }
@@ -122,6 +122,9 @@ function ultoscWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

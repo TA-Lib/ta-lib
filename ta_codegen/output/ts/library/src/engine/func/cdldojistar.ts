@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdldojistar.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A two-candle reversal pattern: a long real body followed by a doji whose real
  * body gaps away from it (up after a white body, down after a black body). Signals
@@ -97,19 +99,17 @@ export * from '../../func/cdldojistar.ts';
  * @see [`cdleveningstar`](https://ta-lib.org/functions/cdleveningstar)
  */
 export function cdldojistar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojistarOptions): CdldojistarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdldojistarResult | null;
-    try {
-      routed = cdldojistarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLDOJISTAR', cdldojistarJs(prices, options));
-    }
+  let routed: CdldojistarResult | null;
+  try {
+    routed = cdldojistarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLDOJISTAR', cdldojistarJs(prices, options));
   }
   return cdldojistarJs(prices, options);
 }
@@ -125,6 +125,9 @@ function cdldojistarWasm(prices: { open: ArrayLike<number>; high: ArrayLike<numb
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

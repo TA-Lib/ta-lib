@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/zigzag.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * The percent-filter swing line. A leg runs from the last confirmed pivot to the
  * most extreme price since it, and it reverses only when price moves at least
@@ -138,19 +140,17 @@ export * from '../../func/zigzag.ts';
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  */
 export function zigzag(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagResult {
-  if (engineRoute.mode !== 0) {
-    let routed: ZigzagResult | null;
-    try {
-      routed = zigzagWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ZIGZAG', zigzagJs(prices, options));
-    }
+  let routed: ZigzagResult | null;
+  try {
+    routed = zigzagWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ZIGZAG', zigzagJs(prices, options));
   }
   return zigzagJs(prices, options);
 }
@@ -164,6 +164,9 @@ function zigzagWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayL
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outZigZag !== undefined || o.outTrend !== undefined || o.outPivotIdx !== undefined) {

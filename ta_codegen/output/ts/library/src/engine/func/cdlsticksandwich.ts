@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlsticksandwich.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
  * sandwiching a white candle, where the 3rd black candle closes at the same level
@@ -92,19 +94,17 @@ export * from '../../func/cdlsticksandwich.ts';
  * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)
  */
 export function cdlsticksandwich(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlsticksandwichOptions): CdlsticksandwichResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlsticksandwichResult | null;
-    try {
-      routed = cdlsticksandwichWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLSTICKSANDWICH', cdlsticksandwichJs(prices, options));
-    }
+  let routed: CdlsticksandwichResult | null;
+  try {
+    routed = cdlsticksandwichWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLSTICKSANDWICH', cdlsticksandwichJs(prices, options));
   }
   return cdlsticksandwichJs(prices, options);
 }
@@ -120,6 +120,9 @@ function cdlsticksandwichWasm(prices: { open: ArrayLike<number>; high: ArrayLike
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

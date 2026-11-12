@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdlmorningstar.ts';
 
+const WASM_FROM_BARS = 250;
+
 /**
  * A three-candle bottom-reversal pattern: a long black candle, a small-bodied star
  * gapping down, then a white candle closing well up into the first candle's body.
@@ -101,19 +103,17 @@ export * from '../../func/cdlmorningstar.ts';
  * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
  */
 export function cdlmorningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdlmorningstarResult | null;
-    try {
-      routed = cdlmorningstarWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLMORNINGSTAR', cdlmorningstarJs(prices, options));
-    }
+  let routed: CdlmorningstarResult | null;
+  try {
+    routed = cdlmorningstarWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLMORNINGSTAR', cdlmorningstarJs(prices, options));
   }
   return cdlmorningstarJs(prices, options);
 }
@@ -129,6 +129,9 @@ function cdlmorningstarWasm(prices: { open: ArrayLike<number>; high: ArrayLike<n
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {

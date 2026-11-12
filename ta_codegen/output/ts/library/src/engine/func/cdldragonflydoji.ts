@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdldragonflydoji.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Single-candle pattern: a doji (open and close nearly equal) sitting at the top
  * of the range, with no meaningful upper shadow and a long lower shadow. A
@@ -97,19 +99,17 @@ export * from '../../func/cdldragonflydoji.ts';
  * @see [`cdltakuri`](https://ta-lib.org/functions/cdltakuri)
  */
 export function cdldragonflydoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldragonflydojiOptions): CdldragonflydojiResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CdldragonflydojiResult | null;
-    try {
-      routed = cdldragonflydojiWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CDLDRAGONFLYDOJI', cdldragonflydojiJs(prices, options));
-    }
+  let routed: CdldragonflydojiResult | null;
+  try {
+    routed = cdldragonflydojiWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CDLDRAGONFLYDOJI', cdldragonflydojiJs(prices, options));
   }
   return cdldragonflydojiJs(prices, options);
 }
@@ -125,6 +125,9 @@ function cdldragonflydojiWasm(prices: { open: ArrayLike<number>; high: ArrayLike
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outInteger !== undefined) {
