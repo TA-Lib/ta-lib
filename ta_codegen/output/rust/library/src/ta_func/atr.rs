@@ -301,7 +301,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 today += 1;
                 i -= 1;
             }
@@ -330,7 +330,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 _w3[_wk] = prevATR;
                 outIdx += 1;
                 today += 1;
@@ -348,7 +348,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 outReal[outIdx] = prevATR;
                 outIdx += 1;
                 today += 1;
@@ -528,7 +528,7 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
+        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
         (*outReal) = sp.prevATR;
         sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
@@ -675,7 +675,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -696,7 +696,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevATR;
             today += 1;
         }
@@ -900,7 +900,7 @@ impl AtrStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
+            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
             (*outReal) = prevATR;
         }
         Ok(outReal)

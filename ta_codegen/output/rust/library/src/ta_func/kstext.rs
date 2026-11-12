@@ -435,7 +435,7 @@ impl Core {
             let _w0 = &mut kstBuffer[i..][.._wn];
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (2.0 as f64).mul_add(_w1[_wk], _w0[_wk]);
+                _w0[_wk] = fmadd!(2.0 as f64, _w1[_wk], _w0[_wk]);
                 i += 1;
             }
         }
@@ -453,7 +453,7 @@ impl Core {
             let _w0 = &mut kstBuffer[i..][.._wn];
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (3.0 as f64).mul_add(_w1[_wk], _w0[_wk]);
+                _w0[_wk] = fmadd!(3.0 as f64, _w1[_wk], _w0[_wk]);
                 i += 1;
             }
         }
@@ -471,7 +471,7 @@ impl Core {
             let _w0 = &mut kstBuffer[i..][.._wn];
             let _w1 = &tempBuffer[i..][.._wn];
             for _wk in 0.._wn {
-                _w0[_wk] = (4.0 as f64).mul_add(_w1[_wk], _w0[_wk]);
+                _w0[_wk] = fmadd!(4.0 as f64, _w1[_wk], _w0[_wk]);
                 i += 1;
             }
         }
@@ -707,15 +707,15 @@ impl Core {
         cur_tempBuffer = sp.sub2.update(inReal)?;
         cur_tempBuffer = sp.sub3.update(cur_tempBuffer)?;
         // Combine map (batch tail, per bar).
-        cur_kstBuffer = (2.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+        cur_kstBuffer = fmadd!(2.0 as f64, cur_tempBuffer, cur_kstBuffer);
         cur_tempBuffer = sp.sub4.update(inReal)?;
         cur_tempBuffer = sp.sub5.update(cur_tempBuffer)?;
         // Combine map (batch tail, per bar).
-        cur_kstBuffer = (3.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+        cur_kstBuffer = fmadd!(3.0 as f64, cur_tempBuffer, cur_kstBuffer);
         cur_tempBuffer = sp.sub6.update(inReal)?;
         cur_tempBuffer = sp.sub7.update(cur_tempBuffer)?;
         // Combine map (batch tail, per bar).
-        cur_kstBuffer = (4.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+        cur_kstBuffer = fmadd!(4.0 as f64, cur_tempBuffer, cur_kstBuffer);
         cur_outKSTSignal = sp.sub8.update(cur_kstBuffer)?;
         (*outKST) = cur_kstBuffer;
         (*outKSTSignal) = cur_outKSTSignal;
@@ -919,7 +919,7 @@ impl Core {
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
-            kstBuffer[i] = (2.0 as f64).mul_add(tempBuffer[i], kstBuffer[i]);
+            kstBuffer[i] = fmadd!(2.0 as f64, tempBuffer[i], kstBuffer[i]);
             i += 1;
         }
         // Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
@@ -943,7 +943,7 @@ impl Core {
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
-            kstBuffer[i] = (3.0 as f64).mul_add(tempBuffer[i], kstBuffer[i]);
+            kstBuffer[i] = fmadd!(3.0 as f64, tempBuffer[i], kstBuffer[i]);
             i += 1;
         }
         // Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
@@ -968,7 +968,7 @@ impl Core {
         // for( i = 0; i < kstNb; i += 1 )
         i = 0;
         while i < kstNb {
-            kstBuffer[i] = (4.0 as f64).mul_add(tempBuffer[i], kstBuffer[i]);
+            kstBuffer[i] = fmadd!(4.0 as f64, tempBuffer[i], kstBuffer[i]);
             i += 1;
         }
         // Every read of inReal is done: an output may alias it.
@@ -1231,15 +1231,15 @@ impl KstextStream {
             cur_tempBuffer = sp.sub2.peek(inReal)?;
             cur_tempBuffer = sp.sub3.peek(cur_tempBuffer)?;
             // Combine map (batch tail, per bar).
-            cur_kstBuffer = (2.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+            cur_kstBuffer = fmadd!(2.0 as f64, cur_tempBuffer, cur_kstBuffer);
             cur_tempBuffer = sp.sub4.peek(inReal)?;
             cur_tempBuffer = sp.sub5.peek(cur_tempBuffer)?;
             // Combine map (batch tail, per bar).
-            cur_kstBuffer = (3.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+            cur_kstBuffer = fmadd!(3.0 as f64, cur_tempBuffer, cur_kstBuffer);
             cur_tempBuffer = sp.sub6.peek(inReal)?;
             cur_tempBuffer = sp.sub7.peek(cur_tempBuffer)?;
             // Combine map (batch tail, per bar).
-            cur_kstBuffer = (4.0 as f64).mul_add(cur_tempBuffer, cur_kstBuffer);
+            cur_kstBuffer = fmadd!(4.0 as f64, cur_tempBuffer, cur_kstBuffer);
             cur_outKSTSignal = sp.sub8.peek(cur_kstBuffer)?;
             (*outKST) = cur_kstBuffer;
             (*outKSTSignal) = cur_outKSTSignal;

@@ -307,11 +307,11 @@ impl Core {
             }
         }
         // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal = fmadd!(tempReal as f64, constDiff, constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
         // 'today' keep track of where the processing is within the
         // input.
         // Skip the unstable period. Do the whole processing
@@ -349,11 +349,11 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
         }
         // Write the first value.
         outReal[0] = prevKAMA;
@@ -393,11 +393,11 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
             outReal[outIdx] = prevKAMA;
             outIdx += 1;
         }
@@ -593,11 +593,11 @@ impl Core {
         // and outReal can be pointers to the same buffer.
         sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+        tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        sp.prevKAMA = (inReal - sp.prevKAMA as f64).mul_add(tempReal, sp.prevKAMA);
+        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA as f64, tempReal, sp.prevKAMA);
         (*outReal) = sp.prevKAMA;
         sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
@@ -648,11 +648,11 @@ impl Core {
         // and outReal can be pointers to the same buffer.
         sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+        tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        sp.prevKAMA = (inReal - sp.prevKAMA as f64).mul_add(tempReal, sp.prevKAMA);
+        sp.prevKAMA = fmadd!(inReal - sp.prevKAMA as f64, tempReal, sp.prevKAMA);
         (*outReal) = sp.prevKAMA;
         sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
@@ -817,11 +817,11 @@ impl Core {
             }
         }
         // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+        tempReal = fmadd!(tempReal as f64, constDiff, constMax);
         tempReal *= tempReal;
         // Calculate the KAMA like an EMA, using the
         // smoothing constant as the adaptive factor.
-        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+        prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
         // 'today' keep track of where the processing is within the
         // input.
         // Skip the unstable period. Do the whole processing
@@ -859,11 +859,11 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
         }
         // Write the first value.
         outReal[(0 * outStride) as usize] = prevKAMA;
@@ -903,11 +903,11 @@ impl Core {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
+            tempReal = fmadd!(tempReal as f64, constDiff, constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64, tempReal, prevKAMA);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevKAMA;
         }
         (*outNBElement) = outIdx;
@@ -1138,11 +1138,11 @@ impl KamaStream {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+            tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal - prevKAMA as f64, tempReal, prevKAMA);
             (*outReal) = prevKAMA;
         }
         Ok(outReal)
@@ -1258,11 +1258,11 @@ impl KamaStream {
             // and outReal can be pointers to the same buffer.
             trailingValue = tempReal2;
             // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+            tempReal = fmadd!(tempReal as f64, sp.constDiff, sp.constMax);
             tempReal *= tempReal;
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            prevKAMA = fmadd!(inReal - prevKAMA as f64, tempReal, prevKAMA);
             (*outReal) = prevKAMA;
         }
         Ok(outReal)

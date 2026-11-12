@@ -398,7 +398,7 @@ impl Core {
         // in this package.
         DCPhase = 0.0;
         while today <= endIdx {
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -450,8 +450,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -497,8 +497,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -508,8 +508,8 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -529,8 +529,8 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
@@ -615,7 +615,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -870,7 +870,7 @@ impl Core {
         let mut ringPosL_trailingWMAIdx: usize = 0_usize;
         let mut ringCapL_trailingWMAIdx: usize = 0_usize;
         sp.win_j_inReal[sp.winPos_j] = inReal;
-        adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
+        adjustedPrevPeriod = fmadd!(0.075 as f64, sp.period, 0.54);
         todayValue = inReal;
         sp.periodWMASub += todayValue;
         sp.periodWMASub -= sp.trailingWMAValue;
@@ -922,8 +922,8 @@ impl Core {
             if { sp.hilbertIdx += 1; sp.hilbertIdx } == 3 {
                 sp.hilbertIdx = 0;
             }
-            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = (0.2 as f64).mul_add(sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
+            Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = fmadd!(0.2 as f64, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
             // The variable I1 is the detrender delayed for
             // 3 price bars.
             //
@@ -969,8 +969,8 @@ impl Core {
             jQ += sp.prev_jQ_Odd;
             sp.prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = (0.2 as f64).mul_add(sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
+            Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = fmadd!(0.2 as f64, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
             // The varaiable I1 is the detrender delayed for
             // 3 price bars.
             //
@@ -980,8 +980,8 @@ impl Core {
             sp.I1ForEvenPrev2 = detrender;
         }
         // Adjust the period for next price bar
-        sp.Re = (0.8 as f64).mul_add(sp.Re, 0.2 * ((I2 as f64).mul_add(sp.prevI2, Q2 * sp.prevQ2)));
-        sp.Im = (0.8 as f64).mul_add(sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
         tempReal = sp.period;
@@ -1001,8 +1001,8 @@ impl Core {
         } else if sp.period > 50_f64 {
             sp.period = 50.0;
         }
-        sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
-        sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
+        sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
+        sp.smoothPeriod = fmadd!(0.67 as f64, sp.smoothPeriod, 0.33 * sp.period);
         // Compute Dominant Cycle Phase
         prevDCPhase = sp.DCPhase;
         DCPeriod = sp.smoothPeriod + 0.5;
@@ -1087,7 +1087,7 @@ impl Core {
         } else {
             cold_arm();
         }
-        trendline = ((2.0 as f64).mul_add(sp.iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
+        trendline = (fmadd!(2.0 as f64, sp.iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * sp.iTrend1)) + sp.iTrend3) / 10.0;
         sp.iTrend3 = sp.iTrend2;
         sp.iTrend2 = sp.iTrend1;
         sp.iTrend1 = tempReal;
@@ -1382,7 +1382,7 @@ impl Core {
         // in this package.
         DCPhase = 0.0;
         while today <= endIdx {
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -1434,8 +1434,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1481,8 +1481,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1492,8 +1492,8 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -1513,8 +1513,8 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
@@ -1599,7 +1599,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
@@ -1941,7 +1941,7 @@ impl HtTrendmodeStream {
             let mut pkVal1: f64 = 0.0_f64;
             pkSlot0 = sp.winPos_j as usize;
             pkVal0 = inReal;
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -1990,8 +1990,8 @@ impl HtTrendmodeStream {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -2033,8 +2033,8 @@ impl HtTrendmodeStream {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -2044,8 +2044,8 @@ impl HtTrendmodeStream {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -2065,8 +2065,8 @@ impl HtTrendmodeStream {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
@@ -2151,7 +2151,7 @@ impl HtTrendmodeStream {
             } else {
                 cold_arm();
             }
-            trendline = ((2.0 as f64).mul_add(iTrend2, (4.0 as f64).mul_add(tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+            trendline = (fmadd!(2.0 as f64, iTrend2, fmadd!(4.0 as f64, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
             iTrend3 = iTrend2;
             iTrend2 = iTrend1;
             iTrend1 = tempReal;

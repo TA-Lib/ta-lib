@@ -326,7 +326,7 @@ impl Core {
                     af = optInAcceleration;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -349,7 +349,7 @@ impl Core {
                         }
                     }
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -379,7 +379,7 @@ impl Core {
                 af = optInAcceleration;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -402,7 +402,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {
@@ -598,7 +598,7 @@ impl Core {
                 sp.af = sp.optInAcceleration;
                 sp.ep = sp.newLow;
                 // Calculate the new SAR
-                sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
+                sp.sar = fmadd!(sp.af as f64, sp.ep - sp.sar, sp.sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sp.sar < prevHigh {
@@ -620,7 +620,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
+                sp.sar = fmadd!(sp.af as f64, sp.ep - sp.sar, sp.sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sp.sar > prevLow {
@@ -649,7 +649,7 @@ impl Core {
             sp.af = sp.optInAcceleration;
             sp.ep = sp.newHigh;
             // Calculate the new SAR
-            sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
+            sp.sar = fmadd!(sp.af as f64, sp.ep - sp.sar, sp.sar);
             // Make sure the new SAR is within
             // yesterday's and today's range.
             if sp.sar > prevLow {
@@ -671,7 +671,7 @@ impl Core {
                 }
             }
             // Calculate the new SAR
-            sp.sar = (sp.af as f64).mul_add(sp.ep - sp.sar, sp.sar);
+            sp.sar = fmadd!(sp.af as f64, sp.ep - sp.sar, sp.sar);
             // Make sure the new SAR is within
             // yesterday's and today's range.
             if sp.sar < prevHigh {
@@ -862,7 +862,7 @@ impl Core {
                     af = optInAcceleration;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -884,7 +884,7 @@ impl Core {
                         }
                     }
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -913,7 +913,7 @@ impl Core {
                 af = optInAcceleration;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -935,7 +935,7 @@ impl Core {
                     }
                 }
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {
@@ -1171,7 +1171,7 @@ impl SarStream {
                     af = sp.optInAcceleration;
                     ep = newLow;
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar < prevHigh {
@@ -1193,7 +1193,7 @@ impl SarStream {
                         }
                     }
                     // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
+                    sar = fmadd!(af as f64, ep - sar, sar);
                     // Make sure the new SAR is within
                     // yesterday's and today's range.
                     if sar > prevLow {
@@ -1222,7 +1222,7 @@ impl SarStream {
                 af = sp.optInAcceleration;
                 ep = newHigh;
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar > prevLow {
@@ -1244,7 +1244,7 @@ impl SarStream {
                     }
                 }
                 // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
+                sar = fmadd!(af as f64, ep - sar, sar);
                 // Make sure the new SAR is within
                 // yesterday's and today's range.
                 if sar < prevHigh {

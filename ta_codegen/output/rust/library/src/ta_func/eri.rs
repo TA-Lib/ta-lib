@@ -265,7 +265,7 @@ impl Core {
         prevMA = tempReal / ((optInTimePeriod) as f64);
         // The warm-up also consumes the EMA unstable period.
         while today <= startIdx {
-            prevMA = (beta as f64).mul_add(prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
+            prevMA = fmadd!(beta as f64, prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
         }
         // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
         // extremes into temps BEFORE writing either output: with two outputs
@@ -284,7 +284,7 @@ impl Core {
             let _w3 = &mut outBearPower[outIdx..][.._wn];
             let _w4 = &mut outBullPower[outIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (beta as f64).mul_add(prevMA, k * _w0[_wk]);
+                prevMA = fmadd!(beta as f64, prevMA, k * _w0[_wk]);
                 tempHT = _w1[_wk];
                 tempLT = _w2[_wk];
                 _w4[_wk] = tempHT - prevMA;
@@ -474,7 +474,7 @@ impl Core {
         } else {
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
-            sp.prevMA = (sp.beta as f64).mul_add(sp.prevMA, sp.k * inClose);
+            sp.prevMA = fmadd!(sp.beta as f64, sp.prevMA, sp.k * inClose);
             tempHT = inHigh;
             tempLT = inLow;
             (*outBullPower) = tempHT - sp.prevMA;
@@ -649,7 +649,7 @@ impl Core {
             prevMA = tempReal / ((optInTimePeriod) as f64);
             // The warm-up also consumes the EMA unstable period.
             while today <= startIdx {
-                prevMA = (beta as f64).mul_add(prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
+                prevMA = fmadd!(beta as f64, prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
             }
             // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
             // extremes into temps BEFORE writing either output: with two outputs
@@ -661,7 +661,7 @@ impl Core {
             outBearPower[(0 * outStride) as usize] = tempLT - prevMA;
             outIdx = 1;
             while today <= endIdx {
-                prevMA = (beta as f64).mul_add(prevMA, k * inClose[today]);
+                prevMA = fmadd!(beta as f64, prevMA, k * inClose[today]);
                 tempHT = inHigh[today];
                 tempLT = inLow[today];
                 outBullPower[(outIdx * outStride) as usize] = tempHT - prevMA;
@@ -878,7 +878,7 @@ impl EriStream {
                 let mut tempHT: f64 = 0.0_f64;
                 let mut tempLT: f64 = 0.0_f64;
                 let mut prevMA = sp.prevMA;
-                prevMA = (sp.beta as f64).mul_add(prevMA, sp.k * inClose);
+                prevMA = fmadd!(sp.beta as f64, prevMA, sp.k * inClose);
                 tempHT = inHigh;
                 tempLT = inLow;
                 (*outBullPower) = tempHT - prevMA;

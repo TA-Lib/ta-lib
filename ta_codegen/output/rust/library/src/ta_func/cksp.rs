@@ -387,7 +387,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 today += 1;
                 i -= 1;
             }
@@ -441,7 +441,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             // Keep this shape: the prefix extreme selected in a local, the
             // block-start override after it, one store. A store made only when the
             // bar sets a new extreme, or the override ahead of the select, compiles
@@ -529,7 +529,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);
@@ -858,7 +858,7 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
+        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
         highest = sp.hhPre;
         lowest = sp.llPre;
         highest = c_max(tempHT, highest);
@@ -1120,7 +1120,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -1166,7 +1166,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             // Keep this shape: the prefix extreme selected in a local, the
             // block-start override after it, one store. A store made only when the
             // bar sets a new extreme, or the override ahead of the select, compiles
@@ -1244,7 +1244,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);
@@ -1594,7 +1594,7 @@ impl CkspStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
+            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
             highest = hhPre;
             lowest = llPre;
             highest = c_max(tempHT, highest);

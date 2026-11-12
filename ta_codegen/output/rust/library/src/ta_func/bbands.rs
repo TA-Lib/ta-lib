@@ -466,7 +466,7 @@ impl Core {
                     for _wk in 0.._wn {
                         tempReal = _w2[_wk];
                         tempReal2 = _w1[_wk];
-                        _w2[_wk] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                        _w2[_wk] = fmadd!(tempReal as f64, optInNbDevUp, tempReal2);
                         _w0[_wk] = tempReal2 - tempReal * optInNbDevDn;
                         i += 1;
                     }
@@ -561,7 +561,7 @@ impl Core {
                 let _w3 = &tempBuffer2[i..][.._wn];
                 for _wk in 0.._wn {
                     tempReal2 = _w1[_wk];
-                    _w2[_wk] = (((_w3[_wk] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
+                    _w2[_wk] = ((fmadd!(_w3[_wk] as f64, optInNbDevUp, tempReal2)) as f64);
                     _w0[_wk] = ((tempReal2 - _w3[_wk] * optInNbDevDn) as f64);
                     i += 1;
                 }
@@ -753,7 +753,7 @@ impl Core {
             cur_outRealLowerBand = tempReal2 - tempReal;
         } else {
             tempReal2 = cur_tempBuffer1;
-            cur_outRealUpperBand = (cur_tempBuffer2 as f64).mul_add(sp.optInNbDevUp, tempReal2);
+            cur_outRealUpperBand = fmadd!(cur_tempBuffer2 as f64, sp.optInNbDevUp, tempReal2);
             cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
         }
         (*outRealUpperBand) = cur_outRealUpperBand;
@@ -920,7 +920,7 @@ impl Core {
             i = 0;
             while i < ((((*outNBElement) as usize)) as usize) {
                 tempReal2 = sc_outRealMiddleBand[i];
-                sc_outRealUpperBand[i] = (tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2);
+                sc_outRealUpperBand[i] = fmadd!(tempBuffer2[i] as f64, optInNbDevUp, tempReal2);
                 sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
                 i += 1;
             }
@@ -1161,7 +1161,7 @@ impl BbandsStream {
                 cur_outRealLowerBand = tempReal2 - tempReal;
             } else {
                 tempReal2 = cur_tempBuffer1;
-                cur_outRealUpperBand = (cur_tempBuffer2 as f64).mul_add(sp.optInNbDevUp, tempReal2);
+                cur_outRealUpperBand = fmadd!(cur_tempBuffer2 as f64, sp.optInNbDevUp, tempReal2);
                 cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
             }
             (*outRealUpperBand) = cur_outRealUpperBand;

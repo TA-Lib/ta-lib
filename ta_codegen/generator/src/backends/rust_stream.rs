@@ -617,7 +617,7 @@ fn fma_dispatch_open(o: &mut String, func: &FuncDef) {
         return;
     };
     let method = &o[line..end];
-    if !method.contains(".mul_add(") {
+    if !method.contains(super::rust_lang::FMA_CALL) {
         return;
     }
     let (params, tail) = method[open.len()..]
@@ -652,7 +652,7 @@ pub fn step_pays_for_dispatch(step: &str) -> bool {
     let loops = step.lines().map(str::trim_start).any(|l| {
         l.starts_with("while ") || l.starts_with("for ") || l.starts_with("loop {")
     });
-    !loops && step.matches(".mul_add(").count() >= STREAM_FMA_MIN_SITES
+    !loops && step.matches(super::rust_lang::FMA_CALL).count() >= STREAM_FMA_MIN_SITES
 }
 
 /// The byte range of the method whose signature line starts with `sig`, from

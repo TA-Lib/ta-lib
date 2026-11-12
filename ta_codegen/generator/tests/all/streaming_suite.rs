@@ -4044,7 +4044,7 @@ fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
     let rust_batch = if rust.contains("fn apo_impl_scalar(") { "fn apo_impl_scalar(" } else { "fn apo_impl(" };
     let rows = [
         ("c", backends::c::generate(&f, &enums, reg, helpers), "TA_RetCode TA_APO(", "TA_RetCode TA_APO_StepImpl( struct", "fma("),
-        ("rust", rust.clone(), rust_batch, "fn apo_step_impl(", ".mul_add("),
+        ("rust", rust.clone(), rust_batch, "fn apo_step_impl(", "fmadd!("),
         ("java", backends::java::generate(&f, &enums, reg, helpers), "RetCode apoImpl(", "private void apoStepImpl(", "Math.fma("),
         ("csharp", backends::csharp::generate(&f, &enums, reg, helpers), "internal RetCode ApoImpl(", "private void ApoStepImpl(", "Math.FusedMultiplyAdd("),
         ("ts", backends::ts::generate(&f, &enums, reg, helpers), "export function apoImpl(", "function apoStepImpl(", "fma("),

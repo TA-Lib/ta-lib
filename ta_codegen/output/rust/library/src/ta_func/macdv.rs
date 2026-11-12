@@ -365,7 +365,7 @@ impl Core {
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         // Fast EMA.
         today = lineIdx - lookbackFast;
@@ -377,7 +377,7 @@ impl Core {
         prevFast = tempReal / ((optInFastPeriod) as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
@@ -422,7 +422,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 today += 1;
             }
         }
@@ -459,9 +459,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -489,9 +489,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -505,7 +505,7 @@ impl Core {
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
             }
             today += 1;
         }
@@ -525,9 +525,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -541,7 +541,7 @@ impl Core {
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
             }
             outMACDV[outIdx] = lineValue;
             outMACDVSignal[outIdx] = prevSignal;
@@ -776,9 +776,9 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
-        sp.prevFast = (sp.fastBeta as f64).mul_add(sp.prevFast, sp.fastK * tempReal);
-        sp.prevSlow = (sp.slowBeta as f64).mul_add(sp.prevSlow, sp.slowK * tempReal);
+        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
+        sp.prevFast = fmadd!(sp.fastBeta as f64, sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = fmadd!(sp.slowBeta as f64, sp.prevSlow, sp.slowK * tempReal);
         spread = sp.prevFast - sp.prevSlow;
         bandScale = (sp.prevFast).abs();
         if (sp.prevSlow).abs() > bandScale {
@@ -792,7 +792,7 @@ impl Core {
         if sp.optInSignalPeriod == 1 {
             sp.prevSignal = lineValue;
         } else {
-            sp.prevSignal = (sp.signalBeta as f64).mul_add(sp.prevSignal, sp.signalK * lineValue);
+            sp.prevSignal = fmadd!(sp.signalBeta as f64, sp.prevSignal, sp.signalK * lineValue);
         }
         (*outMACDV) = lineValue;
         (*outMACDVSignal) = sp.prevSignal;
@@ -980,7 +980,7 @@ impl Core {
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         // Fast EMA.
         today = lineIdx - lookbackFast;
@@ -992,7 +992,7 @@ impl Core {
         prevFast = tempReal / ((optInFastPeriod) as f64);
         while today <= lineIdx {
             tempReal = inClose[{ let _v = today; today += 1; _v }];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
         }
         // Average True Range: the first True Range consumes a previous close.
         today = lineIdx - lookbackATR + 1;
@@ -1022,7 +1022,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             today += 1;
         }
         // Without price movement the line answers its neutral point, 0.0 (#570).
@@ -1058,9 +1058,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -1088,9 +1088,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -1104,7 +1104,7 @@ impl Core {
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
             }
             today += 1;
         }
@@ -1124,9 +1124,9 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -1140,7 +1140,7 @@ impl Core {
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * lineValue);
+                prevSignal = fmadd!(signalBeta as f64, prevSignal, signalK * lineValue);
             }
             outMACDV[(outIdx * outStride) as usize] = lineValue;
             outMACDVSignal[(outIdx * outStride) as usize] = prevSignal;
@@ -1408,9 +1408,9 @@ impl MacdvStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
-            prevFast = (sp.fastBeta as f64).mul_add(prevFast, sp.fastK * tempReal);
-            prevSlow = (sp.slowBeta as f64).mul_add(prevSlow, sp.slowK * tempReal);
+            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
+            prevFast = fmadd!(sp.fastBeta as f64, prevFast, sp.fastK * tempReal);
+            prevSlow = fmadd!(sp.slowBeta as f64, prevSlow, sp.slowK * tempReal);
             spread = prevFast - prevSlow;
             bandScale = (prevFast).abs();
             if (prevSlow).abs() > bandScale {
@@ -1424,7 +1424,7 @@ impl MacdvStream {
             if sp.optInSignalPeriod == 1 {
                 prevSignal = lineValue;
             } else {
-                prevSignal = (sp.signalBeta as f64).mul_add(prevSignal, sp.signalK * lineValue);
+                prevSignal = fmadd!(sp.signalBeta as f64, prevSignal, sp.signalK * lineValue);
             }
             (*outMACDV) = lineValue;
             (*outMACDVSignal) = prevSignal;

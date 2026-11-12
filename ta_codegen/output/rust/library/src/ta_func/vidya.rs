@@ -272,7 +272,7 @@ impl Core {
             } else {
                 k = 0.0;
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             i += 1;
         }
         // Each bar below drops the change that leaves the window after its own
@@ -309,7 +309,7 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
@@ -344,7 +344,7 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             outReal[outIdx] = prevVIDYA;
             outIdx += 1;
             tempReal = inReal[trailingIdx];
@@ -549,7 +549,7 @@ impl Core {
                 k = 0.0;
             }
         }
-        sp.prevVIDYA = (sp.prevValue - sp.prevVIDYA as f64).mul_add(k, sp.prevVIDYA);
+        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA as f64, k, sp.prevVIDYA);
         (*outReal) = sp.prevVIDYA;
         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
         diff = tempReal - sp.trailingValue;
@@ -597,7 +597,7 @@ impl Core {
                 k = 0.0;
             }
         }
-        sp.prevVIDYA = (sp.prevValue - sp.prevVIDYA as f64).mul_add(k, sp.prevVIDYA);
+        sp.prevVIDYA = fmadd!(sp.prevValue - sp.prevVIDYA as f64, k, sp.prevVIDYA);
         (*outReal) = sp.prevVIDYA;
         tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
         diff = tempReal - sp.trailingValue;
@@ -747,7 +747,7 @@ impl Core {
             } else {
                 k = 0.0;
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             i += 1;
         }
         // Each bar below drops the change that leaves the window after its own
@@ -784,7 +784,7 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
@@ -819,7 +819,7 @@ impl Core {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevVIDYA;
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
@@ -1053,7 +1053,7 @@ impl VidyaStream {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             (*outReal) = prevVIDYA;
         }
         Ok(outReal)
@@ -1162,7 +1162,7 @@ impl VidyaStream {
                     k = 0.0;
                 }
             }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            prevVIDYA = fmadd!(prevValue - prevVIDYA as f64, k, prevVIDYA);
             (*outReal) = prevVIDYA;
         }
         Ok(outReal)

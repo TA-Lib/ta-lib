@@ -228,7 +228,7 @@ impl Core {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * _w0[_wk]);
+                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * _w0[_wk]);
                 today += 1;
                 i -= 1;
             }
@@ -245,7 +245,7 @@ impl Core {
             let _w1 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
                 nbRMA -= 1;
-                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * _w0[_wk]);
+                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * _w0[_wk]);
                 _w1[_wk] = prevRMA;
                 outIdx += 1;
                 today += 1;
@@ -253,7 +253,7 @@ impl Core {
             nbRMA = nbRMA.wrapping_sub(1);
         } else {
             while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
-                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
+                prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
                 outReal[outIdx] = prevRMA;
                 outIdx += 1;
                 today += 1;
@@ -428,7 +428,7 @@ struct RmaStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn rma_step_impl(sp: &mut RmaStreamState, inReal: f64, outReal: &mut f64) {
-        sp.prevRMA = (sp.wBeta as f64).mul_add(sp.prevRMA, sp.wAlpha * inReal);
+        sp.prevRMA = fmadd!(sp.wBeta as f64, sp.prevRMA, sp.wAlpha * inReal);
         (*outReal) = sp.prevRMA;
         sp.cur_outReal = (*outReal);
     }
@@ -521,7 +521,7 @@ impl Core {
         // Skip the unstable period.
         i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
         while i != 0 {
-            prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
+            prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
             today += 1;
             i -= 1;
         }
@@ -532,7 +532,7 @@ impl Core {
         // Now do the number of requested RMA.
         nbRMA = endIdx - startIdx + 1;
         while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
-            prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
+            prevRMA = fmadd!(wBeta as f64, prevRMA, wAlpha * inReal[today]);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevRMA;
             today += 1;
         }
@@ -708,7 +708,7 @@ impl RmaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut prevRMA = sp.prevRMA;
-            prevRMA = (sp.wBeta as f64).mul_add(prevRMA, sp.wAlpha * inReal);
+            prevRMA = fmadd!(sp.wBeta as f64, prevRMA, sp.wAlpha * inReal);
             (*outReal) = prevRMA;
         }
         Ok(outReal)

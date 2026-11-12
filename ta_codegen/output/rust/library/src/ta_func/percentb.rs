@@ -408,7 +408,7 @@ impl Core {
                     while _k < _outIdx - _tileBase {
                         middle = _mid[_k];
                         deviation = (outReal[_tileBase + _k]).sqrt();
-                        upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                        upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                         lower = middle - deviation * optInNbDevDn;
                         den = upper - lower;
                         outReal[_tileBase + _k] = (((_x[_k] - lower) / den) as f64);
@@ -469,7 +469,7 @@ impl Core {
             while i < ((((*outNBElement) as usize)) as usize) {
                 middle = tempMA[i + offsetMA];
                 deviation = (outReal[i]).sqrt();
-                upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 den = upper - lower;
                 outReal[i] = (((tempX[i + offsetX] - lower) / den) as f64);
@@ -668,7 +668,7 @@ impl Core {
         } else {
             middle = cur_tempMA;
             deviation = (cur_outReal).sqrt();
-            upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
+            upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
             den = upper - lower;
             cur_outReal = (cur_tempX - lower) / den;
@@ -821,7 +821,7 @@ impl Core {
             while i < ((((*outNBElement) as usize)) as usize) {
                 middle = tempMA[i + offset];
                 deviation = (sc_outReal[i]).sqrt();
-                upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 den = upper - lower;
                 sc_outReal[i] = (tempX[i] - lower) / den;
@@ -1038,7 +1038,7 @@ impl PercentbStream {
             } else {
                 middle = cur_tempMA;
                 deviation = (cur_outReal).sqrt();
-                upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
                 lower = middle - deviation * sp.optInNbDevDn;
                 den = upper - lower;
                 cur_outReal = (cur_tempX - lower) / den;

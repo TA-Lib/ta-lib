@@ -296,7 +296,7 @@ impl Core {
                 greatest = c_max(val2, greatest);
                 val3 = (tempCY - tempLT).abs();
                 greatest = c_max(val3, greatest);
-                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
                 today += 1;
                 i -= 1;
             }
@@ -327,7 +327,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;
@@ -579,7 +579,7 @@ impl Core {
         greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
         greatest = c_max(val3, greatest);
-        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
+        sp.prevATR = fmadd!(sp.wBeta as f64, sp.prevATR, sp.wAlpha * greatest);
         medianPrice = (tempHT + tempLT) / 2.0;
         band = ((sp.optInMultiplier) as f64) * sp.prevATR;
         basicUpper = medianPrice + band;
@@ -747,7 +747,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -777,7 +777,7 @@ impl Core {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+            prevATR = fmadd!(wBeta as f64, prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;
@@ -1044,7 +1044,7 @@ impl SupertrendStream {
             greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
             greatest = c_max(val3, greatest);
-            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
+            prevATR = fmadd!(sp.wBeta as f64, prevATR, sp.wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((sp.optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;

@@ -167,7 +167,7 @@ impl Core {
             let _w2 = &inLow[i..][.._wn];
             let _w3 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                _w3[_wk] = ((((_w0[_wk] as f64).mul_add(2.0, _w1[_wk] + _w2[_wk])) / 4.0) as f64);
+                _w3[_wk] = (((fmadd!(_w0[_wk] as f64, 2.0, _w1[_wk] + _w2[_wk])) / 4.0) as f64);
                 outIdx += 1;
                 i += 1;
             }
@@ -316,7 +316,7 @@ struct WclpriceStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn wclprice_step_impl(sp: &mut WclpriceStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
-        (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
+        (*outReal) = (fmadd!(inClose as f64, 2.0, inHigh + inLow)) / 4.0;
         sp.cur_outReal = (*outReal);
     }
 
@@ -346,7 +346,7 @@ impl Core {
         // Weighted Close Price = (High + Low + (Close*2) ) / 4
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((((inClose[i] as f64).mul_add(2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((fmadd!(inClose[i] as f64, 2.0, inHigh[i] + inLow[i])) / 4.0) as f64);
         }
         i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
@@ -529,7 +529,7 @@ impl WclpriceStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
+            (*outReal) = (fmadd!(inClose as f64, 2.0, inHigh + inLow)) / 4.0;
         }
         Ok(outReal)
     }

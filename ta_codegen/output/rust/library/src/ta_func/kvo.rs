@@ -359,10 +359,10 @@ impl Core {
             } else {
                 vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
-            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
+            emaFast = fmadd!(betaFast as f64, emaFast, kFast * vf);
+            emaSlow = fmadd!(betaSlow as f64, emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
+            signalValue = fmadd!(betaSignal as f64, signalValue, kSignal * kvoValue);
             prevHlc = hlc;
             prevDm = dmToday;
             prevTrend = trend;
@@ -389,10 +389,10 @@ impl Core {
             } else {
                 vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
-            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
+            emaFast = fmadd!(betaFast as f64, emaFast, kFast * vf);
+            emaSlow = fmadd!(betaSlow as f64, emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
+            signalValue = fmadd!(betaSignal as f64, signalValue, kSignal * kvoValue);
             outKVO[outIdx] = kvoValue;
             outKVOSignal[outIdx] = signalValue;
             outIdx = outIdx + 1;
@@ -630,10 +630,10 @@ impl Core {
         } else {
             vf = inVolume * (2.0 * (dmToday / sp.cm) - 1.0).abs() * 100.0 * trend;
         }
-        sp.emaFast = (sp.betaFast as f64).mul_add(sp.emaFast, sp.kFast * vf);
-        sp.emaSlow = (sp.betaSlow as f64).mul_add(sp.emaSlow, sp.kSlow * vf);
+        sp.emaFast = fmadd!(sp.betaFast as f64, sp.emaFast, sp.kFast * vf);
+        sp.emaSlow = fmadd!(sp.betaSlow as f64, sp.emaSlow, sp.kSlow * vf);
         kvoValue = sp.emaFast - sp.emaSlow;
-        sp.signalValue = (sp.betaSignal as f64).mul_add(sp.signalValue, sp.kSignal * kvoValue);
+        sp.signalValue = fmadd!(sp.betaSignal as f64, sp.signalValue, sp.kSignal * kvoValue);
         (*outKVO) = kvoValue;
         (*outKVOSignal) = sp.signalValue;
         sp.prevHlc = hlc;
@@ -818,10 +818,10 @@ impl Core {
             } else {
                 vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
-            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
+            emaFast = fmadd!(betaFast as f64, emaFast, kFast * vf);
+            emaSlow = fmadd!(betaSlow as f64, emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
+            signalValue = fmadd!(betaSignal as f64, signalValue, kSignal * kvoValue);
             prevHlc = hlc;
             prevDm = dmToday;
             prevTrend = trend;
@@ -848,10 +848,10 @@ impl Core {
             } else {
                 vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
-            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
+            emaFast = fmadd!(betaFast as f64, emaFast, kFast * vf);
+            emaSlow = fmadd!(betaSlow as f64, emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
+            signalValue = fmadd!(betaSignal as f64, signalValue, kSignal * kvoValue);
             outKVO[(outIdx * outStride) as usize] = kvoValue;
             outKVOSignal[(outIdx * outStride) as usize] = signalValue;
             outIdx = outIdx + 1;
@@ -1115,10 +1115,10 @@ impl KvoStream {
             } else {
                 vf = inVolume * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (sp.betaFast as f64).mul_add(emaFast, sp.kFast * vf);
-            emaSlow = (sp.betaSlow as f64).mul_add(emaSlow, sp.kSlow * vf);
+            emaFast = fmadd!(sp.betaFast as f64, emaFast, sp.kFast * vf);
+            emaSlow = fmadd!(sp.betaSlow as f64, emaSlow, sp.kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (sp.betaSignal as f64).mul_add(signalValue, sp.kSignal * kvoValue);
+            signalValue = fmadd!(sp.betaSignal as f64, signalValue, sp.kSignal * kvoValue);
             (*outKVO) = kvoValue;
             (*outKVOSignal) = signalValue;
         }

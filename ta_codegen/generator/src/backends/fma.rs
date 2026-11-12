@@ -411,7 +411,7 @@ pub fn canonicalize_accumulator_add(target: &Expr, value: &Expr) -> Expr {
 /// The single fusion detector. For `a*b + c` in either operand order — with both
 /// multiply operands provably float and neither definitely-integer (excludes
 /// `i32 * f64` index math) — returns the `(a, b, c)` a backend should emit as
-/// `fma(a, b, c)` / `a.mul_add(b, c)` / `Math.fma(a, b, c)`. A left-hand `Mul`
+/// `fma(a, b, c)` / `fmadd!(a, b, c)` / `Math.fma(a, b, c)`. A left-hand `Mul`
 /// takes priority over a right-hand one, matching the historical Rust detector
 /// (this matters for `a*b + c*d`, where only the first product fuses).
 ///

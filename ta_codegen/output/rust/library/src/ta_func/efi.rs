@@ -283,7 +283,7 @@ impl Core {
         while today <= startIdx {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
-            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
+            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
             today = today + 1;
         }
         outReal[0] = prevMA;
@@ -296,7 +296,7 @@ impl Core {
             for _wk in 0.._wn {
                 force = (_w0[_wk] - prevClose) * _w1[_wk];
                 prevClose = _w0[_wk];
-                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
+                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
                 _w2[_wk] = prevMA;
                 outIdx = outIdx + 1;
                 today = today + 1;
@@ -476,7 +476,7 @@ impl Core {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
-            sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * force);
+            sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * force);
             (*outReal) = sp.prevMA;
             sp.cur_outReal = (*outReal);
         }
@@ -689,7 +689,7 @@ impl Core {
             while today <= startIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
+                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
                 today = today + 1;
             }
             outReal[(0 * outStride) as usize] = prevMA;
@@ -697,7 +697,7 @@ impl Core {
             while today <= endIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
+                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * force);
                 outReal[(outIdx * outStride) as usize] = prevMA;
                 outIdx = outIdx + 1;
                 today = today + 1;
@@ -899,7 +899,7 @@ impl EfiStream {
                 let mut prevMA = sp.prevMA;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
-                prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * force);
+                prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * force);
                 (*outReal) = prevMA;
             }
         }

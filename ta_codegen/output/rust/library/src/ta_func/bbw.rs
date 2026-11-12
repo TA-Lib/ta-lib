@@ -400,7 +400,7 @@ impl Core {
                     while _k < _outIdx - _tileBase {
                         middle = _mid[_k];
                         deviation = (outReal[_tileBase + _k]).sqrt();
-                        upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                        upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                         lower = middle - deviation * optInNbDevDn;
                         outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                         if middle == 0.0 {
@@ -453,7 +453,7 @@ impl Core {
             while i < ((((*outNBElement) as usize)) as usize) {
                 middle = tempBuffer[i + offset];
                 deviation = (outReal[i]).sqrt();
-                upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
@@ -643,7 +643,7 @@ impl Core {
         } else {
             middle = cur_tempBuffer;
             deviation = (cur_outReal).sqrt();
-            upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
+            upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
             cur_outReal = (upper - lower) / middle * 100.0;
             if middle == 0.0 {
@@ -761,7 +761,7 @@ impl Core {
             while i < ((((*outNBElement) as usize)) as usize) {
                 middle = tempBuffer[i + offset];
                 deviation = (sc_outReal[i]).sqrt();
-                upper = (deviation as f64).mul_add(optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
                 sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
@@ -974,7 +974,7 @@ impl BbwStream {
             } else {
                 middle = cur_tempBuffer;
                 deviation = (cur_outReal).sqrt();
-                upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
+                upper = fmadd!(deviation as f64, sp.optInNbDevUp, middle);
                 lower = middle - deviation * sp.optInNbDevDn;
                 cur_outReal = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {

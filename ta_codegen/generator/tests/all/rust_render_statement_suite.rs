@@ -2302,7 +2302,7 @@ fn rust_lookback_body_never_fuses_multiply_add() {
         "the fusable shape must actually reach the lookback renderer: {section}"
     );
     assert!(
-        !section.contains(".mul_add("),
+        !section.contains("fmadd!("),
         "a lookback body must not fuse — C/Java/C# do not: {section}"
     );
 }
@@ -2742,7 +2742,7 @@ fn rust_macd_output_loops_run_as_counted_windows() {
         for array in ["inReal", "outMACD", "outMACDSignal", "outMACDHist"] {
             assert!(!output_loop.contains(&format!("{array}[")), "{name}: {output_loop}");
         }
-        assert!(output_loop.contains(".mul_add("), "{name}: {output_loop}");
+        assert!(output_loop.contains("fmadd!("), "{name}: {output_loop}");
     }
 }
 

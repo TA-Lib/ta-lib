@@ -278,8 +278,8 @@ impl Core {
                     emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
                 }
             } else {
-                emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
-                emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
+                emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
+                emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -302,8 +302,8 @@ impl Core {
                         emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
                     }
                 } else {
-                    emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
-                    emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
+                    emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -328,10 +328,10 @@ impl Core {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
             absMom = (mom).abs();
-            emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
-            emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
-            emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
-            emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
+            emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
+            emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
+            emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
@@ -512,10 +512,10 @@ impl Core {
         mom = inReal - sp.prevClose;
         sp.prevClose = inReal;
         absMom = (mom).abs();
-        sp.emaFirstNum = (sp.betaFirst as f64).mul_add(sp.emaFirstNum, sp.kFirst * mom);
-        sp.emaFirstDen = (sp.betaFirst as f64).mul_add(sp.emaFirstDen, sp.kFirst * absMom);
-        sp.emaSecondNum = (sp.betaSecond as f64).mul_add(sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
-        sp.emaSecondDen = (sp.betaSecond as f64).mul_add(sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
+        sp.emaFirstNum = fmadd!(sp.betaFirst as f64, sp.emaFirstNum, sp.kFirst * mom);
+        sp.emaFirstDen = fmadd!(sp.betaFirst as f64, sp.emaFirstDen, sp.kFirst * absMom);
+        sp.emaSecondNum = fmadd!(sp.betaSecond as f64, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+        sp.emaSecondDen = fmadd!(sp.betaSecond as f64, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
         if sp.emaSecondDen > 0.0 {
             tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
         } else {
@@ -658,8 +658,8 @@ impl Core {
                     emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
                 }
             } else {
-                emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
-                emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
+                emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
+                emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -682,8 +682,8 @@ impl Core {
                         emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
                     }
                 } else {
-                    emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
-                    emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
+                    emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -708,10 +708,10 @@ impl Core {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
             absMom = (mom).abs();
-            emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
-            emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
-            emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
-            emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
+            emaFirstNum = fmadd!(betaFirst as f64, emaFirstNum, kFirst * mom);
+            emaFirstDen = fmadd!(betaFirst as f64, emaFirstDen, kFirst * absMom);
+            emaSecondNum = fmadd!(betaSecond as f64, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(betaSecond as f64, emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
@@ -923,10 +923,10 @@ impl TsiStream {
             mom = inReal - prevClose;
             prevClose = inReal;
             absMom = (mom).abs();
-            emaFirstNum = (sp.betaFirst as f64).mul_add(emaFirstNum, sp.kFirst * mom);
-            emaFirstDen = (sp.betaFirst as f64).mul_add(emaFirstDen, sp.kFirst * absMom);
-            emaSecondNum = (sp.betaSecond as f64).mul_add(emaSecondNum, sp.kSecond * emaFirstNum);
-            emaSecondDen = (sp.betaSecond as f64).mul_add(emaSecondDen, sp.kSecond * emaFirstDen);
+            emaFirstNum = fmadd!(sp.betaFirst as f64, emaFirstNum, sp.kFirst * mom);
+            emaFirstDen = fmadd!(sp.betaFirst as f64, emaFirstDen, sp.kFirst * absMom);
+            emaSecondNum = fmadd!(sp.betaSecond as f64, emaSecondNum, sp.kSecond * emaFirstNum);
+            emaSecondDen = fmadd!(sp.betaSecond as f64, emaSecondDen, sp.kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {

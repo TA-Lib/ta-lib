@@ -365,12 +365,12 @@ impl Core {
         prevFast = prevFast / ((optInFastPeriod) as f64);
         while today < fastToday {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -393,8 +393,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -446,7 +446,7 @@ impl Core {
                 if nPF == 0 {
                     pf = frac1;
                 } else {
-                    pf = (0.5 as f64).mul_add(frac1 - pf, pf);
+                    pf = fmadd!(0.5 as f64, frac1 - pf, pf);
                 }
                 nPF = nPF + 1;
                 pfRing[pfRing_Idx] = pf;
@@ -498,7 +498,7 @@ impl Core {
                     if nPF == ((optInCyclePeriod) as usize) {
                         pff = frac2;
                     } else {
-                        pff = (0.5 as f64).mul_add(frac2 - pff, pff);
+                        pff = fmadd!(0.5 as f64, frac2 - pff, pff);
                     }
                 }
             }
@@ -508,8 +508,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -556,7 +556,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            pf = (0.5 as f64).mul_add(frac1 - pf, pf);
+            pf = fmadd!(0.5 as f64, frac1 - pf, pf);
             pfRing[pfRing_Idx] = pf;
             if pfRing_Idx == 0 {
                 pfHi = pf;
@@ -602,7 +602,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            pff = (0.5 as f64).mul_add(frac2 - pff, pff);
+            pff = fmadd!(0.5 as f64, frac2 - pff, pff);
             outReal[outIdx] = pff;
             outIdx += 1;
             today = today + 1;
@@ -810,8 +810,8 @@ impl Core {
         let mut sufLo: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         tempReal = inReal;
-        sp.prevFast = (sp.fastBeta as f64).mul_add(sp.prevFast, sp.fastK * tempReal);
-        sp.prevSlow = (sp.slowBeta as f64).mul_add(sp.prevSlow, sp.slowK * tempReal);
+        sp.prevFast = fmadd!(sp.fastBeta as f64, sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = fmadd!(sp.slowBeta as f64, sp.prevSlow, sp.slowK * tempReal);
         lineValue = sp.prevFast - sp.prevSlow;
         cb_lineRing[sp.lineRing_Idx] = lineValue;
         if sp.lineRing_Idx == 0 {
@@ -854,7 +854,7 @@ impl Core {
         } else {
             cold_arm();
         }
-        sp.pf = (0.5 as f64).mul_add(sp.frac1 - sp.pf, sp.pf);
+        sp.pf = fmadd!(0.5 as f64, sp.frac1 - sp.pf, sp.pf);
         cb_pfRing[sp.pfRing_Idx] = sp.pf;
         if sp.pfRing_Idx == 0 {
             sp.pfHi = sp.pf;
@@ -896,7 +896,7 @@ impl Core {
         } else {
             cold_arm();
         }
-        sp.pff = (0.5 as f64).mul_add(sp.frac2 - sp.pff, sp.pff);
+        sp.pff = fmadd!(0.5 as f64, sp.frac2 - sp.pff, sp.pff);
         (*outReal) = sp.pff;
         sp.cur_outReal = (*outReal);
     }
@@ -1082,12 +1082,12 @@ impl Core {
         prevFast = prevFast / ((optInFastPeriod) as f64);
         while today < fastToday {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -1110,8 +1110,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -1157,7 +1157,7 @@ impl Core {
                 if nPF == 0 {
                     pf = frac1;
                 } else {
-                    pf = (0.5 as f64).mul_add(frac1 - pf, pf);
+                    pf = fmadd!(0.5 as f64, frac1 - pf, pf);
                 }
                 nPF = nPF + 1;
                 pfRing[pfRing_Idx] = pf;
@@ -1203,7 +1203,7 @@ impl Core {
                     if nPF == ((optInCyclePeriod) as usize) {
                         pff = frac2;
                     } else {
-                        pff = (0.5 as f64).mul_add(frac2 - pff, pff);
+                        pff = fmadd!(0.5 as f64, frac2 - pff, pff);
                     }
                 }
             }
@@ -1213,8 +1213,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            prevFast = fmadd!(fastBeta as f64, prevFast, fastK * tempReal);
+            prevSlow = fmadd!(slowBeta as f64, prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -1255,7 +1255,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            pf = (0.5 as f64).mul_add(frac1 - pf, pf);
+            pf = fmadd!(0.5 as f64, frac1 - pf, pf);
             pfRing[pfRing_Idx] = pf;
             if pfRing_Idx == 0 {
                 pfHi = pf;
@@ -1295,7 +1295,7 @@ impl Core {
             } else {
                 cold_arm();
             }
-            pff = (0.5 as f64).mul_add(frac2 - pff, pff);
+            pff = fmadd!(0.5 as f64, frac2 - pff, pff);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = pff;
             today = today + 1;
         }
@@ -1564,8 +1564,8 @@ impl StcStream {
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
             tempReal = inReal;
-            prevFast = (sp.fastBeta as f64).mul_add(prevFast, sp.fastK * tempReal);
-            prevSlow = (sp.slowBeta as f64).mul_add(prevSlow, sp.slowK * tempReal);
+            prevFast = fmadd!(sp.fastBeta as f64, prevFast, sp.fastK * tempReal);
+            prevSlow = fmadd!(sp.slowBeta as f64, prevSlow, sp.slowK * tempReal);
             lineValue = prevFast - prevSlow;
             pkSlot0 = lineRing_Idx as usize;
             pkVal0 = lineValue;
@@ -1605,7 +1605,7 @@ impl StcStream {
             } else {
                 cold_arm();
             }
-            pf = (0.5 as f64).mul_add(frac1 - pf, pf);
+            pf = fmadd!(0.5 as f64, frac1 - pf, pf);
             pkSlot1 = pfRing_Idx as usize;
             pkVal1 = pf;
             if pfRing_Idx == 0 {
@@ -1644,7 +1644,7 @@ impl StcStream {
             } else {
                 cold_arm();
             }
-            pff = (0.5 as f64).mul_add(frac2 - pff, pff);
+            pff = fmadd!(0.5 as f64, frac2 - pff, pff);
             (*outReal) = pff;
         }
         Ok(outReal)

@@ -244,7 +244,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
@@ -272,7 +272,7 @@ impl Core {
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -294,7 +294,7 @@ impl Core {
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 }
                 peak2 = total2;
             }
@@ -504,7 +504,7 @@ impl Core {
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
-        moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, sp.total3 - 3.0 * residue * sp.total2);
+        moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
         // Each bar rounds the cubic sum by at most eps times the peak second
         // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
         // 1000x before the rebuild at 1% of the peak.
@@ -536,7 +536,7 @@ impl Core {
             residue = sp.total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = sp.total2 - sp.dPeriod * residueSq;
-            moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, sp.total3 - 3.0 * residue * sp.total2);
+            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
             // The left-to-right sum can miss the mean by more than the window's
             // spread, and the trigger would then fire again on every bar. Adding
             // the measured miss back lands within about an ulp of the mean, where
@@ -560,7 +560,7 @@ impl Core {
                 residue = sp.total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = sp.total2 - sp.dPeriod * residueSq;
-                moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, sp.total3 - 3.0 * residue * sp.total2);
+                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, sp.total3 - 3.0 * residue * sp.total2);
             }
             sp.peak2 = sp.total2;
         }
@@ -702,7 +702,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
@@ -730,7 +730,7 @@ impl Core {
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -752,7 +752,7 @@ impl Core {
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment3 = (2.0 * dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 }
                 peak2 = total2;
             }
@@ -1009,7 +1009,7 @@ impl SkewStream {
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;
-            moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+            moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
             // Each bar rounds the cubic sum by at most eps times the peak second
             // sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
             // 1000x before the rebuild at 1% of the peak.
@@ -1041,7 +1041,7 @@ impl SkewStream {
                 residue = total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - sp.dPeriod * residueSq;
-                moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 // The left-to-right sum can miss the mean by more than the window's
                 // spread, and the trigger would then fire again on every bar. Adding
                 // the measured miss back lands within about an ulp of the mean, where
@@ -1065,7 +1065,7 @@ impl SkewStream {
                     residue = total1 * sp.invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - sp.dPeriod * residueSq;
-                    moment3 = (2.0 * sp.dPeriod * residueSq as f64).mul_add(residue, total3 - 3.0 * residue * total2);
+                    moment3 = fmadd!(2.0 * sp.dPeriod * residueSq as f64, residue, total3 - 3.0 * residue * total2);
                 }
                 peak2 = total2;
             }

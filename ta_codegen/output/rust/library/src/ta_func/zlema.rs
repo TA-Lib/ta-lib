@@ -251,7 +251,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &inReal[trailingIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
+                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 today += 1;
                 trailingIdx += 1;
             }
@@ -264,7 +264,7 @@ impl Core {
             let _w1 = &inReal[trailingIdx..][.._wn];
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
+                prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 today += 1;
                 trailingIdx += 1;
                 _w2[_wk] = prevMA;
@@ -439,7 +439,7 @@ impl Core {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
-        sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
+        sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
         ringPosL_trailingIdx = sp.ringPos_trailingIdx;
@@ -452,7 +452,7 @@ impl Core {
     }
 
     fn zlema_step_tape_impl(sp: &mut ZlemaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
-        sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize]));
+        sp.prevMA = fmadd!(sp.emaBeta as f64, sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize]));
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
     }
@@ -577,14 +577,14 @@ impl Core {
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
-            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
+            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
         }
         outReal[(0 * outStride) as usize] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
+            prevMA = fmadd!(emaBeta as f64, prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMA;
@@ -781,7 +781,7 @@ impl ZlemaStream {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 })));
+            prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 })));
             (*outReal) = prevMA;
         }
         Ok(outReal)
@@ -863,7 +863,7 @@ impl ZlemaStream {
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (tapeBase & tapeMask) as usize;
             pkVal0 = inReal;
-            prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 })));
+            prevMA = fmadd!(sp.emaBeta as f64, prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 })));
             (*outReal) = prevMA;
         }
         Ok(outReal)

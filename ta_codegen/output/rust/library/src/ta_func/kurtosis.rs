@@ -263,7 +263,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -296,7 +296,7 @@ impl Core {
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -320,7 +320,7 @@ impl Core {
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 }
                 peak2 = total2;
                 peak4 = total4;
@@ -538,7 +538,7 @@ impl Core {
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
-        moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+        moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
         // Rebuild once either central moment falls below 1% of the largest
         // shifted sum of its power held since the last rebuild. That catches a
         // shift several sigma stale, where the expansion above cancels as
@@ -575,7 +575,7 @@ impl Core {
             residue = sp.total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = sp.total2 - sp.dPeriod * residueSq;
-            moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             // The left-to-right sum misses the mean by many ulps at a long
             // period, and a window whose spread is under that miss would fire a
             // trigger again on every bar. The residue just measured is the
@@ -601,7 +601,7 @@ impl Core {
                 residue = sp.total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = sp.total2 - sp.dPeriod * residueSq;
-                moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq as f64, sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             }
             sp.peak2 = sp.total2;
             sp.peak4 = sp.total4;
@@ -759,7 +759,7 @@ impl Core {
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
-            moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -792,7 +792,7 @@ impl Core {
                 residue = total1 * invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
-                moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -816,7 +816,7 @@ impl Core {
                     residue = total1 * invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - dPeriod * residueSq;
-                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
                 }
                 peak2 = total2;
                 peak4 = total4;
@@ -1080,7 +1080,7 @@ impl KurtosisStream {
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;
-            moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+            moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
             // Rebuild once either central moment falls below 1% of the largest
             // shifted sum of its power held since the last rebuild. That catches a
             // shift several sigma stale, where the expansion above cancels as
@@ -1117,7 +1117,7 @@ impl KurtosisStream {
                 residue = total1 * sp.invPeriod;
                 residueSq = residue * residue;
                 moment2 = total2 - sp.dPeriod * residueSq;
-                moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
                 // The left-to-right sum misses the mean by many ulps at a long
                 // period, and a window whose spread is under that miss would fire a
                 // trigger again on every bar. The residue just measured is the
@@ -1143,7 +1143,7 @@ impl KurtosisStream {
                     residue = total1 * sp.invPeriod;
                     residueSq = residue * residue;
                     moment2 = total2 - sp.dPeriod * residueSq;
-                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                    moment4 = fmadd!(6.0 * residueSq as f64, total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
                 }
                 peak2 = total2;
                 peak4 = total4;

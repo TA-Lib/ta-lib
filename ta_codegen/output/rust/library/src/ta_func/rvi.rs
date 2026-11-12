@@ -400,8 +400,8 @@ impl Core {
             } else if delta < 0.0 {
                 dnValue = sigma;
             }
-            prevUp = (wBeta as f64).mul_add(prevUp, wAlpha * upValue);
-            prevDn = (wBeta as f64).mul_add(prevDn, wAlpha * dnValue);
+            prevUp = fmadd!(wBeta as f64, prevUp, wAlpha * upValue);
+            prevDn = fmadd!(wBeta as f64, prevDn, wAlpha * dnValue);
             today += 1;
             i -= 1;
         }
@@ -478,8 +478,8 @@ impl Core {
             } else if delta < 0.0 {
                 dnValue = sigma;
             }
-            prevUp = (wBeta as f64).mul_add(prevUp, wAlpha * upValue);
-            prevDn = (wBeta as f64).mul_add(prevDn, wAlpha * dnValue);
+            prevUp = fmadd!(wBeta as f64, prevUp, wAlpha * upValue);
+            prevDn = fmadd!(wBeta as f64, prevDn, wAlpha * dnValue);
             total = prevUp + prevDn;
             outReal[outIdx] = (if total == 0.0 { 50.0 } else { 100.0 * (prevUp / total) });
             outIdx += 1;
@@ -737,8 +737,8 @@ impl Core {
         } else if delta < 0.0 {
             dnValue = sigma;
         }
-        sp.prevUp = (sp.wBeta as f64).mul_add(sp.prevUp, sp.wAlpha * upValue);
-        sp.prevDn = (sp.wBeta as f64).mul_add(sp.prevDn, sp.wAlpha * dnValue);
+        sp.prevUp = fmadd!(sp.wBeta as f64, sp.prevUp, sp.wAlpha * upValue);
+        sp.prevDn = fmadd!(sp.wBeta as f64, sp.prevDn, sp.wAlpha * dnValue);
         total = sp.prevUp + sp.prevDn;
         (*outReal) = (if total == 0.0 { 50.0 } else { 100.0 * (sp.prevUp / total) });
         sp.today += 1;
@@ -1004,8 +1004,8 @@ impl Core {
             } else if delta < 0.0 {
                 dnValue = sigma;
             }
-            prevUp = (wBeta as f64).mul_add(prevUp, wAlpha * upValue);
-            prevDn = (wBeta as f64).mul_add(prevDn, wAlpha * dnValue);
+            prevUp = fmadd!(wBeta as f64, prevUp, wAlpha * upValue);
+            prevDn = fmadd!(wBeta as f64, prevDn, wAlpha * dnValue);
             today += 1;
             i -= 1;
         }
@@ -1082,8 +1082,8 @@ impl Core {
             } else if delta < 0.0 {
                 dnValue = sigma;
             }
-            prevUp = (wBeta as f64).mul_add(prevUp, wAlpha * upValue);
-            prevDn = (wBeta as f64).mul_add(prevDn, wAlpha * dnValue);
+            prevUp = fmadd!(wBeta as f64, prevUp, wAlpha * upValue);
+            prevDn = fmadd!(wBeta as f64, prevDn, wAlpha * dnValue);
             total = prevUp + prevDn;
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (if total == 0.0 { 50.0 } else { 100.0 * (prevUp / total) });
             today += 1;
@@ -1384,8 +1384,8 @@ impl RviStream {
             } else if delta < 0.0 {
                 dnValue = sigma;
             }
-            prevUp = (sp.wBeta as f64).mul_add(prevUp, sp.wAlpha * upValue);
-            prevDn = (sp.wBeta as f64).mul_add(prevDn, sp.wAlpha * dnValue);
+            prevUp = fmadd!(sp.wBeta as f64, prevUp, sp.wAlpha * upValue);
+            prevDn = fmadd!(sp.wBeta as f64, prevDn, sp.wAlpha * dnValue);
             total = prevUp + prevDn;
             (*outReal) = (if total == 0.0 { 50.0 } else { 100.0 * (prevUp / total) });
         }

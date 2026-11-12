@@ -303,8 +303,8 @@ impl Core {
                 cold_arm();
             }
             today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            fastEMA = fmadd!(one_minus_fastk as f64, fastEMA, fastk * ad);
+            slowEMA = fmadd!(one_minus_slowk as f64, slowEMA, slowk * ad);
         }
         // Perform the calculation for the requested range
         outIdx = 0;
@@ -319,8 +319,8 @@ impl Core {
                 cold_arm();
             }
             today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            fastEMA = fmadd!(one_minus_fastk as f64, fastEMA, fastk * ad);
+            slowEMA = fmadd!(one_minus_slowk as f64, slowEMA, slowk * ad);
             outReal[outIdx] = fastEMA - slowEMA;
             outIdx += 1;
         }
@@ -512,8 +512,8 @@ impl Core {
         } else {
             cold_arm();
         }
-        sp.fastEMA = (sp.one_minus_fastk as f64).mul_add(sp.fastEMA, sp.fastk * sp.ad);
-        sp.slowEMA = (sp.one_minus_slowk as f64).mul_add(sp.slowEMA, sp.slowk * sp.ad);
+        sp.fastEMA = fmadd!(sp.one_minus_fastk as f64, sp.fastEMA, sp.fastk * sp.ad);
+        sp.slowEMA = fmadd!(sp.one_minus_slowk as f64, sp.slowEMA, sp.slowk * sp.ad);
         (*outReal) = sp.fastEMA - sp.slowEMA;
         sp.cur_outReal = (*outReal);
     }
@@ -660,8 +660,8 @@ impl Core {
                 cold_arm();
             }
             today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            fastEMA = fmadd!(one_minus_fastk as f64, fastEMA, fastk * ad);
+            slowEMA = fmadd!(one_minus_slowk as f64, slowEMA, slowk * ad);
         }
         // Perform the calculation for the requested range
         outIdx = 0;
@@ -676,8 +676,8 @@ impl Core {
                 cold_arm();
             }
             today += 1;
-            fastEMA = (one_minus_fastk as f64).mul_add(fastEMA, fastk * ad);
-            slowEMA = (one_minus_slowk as f64).mul_add(slowEMA, slowk * ad);
+            fastEMA = fmadd!(one_minus_fastk as f64, fastEMA, fastk * ad);
+            slowEMA = fmadd!(one_minus_slowk as f64, slowEMA, slowk * ad);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fastEMA - slowEMA;
         }
         (*outNBElement) = outIdx;
@@ -888,8 +888,8 @@ impl AdoscStream {
             } else {
                 cold_arm();
             }
-            fastEMA = (sp.one_minus_fastk as f64).mul_add(fastEMA, sp.fastk * ad);
-            slowEMA = (sp.one_minus_slowk as f64).mul_add(slowEMA, sp.slowk * ad);
+            fastEMA = fmadd!(sp.one_minus_fastk as f64, fastEMA, sp.fastk * ad);
+            slowEMA = fmadd!(sp.one_minus_slowk as f64, slowEMA, sp.slowk * ad);
             (*outReal) = fastEMA - slowEMA;
         }
         Ok(outReal)

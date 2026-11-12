@@ -387,8 +387,8 @@ impl Core {
                     emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
                 }
             } else {
-                emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
-                emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
+                emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
+                emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -411,8 +411,8 @@ impl Core {
                         emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
-                    emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
+                    emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -430,7 +430,7 @@ impl Core {
                         prevSignal = sumSignal / ((optInSignalPeriod) as f64);
                     }
                 } else {
-                    prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
+                    prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
@@ -478,10 +478,10 @@ impl Core {
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
-            emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
-            emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
-            emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
+            emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
+            emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
+            emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
+            emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -498,7 +498,7 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
+            prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
             outSMI[outIdx] = smiValue;
             outSMISignal[outIdx] = prevSignal;
             outIdx = outIdx + 1;
@@ -756,10 +756,10 @@ impl Core {
         }
         den = sp.highest - sp.lowest;
         num = sp.x_inClose[(sp.today & sp.xMask) as usize] - (sp.highest + sp.lowest) * 0.5;
-        sp.emaSlowNum = (sp.betaSlow as f64).mul_add(sp.emaSlowNum, sp.kSlow * num);
-        sp.emaSlowDen = (sp.betaSlow as f64).mul_add(sp.emaSlowDen, sp.kSlow * den);
-        sp.emaFastNum = (sp.betaFast as f64).mul_add(sp.emaFastNum, sp.kFast * sp.emaSlowNum);
-        sp.emaFastDen = (sp.betaFast as f64).mul_add(sp.emaFastDen, sp.kFast * sp.emaSlowDen);
+        sp.emaSlowNum = fmadd!(sp.betaSlow as f64, sp.emaSlowNum, sp.kSlow * num);
+        sp.emaSlowDen = fmadd!(sp.betaSlow as f64, sp.emaSlowDen, sp.kSlow * den);
+        sp.emaFastNum = fmadd!(sp.betaFast as f64, sp.emaFastNum, sp.kFast * sp.emaSlowNum);
+        sp.emaFastDen = fmadd!(sp.betaFast as f64, sp.emaFastDen, sp.kFast * sp.emaSlowDen);
         // The denominator is an EMA of an EMA of the high-low range: every term
         // is non-negative and every weight is positive, so it carries no
         // cancellation residue and is zero only when every range that reached it
@@ -776,7 +776,7 @@ impl Core {
         } else {
             smiValue = 0.0;
         }
-        sp.prevSignal = (sp.betaSignal as f64).mul_add(sp.prevSignal, sp.kSignal * smiValue);
+        sp.prevSignal = fmadd!(sp.betaSignal as f64, sp.prevSignal, sp.kSignal * smiValue);
         (*outSMI) = smiValue;
         (*outSMISignal) = sp.prevSignal;
         sp.trailingIdx = sp.trailingIdx + 1;
@@ -989,8 +989,8 @@ impl Core {
                     emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
                 }
             } else {
-                emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
-                emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
+                emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
+                emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -1013,8 +1013,8 @@ impl Core {
                         emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
-                    emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
+                    emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -1032,7 +1032,7 @@ impl Core {
                         prevSignal = sumSignal / ((optInSignalPeriod) as f64);
                     }
                 } else {
-                    prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
+                    prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
@@ -1080,10 +1080,10 @@ impl Core {
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
-            emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
-            emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
-            emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
+            emaSlowNum = fmadd!(betaSlow as f64, emaSlowNum, kSlow * num);
+            emaSlowDen = fmadd!(betaSlow as f64, emaSlowDen, kSlow * den);
+            emaFastNum = fmadd!(betaFast as f64, emaFastNum, kFast * emaSlowNum);
+            emaFastDen = fmadd!(betaFast as f64, emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1100,7 +1100,7 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
+            prevSignal = fmadd!(betaSignal as f64, prevSignal, kSignal * smiValue);
             outSMI[(outIdx * outStride) as usize] = smiValue;
             outSMISignal[(outIdx * outStride) as usize] = prevSignal;
             outIdx = outIdx + 1;
@@ -1406,10 +1406,10 @@ impl SmiStream {
             }
             den = highest - lowest;
             num = (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 }) - (highest + lowest) * 0.5;
-            emaSlowNum = (sp.betaSlow as f64).mul_add(emaSlowNum, sp.kSlow * num);
-            emaSlowDen = (sp.betaSlow as f64).mul_add(emaSlowDen, sp.kSlow * den);
-            emaFastNum = (sp.betaFast as f64).mul_add(emaFastNum, sp.kFast * emaSlowNum);
-            emaFastDen = (sp.betaFast as f64).mul_add(emaFastDen, sp.kFast * emaSlowDen);
+            emaSlowNum = fmadd!(sp.betaSlow as f64, emaSlowNum, sp.kSlow * num);
+            emaSlowDen = fmadd!(sp.betaSlow as f64, emaSlowDen, sp.kSlow * den);
+            emaFastNum = fmadd!(sp.betaFast as f64, emaFastNum, sp.kFast * emaSlowNum);
+            emaFastDen = fmadd!(sp.betaFast as f64, emaFastDen, sp.kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1426,7 +1426,7 @@ impl SmiStream {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (sp.betaSignal as f64).mul_add(prevSignal, sp.kSignal * smiValue);
+            prevSignal = fmadd!(sp.betaSignal as f64, prevSignal, sp.kSignal * smiValue);
             (*outSMI) = smiValue;
             (*outSMISignal) = prevSignal;
         }

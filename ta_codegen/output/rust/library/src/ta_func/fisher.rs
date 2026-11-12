@@ -353,14 +353,14 @@ impl Core {
                 } else {
                     ratio = 0.5;
                 }
-                smoothed = (0.67 as f64).mul_add(smoothed, 0.33 * 2.0 * (ratio - 0.5));
+                smoothed = fmadd!(0.67 as f64, smoothed, 0.33 * 2.0 * (ratio - 0.5));
                 if smoothed > 0.99 {
                     smoothed = 0.999;
                 }
                 if smoothed < -0.99 {
                     smoothed = -0.999;
                 }
-                fish = (0.5 as f64).mul_add(((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
+                fish = fmadd!(0.5 as f64, ((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
                 if today + m >= startIdx {
                     outFisher[outIdx] = fish;
                     outTrigger[outIdx] = prevFish;
@@ -612,7 +612,7 @@ impl Core {
             ratio = 0.5;
         }
         // The listing's .33*2*(r-.5) + .67*Value1[1].
-        sp.smoothed = (0.67 as f64).mul_add(sp.smoothed, 0.33 * 2.0 * (ratio - 0.5));
+        sp.smoothed = fmadd!(0.67 as f64, sp.smoothed, 0.33 * 2.0 * (ratio - 0.5));
         // The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
         // the next bar's smoothing reads -- the listing assigns it back to
         // Value1 rather than holding it for the transform alone.
@@ -622,7 +622,7 @@ impl Core {
         if sp.smoothed < -0.99 {
             sp.smoothed = -0.999;
         }
-        fish = (0.5 as f64).mul_add(((1.0 + sp.smoothed) / (1.0 - sp.smoothed)).ln(), 0.5 * sp.prevFish);
+        fish = fmadd!(0.5 as f64, ((1.0 + sp.smoothed) / (1.0 - sp.smoothed)).ln(), 0.5 * sp.prevFish);
         (*outFisher) = fish;
         // The author's second plot is Fish[1]: the previous bar's smoothed,
         // which at the first output bar is the zero seed when no unstable
@@ -792,7 +792,7 @@ impl Core {
                 ratio = 0.5;
             }
             // The listing's .33*2*(r-.5) + .67*Value1[1].
-            smoothed = (0.67 as f64).mul_add(smoothed, 0.33 * 2.0 * (ratio - 0.5));
+            smoothed = fmadd!(0.67 as f64, smoothed, 0.33 * 2.0 * (ratio - 0.5));
             // The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
             // the next bar's smoothing reads -- the listing assigns it back to
             // Value1 rather than holding it for the transform alone.
@@ -802,7 +802,7 @@ impl Core {
             if smoothed < -0.99 {
                 smoothed = -0.999;
             }
-            fish = (0.5 as f64).mul_add(((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
+            fish = fmadd!(0.5 as f64, ((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
             if today >= startIdx {
                 outFisher[(outIdx * outStride) as usize] = fish;
                 // The author's second plot is Fish[1]: the previous bar's smoothed,
@@ -1110,7 +1110,7 @@ impl FisherStream {
                 ratio = 0.5;
             }
             // The listing's .33*2*(r-.5) + .67*Value1[1].
-            smoothed = (0.67 as f64).mul_add(smoothed, 0.33 * 2.0 * (ratio - 0.5));
+            smoothed = fmadd!(0.67 as f64, smoothed, 0.33 * 2.0 * (ratio - 0.5));
             // The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
             // the next bar's smoothing reads -- the listing assigns it back to
             // Value1 rather than holding it for the transform alone.
@@ -1120,7 +1120,7 @@ impl FisherStream {
             if smoothed < -0.99 {
                 smoothed = -0.999;
             }
-            fish = (0.5 as f64).mul_add(((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * sp.prevFish);
+            fish = fmadd!(0.5 as f64, ((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * sp.prevFish);
             (*outFisher) = fish;
             // The author's second plot is Fish[1]: the previous bar's smoothed,
             // which at the first output bar is the zero seed when no unstable

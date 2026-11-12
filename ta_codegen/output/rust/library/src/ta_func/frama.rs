@@ -356,7 +356,7 @@ impl Core {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = (1.0 - alpha as f64).mul_add(prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }
@@ -591,7 +591,7 @@ impl Core {
         // returns the price exactly too.
         if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
             alpha = (sp.expScale * ((r1 + r2) / r).ln()).exp();
-            sp.prevFRAMA = (1.0 - alpha as f64).mul_add(sp.prevFRAMA, alpha * price);
+            sp.prevFRAMA = fmadd!(1.0 - alpha as f64, sp.prevFRAMA, alpha * price);
         } else {
             sp.prevFRAMA = price;
         }
@@ -806,7 +806,7 @@ impl Core {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = (1.0 - alpha as f64).mul_add(prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }
@@ -1072,7 +1072,7 @@ impl FramaStream {
             // returns the price exactly too.
             if r1 > 0.0 && r2 > 0.0 && r1 + r2 > r {
                 alpha = (sp.expScale * ((r1 + r2) / r).ln()).exp();
-                prevFRAMA = (1.0 - alpha as f64).mul_add(prevFRAMA, alpha * price);
+                prevFRAMA = fmadd!(1.0 - alpha as f64, prevFRAMA, alpha * price);
             } else {
                 prevFRAMA = price;
             }

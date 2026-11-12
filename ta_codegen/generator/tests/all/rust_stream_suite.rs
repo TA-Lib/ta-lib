@@ -797,7 +797,7 @@ fn a_fused_stream_update_is_fma_dispatched() {
                 "    #[target_feature(enable = \"fma\")]\n    fn {name}_open_impl_fma("
             ));
             let body = if fused { format!("{open}_scalar(") } else { format!("{open}(") };
-            let fuses = body_of(&s, &body).contains(".mul_add(");
+            let fuses = body_of(&s, &body).contains("fmadd!(");
             let routed = s.contains(&format!("dispatch_fma!(self, {name}_open_impl_fma, {name}_open_impl_scalar,"))
                 && s.contains(&format!("    #[inline(always)]\n    {open}_scalar("));
             let (func, _) = load_indicator(&name);
@@ -828,7 +828,7 @@ fn a_fused_stream_update_is_fma_dispatched() {
             drifted.push(format!("{name}: pays={pays}, update dispatched={upd}, step inlined={inlined}"));
         }
         dispatched += usize::from(pays);
-        declined += usize::from(!pays && step.contains(".mul_add("));
+        declined += usize::from(!pays && step.contains("fmadd!("));
     }
     assert!(drifted.is_empty(), "stream FMA dispatch drifted:\n{}", drifted.join("\n"));
     assert!(opens >= 150, "only {opens} `open_impl` rendered: the signature moved");

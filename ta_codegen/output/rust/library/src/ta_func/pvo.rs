@@ -409,7 +409,7 @@ impl Core {
             }
             _eFast = _eFast / ((optInFastPeriod) as f64);
             while _eFastToday <= _eSlowStart {
-                _eFast = (_eFastBeta as f64).mul_add(_eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
+                _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * inVolume[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
             }
             _eSlow = 0.0;
             // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
@@ -420,7 +420,7 @@ impl Core {
             }
             _eSlow = _eSlow / ((optInSlowPeriod) as f64);
             while _eSlowToday <= _eSlowStart {
-                _eSlow = (_eSlowBeta as f64).mul_add(_eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
+                _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * inVolume[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
             }
             _eOutIdx = 0;
             if !((_eSlow).abs() < 1e-14) {
@@ -432,8 +432,8 @@ impl Core {
             _eToday = _eSlowStart + 1;
             while _eToday <= endIdx {
                 _eX = inVolume[{ let _v = _eToday; _eToday += 1; _v }];
-                _eFast = (_eFastBeta as f64).mul_add(_eFast, _eFastK * _eX);
-                _eSlow = (_eSlowBeta as f64).mul_add(_eSlow, _eSlowK * _eX);
+                _eFast = fmadd!(_eFastBeta as f64, _eFast, _eFastK * _eX);
+                _eSlow = fmadd!(_eSlowBeta as f64, _eSlow, _eSlowK * _eX);
                 if !((_eSlow).abs() < 1e-14) {
                     outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
                 } else {

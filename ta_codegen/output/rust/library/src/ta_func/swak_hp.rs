@@ -235,7 +235,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
+                y = fmadd!(a1 as f64, y1, c0 * (x0 - x1));
                 x1 = x0;
                 y1 = y;
                 today += 1;
@@ -253,7 +253,7 @@ impl Core {
                 // is one fused step. Nested inside, it is two, and every backend's last
                 // bit moves with it.
                 x0 = _w0[_wk];
-                y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
+                y = fmadd!(a1 as f64, y1, c0 * (x0 - x1));
                 x1 = x0;
                 y1 = y;
                 _w1[_wk] = y;
@@ -418,7 +418,7 @@ impl Core {
         // is one fused step. Nested inside, it is two, and every backend's last
         // bit moves with it.
         x0 = inReal;
-        y = (sp.a1 as f64).mul_add(sp.y1, sp.c0 * (x0 - sp.x1));
+        y = fmadd!(sp.a1 as f64, sp.y1, sp.c0 * (x0 - sp.x1));
         sp.x1 = x0;
         sp.y1 = y;
         (*outReal) = y;
@@ -522,7 +522,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
+            y = fmadd!(a1 as f64, y1, c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             today += 1;
@@ -535,7 +535,7 @@ impl Core {
             // is one fused step. Nested inside, it is two, and every backend's last
             // bit moves with it.
             x0 = inReal[today];
-            y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
+            y = fmadd!(a1 as f64, y1, c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             outReal[(outIdx * outStride) as usize] = y;
@@ -723,7 +723,7 @@ impl SwakHpStream {
             // is one fused step. Nested inside, it is two, and every backend's last
             // bit moves with it.
             x0 = inReal;
-            y = (sp.a1 as f64).mul_add(y1, sp.c0 * (x0 - x1));
+            y = fmadd!(sp.a1 as f64, y1, sp.c0 * (x0 - x1));
             x1 = x0;
             y1 = y;
             (*outReal) = y;

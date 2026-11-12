@@ -335,7 +335,7 @@ impl Core {
                     esa = sumEsa / ((optInChannelPeriod) as f64);
                 }
             } else {
-                esa = (beta1 as f64).mul_add(esa, k1 * ap);
+                esa = fmadd!(beta1 as f64, esa, k1 * ap);
             }
             // Stage 2: the exponential average of the absolute distance, over what
             // stage 1 publishes. The counter is compared before it is subtracted,
@@ -366,7 +366,7 @@ impl Core {
                         d = sumD / ((optInChannelPeriod) as f64);
                     }
                 } else {
-                    d = (beta1 as f64).mul_add(d, k1 * dev);
+                    d = fmadd!(beta1 as f64, d, k1 * dev);
                 }
                 // Stage 3: the oscillator, then its own smoothing.
                 if nDev >= lookbackChannel {
@@ -388,7 +388,7 @@ impl Core {
                             wt1 = sumCi / ((optInAveragePeriod) as f64);
                         }
                     } else {
-                        wt1 = (beta2 as f64).mul_add(wt1, k2 * ci);
+                        wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
                     }
                     if nCi >= lookbackAverage {
                         wtBuffer[wtBuffer_Idx] = wt1;
@@ -417,20 +417,20 @@ impl Core {
         // frames from carrying a seeded output local.
         while today <= endIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            esa = (beta1 as f64).mul_add(esa, k1 * ap);
+            esa = fmadd!(beta1 as f64, esa, k1 * ap);
             num = ap - esa;
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
             dev = (num).abs();
-            d = (beta1 as f64).mul_add(d, k1 * dev);
+            d = fmadd!(beta1 as f64, d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = (beta2 as f64).mul_add(wt1, k2 * ci);
+            wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
             wtBuffer[wtBuffer_Idx] = wt1;
             sumSignal = sumSignal + wt1;
             outWT1[outIdx] = wt1;
@@ -644,20 +644,20 @@ impl Core {
         let mut num: f64 = 0.0_f64;
         let mut scaledDev: f64 = 0.0_f64;
         ap = (inHigh + inLow + inClose) / 3.0;
-        sp.esa = (sp.beta1 as f64).mul_add(sp.esa, sp.k1 * ap);
+        sp.esa = fmadd!(sp.beta1 as f64, sp.esa, sp.k1 * ap);
         num = ap - sp.esa;
         if ap == sp.prevAp && sp.esa == sp.prevEsa {
             num = 0.0;
         }
         dev = (num).abs();
-        sp.d = (sp.beta1 as f64).mul_add(sp.d, sp.k1 * dev);
+        sp.d = fmadd!(sp.beta1 as f64, sp.d, sp.k1 * dev);
         scaledDev = 0.015 * sp.d;
         if scaledDev > 0.0 {
             ci = num / scaledDev;
         } else {
             ci = 0.0;
         }
-        sp.wt1 = (sp.beta2 as f64).mul_add(sp.wt1, sp.k2 * ci);
+        sp.wt1 = fmadd!(sp.beta2 as f64, sp.wt1, sp.k2 * ci);
         sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1;
         sp.sumSignal = sp.sumSignal + sp.wt1;
         (*outWT1) = sp.wt1;
@@ -832,7 +832,7 @@ impl Core {
                     esa = sumEsa / ((optInChannelPeriod) as f64);
                 }
             } else {
-                esa = (beta1 as f64).mul_add(esa, k1 * ap);
+                esa = fmadd!(beta1 as f64, esa, k1 * ap);
             }
             // Stage 2: the exponential average of the absolute distance, over what
             // stage 1 publishes. The counter is compared before it is subtracted,
@@ -863,7 +863,7 @@ impl Core {
                         d = sumD / ((optInChannelPeriod) as f64);
                     }
                 } else {
-                    d = (beta1 as f64).mul_add(d, k1 * dev);
+                    d = fmadd!(beta1 as f64, d, k1 * dev);
                 }
                 // Stage 3: the oscillator, then its own smoothing.
                 if nDev >= lookbackChannel {
@@ -885,7 +885,7 @@ impl Core {
                             wt1 = sumCi / ((optInAveragePeriod) as f64);
                         }
                     } else {
-                        wt1 = (beta2 as f64).mul_add(wt1, k2 * ci);
+                        wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
                     }
                     if nCi >= lookbackAverage {
                         wtBuffer[wtBuffer_Idx] = wt1;
@@ -914,20 +914,20 @@ impl Core {
         // frames from carrying a seeded output local.
         while today <= endIdx {
             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-            esa = (beta1 as f64).mul_add(esa, k1 * ap);
+            esa = fmadd!(beta1 as f64, esa, k1 * ap);
             num = ap - esa;
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
             dev = (num).abs();
-            d = (beta1 as f64).mul_add(d, k1 * dev);
+            d = fmadd!(beta1 as f64, d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = (beta2 as f64).mul_add(wt1, k2 * ci);
+            wt1 = fmadd!(beta2 as f64, wt1, k2 * ci);
             wtBuffer[wtBuffer_Idx] = wt1;
             sumSignal = sumSignal + wt1;
             outWT1[(outIdx * outStride) as usize] = wt1;
@@ -1176,20 +1176,20 @@ impl WavetrendStream {
             let mut sumSignal = sp.sumSignal;
             let mut wt1 = sp.wt1;
             ap = (inHigh + inLow + inClose) / 3.0;
-            esa = (sp.beta1 as f64).mul_add(esa, sp.k1 * ap);
+            esa = fmadd!(sp.beta1 as f64, esa, sp.k1 * ap);
             num = ap - esa;
             if ap == sp.prevAp && esa == sp.prevEsa {
                 num = 0.0;
             }
             dev = (num).abs();
-            d = (sp.beta1 as f64).mul_add(d, sp.k1 * dev);
+            d = fmadd!(sp.beta1 as f64, d, sp.k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
                 ci = num / scaledDev;
             } else {
                 ci = 0.0;
             }
-            wt1 = (sp.beta2 as f64).mul_add(wt1, sp.k2 * ci);
+            wt1 = fmadd!(sp.beta2 as f64, wt1, sp.k2 * ci);
             sumSignal = sumSignal + wt1;
             (*outWT1) = wt1;
             (*outWT2) = sumSignal / (sp.optInSignalPeriod as f64);

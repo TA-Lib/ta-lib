@@ -280,7 +280,7 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += e1;
             i -= 1;
         }
@@ -290,8 +290,8 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
             tempReal += e2;
             i -= 1;
         }
@@ -301,9 +301,9 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
             tempReal += e3;
             i -= 1;
         }
@@ -313,10 +313,10 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
             tempReal += e4;
             i -= 1;
         }
@@ -326,11 +326,11 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
             tempReal += e5;
             i -= 1;
         }
@@ -338,32 +338,32 @@ impl Core {
         // Skip the unstable period
         while today <= startIdx {
             // Do the calculation but do not write the output
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
         c1 = -(tempReal * optInVFactor);
         c2 = 3.0 * (tempReal - c1);
         c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
-        c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
+        c4 = fmadd!(3.0 as f64, tempReal, fmadd!(3.0 as f64, optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
-        outReal[outIdx] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
+        outReal[outIdx] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
         outIdx += 1;
         // Calculate and output the remaining of the range.
         while today <= endIdx {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
-            outReal[outIdx] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
+            outReal[outIdx] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
             outIdx += 1;
         }
         // Indicates to the caller the number of output
@@ -529,13 +529,13 @@ impl Core {
             sp.cur_outReal = (*outReal);
             return;
         }
-        sp.e1 = (sp.one_minus_k as f64).mul_add(sp.e1, sp.k * inReal);
-        sp.e2 = (sp.one_minus_k as f64).mul_add(sp.e2, sp.k * sp.e1);
-        sp.e3 = (sp.one_minus_k as f64).mul_add(sp.e3, sp.k * sp.e2);
-        sp.e4 = (sp.one_minus_k as f64).mul_add(sp.e4, sp.k * sp.e3);
-        sp.e5 = (sp.one_minus_k as f64).mul_add(sp.e5, sp.k * sp.e4);
-        sp.e6 = (sp.one_minus_k as f64).mul_add(sp.e6, sp.k * sp.e5);
-        (*outReal) = (sp.c4 as f64).mul_add(sp.e3, (sp.c3 as f64).mul_add(sp.e4, (sp.c1 as f64).mul_add(sp.e6, sp.c2 * sp.e5)));
+        sp.e1 = fmadd!(sp.one_minus_k as f64, sp.e1, sp.k * inReal);
+        sp.e2 = fmadd!(sp.one_minus_k as f64, sp.e2, sp.k * sp.e1);
+        sp.e3 = fmadd!(sp.one_minus_k as f64, sp.e3, sp.k * sp.e2);
+        sp.e4 = fmadd!(sp.one_minus_k as f64, sp.e4, sp.k * sp.e3);
+        sp.e5 = fmadd!(sp.one_minus_k as f64, sp.e5, sp.k * sp.e4);
+        sp.e6 = fmadd!(sp.one_minus_k as f64, sp.e6, sp.k * sp.e5);
+        (*outReal) = fmadd!(sp.c4 as f64, sp.e3, fmadd!(sp.c3 as f64, sp.e4, fmadd!(sp.c1 as f64, sp.e6, sp.c2 * sp.e5)));
         sp.cur_outReal = (*outReal);
     }
 
@@ -681,7 +681,7 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += e1;
             i -= 1;
         }
@@ -691,8 +691,8 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
             tempReal += e2;
             i -= 1;
         }
@@ -702,9 +702,9 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
             tempReal += e3;
             i -= 1;
         }
@@ -714,10 +714,10 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
             tempReal += e4;
             i -= 1;
         }
@@ -727,11 +727,11 @@ impl Core {
         // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod - 1) as usize;
         while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
             tempReal += e5;
             i -= 1;
         }
@@ -739,31 +739,31 @@ impl Core {
         // Skip the unstable period
         while today <= startIdx {
             // Do the calculation but do not write the output
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
         }
         // Calculate the constants
         tempReal = optInVFactor * optInVFactor;
         c1 = -(tempReal * optInVFactor);
         c2 = 3.0 * (tempReal - c1);
         c3 = -6.0 * tempReal - 3.0 * (optInVFactor - c1);
-        c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
+        c4 = fmadd!(3.0 as f64, tempReal, fmadd!(3.0 as f64, optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
-        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
+        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
         // Calculate and output the remaining of the range.
         while today <= endIdx {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
+            e1 = fmadd!(one_minus_k as f64, e1, k * inReal[{ let _v = today; today += 1; _v }]);
+            e2 = fmadd!(one_minus_k as f64, e2, k * e1);
+            e3 = fmadd!(one_minus_k as f64, e3, k * e2);
+            e4 = fmadd!(one_minus_k as f64, e4, k * e3);
+            e5 = fmadd!(one_minus_k as f64, e5, k * e4);
+            e6 = fmadd!(one_minus_k as f64, e6, k * e5);
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(c4 as f64, e3, fmadd!(c3 as f64, e4, fmadd!(c1 as f64, e6, c2 * e5)));
         }
         // Indicates to the caller the number of output
         // successfully calculated.
@@ -971,13 +971,13 @@ impl T3Stream {
                 (*outReal) = inReal;
                 return Ok((*outReal));
             }
-            e1 = (sp.one_minus_k as f64).mul_add(e1, sp.k * inReal);
-            e2 = (sp.one_minus_k as f64).mul_add(e2, sp.k * e1);
-            e3 = (sp.one_minus_k as f64).mul_add(e3, sp.k * e2);
-            e4 = (sp.one_minus_k as f64).mul_add(e4, sp.k * e3);
-            e5 = (sp.one_minus_k as f64).mul_add(e5, sp.k * e4);
-            e6 = (sp.one_minus_k as f64).mul_add(e6, sp.k * e5);
-            (*outReal) = (sp.c4 as f64).mul_add(e3, (sp.c3 as f64).mul_add(e4, (sp.c1 as f64).mul_add(e6, sp.c2 * e5)));
+            e1 = fmadd!(sp.one_minus_k as f64, e1, sp.k * inReal);
+            e2 = fmadd!(sp.one_minus_k as f64, e2, sp.k * e1);
+            e3 = fmadd!(sp.one_minus_k as f64, e3, sp.k * e2);
+            e4 = fmadd!(sp.one_minus_k as f64, e4, sp.k * e3);
+            e5 = fmadd!(sp.one_minus_k as f64, e5, sp.k * e4);
+            e6 = fmadd!(sp.one_minus_k as f64, e6, sp.k * e5);
+            (*outReal) = fmadd!(sp.c4 as f64, e3, fmadd!(sp.c3 as f64, e4, fmadd!(sp.c1 as f64, e6, sp.c2 * e5)));
         }
         Ok(outReal)
     }

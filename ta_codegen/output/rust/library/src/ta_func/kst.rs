@@ -597,7 +597,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -642,7 +642,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sigRing[sigRing_Idx] = kst;
                     sigRing_Idx += 1;
@@ -699,7 +699,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -749,7 +749,7 @@ impl Core {
                     ring4_Idx += 1;
                     if ring4_Idx >= ring4.len() { ring4_Idx = 0; }
                     total4 -= ring4[ring4_Idx];
-                    kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+                    kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
                     sigTotal += kst;
                     sig = sigTotal / (optInSignalPeriod as f64);
                     sigRing[sigRing_Idx] = kst;
@@ -1065,7 +1065,7 @@ impl Core {
             sp.ring4_Idx = 0;
         }
         sp.total4 -= sp.cb_ring4[sp.ring4_Idx];
-        kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+        kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
         sp.sigTotal += kst;
         sig = sp.sigTotal / (sp.optInSignalPeriod as f64);
         sp.cb_sigRing[sp.sigRing_Idx] = kst;
@@ -1353,7 +1353,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sigRing[sigRing_Idx] = kst;
             sigRing_Idx += 1;
@@ -1398,7 +1398,7 @@ impl Core {
             ring4_Idx += 1;
             if ring4_Idx > maxIdx_ring4 { ring4_Idx = 0; }
             total4 -= ring4[ring4_Idx];
-            kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sig = sigTotal / (optInSignalPeriod as f64);
             sigRing[sigRing_Idx] = kst;
@@ -1798,7 +1798,7 @@ impl KstStream {
                 ring4_Idx = 0;
             }
             total4 -= (if (ring4_Idx as usize) != pkSlot7 { sp.cb_ring4[ring4_Idx] } else { pkVal7 });
-            kst = (4.0 as f64).mul_add(rcma4, (3.0 as f64).mul_add(rcma3, (2.0 as f64).mul_add(rcma2, rcma1)));
+            kst = fmadd!(4.0 as f64, rcma4, fmadd!(3.0 as f64, rcma3, fmadd!(2.0 as f64, rcma2, rcma1)));
             sigTotal += kst;
             sig = sigTotal / (sp.optInSignalPeriod as f64);
             pkSlot8 = sigRing_Idx as usize;

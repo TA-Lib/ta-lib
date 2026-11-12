@@ -239,7 +239,7 @@ impl Core {
         trailingIdx += 1;
         closeValue = inReal[today];
         if closeValue != 0.0 {
-            outReal[outIdx] = 100.0 * (closeValue - ((m as f64).mul_add(optInTimePeriod as f64, b))) / closeValue;
+            outReal[outIdx] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
             outIdx += 1;
         } else {
             outReal[outIdx] = 0.0;
@@ -276,7 +276,7 @@ impl Core {
             trailingIdx += 1;
             closeValue = inReal[today];
             if closeValue != 0.0 {
-                outReal[outIdx] = 100.0 * (closeValue - ((m as f64).mul_add(optInTimePeriod as f64, b))) / closeValue;
+                outReal[outIdx] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
@@ -476,7 +476,7 @@ impl Core {
         sp.trailingIdx += 1;
         closeValue = sp.x_inReal[(sp.today & sp.xMask) as usize];
         if closeValue != 0.0 {
-            (*outReal) = 100.0 * (closeValue - ((m as f64).mul_add(sp.optInTimePeriod as f64, b))) / closeValue;
+            (*outReal) = 100.0 * (closeValue - (fmadd!(m as f64, sp.optInTimePeriod as f64, b))) / closeValue;
         } else {
             (*outReal) = 0.0;
         }
@@ -595,7 +595,7 @@ impl Core {
         trailingIdx += 1;
         closeValue = inReal[today];
         if closeValue != 0.0 {
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - ((m as f64).mul_add(optInTimePeriod as f64, b))) / closeValue;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
         } else {
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
         }
@@ -630,7 +630,7 @@ impl Core {
             trailingIdx += 1;
             closeValue = inReal[today];
             if closeValue != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - ((m as f64).mul_add(optInTimePeriod as f64, b))) / closeValue;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (closeValue - (fmadd!(m as f64, optInTimePeriod as f64, b))) / closeValue;
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
@@ -881,7 +881,7 @@ impl FoscStream {
             trailingIdx += 1;
             closeValue = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
             if closeValue != 0.0 {
-                (*outReal) = 100.0 * (closeValue - ((m as f64).mul_add(sp.optInTimePeriod as f64, b))) / closeValue;
+                (*outReal) = 100.0 * (closeValue - (fmadd!(m as f64, sp.optInTimePeriod as f64, b))) / closeValue;
             } else {
                 (*outReal) = 0.0;
             }

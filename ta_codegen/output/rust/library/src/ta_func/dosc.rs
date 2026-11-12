@@ -366,7 +366,7 @@ impl Core {
                         ema1 = sum1 / ((optInFirstPeriod) as f64);
                     }
                 } else {
-                    ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
+                    ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
                 }
                 if n1 >= lookbackEMA1 {
                     n2 = n1 - lookbackEMA1;
@@ -376,7 +376,7 @@ impl Core {
                             ema2 = sum2 / ((optInSecondPeriod) as f64);
                         }
                     } else {
-                        ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+                        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
                     }
                     if n2 >= lookbackEMA2 {
                         dsBuffer[dsBuffer_Idx] = ema2;
@@ -410,8 +410,8 @@ impl Core {
         // 2/2/2/2, so the store below and the one in the stable loop are
         // unconditional. Keep them so: under a guard, the managed peek frames
         // seed a dead output local.
-        ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
-        ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+        ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
         dsBuffer[dsBuffer_Idx] = ema2;
         sumSignal = sumSignal + ema2;
         outReal[0] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -438,8 +438,8 @@ impl Core {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
-            ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+            ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+            ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
             dsBuffer[dsBuffer_Idx] = ema2;
             sumSignal = sumSignal + ema2;
             outReal[outIdx] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -641,8 +641,8 @@ impl Core {
         } else {
             rsiValue = 50.0;
         }
-        sp.ema1 = (sp.beta1 as f64).mul_add(sp.ema1, sp.k1 * rsiValue);
-        sp.ema2 = (sp.beta2 as f64).mul_add(sp.ema2, sp.k2 * sp.ema1);
+        sp.ema1 = fmadd!(sp.beta1 as f64, sp.ema1, sp.k1 * rsiValue);
+        sp.ema2 = fmadd!(sp.beta2 as f64, sp.ema2, sp.k2 * sp.ema1);
         sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2;
         sp.sumSignal = sp.sumSignal + sp.ema2;
         (*outReal) = sp.ema2 - sp.sumSignal / (sp.optInSignalPeriod as f64);
@@ -843,7 +843,7 @@ impl Core {
                         ema1 = sum1 / ((optInFirstPeriod) as f64);
                     }
                 } else {
-                    ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
+                    ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
                 }
                 if n1 >= lookbackEMA1 {
                     n2 = n1 - lookbackEMA1;
@@ -853,7 +853,7 @@ impl Core {
                             ema2 = sum2 / ((optInSecondPeriod) as f64);
                         }
                     } else {
-                        ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+                        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
                     }
                     if n2 >= lookbackEMA2 {
                         dsBuffer[dsBuffer_Idx] = ema2;
@@ -887,8 +887,8 @@ impl Core {
         // 2/2/2/2, so the store below and the one in the stable loop are
         // unconditional. Keep them so: under a guard, the managed peek frames
         // seed a dead output local.
-        ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
-        ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+        ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+        ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
         dsBuffer[dsBuffer_Idx] = ema2;
         sumSignal = sumSignal + ema2;
         outReal[(0 * outStride) as usize] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -915,8 +915,8 @@ impl Core {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = (beta1 as f64).mul_add(ema1, k1 * rsiValue);
-            ema2 = (beta2 as f64).mul_add(ema2, k2 * ema1);
+            ema1 = fmadd!(beta1 as f64, ema1, k1 * rsiValue);
+            ema2 = fmadd!(beta2 as f64, ema2, k2 * ema1);
             dsBuffer[dsBuffer_Idx] = ema2;
             sumSignal = sumSignal + ema2;
             outReal[(outIdx * outStride) as usize] = ema2 - sumSignal / (optInSignalPeriod as f64);
@@ -1141,8 +1141,8 @@ impl DoscStream {
             } else {
                 rsiValue = 50.0;
             }
-            ema1 = (sp.beta1 as f64).mul_add(ema1, sp.k1 * rsiValue);
-            ema2 = (sp.beta2 as f64).mul_add(ema2, sp.k2 * ema1);
+            ema1 = fmadd!(sp.beta1 as f64, ema1, sp.k1 * rsiValue);
+            ema2 = fmadd!(sp.beta2 as f64, ema2, sp.k2 * ema1);
             sumSignal = sumSignal + ema2;
             (*outReal) = ema2 - sumSignal / (sp.optInSignalPeriod as f64);
         }

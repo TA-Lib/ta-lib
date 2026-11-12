@@ -359,7 +359,7 @@ impl Core {
                         (_w7[_wk + 2] < _w11[_wk + 1])) |    // downside gap between 2nd and 3rd
                         ((!(_w3[_wk] >= _w15[_wk])) &        // 1st black
                         (_w3[_wk + 2] >= _w15[_wk + 2]) &    // 3rd white
-                        (_w3[_wk + 2] > ((_w3[_wk] - _w15[_wk]).abs() as f64).mul_add(optInPenetration, _w3[_wk])) & // 3rd closes well within 1st rb
+                        (_w3[_wk + 2] > fmadd!((_w3[_wk] - _w15[_wk]).abs() as f64, optInPenetration, _w3[_wk])) & // 3rd closes well within 1st rb
                         (_w7[_wk + 1] < _w11[_wk]) &         // downside gap between 1st and 2nd
                         (_w11[_wk + 2] > _w7[_wk + 1])))),   // upside gap between 2nd and 3rd
                         ((if _w3[_wk + 2] >= _w15[_wk + 2] { 1 } else { -1 }) * 100) as i32, 0);
@@ -386,7 +386,7 @@ impl Core {
                         (inHigh[i] < inLow[i - 1])) |           // downside gap between 2nd and 3rd
                         ((!(inClose[i - 2] >= inOpen[i - 2])) & // 1st black
                         (inClose[i] >= inOpen[i]) &             // 3rd white
-                        (inClose[i] > ((inClose[i - 2] - inOpen[i - 2]).abs() as f64).mul_add(optInPenetration, inClose[i - 2])) & // 3rd closes well within 1st rb
+                        (inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2])) & // 3rd closes well within 1st rb
                         (inHigh[i - 1] < inLow[i - 2]) &        // downside gap between 1st and 2nd
                         (inLow[i] > inHigh[i - 1])))),          // upside gap between 2nd and 3rd
                         ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
@@ -415,7 +415,7 @@ impl Core {
                     (inHigh[i] < inLow[i - 1])) |           // downside gap between 2nd and 3rd
                     ((!(inClose[i - 2] >= inOpen[i - 2])) & // 1st black
                     (inClose[i] >= inOpen[i]) &             // 3rd white
-                    (inClose[i] > ((inClose[i - 2] - inOpen[i - 2]).abs() as f64).mul_add(optInPenetration, inClose[i - 2])) & // 3rd closes well within 1st rb
+                    (inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2])) & // 3rd closes well within 1st rb
                     (inHigh[i - 1] < inLow[i - 2]) &        // downside gap between 1st and 2nd
                     (inLow[i] > inHigh[i - 1])))),          // upside gap between 2nd and 3rd
                     ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, 0);
@@ -713,7 +713,7 @@ impl Core {
              ((if inHigh < sp.lag1_inLow { 1 } else { 0 }) != 0) ||           // downside gap between 2nd and 3rd
             (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // 1st black
              (if inClose >= inOpen { 1 } else { -1 }) == 1 &&                 // 3rd white
-             inClose > ((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64).mul_add(sp.optInPenetration, sp.lag2_inClose) && // 3rd closes well within 1st rb
+             inClose > fmadd!((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64, sp.optInPenetration, sp.lag2_inClose) && // 3rd closes well within 1st rb
              ((if sp.lag1_inHigh < sp.lag2_inLow { 1 } else { 0 }) != 0) &&   // downside gap between 1st and 2nd
              ((if inLow > sp.lag1_inHigh { 1 } else { 0 }) != 0))             // upside gap between 2nd and 3rd
         {
@@ -1025,7 +1025,7 @@ impl Core {
                  ((if inHigh[i] < inLow[i - 1] { 1 } else { 0 }) != 0) ||       // downside gap between 2nd and 3rd
                 (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 1st black
                  (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&         // 3rd white
-                 inClose[i] > ((inClose[i - 2] - inOpen[i - 2]).abs() as f64).mul_add(optInPenetration, inClose[i - 2]) && // 3rd closes well within 1st rb
+                 inClose[i] > fmadd!((inClose[i - 2] - inOpen[i - 2]).abs() as f64, optInPenetration, inClose[i - 2]) && // 3rd closes well within 1st rb
                  ((if inHigh[i - 1] < inLow[i - 2] { 1 } else { 0 }) != 0) &&   // downside gap between 1st and 2nd
                  ((if inLow[i] > inHigh[i - 1] { 1 } else { 0 }) != 0))         // upside gap between 2nd and 3rd
             {
@@ -1316,7 +1316,7 @@ impl CdlabandonedbabyStream {
                  ((if inHigh < sp.lag1_inLow { 1 } else { 0 }) != 0) ||           // downside gap between 2nd and 3rd
                 (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { -1 }) == -1 && // 1st black
                  (if inClose >= inOpen { 1 } else { -1 }) == 1 &&                 // 3rd white
-                 inClose > ((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64).mul_add(sp.optInPenetration, sp.lag2_inClose) && // 3rd closes well within 1st rb
+                 inClose > fmadd!((sp.lag2_inClose - sp.lag2_inOpen).abs() as f64, sp.optInPenetration, sp.lag2_inClose) && // 3rd closes well within 1st rb
                  ((if sp.lag1_inHigh < sp.lag2_inLow { 1 } else { 0 }) != 0) &&   // downside gap between 1st and 2nd
                  ((if inLow > sp.lag1_inHigh { 1 } else { 0 }) != 0))             // upside gap between 2nd and 3rd
             {

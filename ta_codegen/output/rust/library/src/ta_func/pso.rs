@@ -378,8 +378,8 @@ impl Core {
                 }
                 nsk = 0.1 * (fastK - 50.0);
                 if nBar > warmBars {
-                    ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
-                    ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+                    ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
+                    ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
                     outReal[outIdx + nOut] = 0.5 * ema2;
                     nOut = nOut + 1;
                 } else {
@@ -390,7 +390,7 @@ impl Core {
                             ema1 = sum1 / ((optInEMAPeriod) as f64);
                         }
                     } else {
-                        ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
+                        ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
                     }
                     if nBar >= lookbackEMA {
                         n2 = nBar - lookbackEMA;
@@ -400,7 +400,7 @@ impl Core {
                                 ema2 = sum2 / ((optInEMAPeriod) as f64);
                             }
                         } else {
-                            ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+                            ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
                         }
                     }
                     if nBar == warmBars {
@@ -654,8 +654,8 @@ impl Core {
             fastK = 50.0;
         }
         nsk = 0.1 * (fastK - 50.0);
-        sp.ema1 = (sp.emaBeta as f64).mul_add(sp.ema1, sp.emaK * nsk);
-        sp.ema2 = (sp.emaBeta as f64).mul_add(sp.ema2, sp.emaK * sp.ema1);
+        sp.ema1 = fmadd!(sp.emaBeta as f64, sp.ema1, sp.emaK * nsk);
+        sp.ema2 = fmadd!(sp.emaBeta as f64, sp.ema2, sp.emaK * sp.ema1);
         (*outReal) = (0.5 * sp.ema2).tanh();
         sp.trailingIdx = sp.trailingIdx + 1;
         sp.today = sp.today + 1;
@@ -841,7 +841,7 @@ impl Core {
                     ema1 = sum1 / ((optInEMAPeriod) as f64);
                 }
             } else {
-                ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
+                ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
             }
             // Pass 2, over what pass 1 publishes. Keep the comparison ahead of
             // the subtraction: the counters are unsigned in Rust.
@@ -853,7 +853,7 @@ impl Core {
                         ema2 = sum2 / ((optInEMAPeriod) as f64);
                     }
                 } else {
-                    ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+                    ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
                 }
             }
             nBar = nBar + 1;
@@ -910,8 +910,8 @@ impl Core {
                 fastK = 50.0;
             }
             nsk = 0.1 * (fastK - 50.0);
-            ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
-            ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+            ema1 = fmadd!(emaBeta as f64, ema1, emaK * nsk);
+            ema2 = fmadd!(emaBeta as f64, ema2, emaK * ema1);
             outReal[(outIdx * outStride) as usize] = (0.5 * ema2).tanh();
             outIdx = outIdx + 1;
             trailingIdx = trailingIdx + 1;
@@ -1193,8 +1193,8 @@ impl PsoStream {
                 fastK = 50.0;
             }
             nsk = 0.1 * (fastK - 50.0);
-            ema1 = (sp.emaBeta as f64).mul_add(ema1, sp.emaK * nsk);
-            ema2 = (sp.emaBeta as f64).mul_add(ema2, sp.emaK * ema1);
+            ema1 = fmadd!(sp.emaBeta as f64, ema1, sp.emaK * nsk);
+            ema2 = fmadd!(sp.emaBeta as f64, ema2, sp.emaK * ema1);
             (*outReal) = (0.5 * ema2).tanh();
         }
         Ok(outReal)

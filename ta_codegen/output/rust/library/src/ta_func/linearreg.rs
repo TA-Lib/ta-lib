@@ -249,7 +249,7 @@ impl Core {
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
-        outReal[outIdx] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+        outReal[outIdx] = fmadd!(m as f64, (optInTimePeriod - 1) as f64, b);
         outIdx += 1;
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
@@ -343,7 +343,7 @@ impl Core {
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
-            outReal[outIdx] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            outReal[outIdx] = fmadd!(m as f64, (optInTimePeriod - 1) as f64, b);
             outIdx += 1;
             today += 1;
         }
@@ -587,7 +587,7 @@ impl Core {
         b = (sp.SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
         sp.trailingValue = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize];
         sp.trailingIdx += 1;
-        (*outReal) = (m as f64).mul_add((sp.optInTimePeriod - 1) as f64, b);
+        (*outReal) = fmadd!(m as f64, (sp.optInTimePeriod - 1) as f64, b);
         sp.today += 1;
         sp.cur_outReal = (*outReal);
     }
@@ -706,7 +706,7 @@ impl Core {
         barsSinceReseed = (32 * optInTimePeriod) as usize;
         trailingValue = inReal[trailingIdx];
         trailingIdx += 1;
-        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(m as f64, (optInTimePeriod - 1) as f64, b);
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
         // the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -799,7 +799,7 @@ impl Core {
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             trailingValue = inReal[trailingIdx];
             trailingIdx += 1;
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (m as f64).mul_add((optInTimePeriod - 1) as f64, b);
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = fmadd!(m as f64, (optInTimePeriod - 1) as f64, b);
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -1100,7 +1100,7 @@ impl LinearregStream {
             b = (SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
             trailingValue = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
             trailingIdx += 1;
-            (*outReal) = (m as f64).mul_add((sp.optInTimePeriod - 1) as f64, b);
+            (*outReal) = fmadd!(m as f64, (sp.optInTimePeriod - 1) as f64, b);
         }
         Ok(outReal)
     }

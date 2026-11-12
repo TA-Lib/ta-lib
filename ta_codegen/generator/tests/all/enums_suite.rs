@@ -746,13 +746,13 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
                 out.contains(&format!(
                     "fn {}_impl_scalar(",
                     backends::common::snake_words(&func.name)
-                )) && out.contains(".mul_add("),
+                )) && out.contains("fmadd!("),
                 "{name}: dispatch emitted but trio structure incomplete"
             );
             dispatched.push(name);
         } else {
             assert!(
-                !out.contains(".mul_add("),
+                !out.contains("fmadd!("),
                 "{name}: fused body without a dispatch trio"
             );
         }

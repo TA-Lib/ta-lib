@@ -207,7 +207,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
         // The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
         // x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
         om = 1.0 - a2p;
@@ -227,7 +227,7 @@ impl Core {
             let _wn: usize = i;
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
-                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * _w0[_wk]));
+                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 today += 1;
@@ -244,7 +244,7 @@ impl Core {
                 // rate is the latency of whatever y1 crosses to become y: outermost, that
                 // is one fused step. Nested inside, it is three, and every backend's last
                 // bit moves with it.
-                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * _w0[_wk]));
+                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * _w0[_wk]));
                 y2 = y1;
                 y1 = y;
                 _w1[_wk] = y;
@@ -412,7 +412,7 @@ impl Core {
         // rate is the latency of whatever y1 crosses to become y: outermost, that
         // is one fused step. Nested inside, it is three, and every backend's last
         // bit moves with it.
-        y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * inReal));
+        y = fmadd!(sp.a1 as f64, sp.y1, fmadd!(sp.a2 as f64, sp.y2, sp.c0 * inReal));
         sp.y2 = sp.y1;
         sp.y1 = y;
         (*outReal) = y;
@@ -490,7 +490,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
         // The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
         // x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
         om = 1.0 - a2p;
@@ -507,7 +507,7 @@ impl Core {
         // Skip the unstable period: run the recurrence but publish nothing.
         i = lookbackTotal;
         while i != 0 {
-            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * inReal[today]));
+            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
             today += 1;
@@ -519,7 +519,7 @@ impl Core {
             // rate is the latency of whatever y1 crosses to become y: outermost, that
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
-            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * inReal[today]));
+            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * inReal[today]));
             y2 = y1;
             y1 = y;
             outReal[(outIdx * outStride) as usize] = y;
@@ -706,7 +706,7 @@ impl SwakGaussStream {
             // rate is the latency of whatever y1 crosses to become y: outermost, that
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
-            y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * inReal));
+            y = fmadd!(sp.a1 as f64, y1, fmadd!(sp.a2 as f64, y2, sp.c0 * inReal));
             y2 = y1;
             y1 = y;
             (*outReal) = y;

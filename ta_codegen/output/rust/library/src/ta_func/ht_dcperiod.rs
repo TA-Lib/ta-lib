@@ -324,7 +324,7 @@ impl Core {
         // first at the Excel implementation in "test_MAMA.xls" included
         // in this package.
         while today <= endIdx {
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -373,8 +373,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -420,8 +420,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -431,8 +431,8 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -452,8 +452,8 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             if today >= startIdx {
                 outReal[outIdx] = smoothPeriod;
                 outIdx += 1;
@@ -654,7 +654,7 @@ impl Core {
         let mut todayValue: f64 = 0.0_f64;
         let mut ringPosL_trailingWMAIdx: usize = 0_usize;
         let mut ringCapL_trailingWMAIdx: usize = 0_usize;
-        adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
+        adjustedPrevPeriod = fmadd!(0.075 as f64, sp.period, 0.54);
         todayValue = inReal;
         sp.periodWMASub += todayValue;
         sp.periodWMASub -= sp.trailingWMAValue;
@@ -703,8 +703,8 @@ impl Core {
             if { sp.hilbertIdx += 1; sp.hilbertIdx } == 3 {
                 sp.hilbertIdx = 0;
             }
-            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = (0.2 as f64).mul_add(sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
+            Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = fmadd!(0.2 as f64, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
             // The variable I1 is the detrender delayed for
             // 3 price bars.
             //
@@ -750,8 +750,8 @@ impl Core {
             jQ += sp.prev_jQ_Odd;
             sp.prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = (0.2 as f64).mul_add(sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
+            Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = fmadd!(0.2 as f64, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
             // The varaiable I1 is the detrender delayed for
             // 3 price bars.
             //
@@ -761,8 +761,8 @@ impl Core {
             sp.I1ForEvenPrev2 = detrender;
         }
         // Adjust the period for next price bar
-        sp.Re = (0.8 as f64).mul_add(sp.Re, 0.2 * ((I2 as f64).mul_add(sp.prevI2, Q2 * sp.prevQ2)));
-        sp.Im = (0.8 as f64).mul_add(sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+        sp.Re = fmadd!(0.8 as f64, sp.Re, 0.2 * (fmadd!(I2 as f64, sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Im = fmadd!(0.8 as f64, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
         sp.prevQ2 = Q2;
         sp.prevI2 = I2;
         tempReal = sp.period;
@@ -782,8 +782,8 @@ impl Core {
         } else if sp.period > 50_f64 {
             sp.period = 50.0;
         }
-        sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
-        sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
+        sp.period = fmadd!(0.2 as f64, sp.period, 0.8 * tempReal);
+        sp.smoothPeriod = fmadd!(0.67 as f64, sp.smoothPeriod, 0.33 * sp.period);
         (*outReal) = sp.smoothPeriod;
         // Ooof... let's do the next price bar now!
         sp.cur_outReal = (*outReal);
@@ -1014,7 +1014,7 @@ impl Core {
         // first at the Excel implementation in "test_MAMA.xls" included
         // in this package.
         while today <= endIdx {
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal[today];
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -1063,8 +1063,8 @@ impl Core {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1110,8 +1110,8 @@ impl Core {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1121,8 +1121,8 @@ impl Core {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -1142,8 +1142,8 @@ impl Core {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             if today >= startIdx {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = smoothPeriod;
             }
@@ -1425,7 +1425,7 @@ impl HtDcperiodStream {
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
             let mut smoothPeriod = sp.smoothPeriod;
             let mut trailingWMAValue = sp.trailingWMAValue;
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = fmadd!(0.075 as f64, period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
@@ -1470,8 +1470,8 @@ impl HtDcperiodStream {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1513,8 +1513,8 @@ impl HtDcperiodStream {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = fmadd!(0.2 as f64, Q1 + jI, 0.8 * prevQ2);
+                I2 = fmadd!(0.2 as f64, I1ForOddPrev3 - jQ, 0.8 * prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1524,8 +1524,8 @@ impl HtDcperiodStream {
                 I1ForEvenPrev2 = detrender;
             }
             // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            Re = fmadd!(0.8 as f64, Re, 0.2 * (fmadd!(I2 as f64, prevI2, Q2 * prevQ2)));
+            Im = fmadd!(0.8 as f64, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
             prevQ2 = Q2;
             prevI2 = I2;
             tempReal = period;
@@ -1545,8 +1545,8 @@ impl HtDcperiodStream {
             } else if period > 50_f64 {
                 period = 50.0;
             }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
+            period = fmadd!(0.2 as f64, period, 0.8 * tempReal);
+            smoothPeriod = fmadd!(0.67 as f64, smoothPeriod, 0.33 * period);
             (*outReal) = smoothPeriod;
         }
         Ok(outReal)

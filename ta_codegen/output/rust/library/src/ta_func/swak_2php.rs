@@ -209,7 +209,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
         // The two-pole high-pass row: the same double real pole as the Gaussian
         // and Butterworth rows, with a (1, -2, 1) numerator instead. That
         // numerator is zero on a constant, so the DC gain is 0 and the line is
@@ -237,7 +237,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             for _wk in 0.._wn {
                 x0 = _w0[_wk];
-                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - 2.0 * x1 + x2)));
+                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * (x0 - 2.0 * x1 + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -257,7 +257,7 @@ impl Core {
                 // is one fused step. Nested inside, it is three, and every backend's last
                 // bit moves with it.
                 x0 = _w0[_wk];
-                y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - 2.0 * x1 + x2)));
+                y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * (x0 - 2.0 * x1 + x2)));
                 x2 = x1;
                 x1 = x0;
                 y2 = y1;
@@ -426,7 +426,7 @@ impl Core {
         // is one fused step. Nested inside, it is three, and every backend's last
         // bit moves with it.
         x0 = inReal;
-        y = (sp.a1 as f64).mul_add(sp.y1, (sp.a2 as f64).mul_add(sp.y2, sp.c0 * (x0 - 2.0 * sp.x1 + sp.x2)));
+        y = fmadd!(sp.a1 as f64, sp.y1, fmadd!(sp.a2 as f64, sp.y2, sp.c0 * (x0 - 2.0 * sp.x1 + sp.x2)));
         sp.x2 = sp.x1;
         sp.x1 = x0;
         sp.y2 = sp.y1;
@@ -509,7 +509,7 @@ impl Core {
         // digits the longer the period, and the cutoff drifts with them.
         s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
         b2p = 2.415 * (2.0 * s * s);
-        a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
+        a2p = -b2p + (fmadd!(b2p as f64, b2p, 2.0 * b2p)).sqrt();
         // The two-pole high-pass row: the same double real pole as the Gaussian
         // and Butterworth rows, with a (1, -2, 1) numerator instead. That
         // numerator is zero on a constant, so the DC gain is 0 and the line is
@@ -534,7 +534,7 @@ impl Core {
         i = lookbackTotal;
         while i != 0 {
             x0 = inReal[today];
-            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - 2.0 * x1 + x2)));
+            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * (x0 - 2.0 * x1 + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -549,7 +549,7 @@ impl Core {
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
             x0 = inReal[today];
-            y = (a1 as f64).mul_add(y1, (a2 as f64).mul_add(y2, c0 * (x0 - 2.0 * x1 + x2)));
+            y = fmadd!(a1 as f64, y1, fmadd!(a2 as f64, y2, c0 * (x0 - 2.0 * x1 + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;
@@ -744,7 +744,7 @@ impl Swak2phpStream {
             // is one fused step. Nested inside, it is three, and every backend's last
             // bit moves with it.
             x0 = inReal;
-            y = (sp.a1 as f64).mul_add(y1, (sp.a2 as f64).mul_add(y2, sp.c0 * (x0 - 2.0 * x1 + x2)));
+            y = fmadd!(sp.a1 as f64, y1, fmadd!(sp.a2 as f64, y2, sp.c0 * (x0 - 2.0 * x1 + x2)));
             x2 = x1;
             x1 = x0;
             y2 = y1;

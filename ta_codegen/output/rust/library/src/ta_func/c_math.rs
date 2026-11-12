@@ -14,6 +14,29 @@ pub(crate) fn c_max(a: f64, b: f64) -> f64 {
     core::hint::select_unpredictable(a > b, a, b)
 }
 
+/// `a * b + c`, rounded once. On wasm32 `f64::mul_add` is a software routine;
+/// `relaxed_madd` fuses only where the CPU has FMA, so a build enabling
+/// `relaxed-simd` must check for FMA at load, and must pass `-C no-vectorize-loops
+/// -C no-vectorize-slp`: with the feature on, LLVM turns vectorised float
+/// selects into relaxed min/max, whose NaN and signed-zero answers vary by engine.
+#[cfg(not(all(target_arch = "wasm32", target_feature = "relaxed-simd")))]
+macro_rules! fmadd {
+    ($a:expr, $b:expr, $c:expr) => {
+        ($a).mul_add($b, $c)
+    };
+}
+#[cfg(all(target_arch = "wasm32", target_feature = "relaxed-simd"))]
+macro_rules! fmadd {
+    ($a:expr, $b:expr, $c:expr) => {
+        core::arch::wasm32::f64x2_extract_lane::<0>(core::arch::wasm32::f64x2_relaxed_madd(
+            core::arch::wasm32::f64x2_splat($a),
+            core::arch::wasm32::f64x2_splat($b),
+            core::arch::wasm32::f64x2_splat($c),
+        ))
+    };
+}
+pub(crate) use fmadd;
+
 /// The else arm of a divisor guard (`if( d > 0.0 ) x += a/d;`). Without a
 /// call on a cold path LLVM if-converts the guarded division into a blend,
 /// silently slower than the predicted branch gcc keeps.

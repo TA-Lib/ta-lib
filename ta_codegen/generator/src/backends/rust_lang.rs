@@ -480,18 +480,21 @@ fn gen_imports() -> String {
         .to_string()
 }
 
+/// Every fused site, and only a fused site, invokes the crate's `c_math::fmadd!`.
+pub const FMA_CALL: &str = "fmadd!(";
+
 /// Runtime FMA dispatch (issue #156). When a rendered batch variant contains
 /// fused multiply-adds, restructure it into the Rust analogue of the C
 /// backend's `TA_FMA_MULTIVERSION` (`target_clones("default","fma")`): the
 /// body moves verbatim to a private `{name}_scalar` (`#[inline(always)]`, so it
 /// compiles once per clone), `{name}_fma` is a `#[target_feature(enable =
-/// "fma")]` clone whose codegen turns every `mul_add` into a hardware
+/// "fma")]` clone whose codegen turns every fused site into a hardware
 /// `vfmadd`, and the public name becomes a dispatcher through
 /// `ta_lib_dispatch::dispatch_fma!` (one cached CPU check per call; both
 /// paths are correctly rounded, so which clone runs never changes bits).
 /// Lookback stays undispatched; the stream tier has its own pass.
 fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
-    if !fma::EMIT_FMA || !text.contains(".mul_add(") {
+    if !fma::EMIT_FMA || !text.contains(FMA_CALL) {
         return text;
     }
     // From here the variant fuses, so a signature-pattern mismatch must fail
@@ -509,9 +512,9 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     let params_end = params_start + close_rel;
     let body_start = params_end + sig_close.len();
     // Only the *body* decides (site selection lives in fma::fuse_operands;
-    // `.mul_add(` in the rendered body is its footprint) — a mention in the
+    // `FMA_CALL` in the rendered body is its footprint) — a mention in the
     // doc comment alone must not dispatch.
-    if !text[body_start..].contains(".mul_add(") {
+    if !text[body_start..].contains(FMA_CALL) {
         return text;
     }
 
@@ -4547,8 +4550,8 @@ impl ExprEmitter for RustExpr<'_> {
 /// Every cast [`render_binop`] emits from an *operand* goes through here —
 /// including the `as f64` ones, which already wrapped and so are unchanged — so
 /// the invariant is one function rather than a rule each site has to re-derive.
-/// The one cast it does not cover is the FMA fusion's `({a} as f64).mul_add(..)`,
-/// which returns immediately and whose cast is followed by `)` by construction.
+/// The one cast it does not cover is the FMA fusion's `fmadd!({a} as f64, ..)`,
+/// which returns immediately and whose cast is followed by `,` by construction.
 /// Issue #159.
 fn wrap_cast(operand: &str, ty: &str) -> String {
     format!("(({operand}) as {ty})")
@@ -4568,7 +4571,7 @@ fn render_binop(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    // Fused multiply-add: (a * b) + c → (a as f64).mul_add(b, c). Emits ARM
+    // Fused multiply-add: (a * b) + c → fmadd!(a as f64, b, c). Emits ARM
     // fmadd (1 FP op) vs fmul+fadd (2 FP ops), IEEE-754 correctly-rounded so it
     // matches the C `fma()` / Java `Math.fma` the other backends emit at the same
     // sites (site selection lives in `fma::fuse_operands`, shared by all backends).
@@ -4583,7 +4586,7 @@ fn render_binop(
             let a_str = render_expr(a, ctx, opt_real_params, registry, helpers);
             let b_str = render_expr(b, ctx, opt_real_params, registry, helpers);
             let c_str = render_expr(c, ctx, opt_real_params, registry, helpers);
-            return format!("({a_str} as f64).mul_add({b_str}, {c_str})");
+            return format!("{FMA_CALL}{a_str} as f64, {b_str}, {c_str})");
         }
     }
     // C pointer-identity buffer comparisons (BBANDS' `inReal == outRealUpperBand`,
