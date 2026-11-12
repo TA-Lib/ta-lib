@@ -67,6 +67,16 @@ fn sentinel(opt: &OptInput) -> &'static str {
     }
 }
 
+/// The bytes one call places in linear memory: `(per input bar, per output
+/// bar)`. The glue asks `wasmFrame` for exactly this.
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+pub fn frame_bytes(func: &FuncDef) -> (u32, u32) {
+    let n_real = func.outputs.iter().filter(|o| is_real(&o.param_type)).count() as u32;
+    let n_int = func.outputs.len() as u32 - n_real;
+    (8 * func.inputs.len() as u32, 8 * n_real + 4 * n_int)
+}
+
 fn plus(base: &str, terms: &[(u32, &str)]) -> String {
     let mut s = base.to_string();
     for (k, var) in terms {
@@ -143,12 +153,12 @@ pub fn render_routed(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry:
     let n_in = func.inputs.len() as u32;
     let (reals, ints): (Vec<_>, Vec<_>) = func.outputs.iter().partition(|o| is_real(&o.param_type));
     let n_real = reals.len() as u32;
-    let n_int = ints.len() as u32;
     // Every read of a caller's argument stays above `wasmFrame`: a getter, a
     // Proxy trap or a `valueOf` can call a routed function back, which takes
     // the same scratch and may grow linear memory, detaching the views
     // `wasmFrame` derived.
-    let bytes = plus(&format!("n * {}", 8 * n_in), &[(8 * n_real + 4 * n_int, "outLen")]);
+    let (per_in, per_out) = frame_bytes(func);
+    let bytes = plus(&format!("n * {per_in}"), &[(per_out, "outLen")]);
     let _ = writeln!(b, "  const w = wasmFrame({bytes});\n  if (w === null) {{\n    return null;\n  }}\n  const at = w.base;");
     for (k, i) in func.inputs.iter().enumerate() {
         let at = plus("at", &[(8 * k as u32, "n")]);
@@ -492,7 +502,9 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
           const args = [...row.args(DATA), { ...options, ...range }];
           const where = `${row.name} ${label} ${JSON.stringify(range)}`;
           const want = outcome(g, args);
+          const entered = hooks.moduleCalls();
           const got = outcome(f, args);
+          const ran = hooks.moduleCalls() - entered;
           if (want.error !== undefined) {
             assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
             assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
@@ -502,6 +514,7 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
             continue;
           }
           assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
+          assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
           const a = got.value as Record<string, unknown>;
           const b = want.value as Record<string, unknown>;
           assert.deepEqual(Object.keys(a), Object.keys(b), where);

@@ -154,7 +154,7 @@ static void engine_scan(const CodegenPipe *cp, const char *request, const char *
     if( defects > 0 )
     {
         json_str_field(response, "\"engine_defect_why\":", defectWhy, (int)sizeof(defectWhy));
-        engine_defect(fn, "fell through for a reason that is not the engine's contract", defectWhy);
+        engine_defect(fn, "the server reports an engine defect", defectWhy);
     }
     json_str_field(response, "\"engine_why\":", why, (int)sizeof(why));
     if( expected > 0 )
@@ -567,7 +567,43 @@ void codegen_pipe_close(CodegenPipe *cp)
         cp->from_child_fd = -1;
     }
 
-    if( cp->child_pid > 0 )
+    if( cp->child_pid > 0 && cp->engineWasm )
+    {
+        /* Its exit status is evidence, so it gets far longer than the others
+         * before SIGTERM; a death by that SIGTERM is the only one excused. */
+        int status = 0, waited = 0, killed = 0;
+        pid_t result;
+        while( (result = waitpid(cp->child_pid, &status, WNOHANG)) == 0 && waited < 10000 )
+        {
+            usleep(5000);
+            waited += 5;
+        }
+        if( result == 0 )
+        {
+            kill(cp->child_pid, SIGTERM);
+            killed = 1;
+            result = waitpid(cp->child_pid, &status, 0);
+        }
+        if( result != (pid_t)cp->child_pid )
+        {
+            printf("  ENGINE DEFECT: the WASM-engine server (pid %d) could not be waited for\n", cp->child_pid);
+            g_engineExitFailures++;
+        }
+        else if( WIFEXITED(status) && WEXITSTATUS(status) != 0 )
+        {
+            printf("  ENGINE DEFECT: the WASM-engine server (pid %d) exited with status %d\n",
+                   cp->child_pid, WEXITSTATUS(status));
+            g_engineExitFailures++;
+        }
+        else if( WIFSIGNALED(status) && !(killed && WTERMSIG(status) == SIGTERM) )
+        {
+            printf("  ENGINE DEFECT: the WASM-engine server (pid %d) died of signal %d\n",
+                   cp->child_pid, WTERMSIG(status));
+            g_engineExitFailures++;
+        }
+        cp->child_pid = -1;
+    }
+    else if( cp->child_pid > 0 )
     {
         /* Closing stdin should cause ta_codegen to exit.
          * Wait briefly, then kill if still running.
@@ -584,14 +620,6 @@ void codegen_pipe_close(CodegenPipe *cp)
                 kill(cp->child_pid, SIGTERM);
                 waitpid(cp->child_pid, &status, 0);
             }
-        }
-        /* A WASM-engine server that could not start the engine exits non-zero. */
-        if( cp->engineWasm && result == (pid_t)cp->child_pid &&
-            WIFEXITED(status) && WEXITSTATUS(status) != 0 )
-        {
-            printf("  ENGINE DEFECT: the WASM-engine server (pid %d) exited with status %d\n",
-                   cp->child_pid, WEXITSTATUS(status));
-            g_engineExitFailures++;
         }
         cp->child_pid = -1;
     }

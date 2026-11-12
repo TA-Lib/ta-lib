@@ -77,7 +77,8 @@ declare function atob(data: string): string;
 /** @internal */
 export type WasmBatch = (...args: number[]) => number;
 
-const BUDGET = 1 << 28;
+/** @internal The most bytes of inputs and outputs a call may place in linear memory. */
+export const BUDGET = 1 << 28;
 const HIGH_WATER = 1 << 29;
 /** @internal Calls that threw inside the module before the engine is given up. */
 export const MAX_TRAPS = 3;
@@ -124,6 +125,7 @@ let fallThroughs = 0;
 let lastReason = '';
 let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
+let retired = 0;
 
 /** @internal The live instance: its exports, and views over its memory that a call re-derives before use. */
 export class WasmEngine {
@@ -183,6 +185,7 @@ export class WasmEngine {
   /** Linear memory never shrinks: an instance past the high-water mark is dropped once its results are copied out. */
   done(): void {
     if (live === this && this.memory.buffer.byteLength > highWater) {
+      retired += this.x.batch_calls() >>> 0;
       live = null;
     }
   }
@@ -210,6 +213,14 @@ export function resetFallThroughs(): void {
   fallThroughs = 0;
   lastReason = '';
   lastThrown = undefined;
+}
+
+/**
+ * @internal The batch calls the module counted, over every instance dropped
+ * after its call and the live one: a call ran in WASM only if this moved by one.
+ */
+export function moduleCalls(): number {
+  return live === null ? retired : retired + (live.x.batch_calls() >>> 0);
 }
 
 /** @internal The reason the latest fall-through gave; `''` when none since the last reset. */
@@ -362,6 +373,7 @@ function adopt(instance: WasmInstance): WasmEngine | null {
     !(memory instanceof WebAssembly.Memory) ||
     typeof x.scratch !== 'function' ||
     typeof x.out_range !== 'function' ||
+    typeof x.batch_calls !== 'function' ||
     typeof x.fma_probe !== 'function'
   ) {
     failure = 'instantiate';

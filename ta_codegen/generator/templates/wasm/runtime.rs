@@ -23,6 +23,19 @@ pub extern "C" fn out_range() -> *const u32 {
     OUT_RANGE.as_ptr().cast()
 }
 
+static BATCH_CALLS: AtomicU32 = AtomicU32::new(0);
+
+/// The `<name>_batch` calls this instance has entered. Only the exports
+/// advance it, so a caller that sees it move by one knows the call ran here.
+#[no_mangle]
+pub extern "C" fn batch_calls() -> u32 {
+    BATCH_CALLS.load(Ordering::Relaxed)
+}
+
+pub(crate) fn entered() {
+    BATCH_CALLS.fetch_add(1, Ordering::Relaxed);
+}
+
 static SCRATCH: Mutex<Vec<f64>> = Mutex::new(Vec::new());
 
 /// At least `bytes` bytes aligned for `f64`, kept across calls. A call that has

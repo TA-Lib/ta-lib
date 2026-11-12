@@ -90,6 +90,7 @@ function engineBytes(fused: boolean, withBatch = true): string {
     [...name('memory'), 2, 0],
     [...name('scratch'), 0, 0],
     [...name('out_range'), 0, 1],
+    [...name('batch_calls'), 0, 1],
     [...name('fma_probe'), 0, 2],
     ...(withBatch ? [[...name('sma_batch'), 0, 3]] : []),
   ]);

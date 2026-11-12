@@ -1,7 +1,7 @@
 // Usage: node engine.mjs
-// Exits 1 unless, in strict mode, a call through the default entry runs in WASM
-// and gives the bits ta-lib/js gives. Strict mode throws instead of falling
-// through, so a success here is a WASM answer.
+// Exits 1 unless, in strict mode, each call through the default entry runs in
+// WASM, by the module's own count of batch calls, and gives the bits ta-lib/js
+// gives.
 import { ema, macd, ready } from 'ta-lib';
 import * as js from 'ta-lib/js';
 
@@ -10,7 +10,9 @@ const close = Float64Array.from({ length: 500 }, (_, i) => Math.round((100 + 10 
 const bits = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('hex');
 
 hooks.setEngineMode('strict');
+const entered = hooks.moduleCalls();
 const got = [ema(close, { timePeriod: 20 }), macd(close)];
+const ran = hooks.moduleCalls() - entered;
 const want = [js.ema(close, { timePeriod: 20 }), js.macd(close)];
 for (let k = 0; k < got.length; k++) {
   for (const key of Object.keys(want[k])) {
@@ -22,8 +24,8 @@ for (let k = 0; k < got.length; k++) {
   }
 }
 const status = await ready();
-if (status.engine !== 'wasm' || hooks.fallThroughCount() !== 0) {
-  console.error(`engine ${JSON.stringify(status)}, ${hooks.fallThroughCount()} fall-through(s)`);
+if (status.engine !== 'wasm' || hooks.fallThroughCount() !== 0 || ran !== got.length) {
+  console.error(`engine ${JSON.stringify(status)}, ${hooks.fallThroughCount()} fall-through(s), the module counted ${ran} batch call(s)`);
   process.exit(1);
 }
 console.log(`engine.mjs: EMA and MACD ran in WASM in strict mode, bit-identical to ta-lib/js (${JSON.stringify(status)})`);

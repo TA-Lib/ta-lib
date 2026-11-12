@@ -236,13 +236,15 @@ for (const n of measured) {
   const args = argsFor(n);
 
   hooks.resetFallThroughs();
+  const entered = hooks.moduleCalls();
   const got = wasmFn(...args, {});
+  const moduleCalls = hooks.moduleCalls() - entered;
   const fell = hooks.fallThroughCount();
   const status = hooks.engineStatus();
   const ref = jsFn(...args, {});
   const equal = sameBits(got, ref);
-  if (fell !== 0 || status.engine !== 'wasm' || !equal) {
-    emit({ func: FUNC, bars: n, error: 'forced call did not run in WASM with the bits of ta-lib/js', fallThroughs: fell, reason: hooks.lastFallThrough(), engine: status, bitsEqual: equal });
+  if (fell !== 0 || moduleCalls !== 1 || status.engine !== 'wasm' || !equal) {
+    emit({ func: FUNC, bars: n, error: 'forced call did not run in WASM with the bits of ta-lib/js', fallThroughs: fell, moduleCalls, reason: hooks.lastFallThrough(), engine: status, bitsEqual: equal });
     process.exit(1);
   }
   const out = ref[outKey];

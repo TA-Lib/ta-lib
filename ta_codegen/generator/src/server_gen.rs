@@ -5405,18 +5405,20 @@ function coreIsDefault(c: Core): boolean {
 // The one list of fall-throughs that are the engine's contract: the label a
 // fall-through is expected under, or null when it is a defect. A reason is
 // expected only where this call's own facts explain it; the engine's load
-// states ('not-loaded', 'compile', 'instantiate', 'fma', 'unavailable') never
-// are. This server passes no output buffer, so 'options' under the default
-// Core is a defect unless ta-lib/js rejects the call too.
+// states ('not-loaded', 'compile', 'instantiate', 'fma', 'unavailable'), a trap
+// and a throw in the glue never are. This server passes no output buffer, so
+// 'options' under the default Core is a defect unless ta-lib/js rejects the
+// call too.
 function expectedFallThrough(
   reason: string, exported: boolean, declined: boolean, lengthsDiffer: boolean, coreDefault: boolean, rejected: boolean,
+  bytes: number,
 ): string | null {
   if (!exported) return 'no-export';
   if (reason === 'declined' && declined) return 'ma-type';
   if (reason === 'options' && !coreDefault) return 'core';
   if (reason === 'input' && lengthsDiffer) return 'lengths';
-  if (reason === 'budget') return 'budget';
-  const callShaped = ['options', 'parameter', 'input', 'range', 'rejected', 'declined', 'threw', 'trap'];
+  if (reason === 'budget' && bytes > BUDGET) return 'budget';
+  const callShaped = ['options', 'parameter', 'input', 'range', 'rejected', 'declined'];
   if (rejected && callShaped.includes(reason)) return 'js-rejects';
   return null;
 }
@@ -5433,9 +5435,10 @@ function engineTallyReset(): void {
   tally.defectWhy = '';
 }
 
-function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boolean, call: (c: Core) => T): T {
+function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boolean, bytes: number, call: (c: Core) => T): T {
   const coreDefault = coreIsDefault(core);
   const before = fallThroughCount();
+  const entered = moduleCalls();
   let rejected = false;
   tally.calls++;
   tally.exported = exported ? 1 : 0;
@@ -5446,6 +5449,7 @@ function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boo
     throw e;
   } finally {
     const fell = fallThroughCount() - before;
+    const ran = moduleCalls() - entered;
     const status = engineStatus();
     let defect: string | null = null;
     if (status.engine !== 'wasm') {
@@ -5453,10 +5457,14 @@ function engineBatch<T>(exported: boolean, declined: boolean, lengthsDiffer: boo
     } else if (fell > 1) {
       defect = 'repeated-fall-through';
     } else if (exported && fell === 0) {
-      tally.wasm++;
+      if (ran === 1) {
+        tally.wasm++;
+      } else {
+        defect = `not-in-module (the module counted ${ran} batch calls)`;
+      }
     } else {
       const reason = fell === 0 ? '' : lastFallThrough();
-      const why = expectedFallThrough(reason, exported, declined, lengthsDiffer, coreDefault, rejected);
+      const why = expectedFallThrough(reason, exported, declined, lengthsDiffer, coreDefault, rejected, bytes);
       if (why === null) {
         defect = reason === '' ? 'no-fall-through-reason' : reason;
       } else {
@@ -5695,7 +5703,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
     s.push_str("import { RetCode, TALibError } from '../library/src/runtime/errors.ts';\n");
     s.push_str("import { MInteger } from '../library/src/runtime/mInteger.ts';\n");
     s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';\n");
-    s.push_str("import { engineStatus, fallThroughCount, lastFallThrough, ready, setEngineMode } from '../library/src/runtime/wasm.ts';\n");
+    s.push_str("import { BUDGET, engineStatus, fallThroughCount, lastFallThrough, moduleCalls, ready, setEngineMode } from '../library/src/runtime/wasm.ts';\n");
     s.push_str("import * as ENGINE from '../library/src/engine/index.ts';\n");
     let mut enum_types: Vec<&str> = funcs
         .iter()
@@ -6025,11 +6033,13 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
         let eq: Vec<String> = input_names[1..].iter().map(|i| format!("{i}.length !== {}.length", input_names[0])).collect();
         eq.join(" || ")
     };
+    let (per_in, per_out) = crate::backends::ts_engine::frame_bytes(func);
+    let bytes = format!("{}.length * {per_in} + (endIdx - startIdx + 1) * {per_out}", input_names[0]);
     let engine_call = |ins: &[String], indent: &str| -> String {
         let mut b = String::new();
         let _ = writeln!(
             b,
-            "{indent}const r = engineBatch({exported}, {declined}, {lengths_differ}, (c) => {});",
+            "{indent}const r = engineBatch({exported}, {declined}, {lengths_differ}, {bytes}, (c) => {});",
             api.batch_in("ENGINE", ins, &opt_names, ("startIdx", "endIdx"), "c")
         );
         let _ = writeln!(b, "{indent}outBegIdx.value = r.begIdx;");

@@ -97,10 +97,13 @@ function same(got: Outcome, want: Outcome, where: string): void {
   }
 }
 
-/** Both calls' outcomes compared; returns the fall-throughs the ta-lib call made, and its outcome. */
-function check(where: string, viaDefault: () => unknown, viaJs: () => unknown): { fellThrough: number; got: Outcome } {
+type Checked = { fellThrough: number; ran: number; got: Outcome };
+
+/** Both calls' outcomes compared; returns the fall-throughs the ta-lib call made, the batch calls the module counted, and its outcome. */
+function check(where: string, viaDefault: () => unknown, viaJs: () => unknown): Checked {
   hooks.setEngineMode('force');
   const before = hooks.fallThroughCount();
+  const entered = hooks.moduleCalls();
   let got: Outcome;
   try {
     got = outcome(viaDefault);
@@ -108,8 +111,14 @@ function check(where: string, viaDefault: () => unknown, viaJs: () => unknown): 
     hooks.setEngineMode('table');
   }
   const fellThrough = hooks.fallThroughCount() - before;
+  const ran = hooks.moduleCalls() - entered;
   same(got, outcome(viaJs), where);
-  return { fellThrough, got };
+  return { fellThrough, ran, got };
+}
+
+function ranInWasm(r: Checked, where: string): void {
+  assert.equal(r.fellThrough, 0, `${where}: fell through`);
+  assert.equal(r.ran, 1, `${where}: the module counted ${r.ran} batch calls, not one`);
 }
 
 test('a caller-supplied output buffer falls through, and the result is a view of it', () => {
@@ -138,7 +147,7 @@ test('a Core other than Core.DEFAULT falls through', () => {
 
 test('startIdx and endIdx are routed; out of range they are rejected as ta-lib/js rejects them', () => {
   const inRange = check('10..200', () => ema(close, { startIdx: 10, endIdx: 200 }), () => js.ema(close, { startIdx: 10, endIdx: 200 }));
-  assert.equal(inRange.fellThrough, 0);
+  ranInWasm(inRange, '10..200');
   for (const range of [{ endIdx: N }, { startIdx: -1 }, { startIdx: 50, endIdx: 40 }, { endIdx: 2 ** 31 }]) {
     const r = check(JSON.stringify(range), () => ema(close, range), () => js.ema(close, range));
     assert.equal(r.fellThrough, 1, JSON.stringify(range));
@@ -169,8 +178,8 @@ test('an empty input is rejected as ta-lib/js rejects it', () => {
 test('a number[] and a Float32Array are routed and give the bits of ta-lib/js', () => {
   const list = Array.from(close);
   const narrow = Float32Array.from(close);
-  assert.equal(check('number[]', () => ema(list), () => js.ema(list)).fellThrough, 0);
-  assert.equal(check('Float32Array', () => ema(narrow), () => js.ema(narrow)).fellThrough, 0);
+  ranInWasm(check('number[]', () => ema(list), () => js.ema(list)), 'number[]');
+  ranInWasm(check('Float32Array', () => ema(narrow), () => js.ema(narrow)), 'Float32Array');
 });
 
 test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js rejects it', () => {
@@ -186,7 +195,7 @@ test('MA type 7 (MAMA) falls through to ta-lib/js; 99 is rejected as ta-lib/js r
 
 test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entrant call, give the ta-lib/js result', () => {
   const overList = new Proxy(Array.from(close), {});
-  assert.equal(check('Proxy over number[]', () => ema(overList), () => js.ema(overList)).fellThrough, 0);
+  ranInWasm(check('Proxy over number[]', () => ema(overList), () => js.ema(overList)), 'Proxy over number[]');
   const target = close.slice();
   const overTyped = new Proxy(target, {
     get: (t, key) => {
@@ -219,6 +228,7 @@ test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entr
   const r = check('valueOf grows memory', () => ema(series), () => js.ema(series));
   assert.ok(grown > before, `memory ${before} -> ${grown}: the re-entrant call did not grow it`);
   assert.equal(r.fellThrough, 0);
+  assert.equal(r.ran, 2, 'the module did not count the re-entrant call and the outer one');
 });
 
 test('a Float64Array whose length property claims more elements than it has falls through', () => {
@@ -238,7 +248,7 @@ test('a Float64Array whose length claims fewer elements than it has falls throug
   Object.defineProperty(Short.prototype, 'length', { get: () => 10 });
   const c = Short.from(close);
   assert.equal(check('subclass length getter', () => routed.sma(c, { timePeriod: 3 }), () => js.sma(c, { timePeriod: 3 })).fellThrough, 1);
-  assert.equal(check('after', () => macd(close), () => js.macd(close)).fellThrough, 0);
+  ranInWasm(check('after', () => macd(close), () => js.macd(close)), 'after');
 });
 
 test('the routed path accepts exactly the options objects ta-lib/js accepts', () => {
@@ -262,25 +272,26 @@ test('the routed path accepts exactly the options objects ta-lib/js accepts', ()
     const r = check(where, () => ema(close, opts), () => js.ema(close, opts));
     const jsAccepts = r.got.error === undefined;
     assert.equal(hooks.routedOptions(opts) !== null, jsAccepts, `${where}: the routed predicate disagrees with ta-lib/js`);
-    assert.equal(r.fellThrough, jsAccepts ? 0 : 1, where);
+    if (jsAccepts) ranInWasm(r, where);
+    else assert.equal(r.fellThrough, 1, where);
     if (jsAccepts) accepted++;
   }
   assert.equal(accepted, 5);
 });
 
 test('an instance past the high-water mark is dropped after its call, and the next call still answers in WASM', () => {
-  assert.equal(check('warm-up', () => ema(close), () => js.ema(close)).fellThrough, 0);
+  ranInWasm(check('warm-up', () => ema(close), () => js.ema(close)), 'warm-up');
   assert.ok(hooks.wasmMemoryBytes() > 0);
   const previous = hooks.setHighWater(0);
   try {
     for (const where of ['past the mark', 'after the reset']) {
-      assert.equal(check(where, () => ema(close, { timePeriod: 12 }), () => js.ema(close, { timePeriod: 12 })).fellThrough, 0, where);
+      ranInWasm(check(where, () => ema(close, { timePeriod: 12 }), () => js.ema(close, { timePeriod: 12 })), where);
       assert.equal(hooks.wasmMemoryBytes(), 0, `${where}: the instance was kept`);
     }
   } finally {
     hooks.setHighWater(previous);
   }
-  assert.equal(check('below the mark', () => ema(close), () => js.ema(close)).fellThrough, 0);
+  ranInWasm(check('below the mark', () => ema(close), () => js.ema(close)), 'below the mark');
   assert.ok(hooks.wasmMemoryBytes() > 0);
   assert.deepEqual(hooks.engineStatus(), { engine: 'wasm', reason: null });
 });

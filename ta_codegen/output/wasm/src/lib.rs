@@ -3,7 +3,7 @@
 
 mod runtime;
 
-use runtime::{answer, disjoint, enum_param, input, output, span, CORE, DECLINED};
+use runtime::{answer, disjoint, entered, enum_param, input, output, span, CORE, DECLINED};
 
 #[no_mangle]
 pub unsafe extern "C" fn ac_batch(
@@ -18,6 +18,7 @@ pub unsafe extern "C" fn ac_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -41,6 +42,7 @@ pub unsafe extern "C" fn accbands_batch(
     outRealLowerBand: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -62,6 +64,7 @@ pub unsafe extern "C" fn ad_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -81,6 +84,7 @@ pub unsafe extern "C" fn add_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -104,6 +108,7 @@ pub unsafe extern "C" fn adosc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -124,6 +129,7 @@ pub unsafe extern "C" fn adr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -145,6 +151,7 @@ pub unsafe extern "C" fn adx_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -166,6 +173,7 @@ pub unsafe extern "C" fn adxr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -193,6 +201,7 @@ pub unsafe extern "C" fn alligator_batch(
     outLips: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outJaw, out_len), span(outTeeth, out_len), span(outLips, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -214,6 +223,7 @@ pub unsafe extern "C" fn ao_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -235,6 +245,7 @@ pub unsafe extern "C" fn apo_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -259,6 +270,7 @@ pub unsafe extern "C" fn aroon_batch(
     outAroonUp: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outAroonDown, out_len), span(outAroonUp, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -279,6 +291,7 @@ pub unsafe extern "C" fn aroonosc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -301,6 +314,7 @@ pub unsafe extern "C" fn asi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -322,6 +336,7 @@ pub unsafe extern "C" fn atr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -341,6 +356,7 @@ pub unsafe extern "C" fn avgdev_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -362,6 +378,7 @@ pub unsafe extern "C" fn avgprice_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -386,6 +403,7 @@ pub unsafe extern "C" fn bbands_batch(
     outRealLowerBand: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -411,6 +429,7 @@ pub unsafe extern "C" fn bbw_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -434,6 +453,7 @@ pub unsafe extern "C" fn beta_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -455,6 +475,7 @@ pub unsafe extern "C" fn bop_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -476,6 +497,7 @@ pub unsafe extern "C" fn cci_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -497,6 +519,7 @@ pub unsafe extern "C" fn cdl2crows_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -518,6 +541,7 @@ pub unsafe extern "C" fn cdl3blackcrows_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -539,6 +563,7 @@ pub unsafe extern "C" fn cdl3inside_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -560,6 +585,7 @@ pub unsafe extern "C" fn cdl3linestrike_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -581,6 +607,7 @@ pub unsafe extern "C" fn cdl3outside_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -602,6 +629,7 @@ pub unsafe extern "C" fn cdl3starsinsouth_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -623,6 +651,7 @@ pub unsafe extern "C" fn cdl3whitesoldiers_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -645,6 +674,7 @@ pub unsafe extern "C" fn cdlabandonedbaby_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -666,6 +696,7 @@ pub unsafe extern "C" fn cdladvanceblock_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -687,6 +718,7 @@ pub unsafe extern "C" fn cdlbelthold_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -708,6 +740,7 @@ pub unsafe extern "C" fn cdlbreakaway_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -729,6 +762,7 @@ pub unsafe extern "C" fn cdlclosingmarubozu_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -750,6 +784,7 @@ pub unsafe extern "C" fn cdlconcealbabyswall_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -771,6 +806,7 @@ pub unsafe extern "C" fn cdlcounterattack_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -793,6 +829,7 @@ pub unsafe extern "C" fn cdldarkcloudcover_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -814,6 +851,7 @@ pub unsafe extern "C" fn cdldoji_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -835,6 +873,7 @@ pub unsafe extern "C" fn cdldojistar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -856,6 +895,7 @@ pub unsafe extern "C" fn cdldragonflydoji_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -877,6 +917,7 @@ pub unsafe extern "C" fn cdlengulfing_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -899,6 +940,7 @@ pub unsafe extern "C" fn cdleveningdojistar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -921,6 +963,7 @@ pub unsafe extern "C" fn cdleveningstar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -942,6 +985,7 @@ pub unsafe extern "C" fn cdlgapsidesidewhite_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -963,6 +1007,7 @@ pub unsafe extern "C" fn cdlgravestonedoji_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -984,6 +1029,7 @@ pub unsafe extern "C" fn cdlhammer_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1005,6 +1051,7 @@ pub unsafe extern "C" fn cdlhangingman_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1026,6 +1073,7 @@ pub unsafe extern "C" fn cdlharami_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1047,6 +1095,7 @@ pub unsafe extern "C" fn cdlharamicross_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1068,6 +1117,7 @@ pub unsafe extern "C" fn cdlhighwave_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1089,6 +1139,7 @@ pub unsafe extern "C" fn cdlhikkake_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1110,6 +1161,7 @@ pub unsafe extern "C" fn cdlhikkakemod_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1131,6 +1183,7 @@ pub unsafe extern "C" fn cdlhomingpigeon_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1152,6 +1205,7 @@ pub unsafe extern "C" fn cdlidentical3crows_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1173,6 +1227,7 @@ pub unsafe extern "C" fn cdlinneck_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1194,6 +1249,7 @@ pub unsafe extern "C" fn cdlinvertedhammer_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1215,6 +1271,7 @@ pub unsafe extern "C" fn cdlkicking_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1236,6 +1293,7 @@ pub unsafe extern "C" fn cdlkickingbylength_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1257,6 +1315,7 @@ pub unsafe extern "C" fn cdlladderbottom_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1278,6 +1337,7 @@ pub unsafe extern "C" fn cdllongleggeddoji_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1299,6 +1359,7 @@ pub unsafe extern "C" fn cdllongline_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1320,6 +1381,7 @@ pub unsafe extern "C" fn cdlmarubozu_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1341,6 +1403,7 @@ pub unsafe extern "C" fn cdlmatchinglow_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1363,6 +1426,7 @@ pub unsafe extern "C" fn cdlmathold_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1385,6 +1449,7 @@ pub unsafe extern "C" fn cdlmorningdojistar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1407,6 +1472,7 @@ pub unsafe extern "C" fn cdlmorningstar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1428,6 +1494,7 @@ pub unsafe extern "C" fn cdlonneck_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1449,6 +1516,7 @@ pub unsafe extern "C" fn cdlpiercing_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1470,6 +1538,7 @@ pub unsafe extern "C" fn cdlrickshawman_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1491,6 +1560,7 @@ pub unsafe extern "C" fn cdlrisefall3methods_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1512,6 +1582,7 @@ pub unsafe extern "C" fn cdlseparatinglines_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1533,6 +1604,7 @@ pub unsafe extern "C" fn cdlshootingstar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1554,6 +1626,7 @@ pub unsafe extern "C" fn cdlshortline_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1575,6 +1648,7 @@ pub unsafe extern "C" fn cdlspinningtop_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1596,6 +1670,7 @@ pub unsafe extern "C" fn cdlstalledpattern_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1617,6 +1692,7 @@ pub unsafe extern "C" fn cdlsticksandwich_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1638,6 +1714,7 @@ pub unsafe extern "C" fn cdltakuri_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1659,6 +1736,7 @@ pub unsafe extern "C" fn cdltasukigap_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1680,6 +1758,7 @@ pub unsafe extern "C" fn cdlthrusting_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1701,6 +1780,7 @@ pub unsafe extern "C" fn cdltristar_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1722,6 +1802,7 @@ pub unsafe extern "C" fn cdlunique3river_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1743,6 +1824,7 @@ pub unsafe extern "C" fn cdlupsidegap2crows_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1764,6 +1846,7 @@ pub unsafe extern "C" fn cdlxsidegap3methods_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1787,6 +1870,7 @@ pub unsafe extern "C" fn ce_batch(
     outRealShort: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outRealLong, out_len), span(outRealShort, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1805,6 +1889,7 @@ pub unsafe extern "C" fn ceil_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1824,6 +1909,7 @@ pub unsafe extern "C" fn cg_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1848,6 +1934,7 @@ pub unsafe extern "C" fn cksp_batch(
     outLowStop: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outHighStop, out_len), span(outLowStop, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -1870,6 +1957,7 @@ pub unsafe extern "C" fn cmf_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -1889,6 +1977,7 @@ pub unsafe extern "C" fn cmo_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1908,6 +1997,7 @@ pub unsafe extern "C" fn cmou_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1929,6 +2019,7 @@ pub unsafe extern "C" fn coppock_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1949,6 +2040,7 @@ pub unsafe extern "C" fn correl_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -1970,6 +2062,7 @@ pub unsafe extern "C" fn crsi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -1989,6 +2082,7 @@ pub unsafe extern "C" fn cti_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2007,6 +2101,7 @@ pub unsafe extern "C" fn cumsum_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2028,6 +2123,7 @@ pub unsafe extern "C" fn cvi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2047,6 +2143,7 @@ pub unsafe extern "C" fn dema_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2066,6 +2163,7 @@ pub unsafe extern "C" fn div_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -2088,6 +2186,7 @@ pub unsafe extern "C" fn donchian_batch(
     outRealLowerBand: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2110,6 +2209,7 @@ pub unsafe extern "C" fn dosc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2129,6 +2229,7 @@ pub unsafe extern "C" fn dpo_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2150,6 +2251,7 @@ pub unsafe extern "C" fn dx_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2170,6 +2272,7 @@ pub unsafe extern "C" fn efi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -2189,6 +2292,7 @@ pub unsafe extern "C" fn ema_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2211,6 +2315,7 @@ pub unsafe extern "C" fn emv_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -2230,6 +2335,7 @@ pub unsafe extern "C" fn er_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2252,6 +2358,7 @@ pub unsafe extern "C" fn eri_batch(
     outBearPower: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outBullPower, out_len), span(outBearPower, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2270,6 +2377,7 @@ pub unsafe extern "C" fn floor_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2289,6 +2397,7 @@ pub unsafe extern "C" fn fosc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2311,6 +2420,7 @@ pub unsafe extern "C" fn fractal_batch(
     outSwingLow: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outSwingHigh, out_len), span(outSwingLow, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2337,6 +2447,7 @@ pub unsafe extern "C" fn gator_batch(
     outLower: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outUpper, out_len), span(outLower, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2361,6 +2472,7 @@ pub unsafe extern "C" fn ha_batch(
     outHAClose: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outHAOpen, out_len), span(outHAHigh, out_len), span(outHALow, out_len), span(outHAClose, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2380,6 +2492,7 @@ pub unsafe extern "C" fn hma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2400,6 +2513,7 @@ pub unsafe extern "C" fn ibs_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2425,6 +2539,7 @@ pub unsafe extern "C" fn ichimoku_batch(
     outSenkouSpanB: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outTenkanSen, out_len), span(outKijunSen, out_len), span(outSenkouSpanA, out_len), span(outSenkouSpanB, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2445,6 +2560,7 @@ pub unsafe extern "C" fn imi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2464,6 +2580,7 @@ pub unsafe extern "C" fn kama_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2489,6 +2606,7 @@ pub unsafe extern "C" fn kc_batch(
     outRealLowerBand: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2516,6 +2634,7 @@ pub unsafe extern "C" fn kdj_batch(
     outJ: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2550,6 +2669,7 @@ pub unsafe extern "C" fn kst_batch(
     outKSTSignal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outKST, out_len), span(outKSTSignal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2580,6 +2700,7 @@ pub unsafe extern "C" fn kstext_batch(
     outKSTSignal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInROCMAType) = enum_param(optInROCMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2605,6 +2726,7 @@ pub unsafe extern "C" fn kurtosis_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2630,6 +2752,7 @@ pub unsafe extern "C" fn kvo_batch(
     outKVOSignal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outKVO, out_len), span(outKVOSignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -2649,6 +2772,7 @@ pub unsafe extern "C" fn linearreg_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2668,6 +2792,7 @@ pub unsafe extern "C" fn linearreg_intercept_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2687,6 +2812,7 @@ pub unsafe extern "C" fn linearreg_slope_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2707,6 +2833,7 @@ pub unsafe extern "C" fn ma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2733,6 +2860,7 @@ pub unsafe extern "C" fn macd_batch(
     outMACDHist: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2759,6 +2887,7 @@ pub unsafe extern "C" fn macdext_batch(
     outMACDHist: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInFastMAType) = enum_param(optInFastMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2789,6 +2918,7 @@ pub unsafe extern "C" fn macdfix_batch(
     outMACDHist: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2814,6 +2944,7 @@ pub unsafe extern "C" fn macdv_batch(
     outMACDVHist: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMACDV, out_len), span(outMACDVSignal, out_len), span(outMACDVHist, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -2834,6 +2965,7 @@ pub unsafe extern "C" fn marketfi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -2855,6 +2987,7 @@ pub unsafe extern "C" fn massi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2877,6 +3010,7 @@ pub unsafe extern "C" fn mavp_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2899,6 +3033,7 @@ pub unsafe extern "C" fn max_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2918,6 +3053,7 @@ pub unsafe extern "C" fn maxindex_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2937,6 +3073,7 @@ pub unsafe extern "C" fn mcgd_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2956,6 +3093,7 @@ pub unsafe extern "C" fn median_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -2975,6 +3113,7 @@ pub unsafe extern "C" fn medprice_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -2997,6 +3136,7 @@ pub unsafe extern "C" fn mfi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3016,6 +3156,7 @@ pub unsafe extern "C" fn midpoint_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3036,6 +3177,7 @@ pub unsafe extern "C" fn midprice_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3055,6 +3197,7 @@ pub unsafe extern "C" fn min_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3074,6 +3217,7 @@ pub unsafe extern "C" fn minindex_batch(
     outInteger: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outInteger, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3094,6 +3238,7 @@ pub unsafe extern "C" fn minmax_batch(
     outMax: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMin, out_len), span(outMax, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3114,6 +3259,7 @@ pub unsafe extern "C" fn minmaxindex_batch(
     outMaxIdx: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMinIdx, out_len), span(outMaxIdx, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3135,6 +3281,7 @@ pub unsafe extern "C" fn minus_di_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3155,6 +3302,7 @@ pub unsafe extern "C" fn minus_dm_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3174,6 +3322,7 @@ pub unsafe extern "C" fn mom_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3193,6 +3342,7 @@ pub unsafe extern "C" fn mult_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -3214,6 +3364,7 @@ pub unsafe extern "C" fn natr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3233,6 +3384,7 @@ pub unsafe extern "C" fn nvi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3252,6 +3404,7 @@ pub unsafe extern "C" fn obv_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3274,6 +3427,7 @@ pub unsafe extern "C" fn percentb_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -3297,6 +3451,7 @@ pub unsafe extern "C" fn percentile_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3316,6 +3471,7 @@ pub unsafe extern "C" fn percentrank_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3337,6 +3493,7 @@ pub unsafe extern "C" fn plus_di_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3357,6 +3514,7 @@ pub unsafe extern "C" fn plus_dm_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3378,6 +3536,7 @@ pub unsafe extern "C" fn ppo_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -3400,6 +3559,7 @@ pub unsafe extern "C" fn pvi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3421,6 +3581,7 @@ pub unsafe extern "C" fn pvo_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -3443,6 +3604,7 @@ pub unsafe extern "C" fn pvt_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3463,6 +3625,7 @@ pub unsafe extern "C" fn qstick_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3482,6 +3645,7 @@ pub unsafe extern "C" fn rma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3501,6 +3665,7 @@ pub unsafe extern "C" fn roc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3520,6 +3685,7 @@ pub unsafe extern "C" fn rocp_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3539,6 +3705,7 @@ pub unsafe extern "C" fn rocr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3558,6 +3725,7 @@ pub unsafe extern "C" fn rocr100_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3577,6 +3745,7 @@ pub unsafe extern "C" fn rsi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3597,6 +3766,7 @@ pub unsafe extern "C" fn rvi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3618,6 +3788,7 @@ pub unsafe extern "C" fn rvir_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3637,6 +3808,7 @@ pub unsafe extern "C" fn rvol_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inVolume, len)]) {
         return DECLINED;
     }
@@ -3658,6 +3830,7 @@ pub unsafe extern "C" fn sar_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3685,6 +3858,7 @@ pub unsafe extern "C" fn sarext_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -3706,6 +3880,7 @@ pub unsafe extern "C" fn sharpe_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3728,6 +3903,7 @@ pub unsafe extern "C" fn si_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3747,6 +3923,7 @@ pub unsafe extern "C" fn skew_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3766,6 +3943,7 @@ pub unsafe extern "C" fn sma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3791,6 +3969,7 @@ pub unsafe extern "C" fn smi_batch(
     outSMISignal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outSMI, out_len), span(outSMISignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3812,6 +3991,7 @@ pub unsafe extern "C" fn sortino_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3830,6 +4010,7 @@ pub unsafe extern "C" fn sqrt_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3857,6 +4038,7 @@ pub unsafe extern "C" fn sqzmom_batch(
     outSqueeze: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outMomentum, out_len), span(outSqueeze, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -3878,6 +4060,7 @@ pub unsafe extern "C" fn stc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3898,6 +4081,7 @@ pub unsafe extern "C" fn stddev_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -3924,6 +4108,7 @@ pub unsafe extern "C" fn stoch_batch(
     outSlowD: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -3954,6 +4139,7 @@ pub unsafe extern "C" fn stochf_batch(
     outFastD: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -3980,6 +4166,7 @@ pub unsafe extern "C" fn stochrsi_batch(
     outFastD: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -4002,6 +4189,7 @@ pub unsafe extern "C" fn sub_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
         return DECLINED;
     }
@@ -4021,6 +4209,7 @@ pub unsafe extern "C" fn sum_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4044,6 +4233,7 @@ pub unsafe extern "C" fn supertrend_batch(
     outTrend: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outSupertrend, out_len), span(outTrend, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4064,6 +4254,7 @@ pub unsafe extern "C" fn t3_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4083,6 +4274,7 @@ pub unsafe extern "C" fn tema_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4103,6 +4295,7 @@ pub unsafe extern "C" fn trange_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4122,6 +4315,7 @@ pub unsafe extern "C" fn trima_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4141,6 +4335,7 @@ pub unsafe extern "C" fn trix_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4160,6 +4355,7 @@ pub unsafe extern "C" fn tsf_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4180,6 +4376,7 @@ pub unsafe extern "C" fn tsi_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4200,6 +4397,7 @@ pub unsafe extern "C" fn typprice_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4223,6 +4421,7 @@ pub unsafe extern "C" fn ultosc_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4243,6 +4442,7 @@ pub unsafe extern "C" fn var_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4262,6 +4462,7 @@ pub unsafe extern "C" fn vhf_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4282,6 +4483,7 @@ pub unsafe extern "C" fn vidya_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4304,6 +4506,7 @@ pub unsafe extern "C" fn vortex_batch(
     outMinusVI: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outPlusVI, out_len), span(outMinusVI, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4325,6 +4528,7 @@ pub unsafe extern "C" fn vwap_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -4345,6 +4549,7 @@ pub unsafe extern "C" fn vwma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]) {
         return DECLINED;
     }
@@ -4365,6 +4570,7 @@ pub unsafe extern "C" fn wad_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4389,6 +4595,7 @@ pub unsafe extern "C" fn wavetrend_batch(
     outWT2: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outWT1, out_len), span(outWT2, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4409,6 +4616,7 @@ pub unsafe extern "C" fn wclprice_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4430,6 +4638,7 @@ pub unsafe extern "C" fn willr_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
         return DECLINED;
     }
@@ -4449,6 +4658,7 @@ pub unsafe extern "C" fn wma_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }
@@ -4472,6 +4682,7 @@ pub unsafe extern "C" fn zigzag_batch(
     outPivotIdx: *mut i32,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outZigZag, out_len), span(outTrend, out_len), span(outPivotIdx, out_len)], &[span(inHigh, len), span(inLow, len)]) {
         return DECLINED;
     }
@@ -4491,6 +4702,7 @@ pub unsafe extern "C" fn zlema_batch(
     outReal: *mut f64,
     out_len: usize,
 ) -> i32 {
+    entered();
     if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
         return DECLINED;
     }

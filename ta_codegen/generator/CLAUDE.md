@@ -91,12 +91,11 @@ that names no indicator.
 
 **The npm package's WASM engine.** `ts/library/src/runtime/wasm.ts` (loading,
 traps, the fall-through counter and its reasons) is hand-written, like the rest
-of `runtime/`; `src/engine/`, the per-function glue that calls it, is
-`backends/ts_engine.rs`'s. The TypeScript server's `--engine=wasm` classes every
-fall-through in one function, `expectedFallThrough` in `server_gen.rs`: a new
-reason the glue or runtime gives is a defect in ta_regtest's `tswasm` run until
-it is classified there, and it is expected only where the call's own facts
-explain it.
+of `runtime/`, and so is the module's count of batch calls in
+`templates/wasm/runtime.rs`. Generated: each export's increment of that count
+(`backends/wasm.rs`), `src/engine/`, the per-function glue
+(`backends/ts_engine.rs`), and the TypeScript server's `--engine=wasm` prelude,
+which classes every fall-through in `expectedFallThrough` (`server_gen.rs`).
 
 **Emission helpers stay per backend.** Factor a repeated prologue or validation
 emitter within its own backend file, not into `backends/common.rs`: the backends

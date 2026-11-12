@@ -360,12 +360,24 @@ already drives, and a `"timed":1` request answers `unsupported_mode`.
 A fall-through still answers correctly from TypeScript, so values prove nothing
 here: the transport (`engine_scan`) holds every batch reply of a pipe launched
 with `--engine=wasm`, on every pass, to the `engine_*` evidence the server adds,
-and `main()` fails the run on a defect-class fall-through, a batch reply without
-evidence, an export the server reports differently from
-`TA_FUNC_FLG_USES_TRANSCENDENTAL`, a server that exited non-zero (it does when
-the engine did not load), or an exported function that answered successfully and
-never ran in WASM. Which fall-throughs are by design is decided in one place, the
-server's `expectedFallThrough`; never add a waiver on this side.
+and `main()` fails the run on a defect, a batch reply without evidence, an export
+the server reports differently from `TA_FUNC_FLG_USES_TRANSCENDENTAL`, or an
+exported function that answered successfully and never ran in WASM.
+
+- **Ran in WASM** means the module's own count of batch calls, which only the
+  exports advance, moved by exactly one across the call. The router's
+  fall-through counter is never proof: glue that answers from `./js` without
+  calling the module makes no fall-through.
+- **Expected fall-throughs** are decided in one place, the server's
+  `expectedFallThrough`, and only where the call's own facts explain them:
+  `budget` only when the call's bytes exceed the runtime's own budget constant,
+  never a copy of it. A trap, a throw in the glue, a load state, or a reason it
+  does not know is a defect, even on a call `./js` rejects. Never add a waiver on
+  this side.
+- **The exit status is evidence.** At close the WASM-engine server gets 10 s to
+  exit before SIGTERM, and a non-zero exit (it exits 1 when the engine did not
+  load) or a death by any signal but that SIGTERM fails the run. Other servers
+  keep the 100 ms bound.
 
 ## Transport
 

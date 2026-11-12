@@ -109,7 +109,9 @@ test('ready() imports the bytes and resolves to the WASM engine', async () => {
   assert.equal(await lib.ready(), status);
   hooks.setEngineMode('strict');
   try {
+    const entered = hooks.moduleCalls();
     const got = lib.ema(close, { timePeriod: 12 });
+    assert.equal(hooks.moduleCalls() - entered, 1, 'the module did not count one batch call');
     assert.equal(bits(got.values), bits(js.ema(close, { timePeriod: 12 }).values));
   } finally {
     hooks.setEngineMode('table');
@@ -156,7 +158,9 @@ test('a call made while ready() compiles falls through without compiling, and re
   assert.deepEqual(status, { engine: 'wasm', reason: null });
   hooks.setEngineMode('strict');
   try {
+    const entered = hooks.moduleCalls();
     const got = lib.ema(close, { timePeriod: 12 });
+    assert.equal(hooks.moduleCalls() - entered, 1, 'the module did not count one batch call');
     assert.equal(bits(got.values), bits(js.ema(close, { timePeriod: 12 }).values));
   } finally {
     hooks.setEngineMode('table');

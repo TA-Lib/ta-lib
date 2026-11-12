@@ -75,12 +75,7 @@ long codegen_ride_rejects_ever(void);
 long codegen_tail_dirty_ever(void);
 long codegen_tail_reports_ever(void);
 
-/* The WASM-engine server's per-call evidence, held at every call site like the
- * ride verdict. The fall-through classes are the server's (its
- * expectedFallThrough); this side fails the run on a defect-class one, on a
- * batch reply without evidence, on an export set that disagrees with the
- * library's transcendental flag, and on an exported function that answered
- * successfully without ever running in WASM. Returns the failures, after
+/* The failures the WASM-engine servers' evidence and exit statuses showed, after
  * printing them and the census; 0 when no such server ran. */
 int  codegen_engine_report(void);
 

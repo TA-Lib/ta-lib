@@ -3100,7 +3100,9 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
           const args = [...row.args(DATA), { ...options, ...range }];
           const where = `${row.name} ${label} ${JSON.stringify(range)}`;
           const want = outcome(g, args);
+          const entered = hooks.moduleCalls();
           const got = outcome(f, args);
+          const ran = hooks.moduleCalls() - entered;
           if (want.error !== undefined) {
             assert.ok(want.error instanceof TALibError, `${where}: ta-lib/js threw ${String(want.error)}`);
             assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
@@ -3110,6 +3112,7 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
             continue;
           }
           assert.equal(got.error, undefined, `${where}: ${String(got.error)}`);
+          assert.equal(ran, 1, `${where}: the module counted ${ran} batch calls, not one`);
           const a = got.value as Record<string, unknown>;
           const b = want.value as Record<string, unknown>;
           assert.deepEqual(Object.keys(a), Object.keys(b), where);
