@@ -66,6 +66,8 @@
  *  110926 KL    #588 rebuild a total that comes out negative.
  *  111026 MF,CC #588 only a negative a-total can turn the output negative;
  *               skip the rebuild while a close below its low keeps it so.
+ *  111126 MF,CC #588 test after the retiring subtraction, past the output;
+ *               skip all work on a fully flat window.
  */
 
 // Import types from parent module
@@ -186,10 +188,10 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut a1Total: f64 = 0.0_f64;
-        let mut a2Total: f64 = 0.0_f64;
-        let mut a3Total: f64 = 0.0_f64;
         let mut b1Total: f64 = 0.0_f64;
+        let mut a2Total: f64 = 0.0_f64;
         let mut b2Total: f64 = 0.0_f64;
+        let mut a3Total: f64 = 0.0_f64;
         let mut b3Total: f64 = 0.0_f64;
         let mut trueLow: f64 = 0.0_f64;
         let mut trueRange: f64 = 0.0_f64;
@@ -210,6 +212,7 @@ impl Core {
         let mut negSlot: usize = 0_usize;
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
+        let mut trailingPos3: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
         let mut live: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
@@ -225,6 +228,10 @@ impl Core {
         // The two per-bar terms the three moving sums are built from. Both are a
         // pure function of the bar, so each bar is evaluated once on entry and read
         // back when it leaves each of the three windows.
+        // Keep each a-total declared beside its b-total, not beside the next
+        // a-total: the stream state takes this order, and a1 beside a2 lets gcc
+        // load the pair in one read that straddles the two stores the previous
+        // update made, a store-forwarding stall on every update.
         // One entry per bar of the longest window. Stays on the stack for every
         // period up to 32, which covers the 7/14/28 default.
         // Id, Type, Static Size
@@ -353,6 +360,10 @@ impl Core {
         if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
+        trailingPos3 = term_Idx + 1;
+        if trailingPos3 >= ((optInTimePeriod3) as usize) {
+            trailingPos3 = 0;
+        }
         negSlot = 0;
         while today <= endIdx {
             // Add on today's terms
@@ -368,44 +379,96 @@ impl Core {
             trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
-            a1Total += closeMinusTrueLow;
-            a2Total += closeMinusTrueLow;
-            a3Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            b2Total += trueRange;
-            b3Total += trueRange;
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
-            // one.
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
-            nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod1) as usize) {
+            // one. A run as long as the longest window skips the adds, the output
+            // and the retire, which would only add and remove zeros: held prices
+            // take this path on most bars.
+            if nullRun >= ((optInTimePeriod3) as usize) {
                 cold_arm();
+                nullRun = (optInTimePeriod3) as usize;
                 a1Total = 0.0;
                 b1Total = 0.0;
-                if nullRun >= ((optInTimePeriod2) as usize) {
-                    a2Total = 0.0;
-                    b2Total = 0.0;
-                    if nullRun >= ((optInTimePeriod3) as usize) {
-                        nullRun = (optInTimePeriod3) as usize;
-                        a3Total = 0.0;
-                        b3Total = 0.0;
+                a2Total = 0.0;
+                b2Total = 0.0;
+                a3Total = 0.0;
+                b3Total = 0.0;
+                output = 0.0;
+            } else {
+                a1Total += closeMinusTrueLow;
+                a2Total += closeMinusTrueLow;
+                a3Total += closeMinusTrueLow;
+                b1Total += trueRange;
+                b2Total += trueRange;
+                b3Total += trueRange;
+                if nullRun >= ((optInTimePeriod1) as usize) {
+                    cold_arm();
+                    a1Total = 0.0;
+                    b1Total = 0.0;
+                    if nullRun >= ((optInTimePeriod2) as usize) {
+                        a2Total = 0.0;
+                        b2Total = 0.0;
                     }
                 }
+                // Calculate the oscillator value for today. Each window contributes only
+                // when it holds a true range; the totals are sums of non-negative terms
+                // and the reseed above removes their residue, so the test is exact.
+                output = 0.0;
+                if b1Total > 0.0 {
+                    output += 4.0 * (a1Total / b1Total);
+                } else {
+                    cold_arm();
+                }
+                if b2Total > 0.0 {
+                    output += 2.0 * (a2Total / b2Total);
+                } else {
+                    cold_arm();
+                }
+                if b3Total > 0.0 {
+                    output += a3Total / b3Total;
+                } else {
+                    cold_arm();
+                }
+                a1Total -= term_closeMinusTrueLow[trailingPos1];
+                b1Total -= term_trueRange[trailingPos1];
+                a2Total -= term_closeMinusTrueLow[trailingPos2];
+                b2Total -= term_trueRange[trailingPos2];
+                a3Total -= term_closeMinusTrueLow[trailingPos3];
+                b3Total -= term_trueRange[trailingPos3];
             }
+            trailingPos1 += 1;
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
+                trailingPos1 = 0;
+            }
+            trailingPos2 += 1;
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
+                trailingPos2 = 0;
+            }
+            term_Idx = trailingPos3;
+            trailingPos3 += 1;
+            if trailingPos3 >= ((optInTimePeriod3) as usize) {
+                trailingPos3 = 0;
+            }
+            // Store only after this bar's last input read: the output array may be
+            // one of the input arrays.
+            outReal[outIdx] = 100.0 * (output / 7.0);
             // On well-formed bars every term is non-negative, so a total below zero
             // is the residue a term far larger than the rest of its window left
-            // when it retired; rebuild all six from the ring, oldest bar first.
+            // when it retired. Tested here, on the totals the next bar adds to, and
+            // not before the output: a non-negative total plus a non-negative term
+            // stays non-negative, and after the output nothing a peek returns
+            // depends on it. The rebuild sums each window's retained terms oldest
+            // first, the state a call starting at the next bar primes.
             // Only the a-totals are tested: a negative b-total fails its division
-            // gate below. A close below its low makes an a-term, and so a total,
+            // gate. A close below its low makes an a-term, and so a total,
             // genuinely negative, and rebuilding it would run on every bar: negSlot
             // remembers the newest negative term the last rebuild saw, and the
-            // rebuild is skipped while that slot still holds a negative term. The
-            // ring is the longest window, so such an output reads a close below its
-            // low and is outside the guarantee; any other negative total is
-            // rebuilt. Any slot is a valid start: the term it holds is read back.
+            // rebuild is skipped while that retained slot still holds a negative
+            // term, which puts a close below its low in the next output's window.
             // One compare of the smallest a-total, not three: a chain of three
             // compiles to straight-line selects in Rust. The windows are nested,
             // so a1 <= a2 <= a3 and either select stays predictable should a
@@ -414,25 +477,25 @@ impl Core {
             lowest = (if a3Total < lowest { a3Total } else { lowest });
             if lowest < 0.0 {
                 cold_arm();
-                if term_closeMinusTrueLow[negSlot] >= 0.0 {
+                if negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0 {
                     a1Total = 0.0;
                     b1Total = 0.0;
                     a2Total = 0.0;
                     b2Total = 0.0;
                     a3Total = 0.0;
                     b3Total = 0.0;
-                    // for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
-                    i = (optInTimePeriod3 - 1) as usize;
-                    loop {
-                        j = term_Idx + ((optInTimePeriod3) as usize) - i;
+                    // for( i = 1; i < ((optInTimePeriod3) as usize); i += 1 )
+                    i = 1;
+                    while i < ((optInTimePeriod3) as usize) {
+                        j = term_Idx + i;
                         if j >= ((optInTimePeriod3) as usize) {
                             j -= (optInTimePeriod3) as usize;
                         }
-                        if i < ((optInTimePeriod1) as usize) {
+                        if i > ((optInTimePeriod3 - optInTimePeriod1) as usize) {
                             a1Total += term_closeMinusTrueLow[j];
                             b1Total += term_trueRange[j];
                         }
-                        if i < ((optInTimePeriod2) as usize) {
+                        if i > ((optInTimePeriod3 - optInTimePeriod2) as usize) {
                             a2Total += term_closeMinusTrueLow[j];
                             b2Total += term_trueRange[j];
                         }
@@ -441,54 +504,10 @@ impl Core {
                         if term_closeMinusTrueLow[j] < 0.0 {
                             negSlot = j;
                         }
-                        if i == 0 { break; }
-                        i -= 1;
+                        i += 1;
                     }
                 }
             }
-            // Calculate the oscillator value for today. Each window contributes only
-            // when it holds a true range; the totals are sums of non-negative terms
-            // and the reseed above removes their residue, so the test is exact.
-            output = 0.0;
-            if b1Total > 0.0 {
-                output += 4.0 * (a1Total / b1Total);
-            } else {
-                cold_arm();
-            }
-            if b2Total > 0.0 {
-                output += 2.0 * (a2Total / b2Total);
-            } else {
-                cold_arm();
-            }
-            if b3Total > 0.0 {
-                output += a3Total / b3Total;
-            } else {
-                cold_arm();
-            }
-            // Remove the trailing terms to prepare for next day. Each was evaluated
-            // once, when its bar entered the ring.
-            a1Total -= term_closeMinusTrueLow[trailingPos1];
-            b1Total -= term_trueRange[trailingPos1];
-            trailingPos1 += 1;
-            if trailingPos1 >= ((optInTimePeriod3) as usize) {
-                trailingPos1 = 0;
-            }
-            a2Total -= term_closeMinusTrueLow[trailingPos2];
-            b2Total -= term_trueRange[trailingPos2];
-            trailingPos2 += 1;
-            if trailingPos2 >= ((optInTimePeriod3) as usize) {
-                trailingPos2 = 0;
-            }
-            term_Idx += 1;
-            if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
-            a3Total -= term_closeMinusTrueLow[term_Idx];
-            b3Total -= term_trueRange[term_Idx];
-            // Last operation is to write the output. Must
-            // be done after the trailing index have all been
-            // taken care of because the caller is allowed
-            // to have the input array to be also the output
-            // array.
-            outReal[outIdx] = 100.0 * (output / 7.0);
             // Increment indexes
             outIdx += 1;
             today += 1;
@@ -650,14 +669,15 @@ struct UltoscStreamState {
     optInTimePeriod2: i32,
     optInTimePeriod3: i32,
     a1Total: f64,
-    a2Total: f64,
-    a3Total: f64,
     b1Total: f64,
+    a2Total: f64,
     b2Total: f64,
+    a3Total: f64,
     b3Total: f64,
     negSlot: usize,
     trailingPos1: usize,
     trailingPos2: usize,
+    trailingPos3: usize,
     nullRun: usize,
     term_Idx: usize,
     maxIdx_term: usize,
@@ -700,44 +720,96 @@ impl Core {
         trueRange = c_max(tempDouble, trueRange);
         sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
         sp.cb_term_trueRange[sp.term_Idx] = trueRange;
-        sp.a1Total += closeMinusTrueLow;
-        sp.a2Total += closeMinusTrueLow;
-        sp.a3Total += closeMinusTrueLow;
-        sp.b1Total += trueRange;
-        sp.b2Total += trueRange;
-        sp.b3Total += trueRange;
+        live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         // Once a whole window of no-contribution bars has gone by, every slot it
         // spans is 0.0, so its totals are known to be exactly zero and the
         // residue can be dropped. The periods are sorted shortest-first, so a
         // run long enough for a longer window is long enough for every shorter
-        // one.
-        live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
-        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
-        if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+        // one. A run as long as the longest window skips the adds, the output
+        // and the retire, which would only add and remove zeros: held prices
+        // take this path on most bars.
+        if sp.nullRun >= ((sp.optInTimePeriod3) as usize) {
             cold_arm();
+            sp.nullRun = (sp.optInTimePeriod3) as usize;
             sp.a1Total = 0.0;
             sp.b1Total = 0.0;
-            if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
-                sp.a2Total = 0.0;
-                sp.b2Total = 0.0;
-                if sp.nullRun >= ((sp.optInTimePeriod3) as usize) {
-                    sp.nullRun = (sp.optInTimePeriod3) as usize;
-                    sp.a3Total = 0.0;
-                    sp.b3Total = 0.0;
+            sp.a2Total = 0.0;
+            sp.b2Total = 0.0;
+            sp.a3Total = 0.0;
+            sp.b3Total = 0.0;
+            output = 0.0;
+        } else {
+            sp.a1Total += closeMinusTrueLow;
+            sp.a2Total += closeMinusTrueLow;
+            sp.a3Total += closeMinusTrueLow;
+            sp.b1Total += trueRange;
+            sp.b2Total += trueRange;
+            sp.b3Total += trueRange;
+            if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+                cold_arm();
+                sp.a1Total = 0.0;
+                sp.b1Total = 0.0;
+                if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
+                    sp.a2Total = 0.0;
+                    sp.b2Total = 0.0;
                 }
             }
+            // Calculate the oscillator value for today. Each window contributes only
+            // when it holds a true range; the totals are sums of non-negative terms
+            // and the reseed above removes their residue, so the test is exact.
+            output = 0.0;
+            if sp.b1Total > 0.0 {
+                output += 4.0 * (sp.a1Total / sp.b1Total);
+            } else {
+                cold_arm();
+            }
+            if sp.b2Total > 0.0 {
+                output += 2.0 * (sp.a2Total / sp.b2Total);
+            } else {
+                cold_arm();
+            }
+            if sp.b3Total > 0.0 {
+                output += sp.a3Total / sp.b3Total;
+            } else {
+                cold_arm();
+            }
+            sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
+            sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
+            sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
+            sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
+            sp.a3Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos3];
+            sp.b3Total -= sp.cb_term_trueRange[sp.trailingPos3];
         }
+        sp.trailingPos1 += 1;
+        if sp.trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
+            sp.trailingPos1 = 0;
+        }
+        sp.trailingPos2 += 1;
+        if sp.trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
+            sp.trailingPos2 = 0;
+        }
+        sp.term_Idx = sp.trailingPos3;
+        sp.trailingPos3 += 1;
+        if sp.trailingPos3 >= ((sp.optInTimePeriod3) as usize) {
+            sp.trailingPos3 = 0;
+        }
+        // Store only after this bar's last input read: the output array may be
+        // one of the input arrays.
+        (*outReal) = 100.0 * (output / 7.0);
         // On well-formed bars every term is non-negative, so a total below zero
         // is the residue a term far larger than the rest of its window left
-        // when it retired; rebuild all six from the ring, oldest bar first.
+        // when it retired. Tested here, on the totals the next bar adds to, and
+        // not before the output: a non-negative total plus a non-negative term
+        // stays non-negative, and after the output nothing a peek returns
+        // depends on it. The rebuild sums each window's retained terms oldest
+        // first, the state a call starting at the next bar primes.
         // Only the a-totals are tested: a negative b-total fails its division
-        // gate below. A close below its low makes an a-term, and so a total,
+        // gate. A close below its low makes an a-term, and so a total,
         // genuinely negative, and rebuilding it would run on every bar: negSlot
         // remembers the newest negative term the last rebuild saw, and the
-        // rebuild is skipped while that slot still holds a negative term. The
-        // ring is the longest window, so such an output reads a close below its
-        // low and is outside the guarantee; any other negative total is
-        // rebuilt. Any slot is a valid start: the term it holds is read back.
+        // rebuild is skipped while that retained slot still holds a negative
+        // term, which puts a close below its low in the next output's window.
         // One compare of the smallest a-total, not three: a chain of three
         // compiles to straight-line selects in Rust. The windows are nested,
         // so a1 <= a2 <= a3 and either select stays predictable should a
@@ -746,25 +818,25 @@ impl Core {
         lowest = (if sp.a3Total < lowest { sp.a3Total } else { lowest });
         if lowest < 0.0 {
             cold_arm();
-            if sp.cb_term_closeMinusTrueLow[sp.negSlot] >= 0.0 {
+            if sp.negSlot == sp.term_Idx || sp.cb_term_closeMinusTrueLow[sp.negSlot] >= 0.0 {
                 sp.a1Total = 0.0;
                 sp.b1Total = 0.0;
                 sp.a2Total = 0.0;
                 sp.b2Total = 0.0;
                 sp.a3Total = 0.0;
                 sp.b3Total = 0.0;
-                // for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 )
-                i = (sp.optInTimePeriod3 - 1) as usize;
-                loop {
-                    j = sp.term_Idx + ((sp.optInTimePeriod3) as usize) - i;
+                // for( i = 1; i < ((sp.optInTimePeriod3) as usize); i += 1 )
+                i = 1;
+                while i < ((sp.optInTimePeriod3) as usize) {
+                    j = sp.term_Idx + i;
                     if j >= ((sp.optInTimePeriod3) as usize) {
                         j -= (sp.optInTimePeriod3) as usize;
                     }
-                    if i < ((sp.optInTimePeriod1) as usize) {
+                    if i > ((sp.optInTimePeriod3 - sp.optInTimePeriod1) as usize) {
                         sp.a1Total += sp.cb_term_closeMinusTrueLow[j];
                         sp.b1Total += sp.cb_term_trueRange[j];
                     }
-                    if i < ((sp.optInTimePeriod2) as usize) {
+                    if i > ((sp.optInTimePeriod3 - sp.optInTimePeriod2) as usize) {
                         sp.a2Total += sp.cb_term_closeMinusTrueLow[j];
                         sp.b2Total += sp.cb_term_trueRange[j];
                     }
@@ -773,56 +845,10 @@ impl Core {
                     if sp.cb_term_closeMinusTrueLow[j] < 0.0 {
                         sp.negSlot = j;
                     }
-                    if i == 0 { break; }
-                    i -= 1;
+                    i += 1;
                 }
             }
         }
-        // Calculate the oscillator value for today. Each window contributes only
-        // when it holds a true range; the totals are sums of non-negative terms
-        // and the reseed above removes their residue, so the test is exact.
-        output = 0.0;
-        if sp.b1Total > 0.0 {
-            output += 4.0 * (sp.a1Total / sp.b1Total);
-        } else {
-            cold_arm();
-        }
-        if sp.b2Total > 0.0 {
-            output += 2.0 * (sp.a2Total / sp.b2Total);
-        } else {
-            cold_arm();
-        }
-        if sp.b3Total > 0.0 {
-            output += sp.a3Total / sp.b3Total;
-        } else {
-            cold_arm();
-        }
-        // Remove the trailing terms to prepare for next day. Each was evaluated
-        // once, when its bar entered the ring.
-        sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
-        sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
-        sp.trailingPos1 += 1;
-        if sp.trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
-            sp.trailingPos1 = 0;
-        }
-        sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
-        sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
-        sp.trailingPos2 += 1;
-        if sp.trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
-            sp.trailingPos2 = 0;
-        }
-        sp.term_Idx = sp.term_Idx + 1;
-        if sp.term_Idx > sp.maxIdx_term {
-            sp.term_Idx = 0;
-        }
-        sp.a3Total -= sp.cb_term_closeMinusTrueLow[sp.term_Idx];
-        sp.b3Total -= sp.cb_term_trueRange[sp.term_Idx];
-        // Last operation is to write the output. Must
-        // be done after the trailing index have all been
-        // taken care of because the caller is allowed
-        // to have the input array to be also the output
-        // array.
-        (*outReal) = 100.0 * (output / 7.0);
         // Increment indexes
         sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
@@ -865,10 +891,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut a1Total: f64 = 0.0_f64;
-        let mut a2Total: f64 = 0.0_f64;
-        let mut a3Total: f64 = 0.0_f64;
         let mut b1Total: f64 = 0.0_f64;
+        let mut a2Total: f64 = 0.0_f64;
         let mut b2Total: f64 = 0.0_f64;
+        let mut a3Total: f64 = 0.0_f64;
         let mut b3Total: f64 = 0.0_f64;
         let mut trueLow: f64 = 0.0_f64;
         let mut trueRange: f64 = 0.0_f64;
@@ -889,6 +915,7 @@ impl Core {
         let mut negSlot: usize = 0_usize;
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
+        let mut trailingPos3: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
         let mut live: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
@@ -901,6 +928,10 @@ impl Core {
         // The two per-bar terms the three moving sums are built from. Both are a
         // pure function of the bar, so each bar is evaluated once on entry and read
         // back when it leaves each of the three windows.
+        // Keep each a-total declared beside its b-total, not beside the next
+        // a-total: the stream state takes this order, and a1 beside a2 lets gcc
+        // load the pair in one read that straddles the two stores the previous
+        // update made, a store-forwarding stall on every update.
         // One entry per bar of the longest window. Stays on the stack for every
         // period up to 32, which covers the 7/14/28 default.
         // Id, Type, Static Size
@@ -1020,6 +1051,10 @@ impl Core {
         if trailingPos2 >= ((optInTimePeriod3) as usize) {
             trailingPos2 -= (optInTimePeriod3) as usize;
         }
+        trailingPos3 = term_Idx + 1;
+        if trailingPos3 >= ((optInTimePeriod3) as usize) {
+            trailingPos3 = 0;
+        }
         negSlot = 0;
         while today <= endIdx {
             // Add on today's terms
@@ -1035,44 +1070,96 @@ impl Core {
             trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
-            a1Total += closeMinusTrueLow;
-            a2Total += closeMinusTrueLow;
-            a3Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            b2Total += trueRange;
-            b3Total += trueRange;
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
-            // one.
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
-            nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((optInTimePeriod1) as usize) {
+            // one. A run as long as the longest window skips the adds, the output
+            // and the retire, which would only add and remove zeros: held prices
+            // take this path on most bars.
+            if nullRun >= ((optInTimePeriod3) as usize) {
                 cold_arm();
+                nullRun = (optInTimePeriod3) as usize;
                 a1Total = 0.0;
                 b1Total = 0.0;
-                if nullRun >= ((optInTimePeriod2) as usize) {
-                    a2Total = 0.0;
-                    b2Total = 0.0;
-                    if nullRun >= ((optInTimePeriod3) as usize) {
-                        nullRun = (optInTimePeriod3) as usize;
-                        a3Total = 0.0;
-                        b3Total = 0.0;
+                a2Total = 0.0;
+                b2Total = 0.0;
+                a3Total = 0.0;
+                b3Total = 0.0;
+                output = 0.0;
+            } else {
+                a1Total += closeMinusTrueLow;
+                a2Total += closeMinusTrueLow;
+                a3Total += closeMinusTrueLow;
+                b1Total += trueRange;
+                b2Total += trueRange;
+                b3Total += trueRange;
+                if nullRun >= ((optInTimePeriod1) as usize) {
+                    cold_arm();
+                    a1Total = 0.0;
+                    b1Total = 0.0;
+                    if nullRun >= ((optInTimePeriod2) as usize) {
+                        a2Total = 0.0;
+                        b2Total = 0.0;
                     }
                 }
+                // Calculate the oscillator value for today. Each window contributes only
+                // when it holds a true range; the totals are sums of non-negative terms
+                // and the reseed above removes their residue, so the test is exact.
+                output = 0.0;
+                if b1Total > 0.0 {
+                    output += 4.0 * (a1Total / b1Total);
+                } else {
+                    cold_arm();
+                }
+                if b2Total > 0.0 {
+                    output += 2.0 * (a2Total / b2Total);
+                } else {
+                    cold_arm();
+                }
+                if b3Total > 0.0 {
+                    output += a3Total / b3Total;
+                } else {
+                    cold_arm();
+                }
+                a1Total -= term_closeMinusTrueLow[trailingPos1];
+                b1Total -= term_trueRange[trailingPos1];
+                a2Total -= term_closeMinusTrueLow[trailingPos2];
+                b2Total -= term_trueRange[trailingPos2];
+                a3Total -= term_closeMinusTrueLow[trailingPos3];
+                b3Total -= term_trueRange[trailingPos3];
             }
+            trailingPos1 += 1;
+            if trailingPos1 >= ((optInTimePeriod3) as usize) {
+                trailingPos1 = 0;
+            }
+            trailingPos2 += 1;
+            if trailingPos2 >= ((optInTimePeriod3) as usize) {
+                trailingPos2 = 0;
+            }
+            term_Idx = trailingPos3;
+            trailingPos3 += 1;
+            if trailingPos3 >= ((optInTimePeriod3) as usize) {
+                trailingPos3 = 0;
+            }
+            // Store only after this bar's last input read: the output array may be
+            // one of the input arrays.
+            outReal[(outIdx * outStride) as usize] = 100.0 * (output / 7.0);
             // On well-formed bars every term is non-negative, so a total below zero
             // is the residue a term far larger than the rest of its window left
-            // when it retired; rebuild all six from the ring, oldest bar first.
+            // when it retired. Tested here, on the totals the next bar adds to, and
+            // not before the output: a non-negative total plus a non-negative term
+            // stays non-negative, and after the output nothing a peek returns
+            // depends on it. The rebuild sums each window's retained terms oldest
+            // first, the state a call starting at the next bar primes.
             // Only the a-totals are tested: a negative b-total fails its division
-            // gate below. A close below its low makes an a-term, and so a total,
+            // gate. A close below its low makes an a-term, and so a total,
             // genuinely negative, and rebuilding it would run on every bar: negSlot
             // remembers the newest negative term the last rebuild saw, and the
-            // rebuild is skipped while that slot still holds a negative term. The
-            // ring is the longest window, so such an output reads a close below its
-            // low and is outside the guarantee; any other negative total is
-            // rebuilt. Any slot is a valid start: the term it holds is read back.
+            // rebuild is skipped while that retained slot still holds a negative
+            // term, which puts a close below its low in the next output's window.
             // One compare of the smallest a-total, not three: a chain of three
             // compiles to straight-line selects in Rust. The windows are nested,
             // so a1 <= a2 <= a3 and either select stays predictable should a
@@ -1081,25 +1168,25 @@ impl Core {
             lowest = (if a3Total < lowest { a3Total } else { lowest });
             if lowest < 0.0 {
                 cold_arm();
-                if term_closeMinusTrueLow[negSlot] >= 0.0 {
+                if negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0 {
                     a1Total = 0.0;
                     b1Total = 0.0;
                     a2Total = 0.0;
                     b2Total = 0.0;
                     a3Total = 0.0;
                     b3Total = 0.0;
-                    // for( i = optInTimePeriod3 - 1; i >= 0; i -= 1 )
-                    i = (optInTimePeriod3 - 1) as usize;
-                    loop {
-                        j = term_Idx + ((optInTimePeriod3) as usize) - i;
+                    // for( i = 1; i < ((optInTimePeriod3) as usize); i += 1 )
+                    i = 1;
+                    while i < ((optInTimePeriod3) as usize) {
+                        j = term_Idx + i;
                         if j >= ((optInTimePeriod3) as usize) {
                             j -= (optInTimePeriod3) as usize;
                         }
-                        if i < ((optInTimePeriod1) as usize) {
+                        if i > ((optInTimePeriod3 - optInTimePeriod1) as usize) {
                             a1Total += term_closeMinusTrueLow[j];
                             b1Total += term_trueRange[j];
                         }
-                        if i < ((optInTimePeriod2) as usize) {
+                        if i > ((optInTimePeriod3 - optInTimePeriod2) as usize) {
                             a2Total += term_closeMinusTrueLow[j];
                             b2Total += term_trueRange[j];
                         }
@@ -1108,54 +1195,10 @@ impl Core {
                         if term_closeMinusTrueLow[j] < 0.0 {
                             negSlot = j;
                         }
-                        if i == 0 { break; }
-                        i -= 1;
+                        i += 1;
                     }
                 }
             }
-            // Calculate the oscillator value for today. Each window contributes only
-            // when it holds a true range; the totals are sums of non-negative terms
-            // and the reseed above removes their residue, so the test is exact.
-            output = 0.0;
-            if b1Total > 0.0 {
-                output += 4.0 * (a1Total / b1Total);
-            } else {
-                cold_arm();
-            }
-            if b2Total > 0.0 {
-                output += 2.0 * (a2Total / b2Total);
-            } else {
-                cold_arm();
-            }
-            if b3Total > 0.0 {
-                output += a3Total / b3Total;
-            } else {
-                cold_arm();
-            }
-            // Remove the trailing terms to prepare for next day. Each was evaluated
-            // once, when its bar entered the ring.
-            a1Total -= term_closeMinusTrueLow[trailingPos1];
-            b1Total -= term_trueRange[trailingPos1];
-            trailingPos1 += 1;
-            if trailingPos1 >= ((optInTimePeriod3) as usize) {
-                trailingPos1 = 0;
-            }
-            a2Total -= term_closeMinusTrueLow[trailingPos2];
-            b2Total -= term_trueRange[trailingPos2];
-            trailingPos2 += 1;
-            if trailingPos2 >= ((optInTimePeriod3) as usize) {
-                trailingPos2 = 0;
-            }
-            term_Idx += 1;
-            if term_Idx > maxIdx_term { term_Idx = 0; }
-            a3Total -= term_closeMinusTrueLow[term_Idx];
-            b3Total -= term_trueRange[term_Idx];
-            // Last operation is to write the output. Must
-            // be done after the trailing index have all been
-            // taken care of because the caller is allowed
-            // to have the input array to be also the output
-            // array.
-            outReal[(outIdx * outStride) as usize] = 100.0 * (output / 7.0);
             // Increment indexes
             outIdx += 1;
             today += 1;
@@ -1174,14 +1217,15 @@ impl Core {
             optInTimePeriod2,
             optInTimePeriod3,
             a1Total,
-            a2Total,
-            a3Total,
             b1Total,
+            a2Total,
             b2Total,
+            a3Total,
             b3Total,
             negSlot,
             trailingPos1,
             trailingPos2,
+            trailingPos3,
             nullRun,
             term_Idx,
             maxIdx_term,
@@ -1370,9 +1414,6 @@ impl UltoscStream {
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             let mut tempCY: f64 = 0.0_f64;
-            let mut lowest: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
-            let mut j: usize = 0_usize;
             let mut live: usize = 0_usize;
             let mut a1Total = sp.a1Total;
             let mut a2Total = sp.a2Total;
@@ -1380,11 +1421,11 @@ impl UltoscStream {
             let mut b1Total = sp.b1Total;
             let mut b2Total = sp.b2Total;
             let mut b3Total = sp.b3Total;
-            let mut negSlot = sp.negSlot;
             let mut nullRun = sp.nullRun;
             let mut term_Idx = sp.term_Idx;
             let mut trailingPos1 = sp.trailingPos1;
             let mut trailingPos2 = sp.trailingPos2;
+            let mut trailingPos3 = sp.trailingPos3;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -1404,126 +1445,80 @@ impl UltoscStream {
             pkVal0 = closeMinusTrueLow;
             pkSlot1 = term_Idx as usize;
             pkVal1 = trueRange;
-            a1Total += closeMinusTrueLow;
-            a2Total += closeMinusTrueLow;
-            a3Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            b2Total += trueRange;
-            b3Total += trueRange;
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once a whole window of no-contribution bars has gone by, every slot it
             // spans is 0.0, so its totals are known to be exactly zero and the
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
-            // one.
-            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
-            nullRun = nullRun + 1 & live.wrapping_sub(1);
-            if nullRun >= ((sp.optInTimePeriod1) as usize) {
+            // one. A run as long as the longest window skips the adds, the output
+            // and the retire, which would only add and remove zeros: held prices
+            // take this path on most bars.
+            if nullRun >= ((sp.optInTimePeriod3) as usize) {
+                nullRun = (sp.optInTimePeriod3) as usize;
                 a1Total = 0.0;
                 b1Total = 0.0;
-                if nullRun >= ((sp.optInTimePeriod2) as usize) {
-                    a2Total = 0.0;
-                    b2Total = 0.0;
-                    if nullRun >= ((sp.optInTimePeriod3) as usize) {
-                        nullRun = (sp.optInTimePeriod3) as usize;
-                        a3Total = 0.0;
-                        b3Total = 0.0;
-                    }
-                }
-            }
-            // On well-formed bars every term is non-negative, so a total below zero
-            // is the residue a term far larger than the rest of its window left
-            // when it retired; rebuild all six from the ring, oldest bar first.
-            // Only the a-totals are tested: a negative b-total fails its division
-            // gate below. A close below its low makes an a-term, and so a total,
-            // genuinely negative, and rebuilding it would run on every bar: negSlot
-            // remembers the newest negative term the last rebuild saw, and the
-            // rebuild is skipped while that slot still holds a negative term. The
-            // ring is the longest window, so such an output reads a close below its
-            // low and is outside the guarantee; any other negative total is
-            // rebuilt. Any slot is a valid start: the term it holds is read back.
-            // One compare of the smallest a-total, not three: a chain of three
-            // compiles to straight-line selects in Rust. The windows are nested,
-            // so a1 <= a2 <= a3 and either select stays predictable should a
-            // compiler emit it as a branch.
-            lowest = (if a1Total < a2Total { a1Total } else { a2Total });
-            lowest = (if a3Total < lowest { a3Total } else { lowest });
-            if lowest < 0.0 {
-                if (if (negSlot as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[negSlot] } else { pkVal0 }) >= 0.0 {
+                a2Total = 0.0;
+                b2Total = 0.0;
+                a3Total = 0.0;
+                b3Total = 0.0;
+                output = 0.0;
+            } else {
+                a1Total += closeMinusTrueLow;
+                a2Total += closeMinusTrueLow;
+                a3Total += closeMinusTrueLow;
+                b1Total += trueRange;
+                b2Total += trueRange;
+                b3Total += trueRange;
+                if nullRun >= ((sp.optInTimePeriod1) as usize) {
                     a1Total = 0.0;
                     b1Total = 0.0;
-                    a2Total = 0.0;
-                    b2Total = 0.0;
-                    a3Total = 0.0;
-                    b3Total = 0.0;
-                    // for( i = sp.optInTimePeriod3 - 1; i >= 0; i -= 1 )
-                    i = (sp.optInTimePeriod3 - 1) as usize;
-                    loop {
-                        j = term_Idx + ((sp.optInTimePeriod3) as usize) - i;
-                        if j >= ((sp.optInTimePeriod3) as usize) {
-                            j -= (sp.optInTimePeriod3) as usize;
-                        }
-                        if i < ((sp.optInTimePeriod1) as usize) {
-                            a1Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
-                            b1Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
-                        }
-                        if i < ((sp.optInTimePeriod2) as usize) {
-                            a2Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
-                            b2Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
-                        }
-                        a3Total += (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 });
-                        b3Total += (if (j as usize) != pkSlot1 { sp.cb_term_trueRange[j] } else { pkVal1 });
-                        if (if (j as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[j] } else { pkVal0 }) < 0.0 {
-                            negSlot = j;
-                        }
-                        if i == 0 { break; }
-                        i -= 1;
+                    if nullRun >= ((sp.optInTimePeriod2) as usize) {
+                        a2Total = 0.0;
+                        b2Total = 0.0;
                     }
                 }
+                // Calculate the oscillator value for today. Each window contributes only
+                // when it holds a true range; the totals are sums of non-negative terms
+                // and the reseed above removes their residue, so the test is exact.
+                output = 0.0;
+                if b1Total > 0.0 {
+                    output += 4.0 * (a1Total / b1Total);
+                } else {
+                    cold_arm();
+                }
+                if b2Total > 0.0 {
+                    output += 2.0 * (a2Total / b2Total);
+                } else {
+                    cold_arm();
+                }
+                if b3Total > 0.0 {
+                    output += a3Total / b3Total;
+                } else {
+                    cold_arm();
+                }
+                a1Total -= (if (trailingPos1 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos1] } else { pkVal0 });
+                b1Total -= (if (trailingPos1 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos1] } else { pkVal1 });
+                a2Total -= (if (trailingPos2 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos2] } else { pkVal0 });
+                b2Total -= (if (trailingPos2 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos2] } else { pkVal1 });
+                a3Total -= (if (trailingPos3 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos3] } else { pkVal0 });
+                b3Total -= (if (trailingPos3 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos3] } else { pkVal1 });
             }
-            // Calculate the oscillator value for today. Each window contributes only
-            // when it holds a true range; the totals are sums of non-negative terms
-            // and the reseed above removes their residue, so the test is exact.
-            output = 0.0;
-            if b1Total > 0.0 {
-                output += 4.0 * (a1Total / b1Total);
-            } else {
-                cold_arm();
-            }
-            if b2Total > 0.0 {
-                output += 2.0 * (a2Total / b2Total);
-            } else {
-                cold_arm();
-            }
-            if b3Total > 0.0 {
-                output += a3Total / b3Total;
-            } else {
-                cold_arm();
-            }
-            // Remove the trailing terms to prepare for next day. Each was evaluated
-            // once, when its bar entered the ring.
-            a1Total -= (if (trailingPos1 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos1] } else { pkVal0 });
-            b1Total -= (if (trailingPos1 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos1] } else { pkVal1 });
             trailingPos1 += 1;
             if trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
                 trailingPos1 = 0;
             }
-            a2Total -= (if (trailingPos2 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos2] } else { pkVal0 });
-            b2Total -= (if (trailingPos2 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos2] } else { pkVal1 });
             trailingPos2 += 1;
             if trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
                 trailingPos2 = 0;
             }
-            term_Idx = term_Idx + 1;
-            if term_Idx > sp.maxIdx_term {
-                term_Idx = 0;
+            term_Idx = trailingPos3;
+            trailingPos3 += 1;
+            if trailingPos3 >= ((sp.optInTimePeriod3) as usize) {
+                trailingPos3 = 0;
             }
-            a3Total -= (if (term_Idx as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[term_Idx] } else { pkVal0 });
-            b3Total -= (if (term_Idx as usize) != pkSlot1 { sp.cb_term_trueRange[term_Idx] } else { pkVal1 });
-            // Last operation is to write the output. Must
-            // be done after the trailing index have all been
-            // taken care of because the caller is allowed
-            // to have the input array to be also the output
-            // array.
+            // Store only after this bar's last input read: the output array may be
+            // one of the input arrays.
             (*outReal) = 100.0 * (output / 7.0);
         }
         Ok(outReal)

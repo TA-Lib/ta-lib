@@ -15,6 +15,7 @@
  *  102426 MF,CC  #554 zero-run test on the true range itself.
  *  110926 KL     #588 rebuild a sum that comes out negative.
  *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
+ *  111126 MF,CC  #588 test after the outputs; rebuild from the trailing bars.
  */
 
 int vortex_lookback(int optInTimePeriod)
@@ -40,7 +41,11 @@ TA_RetCode vortex(int startIdx, int endIdx,
    int outIdx, today, trailingIdx, lookbackTotal, i;
    int nullRun, live, seeded;
    double prevHigh, prevLow, prevClose;
-   double sTR, sVMP, sVMM, curTR, curVMP, curVMM;
+   /* Keep sVMM declared before sVMP: the stream state takes this order, and
+    * the reverse lets gcc pair the previous bar's low and high in one load
+    * that straddles two stores, a store-forwarding stall on every update.
+    */
+   double sTR, sVMM, sVMP, curTR, curVMP, curVMM;
    double trueRange, tempDouble, tempLT, tempHT, tempCY;
 
    /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
@@ -141,44 +146,6 @@ TA_RetCode vortex(int startIdx, int endIdx,
          nullRun = optInTimePeriod;
          sTR = 0.0;
       }
-      /* Every term is non-negative, so a sum below zero is the residue a
-       * term far larger than the rest of the window left when it retired;
-       * rebuild all three from the window. Only the vortex sums are tested:
-       * a negative sTR fails the division gate below and writes 0.0. Keep
-       * two compares rather than a min: the two sums have no order, and gcc
-       * may emit that select as a branch that mispredicts whenever they swap
-       * order.
-       */
-      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
-      {
-         sTR  = 0.0;
-         sVMP = 0.0;
-         sVMM = 0.0;
-         seeded = 0;
-         for( i = today - optInTimePeriod; i <= today; i++ )
-         {
-            if( seeded != 0 )
-            {
-               tempLT = inLow[i];
-               tempHT = inHigh[i];
-               trueRange = tempHT - tempLT;
-               tempDouble = fabs( prevClose - tempHT );
-               if( tempDouble > trueRange )
-                  trueRange = tempDouble;
-               tempDouble = fabs( prevClose - tempLT );
-               if( tempDouble > trueRange )
-                  trueRange = tempDouble;
-               sTR  += trueRange;
-               sVMP += fabs( tempHT - prevLow );
-               sVMM += fabs( tempLT - prevHigh );
-            }
-            prevHigh  = inHigh[i];
-            prevLow   = inLow[i];
-            prevClose = inClose[i];
-            seeded = 1;
-         }
-      }
-
       /* Record the current window sums, then retire the trailing bar's
        * terms so the sums are ready for the next iteration.
        */
@@ -230,6 +197,49 @@ TA_RetCode vortex(int startIdx, int endIdx,
       {
          outPlusVI[outIdx]  = 0.0;
          outMinusVI[outIdx] = 0.0;
+      }
+
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired.
+       * Tested on the sums the next bar adds to, not on the ones it outputs:
+       * a non-negative sum plus a non-negative term stays non-negative, and
+       * nothing a peek returns depends on it. The rebuild sums the retained
+       * terms oldest first, the state a call starting at the next bar primes.
+       * The first bar it reads only seeds the second, so an aliased output
+       * slot holding it changes nothing. Only the vortex sums are tested: a
+       * negative sTR fails the division gate and writes 0.0. Keep
+       * two compares rather than a min: the two sums have no order, and gcc
+       * may emit that select as a branch that mispredicts whenever they swap
+       * order.
+       */
+      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+      {
+         sTR  = 0.0;
+         sVMP = 0.0;
+         sVMM = 0.0;
+         seeded = 0;
+         for( i = today - optInTimePeriod; i <= today; i++ )
+         {
+            if( seeded > 1 )
+            {
+               tempLT = inLow[i];
+               tempHT = inHigh[i];
+               trueRange = tempHT - tempLT;
+               tempDouble = fabs( prevClose - tempHT );
+               if( tempDouble > trueRange )
+                  trueRange = tempDouble;
+               tempDouble = fabs( prevClose - tempLT );
+               if( tempDouble > trueRange )
+                  trueRange = tempDouble;
+               sTR  += trueRange;
+               sVMP += fabs( tempHT - prevLow );
+               sVMM += fabs( tempLT - prevHigh );
+            }
+            prevHigh  = inHigh[i];
+            prevLow   = inLow[i];
+            prevClose = inClose[i];
+            seeded++;
+         }
       }
       outIdx++;
       today++;

@@ -24,6 +24,8 @@
  *  110926 KL    #588 rebuild a total that comes out negative.
  *  111026 MF,CC #588 only a negative a-total can turn the output negative;
  *               skip the rebuild while a close below its low keeps it so.
+ *  111126 MF,CC #588 test after the retiring subtraction, past the output;
+ *               skip all work on a fully flat window.
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -53,15 +55,19 @@ TA_RetCode ultosc(int startIdx, int endIdx,
     */
    typedef struct { double closeMinusTrueLow; double trueRange; } UltOscTerm;
 
-   double a1Total, a2Total, a3Total;
-   double b1Total, b2Total, b3Total;
+   /* Keep each a-total declared beside its b-total, not beside the next
+    * a-total: the stream state takes this order, and a1 beside a2 lets gcc
+    * load the pair in one read that straddles the two stores the previous
+    * update made, a store-forwarding stall on every update.
+    */
+   double a1Total, b1Total, a2Total, b2Total, a3Total, b3Total;
    double trueLow, trueRange, closeMinusTrueLow;
    double tempDouble, output, tempHT, tempLT, tempCY, lowest;
    int lookbackTotal;
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
    int negSlot;
-   int trailingPos1, trailingPos2;
+   int trailingPos1, trailingPos2, trailingPos3;
    int nullRun, live;
 
    int usedFlag[3];
@@ -190,6 +196,8 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 -= optInTimePeriod3;
    trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
    if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 -= optInTimePeriod3;
+   trailingPos3 = term_Idx + 1;
+   if( trailingPos3 >= optInTimePeriod3 ) trailingPos3 = 0;
    negSlot = 0;
 
    while( today <= endIdx )
@@ -211,49 +219,91 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
       term_trueRange[term_Idx] = trueRange;
 
-      a1Total += closeMinusTrueLow;
-      a2Total += closeMinusTrueLow;
-      a3Total += closeMinusTrueLow;
-      b1Total += trueRange;
-      b2Total += trueRange;
-      b3Total += trueRange;
-
+      live = trueRange + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       /* Once a whole window of no-contribution bars has gone by, every slot it
        * spans is 0.0, so its totals are known to be exactly zero and the
        * residue can be dropped. The periods are sorted shortest-first, so a
        * run long enough for a longer window is long enough for every shorter
-       * one.
+       * one. A run as long as the longest window skips the adds, the output
+       * and the retire, which would only add and remove zeros: held prices
+       * take this path on most bars.
        */
-      live = trueRange + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
-      nullRun = (nullRun + 1) & (live - 1);
-      if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod3) )
       {
+         nullRun = optInTimePeriod3;
          a1Total = 0.0;
          b1Total = 0.0;
-         if( nullRun >= optInTimePeriod2 )
+         a2Total = 0.0;
+         b2Total = 0.0;
+         a3Total = 0.0;
+         b3Total = 0.0;
+         output = 0.0;
+      }
+      else
+      {
+         a1Total += closeMinusTrueLow;
+         a2Total += closeMinusTrueLow;
+         a3Total += closeMinusTrueLow;
+         b1Total += trueRange;
+         b2Total += trueRange;
+         b3Total += trueRange;
+
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
          {
-            a2Total = 0.0;
-            b2Total = 0.0;
-            if( nullRun >= optInTimePeriod3 )
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 )
             {
-               nullRun = optInTimePeriod3;
-               a3Total = 0.0;
-               b3Total = 0.0;
+               a2Total = 0.0;
+               b2Total = 0.0;
             }
          }
+
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
+         output = 0.0;
+
+         if( b1Total > 0.0 ) output += 4.0*(a1Total/b1Total);
+         if( b2Total > 0.0 ) output += 2.0*(a2Total/b2Total);
+         if( b3Total > 0.0 ) output += a3Total/b3Total;
+
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         a3Total -= term_closeMinusTrueLow[trailingPos3];
+         b3Total -= term_trueRange[trailingPos3];
       }
+
+      trailingPos1++;
+      if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 = 0;
+      trailingPos2++;
+      if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 = 0;
+      term_Idx = trailingPos3;
+      trailingPos3++;
+      if( trailingPos3 >= optInTimePeriod3 ) trailingPos3 = 0;
+
+      /* Store only after this bar's last input read: the output array may be
+       * one of the input arrays.
+       */
+      outReal[outIdx] = 100.0 * (output / 7.0);
 
       /* On well-formed bars every term is non-negative, so a total below zero
        * is the residue a term far larger than the rest of its window left
-       * when it retired; rebuild all six from the ring, oldest bar first.
+       * when it retired. Tested here, on the totals the next bar adds to, and
+       * not before the output: a non-negative total plus a non-negative term
+       * stays non-negative, and after the output nothing a peek returns
+       * depends on it. The rebuild sums each window's retained terms oldest
+       * first, the state a call starting at the next bar primes.
        * Only the a-totals are tested: a negative b-total fails its division
-       * gate below. A close below its low makes an a-term, and so a total,
+       * gate. A close below its low makes an a-term, and so a total,
        * genuinely negative, and rebuilding it would run on every bar: negSlot
        * remembers the newest negative term the last rebuild saw, and the
-       * rebuild is skipped while that slot still holds a negative term. The
-       * ring is the longest window, so such an output reads a close below its
-       * low and is outside the guarantee; any other negative total is
-       * rebuilt. Any slot is a valid start: the term it holds is read back.
+       * rebuild is skipped while that retained slot still holds a negative
+       * term, which puts a close below its low in the next output's window.
        * One compare of the smallest a-total, not three: a chain of three
        * compiles to straight-line selects in Rust. The windows are nested,
        * so a1 <= a2 <= a3 and either select stays predictable should a
@@ -263,7 +313,7 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       lowest = a3Total < lowest ? a3Total : lowest;
       if( TA_UNLIKELY(lowest < 0.0) )
       {
-         if( term_closeMinusTrueLow[negSlot] >= 0.0 )
+         if( negSlot == term_Idx || term_closeMinusTrueLow[negSlot] >= 0.0 )
          {
             a1Total = 0.0;
             b1Total = 0.0;
@@ -271,16 +321,16 @@ TA_RetCode ultosc(int startIdx, int endIdx,
             b2Total = 0.0;
             a3Total = 0.0;
             b3Total = 0.0;
-            for( i = optInTimePeriod3 - 1; i >= 0; i-- )
+            for( i = 1; i < optInTimePeriod3; i++ )
             {
-               j = term_Idx + optInTimePeriod3 - i;
+               j = term_Idx + i;
                if( j >= optInTimePeriod3 ) j -= optInTimePeriod3;
-               if( i < optInTimePeriod1 )
+               if( i > optInTimePeriod3 - optInTimePeriod1 )
                {
                   a1Total += term_closeMinusTrueLow[j];
                   b1Total += term_trueRange[j];
                }
-               if( i < optInTimePeriod2 )
+               if( i > optInTimePeriod3 - optInTimePeriod2 )
                {
                   a2Total += term_closeMinusTrueLow[j];
                   b2Total += term_trueRange[j];
@@ -291,41 +341,6 @@ TA_RetCode ultosc(int startIdx, int endIdx,
             }
          }
       }
-
-      /* Calculate the oscillator value for today. Each window contributes only
-       * when it holds a true range; the totals are sums of non-negative terms
-       * and the reseed above removes their residue, so the test is exact.
-       */
-      output = 0.0;
-
-      if( b1Total > 0.0 ) output += 4.0*(a1Total/b1Total);
-      if( b2Total > 0.0 ) output += 2.0*(a2Total/b2Total);
-      if( b3Total > 0.0 ) output += a3Total/b3Total;
-
-      /* Remove the trailing terms to prepare for next day. Each was evaluated
-       * once, when its bar entered the ring.
-       */
-      a1Total -= term_closeMinusTrueLow[trailingPos1];
-      b1Total -= term_trueRange[trailingPos1];
-      trailingPos1++;
-      if( trailingPos1 >= optInTimePeriod3 ) trailingPos1 = 0;
-
-      a2Total -= term_closeMinusTrueLow[trailingPos2];
-      b2Total -= term_trueRange[trailingPos2];
-      trailingPos2++;
-      if( trailingPos2 >= optInTimePeriod3 ) trailingPos2 = 0;
-
-      CIRCBUF_NEXT(term);
-      a3Total -= term_closeMinusTrueLow[term_Idx];
-      b3Total -= term_trueRange[term_Idx];
-
-      /* Last operation is to write the output. Must
-       * be done after the trailing index have all been
-       * taken care of because the caller is allowed
-       * to have the input array to be also the output
-       * array.
-       */
-      outReal[outIdx] = 100.0 * (output / 7.0);
 
       /* Increment indexes */
       outIdx++;

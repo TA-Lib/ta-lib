@@ -59,6 +59,7 @@
  *  102426 MF,CC  #554 zero-run test on the true range itself.
  *  110926 KL     #588 rebuild a sum that comes out negative.
  *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
+ *  111126 MF,CC  #588 test after the outputs; rebuild from the trailing bars.
  */
 
 TA_LIB_API int TA_VORTEX_Lookback( int optInTimePeriod )
@@ -107,8 +108,8 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
    double prevLow;
    double prevClose;
    double sTR;
-   double sVMP;
    double sVMM;
+   double sVMP;
    double curTR;
    double curVMP;
    double curVMM;
@@ -142,6 +143,10 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
    if( outPlusVI == outMinusVI )
       return TA_BAD_PARAM;
 
+   /* Keep sVMM declared before sVMP: the stream state takes this order, and
+    * the reverse lets gcc pair the previous bar's low and high in one load
+    * that straddles two stores, a store-forwarding stall on every update.
+    */
    /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
     * each a rolling sum of "vortex movement" normalized by the rolling sum
     * of true range over the same optInTimePeriod bars.
@@ -245,47 +250,6 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
          nullRun = optInTimePeriod;
          sTR = 0.0;
       }
-      /* Every term is non-negative, so a sum below zero is the residue a
-       * term far larger than the rest of the window left when it retired;
-       * rebuild all three from the window. Only the vortex sums are tested:
-       * a negative sTR fails the division gate below and writes 0.0. Keep
-       * two compares rather than a min: the two sums have no order, and gcc
-       * may emit that select as a branch that mispredicts whenever they swap
-       * order.
-       */
-      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
-      {
-         sTR = 0.0;
-         sVMP = 0.0;
-         sVMM = 0.0;
-         seeded = 0;
-         for( i = today - optInTimePeriod; i <= today; i += 1 )
-         {
-            if( seeded != 0 )
-            {
-               tempLT = inLow[i];
-               tempHT = inHigh[i];
-               trueRange = tempHT - tempLT;
-               tempDouble = fabs(prevClose - tempHT);
-               if( tempDouble > trueRange )
-               {
-                  trueRange = tempDouble;
-               }
-               tempDouble = fabs(prevClose - tempLT);
-               if( tempDouble > trueRange )
-               {
-                  trueRange = tempDouble;
-               }
-               sTR += trueRange;
-               sVMP += fabs(tempHT - prevLow);
-               sVMM += fabs(tempLT - prevHigh);
-            }
-            prevHigh = inHigh[i];
-            prevLow = inLow[i];
-            prevClose = inClose[i];
-            seeded = 1;
-         }
-      }
       /* Record the current window sums, then retire the trailing bar's
        * terms so the sums are ready for the next iteration.
        */
@@ -339,6 +303,52 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
          outPlusVI[outIdx] = 0.0;
          outMinusVI[outIdx] = 0.0;
       }
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired.
+       * Tested on the sums the next bar adds to, not on the ones it outputs:
+       * a non-negative sum plus a non-negative term stays non-negative, and
+       * nothing a peek returns depends on it. The rebuild sums the retained
+       * terms oldest first, the state a call starting at the next bar primes.
+       * The first bar it reads only seeds the second, so an aliased output
+       * slot holding it changes nothing. Only the vortex sums are tested: a
+       * negative sTR fails the division gate and writes 0.0. Keep
+       * two compares rather than a min: the two sums have no order, and gcc
+       * may emit that select as a branch that mispredicts whenever they swap
+       * order.
+       */
+      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+      {
+         sTR = 0.0;
+         sVMP = 0.0;
+         sVMM = 0.0;
+         seeded = 0;
+         for( i = today - optInTimePeriod; i <= today; i += 1 )
+         {
+            if( seeded > 1 )
+            {
+               tempLT = inLow[i];
+               tempHT = inHigh[i];
+               trueRange = tempHT - tempLT;
+               tempDouble = fabs(prevClose - tempHT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               tempDouble = fabs(prevClose - tempLT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               sTR += trueRange;
+               sVMP += fabs(tempHT - prevLow);
+               sVMM += fabs(tempLT - prevHigh);
+            }
+            prevHigh = inHigh[i];
+            prevLow = inLow[i];
+            prevClose = inClose[i];
+            seeded += 1;
+         }
+      }
       outIdx += 1;
       today += 1;
    }
@@ -370,8 +380,8 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
    double prevLow;
    double prevClose;
    double sTR;
-   double sVMP;
    double sVMM;
+   double sVMP;
    double curTR;
    double curVMP;
    double curVMM;
@@ -471,39 +481,6 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
          nullRun = optInTimePeriod;
          sTR = 0.0;
       }
-      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
-      {
-         sTR = 0.0;
-         sVMP = 0.0;
-         sVMM = 0.0;
-         seeded = 0;
-         for( i = today - optInTimePeriod; i <= today; i += 1 )
-         {
-            if( seeded != 0 )
-            {
-               tempLT = (double)inLow[i];
-               tempHT = (double)inHigh[i];
-               trueRange = tempHT - tempLT;
-               tempDouble = fabs(prevClose - tempHT);
-               if( tempDouble > trueRange )
-               {
-                  trueRange = tempDouble;
-               }
-               tempDouble = fabs(prevClose - tempLT);
-               if( tempDouble > trueRange )
-               {
-                  trueRange = tempDouble;
-               }
-               sTR += trueRange;
-               sVMP += fabs(tempHT - prevLow);
-               sVMM += fabs(tempLT - prevHigh);
-            }
-            prevHigh = (double)inHigh[i];
-            prevLow = (double)inLow[i];
-            prevClose = (double)inClose[i];
-            seeded = 1;
-         }
-      }
       curTR = sTR;
       curVMP = sVMP;
       curVMM = sVMM;
@@ -534,6 +511,39 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
          outPlusVI[outIdx] = 0.0;
          outMinusVI[outIdx] = 0.0;
       }
+      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+      {
+         sTR = 0.0;
+         sVMP = 0.0;
+         sVMM = 0.0;
+         seeded = 0;
+         for( i = today - optInTimePeriod; i <= today; i += 1 )
+         {
+            if( seeded > 1 )
+            {
+               tempLT = (double)inLow[i];
+               tempHT = (double)inHigh[i];
+               trueRange = tempHT - tempLT;
+               tempDouble = fabs(prevClose - tempHT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               tempDouble = fabs(prevClose - tempLT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               sTR += trueRange;
+               sVMP += fabs(tempHT - prevLow);
+               sVMM += fabs(tempLT - prevHigh);
+            }
+            prevHigh = (double)inHigh[i];
+            prevLow = (double)inLow[i];
+            prevClose = (double)inClose[i];
+            seeded += 1;
+         }
+      }
       outIdx += 1;
       today += 1;
    }
@@ -557,8 +567,8 @@ struct TA_VORTEX_Stream {
    double prevLow;
    double prevClose;
    double sTR;
-   double sVMP;
    double sVMM;
+   double sVMP;
    double lag1_inHigh;
    double lag1_inLow;
    double lag1_inClose;
@@ -595,7 +605,11 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
    double tempHT;
    double tempCY;
    int ringPosL_trailingIdx;
+   double sVMM;
+   double sVMP;
 
+   sVMM = sp->sVMM;
+   sVMP = sp->sVMP;
    sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] = inHigh;
    sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] = inLow;
    sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] = inClose;
@@ -615,8 +629,8 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       trueRange = tempDouble;
    }
    sp->sTR += trueRange;
-   sp->sVMP += fabs(inHigh - sp->lag1_inLow);
-   sp->sVMM += fabs(inLow - sp->lag1_inHigh);
+   sVMP += fabs(inHigh - sp->lag1_inLow);
+   sVMM += fabs(inLow - sp->lag1_inHigh);
    live = (trueRange <= 0.0) ? 0 : 1;
    sp->nullRun = (sp->nullRun + 1) & (live - 1);
    /* Once the whole window is flat, every TRUE-RANGE term in it is
@@ -636,53 +650,12 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       sp->nullRun = sp->optInTimePeriod;
       sp->sTR = 0.0;
    }
-   /* Every term is non-negative, so a sum below zero is the residue a
-    * term far larger than the rest of the window left when it retired;
-    * rebuild all three from the window. Only the vortex sums are tested:
-    * a negative sTR fails the division gate below and writes 0.0. Keep
-    * two compares rather than a min: the two sums have no order, and gcc
-    * may emit that select as a branch that mispredicts whenever they swap
-    * order.
-    */
-   if( TA_UNLIKELY(sp->sVMP < 0.0 || sp->sVMM < 0.0) )
-   {
-      sp->sTR = 0.0;
-      sp->sVMP = 0.0;
-      sp->sVMM = 0.0;
-      seeded = 0;
-      for( i = sp->optInTimePeriod; i >= 0; i -= 1 )
-      {
-         if( seeded != 0 )
-         {
-            tempLT = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
-            tempHT = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
-            trueRange = tempHT - tempLT;
-            tempDouble = fabs(sp->prevClose - tempHT);
-            if( tempDouble > trueRange )
-            {
-               trueRange = tempDouble;
-            }
-            tempDouble = fabs(sp->prevClose - tempLT);
-            if( tempDouble > trueRange )
-            {
-               trueRange = tempDouble;
-            }
-            sp->sTR += trueRange;
-            sp->sVMP += fabs(tempHT - sp->prevLow);
-            sp->sVMM += fabs(tempLT - sp->prevHigh);
-         }
-         sp->prevHigh = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
-         sp->prevLow = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
-         sp->prevClose = sp->ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
-         seeded = 1;
-      }
-   }
    /* Record the current window sums, then retire the trailing bar's
     * terms so the sums are ready for the next iteration.
     */
    curTR = sp->sTR;
-   curVMP = sp->sVMP;
-   curVMM = sp->sVMM;
+   curVMP = sVMP;
+   curVMM = sVMM;
    tempLT = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx];
    tempHT = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx];
    tempCY = sp->ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx - 1) % sp->ringCap_trailingIdx];
@@ -698,8 +671,8 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       trueRange = tempDouble;
    }
    sp->sTR -= trueRange;
-   sp->sVMP -= fabs(sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx] - sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx - 1) % sp->ringCap_trailingIdx]);
-   sp->sVMM -= fabs(sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx] - sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx - 1) % sp->ringCap_trailingIdx]);
+   sVMP -= fabs(sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx] - sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx - 1) % sp->ringCap_trailingIdx]);
+   sVMM -= fabs(sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx) % sp->ringCap_trailingIdx] - sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - sp->ringLag_trailingIdx - 1) % sp->ringCap_trailingIdx]);
    /* Last operation is to write the outputs. Must be done after the
     * trailing bar has been fully consumed: the caller is allowed to pass
     * an output buffer aliasing any input, and the trailing reads above
@@ -729,6 +702,52 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       *outPlusVI= 0.0;
       *outMinusVI= 0.0;
    }
+   /* Every term is non-negative, so a sum below zero is the residue a
+    * term far larger than the rest of the window left when it retired.
+    * Tested on the sums the next bar adds to, not on the ones it outputs:
+    * a non-negative sum plus a non-negative term stays non-negative, and
+    * nothing a peek returns depends on it. The rebuild sums the retained
+    * terms oldest first, the state a call starting at the next bar primes.
+    * The first bar it reads only seeds the second, so an aliased output
+    * slot holding it changes nothing. Only the vortex sums are tested: a
+    * negative sTR fails the division gate and writes 0.0. Keep
+    * two compares rather than a min: the two sums have no order, and gcc
+    * may emit that select as a branch that mispredicts whenever they swap
+    * order.
+    */
+   if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+   {
+      sp->sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for( i = sp->optInTimePeriod; i >= 0; i -= 1 )
+      {
+         if( seeded > 1 )
+         {
+            tempLT = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+            tempHT = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+            trueRange = tempHT - tempLT;
+            tempDouble = fabs(sp->prevClose - tempHT);
+            if( tempDouble > trueRange )
+            {
+               trueRange = tempDouble;
+            }
+            tempDouble = fabs(sp->prevClose - tempLT);
+            if( tempDouble > trueRange )
+            {
+               trueRange = tempDouble;
+            }
+            sp->sTR += trueRange;
+            sVMP += fabs(tempHT - sp->prevLow);
+            sVMM += fabs(tempLT - sp->prevHigh);
+         }
+         sp->prevHigh = sp->ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+         sp->prevLow = sp->ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+         sp->prevClose = sp->ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i];
+         seeded += 1;
+      }
+   }
    sp->cur_outPlusVI = *outPlusVI;
    sp->cur_outMinusVI = *outMinusVI;
    sp->lag1_inHigh = inHigh;
@@ -741,6 +760,8 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
       ringPosL_trailingIdx = 0;
    }
    sp->ringPos_trailingIdx = ringPosL_trailingIdx;
+   sp->sVMM = sVMM;
+   sp->sVMP = sVMP;
 }
 
 static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
@@ -762,9 +783,13 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
       double prevHigh = 0.0;
       double prevLow = 0.0;
       double prevClose = 0.0;
+      /* Keep sVMM declared before sVMP: the stream state takes this order, and
+       * the reverse lets gcc pair the previous bar's low and high in one load
+       * that straddles two stores, a store-forwarding stall on every update.
+       */
       double sTR = 0.0;
-      double sVMP = 0.0;
       double sVMM = 0.0;
+      double sVMP = 0.0;
       double curTR;
       double curVMP;
       double curVMM;
@@ -876,47 +901,6 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
             nullRun = optInTimePeriod;
             sTR = 0.0;
          }
-         /* Every term is non-negative, so a sum below zero is the residue a
-          * term far larger than the rest of the window left when it retired;
-          * rebuild all three from the window. Only the vortex sums are tested:
-          * a negative sTR fails the division gate below and writes 0.0. Keep
-          * two compares rather than a min: the two sums have no order, and gcc
-          * may emit that select as a branch that mispredicts whenever they swap
-          * order.
-          */
-         if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
-         {
-            sTR = 0.0;
-            sVMP = 0.0;
-            sVMM = 0.0;
-            seeded = 0;
-            for( i = today - optInTimePeriod; i <= today; i += 1 )
-            {
-               if( seeded != 0 )
-               {
-                  tempLT = inLow[i];
-                  tempHT = inHigh[i];
-                  trueRange = tempHT - tempLT;
-                  tempDouble = fabs(prevClose - tempHT);
-                  if( tempDouble > trueRange )
-                  {
-                     trueRange = tempDouble;
-                  }
-                  tempDouble = fabs(prevClose - tempLT);
-                  if( tempDouble > trueRange )
-                  {
-                     trueRange = tempDouble;
-                  }
-                  sTR += trueRange;
-                  sVMP += fabs(tempHT - prevLow);
-                  sVMM += fabs(tempLT - prevHigh);
-               }
-               prevHigh = inHigh[i];
-               prevLow = inLow[i];
-               prevClose = inClose[i];
-               seeded = 1;
-            }
-         }
          /* Record the current window sums, then retire the trailing bar's
           * terms so the sums are ready for the next iteration.
           */
@@ -970,6 +954,52 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
             outPlusVI[outIdx * outStride] = 0.0;
             outMinusVI[outIdx * outStride] = 0.0;
          }
+         /* Every term is non-negative, so a sum below zero is the residue a
+          * term far larger than the rest of the window left when it retired.
+          * Tested on the sums the next bar adds to, not on the ones it outputs:
+          * a non-negative sum plus a non-negative term stays non-negative, and
+          * nothing a peek returns depends on it. The rebuild sums the retained
+          * terms oldest first, the state a call starting at the next bar primes.
+          * The first bar it reads only seeds the second, so an aliased output
+          * slot holding it changes nothing. Only the vortex sums are tested: a
+          * negative sTR fails the division gate and writes 0.0. Keep
+          * two compares rather than a min: the two sums have no order, and gcc
+          * may emit that select as a branch that mispredicts whenever they swap
+          * order.
+          */
+         if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+         {
+            sTR = 0.0;
+            sVMP = 0.0;
+            sVMM = 0.0;
+            seeded = 0;
+            for( i = today - optInTimePeriod; i <= today; i += 1 )
+            {
+               if( seeded > 1 )
+               {
+                  tempLT = inLow[i];
+                  tempHT = inHigh[i];
+                  trueRange = tempHT - tempLT;
+                  tempDouble = fabs(prevClose - tempHT);
+                  if( tempDouble > trueRange )
+                  {
+                     trueRange = tempDouble;
+                  }
+                  tempDouble = fabs(prevClose - tempLT);
+                  if( tempDouble > trueRange )
+                  {
+                     trueRange = tempDouble;
+                  }
+                  sTR += trueRange;
+                  sVMP += fabs(tempHT - prevLow);
+                  sVMM += fabs(tempLT - prevHigh);
+               }
+               prevHigh = inHigh[i];
+               prevLow = inLow[i];
+               prevClose = inClose[i];
+               seeded += 1;
+            }
+         }
          outIdx += 1;
          today += 1;
       }
@@ -986,8 +1016,8 @@ static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **s
       sp->prevLow = prevLow;
       sp->prevClose = prevClose;
       sp->sTR = sTR;
-      sp->sVMP = sVMP;
       sp->sVMM = sVMM;
+      sp->sVMP = sVMP;
       sp->ringLag_trailingIdx = (int)(today - trailingIdx);
       sp->ringCap_trailingIdx = sp->ringLag_trailingIdx + 2;
       if( sp->ringLag_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_VORTEX_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(424); }
@@ -1120,9 +1150,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Update( TA_VORTEX_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inHigh, double inLow, double inClose, double *outPlusVI, double *outMinusVI )
 {
    const struct TA_VORTEX_Stream *sp = stream;
-   int i;
    int live;
-   int seeded;
    double curTR;
    double curVMP;
    double curVMM;
@@ -1132,9 +1160,6 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    double tempHT;
    double tempCY;
    int nullRun;
-   double prevClose;
-   double prevHigh;
-   double prevLow;
    double sTR;
    double sVMM;
    double sVMP;
@@ -1151,9 +1176,6 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    if( !stream || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    nullRun = sp->nullRun;
-   prevClose = sp->prevClose;
-   prevHigh = sp->prevHigh;
-   prevLow = sp->prevLow;
    sTR = sp->sTR;
    sVMM = sp->sVMM;
    sVMP = sp->sVMP;
@@ -1202,47 +1224,6 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    {
       nullRun = sp->optInTimePeriod;
       sTR = 0.0;
-   }
-   /* Every term is non-negative, so a sum below zero is the residue a
-    * term far larger than the rest of the window left when it retired;
-    * rebuild all three from the window. Only the vortex sums are tested:
-    * a negative sTR fails the division gate below and writes 0.0. Keep
-    * two compares rather than a min: the two sums have no order, and gcc
-    * may emit that select as a branch that mispredicts whenever they swap
-    * order.
-    */
-   if( sVMP < 0.0 || sVMM < 0.0 )
-   {
-      sTR = 0.0;
-      sVMP = 0.0;
-      sVMM = 0.0;
-      seeded = 0;
-      for( i = sp->optInTimePeriod; i >= 0; i -= 1 )
-      {
-         if( seeded != 0 )
-         {
-            tempLT = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot1) ? ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal1;
-            tempHT = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot0) ? ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal0;
-            trueRange = tempHT - tempLT;
-            tempDouble = fabs(prevClose - tempHT);
-            if( tempDouble > trueRange )
-            {
-               trueRange = tempDouble;
-            }
-            tempDouble = fabs(prevClose - tempLT);
-            if( tempDouble > trueRange )
-            {
-               trueRange = tempDouble;
-            }
-            sTR += trueRange;
-            sVMP += fabs(tempHT - prevLow);
-            sVMM += fabs(tempLT - prevHigh);
-         }
-         prevHigh = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot0) ? ring_trailingIdx_inHigh[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal0;
-         prevLow = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot1) ? ring_trailingIdx_inLow[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal1;
-         prevClose = (((sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i) != pkSlot2) ? ring_trailingIdx_inClose[(sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i >= sp->ringCap_trailingIdx) ? sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i - sp->ringCap_trailingIdx : sp->ringPos_trailingIdx + sp->ringCap_trailingIdx - i] : pkVal2;
-         seeded = 1;
-      }
    }
    /* Record the current window sums, then retire the trailing bar's
     * terms so the sums are ready for the next iteration.

@@ -108,12 +108,12 @@ static int domain_edge( const TaRefCase *c )
    return 0;
 }
 
-/* Replays the running sums the current library keeps over the case's call,
- * in its order of operations, and reports the first window where it rebuilds
- * them and 0.8.1 does not: a vortex sum or an a-total comes out negative, and
- * for ULTOSC the ring slot it remembers (slot 0 until a rebuild) does not
- * hold a negative term. The two agree on every window before it. The retiring
- * bar and the one it reads decide which waiver the window takes. */
+/* Replays the running sums the current library keeps over the case's call
+ * and reports the first bar after which it rebuilds them and 0.8.1 does not.
+ * Keep the replay bit-exact with the library's order of operations: a drift
+ * either fails ref or waives a real difference. A rebuild after the call's
+ * last bar changes no output. The retiring bar and the one it reads decide
+ * which waiver the case takes. */
 static int bar_at_edge( const TaRefCase *c, int j )
 {
    return fabs( c->high[j] ) > DOMAIN_EDGE || fabs( c->low[j] ) > DOMAIN_EDGE
@@ -165,11 +165,11 @@ static int vortex_rebuilt( const TaRefCase *c )
       live = tr <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( nullRun >= n ) { nullRun = n; sTR = 0.0; }
-      if( sP < 0.0 || sM < 0.0 ) return rebuilt_window( c, t - n );
       i = t - n + 1;
       sTR -= true_range( c, i );
       sP  -= fabs( c->high[i] - c->low[i-1] );
       sM  -= fabs( c->low[i] - c->high[i-1] );
+      if( (sP < 0.0 || sM < 0.0) && t < c->endIdx ) return rebuilt_window( c, i );
    }
    return -1;
 }
@@ -212,17 +212,18 @@ static int ultosc_rebuilt( const TaRefCase *c )
       nullRun = (nullRun + 1) & (live - 1);
       for( k = 0; k < 3 && nullRun >= p[k]; k++ ) { A[k] = 0.0; B[k] = 0.0; }
       if( nullRun > p[2] ) nullRun = p[2];
-      for( k = 0; k < 3 && A[k] >= 0.0; k++ ) ;
-      if( k < 3 )
-      {
-         ultosc_terms( c, s - p[2] + 1 + (t - s + p[2] - 1) / p[2] * p[2], &a, &b );
-         if( a >= 0.0 ) return rebuilt_window( c, t - p[k] );
-      }
       for( k = 0; k < 3; k++ )
       {
          ultosc_terms( c, t - p[k] + 1, &a, &b );
          A[k] -= a;
          B[k] -= b;
+      }
+      for( k = 0; k < 3 && A[k] >= 0.0; k++ ) ;
+      if( k < 3 && t < c->endIdx )
+      {
+         if( (t - s + p[2]) % p[2] == 0 ) return rebuilt_window( c, t - p[k] + 1 );
+         ultosc_terms( c, s - p[2] + 1 + (t - s + p[2] - 1) / p[2] * p[2], &a, &b );
+         if( a >= 0.0 ) return rebuilt_window( c, t - p[k] + 1 );
       }
    }
    return -1;

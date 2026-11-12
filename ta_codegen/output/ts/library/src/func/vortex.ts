@@ -49,6 +49,7 @@
  *  102426 MF,CC  #554 zero-run test on the true range itself.
  *  110926 KL     #588 rebuild a sum that comes out negative.
  *  111026 MF,CC  #588 only a negative vortex sum can turn an output negative.
+ *  111126 MF,CC  #588 test after the outputs; rebuild from the trailing bars.
  */
 
 import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -112,8 +113,8 @@ export function vortexImpl(
   let prevLow = 0;
   let prevClose = 0;
   let sTR = 0;
-  let sVMP = 0;
   let sVMM = 0;
+  let sVMP = 0;
   let curTR = 0;
   let curVMP = 0;
   let curVMM = 0;
@@ -136,6 +137,10 @@ export function vortexImpl(
   if ((outPlusVI.buffer === outMinusVI.buffer && outPlusVI.byteOffset === outMinusVI.byteOffset)) {
     return RetCode.BAD_PARAM;
   }
+  /* Keep sVMM declared before sVMP: the stream state takes this order, and
+   * the reverse lets gcc pair the previous bar's low and high in one load
+   * that straddles two stores, a store-forwarding stall on every update.
+   */
   /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
    * each a rolling sum of "vortex movement" normalized by the rolling sum
    * of true range over the same optInTimePeriod bars.
@@ -230,42 +235,6 @@ export function vortexImpl(
       nullRun = optInTimePeriod;
       sTR = 0.0;
     }
-    /* Every term is non-negative, so a sum below zero is the residue a
-     * term far larger than the rest of the window left when it retired;
-     * rebuild all three from the window. Only the vortex sums are tested:
-     * a negative sTR fails the division gate below and writes 0.0. Keep
-     * two compares rather than a min: the two sums have no order, and gcc
-     * may emit that select as a branch that mispredicts whenever they swap
-     * order.
-     */
-    if (sVMP < 0.0 || sVMM < 0.0) {
-      sTR = 0.0;
-      sVMP = 0.0;
-      sVMM = 0.0;
-      seeded = 0;
-      for (i = today - optInTimePeriod; i <= today; i += 1) {
-        if (seeded !== 0) {
-          tempLT = inLow[i];
-          tempHT = inHigh[i];
-          trueRange = tempHT - tempLT;
-          tempDouble = Math.abs(prevClose - tempHT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          tempDouble = Math.abs(prevClose - tempLT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          sTR += trueRange;
-          sVMP += Math.abs(tempHT - prevLow);
-          sVMM += Math.abs(tempLT - prevHigh);
-        }
-        prevHigh = inHigh[i];
-        prevLow = inLow[i];
-        prevClose = inClose[i];
-        seeded = 1;
-      }
-    }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
      */
@@ -314,6 +283,47 @@ export function vortexImpl(
     } else {
       outPlusVI[outIdx] = 0.0;
       outMinusVI[outIdx] = 0.0;
+    }
+    /* Every term is non-negative, so a sum below zero is the residue a
+     * term far larger than the rest of the window left when it retired.
+     * Tested on the sums the next bar adds to, not on the ones it outputs:
+     * a non-negative sum plus a non-negative term stays non-negative, and
+     * nothing a peek returns depends on it. The rebuild sums the retained
+     * terms oldest first, the state a call starting at the next bar primes.
+     * The first bar it reads only seeds the second, so an aliased output
+     * slot holding it changes nothing. Only the vortex sums are tested: a
+     * negative sTR fails the division gate and writes 0.0. Keep
+     * two compares rather than a min: the two sums have no order, and gcc
+     * may emit that select as a branch that mispredicts whenever they swap
+     * order.
+     */
+    if (sVMP < 0.0 || sVMM < 0.0) {
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for (i = today - optInTimePeriod; i <= today; i += 1) {
+        if (seeded > 1) {
+          tempLT = inLow[i];
+          tempHT = inHigh[i];
+          trueRange = tempHT - tempLT;
+          tempDouble = Math.abs(prevClose - tempHT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          tempDouble = Math.abs(prevClose - tempLT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          sTR += trueRange;
+          sVMP += Math.abs(tempHT - prevLow);
+          sVMM += Math.abs(tempLT - prevHigh);
+        }
+        prevHigh = inHigh[i];
+        prevLow = inLow[i];
+        prevClose = inClose[i];
+        seeded += 1;
+      }
     }
     outIdx += 1;
     today += 1;
@@ -584,9 +594,9 @@ export class VortexStream {
   /** @internal */
   sTR: number = 0;
   /** @internal */
-  sVMP: number = 0;
-  /** @internal */
   sVMM: number = 0;
+  /** @internal */
+  sVMP: number = 0;
   /** @internal */
   lag1_inHigh: number = 0;
   /** @internal */
@@ -703,9 +713,7 @@ export class VortexStream {
     const inHigh = high;
     const inLow = low;
     const inClose = close;
-    let i = 0;
     let live = 0;
-    let seeded = 0;
     let curTR = 0;
     let curVMP = 0;
     let curVMM = 0;
@@ -717,9 +725,6 @@ export class VortexStream {
     let cur_outMinusVI = 0;
     let cur_outPlusVI = 0;
     let nullRun = sp.nullRun;
-    let prevClose = sp.prevClose;
-    let prevHigh = sp.prevHigh;
-    let prevLow = sp.prevLow;
     let sTR = sp.sTR;
     let sVMM = sp.sVMM;
     let sVMP = sp.sVMP;
@@ -768,42 +773,6 @@ export class VortexStream {
     if (nullRun >= sp.optInTimePeriod) {
       nullRun = sp.optInTimePeriod;
       sTR = 0.0;
-    }
-    /* Every term is non-negative, so a sum below zero is the residue a
-     * term far larger than the rest of the window left when it retired;
-     * rebuild all three from the window. Only the vortex sums are tested:
-     * a negative sTR fails the division gate below and writes 0.0. Keep
-     * two compares rather than a min: the two sums have no order, and gcc
-     * may emit that select as a branch that mispredicts whenever they swap
-     * order.
-     */
-    if (sVMP < 0.0 || sVMM < 0.0) {
-      sTR = 0.0;
-      sVMP = 0.0;
-      sVMM = 0.0;
-      seeded = 0;
-      for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
-        if (seeded !== 0) {
-          tempLT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
-          tempHT = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
-          trueRange = tempHT - tempLT;
-          tempDouble = Math.abs(prevClose - tempHT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          tempDouble = Math.abs(prevClose - tempLT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          sTR += trueRange;
-          sVMP += Math.abs(tempHT - prevLow);
-          sVMM += Math.abs(tempLT - prevHigh);
-        }
-        prevHigh = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal0;
-        prevLow = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal1;
-        prevClose = (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i) !== pkSlot2) ? sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i] : pkVal2;
-        seeded = 1;
-      }
     }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
@@ -896,8 +865,8 @@ export class VortexStream {
     c.prevLow = this.prevLow;
     c.prevClose = this.prevClose;
     c.sTR = this.sTR;
-    c.sVMP = this.sVMP;
     c.sVMM = this.sVMM;
+    c.sVMP = this.sVMP;
     c.lag1_inHigh = this.lag1_inHigh;
     c.lag1_inLow = this.lag1_inLow;
     c.lag1_inClose = this.lag1_inClose;
@@ -977,42 +946,6 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
     sp.nullRun = sp.optInTimePeriod;
     sp.sTR = 0.0;
   }
-  /* Every term is non-negative, so a sum below zero is the residue a
-   * term far larger than the rest of the window left when it retired;
-   * rebuild all three from the window. Only the vortex sums are tested:
-   * a negative sTR fails the division gate below and writes 0.0. Keep
-   * two compares rather than a min: the two sums have no order, and gcc
-   * may emit that select as a branch that mispredicts whenever they swap
-   * order.
-   */
-  if (sp.sVMP < 0.0 || sp.sVMM < 0.0) {
-    sp.sTR = 0.0;
-    sp.sVMP = 0.0;
-    sp.sVMM = 0.0;
-    seeded = 0;
-    for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
-      if (seeded !== 0) {
-        tempLT = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
-        tempHT = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
-        trueRange = tempHT - tempLT;
-        tempDouble = Math.abs(sp.prevClose - tempHT);
-        if (tempDouble > trueRange) {
-          trueRange = tempDouble;
-        }
-        tempDouble = Math.abs(sp.prevClose - tempLT);
-        if (tempDouble > trueRange) {
-          trueRange = tempDouble;
-        }
-        sp.sTR += trueRange;
-        sp.sVMP += Math.abs(tempHT - sp.prevLow);
-        sp.sVMM += Math.abs(tempLT - sp.prevHigh);
-      }
-      sp.prevHigh = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
-      sp.prevLow = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
-      sp.prevClose = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
-      seeded = 1;
-    }
-  }
   /* Record the current window sums, then retire the trailing bar's
    * terms so the sums are ready for the next iteration.
    */
@@ -1061,6 +994,47 @@ function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose
     sp.cur_outPlusVI = 0.0;
     sp.cur_outMinusVI = 0.0;
   }
+  /* Every term is non-negative, so a sum below zero is the residue a
+   * term far larger than the rest of the window left when it retired.
+   * Tested on the sums the next bar adds to, not on the ones it outputs:
+   * a non-negative sum plus a non-negative term stays non-negative, and
+   * nothing a peek returns depends on it. The rebuild sums the retained
+   * terms oldest first, the state a call starting at the next bar primes.
+   * The first bar it reads only seeds the second, so an aliased output
+   * slot holding it changes nothing. Only the vortex sums are tested: a
+   * negative sTR fails the division gate and writes 0.0. Keep
+   * two compares rather than a min: the two sums have no order, and gcc
+   * may emit that select as a branch that mispredicts whenever they swap
+   * order.
+   */
+  if (sp.sVMP < 0.0 || sp.sVMM < 0.0) {
+    sp.sTR = 0.0;
+    sp.sVMP = 0.0;
+    sp.sVMM = 0.0;
+    seeded = 0;
+    for (i = sp.optInTimePeriod; i >= 0; i -= 1) {
+      if (seeded > 1) {
+        tempLT = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+        tempHT = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+        trueRange = tempHT - tempLT;
+        tempDouble = Math.abs(sp.prevClose - tempHT);
+        if (tempDouble > trueRange) {
+          trueRange = tempDouble;
+        }
+        tempDouble = Math.abs(sp.prevClose - tempLT);
+        if (tempDouble > trueRange) {
+          trueRange = tempDouble;
+        }
+        sp.sTR += trueRange;
+        sp.sVMP += Math.abs(tempHT - sp.prevLow);
+        sp.sVMM += Math.abs(tempLT - sp.prevHigh);
+      }
+      sp.prevHigh = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+      sp.prevLow = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+      sp.prevClose = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i >= sp.ringCap_trailingIdx) ? sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i - sp.ringCap_trailingIdx : sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - i];
+      seeded += 1;
+    }
+  }
   sp.lag1_inHigh = inHigh;
   sp.lag1_inLow = inLow;
   sp.lag1_inClose = inClose;
@@ -1096,8 +1070,8 @@ function vortexOpenImpl(
   let prevLow = 0;
   let prevClose = 0;
   let sTR = 0;
-  let sVMP = 0;
   let sVMM = 0;
+  let sVMP = 0;
   let curTR = 0;
   let curVMP = 0;
   let curVMM = 0;
@@ -1124,6 +1098,10 @@ function vortexOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
+  /* Keep sVMM declared before sVMP: the stream state takes this order, and
+   * the reverse lets gcc pair the previous bar's low and high in one load
+   * that straddles two stores, a store-forwarding stall on every update.
+   */
   /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
    * each a rolling sum of "vortex movement" normalized by the rolling sum
    * of true range over the same optInTimePeriod bars.
@@ -1218,42 +1196,6 @@ function vortexOpenImpl(
       nullRun = optInTimePeriod;
       sTR = 0.0;
     }
-    /* Every term is non-negative, so a sum below zero is the residue a
-     * term far larger than the rest of the window left when it retired;
-     * rebuild all three from the window. Only the vortex sums are tested:
-     * a negative sTR fails the division gate below and writes 0.0. Keep
-     * two compares rather than a min: the two sums have no order, and gcc
-     * may emit that select as a branch that mispredicts whenever they swap
-     * order.
-     */
-    if (sVMP < 0.0 || sVMM < 0.0) {
-      sTR = 0.0;
-      sVMP = 0.0;
-      sVMM = 0.0;
-      seeded = 0;
-      for (i = today - optInTimePeriod; i <= today; i += 1) {
-        if (seeded !== 0) {
-          tempLT = inLow[i];
-          tempHT = inHigh[i];
-          trueRange = tempHT - tempLT;
-          tempDouble = Math.abs(prevClose - tempHT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          tempDouble = Math.abs(prevClose - tempLT);
-          if (tempDouble > trueRange) {
-            trueRange = tempDouble;
-          }
-          sTR += trueRange;
-          sVMP += Math.abs(tempHT - prevLow);
-          sVMM += Math.abs(tempLT - prevHigh);
-        }
-        prevHigh = inHigh[i];
-        prevLow = inLow[i];
-        prevClose = inClose[i];
-        seeded = 1;
-      }
-    }
     /* Record the current window sums, then retire the trailing bar's
      * terms so the sums are ready for the next iteration.
      */
@@ -1303,6 +1245,47 @@ function vortexOpenImpl(
       outPlusVI[((outIdx * outStride) | 0)] = 0.0;
       outMinusVI[((outIdx * outStride) | 0)] = 0.0;
     }
+    /* Every term is non-negative, so a sum below zero is the residue a
+     * term far larger than the rest of the window left when it retired.
+     * Tested on the sums the next bar adds to, not on the ones it outputs:
+     * a non-negative sum plus a non-negative term stays non-negative, and
+     * nothing a peek returns depends on it. The rebuild sums the retained
+     * terms oldest first, the state a call starting at the next bar primes.
+     * The first bar it reads only seeds the second, so an aliased output
+     * slot holding it changes nothing. Only the vortex sums are tested: a
+     * negative sTR fails the division gate and writes 0.0. Keep
+     * two compares rather than a min: the two sums have no order, and gcc
+     * may emit that select as a branch that mispredicts whenever they swap
+     * order.
+     */
+    if (sVMP < 0.0 || sVMM < 0.0) {
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      seeded = 0;
+      for (i = today - optInTimePeriod; i <= today; i += 1) {
+        if (seeded > 1) {
+          tempLT = inLow[i];
+          tempHT = inHigh[i];
+          trueRange = tempHT - tempLT;
+          tempDouble = Math.abs(prevClose - tempHT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          tempDouble = Math.abs(prevClose - tempLT);
+          if (tempDouble > trueRange) {
+            trueRange = tempDouble;
+          }
+          sTR += trueRange;
+          sVMP += Math.abs(tempHT - prevLow);
+          sVMM += Math.abs(tempLT - prevHigh);
+        }
+        prevHigh = inHigh[i];
+        prevLow = inLow[i];
+        prevClose = inClose[i];
+        seeded += 1;
+      }
+    }
     outIdx += 1;
     today += 1;
   }
@@ -1332,8 +1315,8 @@ function vortexOpenImpl(
   sp.prevLow = prevLow;
   sp.prevClose = prevClose;
   sp.sTR = sTR;
-  sp.sVMP = sVMP;
   sp.sVMM = sVMM;
+  sp.sVMP = sVMP;
   sp.lag1_inHigh = inHigh[historyLen - 1];
   sp.lag1_inLow = inLow[historyLen - 1];
   sp.lag1_inClose = inClose[historyLen - 1];

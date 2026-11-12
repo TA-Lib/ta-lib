@@ -261,6 +261,109 @@ static ErrorNumber test_vortex_cancel( void )
    return TA_TEST_PASS;
 }
 
+/* A 4e15 bar among ordinary ones: when its retirement leaves a vortex sum
+ * negative, the rebuild must restore exactly the terms the window still
+ * holds, so every bar the spike has left matches fresh window sums. */
+static ErrorNumber test_vortex_rebuild_window( void )
+{
+   enum { N = 24 };
+   TA_Real h[N], l[N], c[N], outP[N], outM[N], sP, sM;
+   TA_VORTEX_Stream *stream;
+   TA_Integer beg, nb;
+   TA_RetCode rc;
+   int period, i, j, compared = 0;
+
+   for( period = 2; period <= 3; period++ )
+   {
+      for( i = 0; i < N; i++ )
+      {
+         double b = 100.0 + (i % 5) * 1.37 + (i % 3) * 0.61;
+         h[i] = b + 1.1;
+         l[i] = b - 0.9;
+         c[i] = b + 0.3;
+      }
+      h[5] = 4e15;
+      l[5] = -4e15;
+      c[5] = -1e15;
+      if( TA_VORTEX( 0, N - 1, h, l, c, period, &beg, &nb, outP, outM ) != TA_SUCCESS )
+      {
+         printf( "VORTEX Fail: the rebuild-window call failed (period %d)\n", period );
+         return TA_VORTEX_CANCEL;
+      }
+      if( server_verify_active() )
+      {
+         int cmpBefore = server_verify_comparisons();
+         ErrorNumber e = server_verify( "VORTEX", 0, N - 1, N, TA_SUCCESS, beg, nb,
+                                        (const TA_Real*[]){ h, l, c, NULL },
+                                        (double[]){ period }, 1,
+                                        (const TA_Real*[]){ outP, outM, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "VORTEX rebuild-window: compared no server despite live pipes\n" );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
+      for( i = 0; i < nb; i++ )
+      {
+         int bar = beg + i;
+         double nTR = 0.0, nP = 0.0, nM = 0.0, wantP, wantM;
+         /* Bar 6's terms are the last to read the spike. */
+         if( bar - period + 1 <= 6 )
+            continue;
+         for( j = bar - period + 1; j <= bar; j++ )
+         {
+            double tr = h[j] - l[j];
+            if( fabs( c[j-1] - h[j] ) > tr ) tr = fabs( c[j-1] - h[j] );
+            if( fabs( c[j-1] - l[j] ) > tr ) tr = fabs( c[j-1] - l[j] );
+            nTR += tr;
+            nP  += fabs( h[j] - l[j-1] );
+            nM  += fabs( l[j] - h[j-1] );
+         }
+         wantP = ( nTR > 0.0 ) ? nP / nTR : 0.0;
+         wantM = ( nTR > 0.0 ) ? nM / nTR : 0.0;
+         compared++;
+         if( fabs( outP[i] - wantP ) > 1e-9 || fabs( outM[i] - wantM ) > 1e-9 )
+         {
+            printf( "VORTEX Fail: period %d bar %d is (%.17g,%.17g) after the 4e15 "
+                    "spike, fresh sums give (%.17g,%.17g)\n",
+                    period, bar, outP[i], outM[i], wantP, wantM );
+            return TA_VORTEX_CANCEL;
+         }
+      }
+
+      rc = TA_VORTEX_Open( &stream, h, l, c, period + 1, period, &sP, &sM );
+      for( i = period + 1; rc == TA_SUCCESS && i < N; i++ )
+      {
+         rc = TA_VORTEX_Update( stream, h[i], l[i], c[i], &sP, &sM );
+         if( rc == TA_SUCCESS &&
+             ( memcmp( &sP, &outP[i-period], sizeof(TA_Real) ) != 0 ||
+               memcmp( &sM, &outM[i-period], sizeof(TA_Real) ) != 0 ) )
+         {
+            printf( "VORTEX Fail: rebuild-window period %d bar %d: stream "
+                    "(%.17g,%.17g), batch (%.17g,%.17g)\n",
+                    period, i, sP, sM, outP[i-period], outM[i-period] );
+            TA_VORTEX_Close( stream );
+            return TA_VORTEX_CANCEL;
+         }
+      }
+      if( rc != TA_SUCCESS )
+      {
+         printf( "VORTEX Fail: rebuild-window stream retCode %d (period %d)\n",
+                 (int)rc, period );
+         return TA_VORTEX_CANCEL;
+      }
+      TA_VORTEX_Close( stream );
+   }
+   if( compared == 0 )
+   {
+      printf( "VORTEX Fail: the rebuild-window test compared no bar\n" );
+      return TA_VORTEX_CANCEL;
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_vortex( TA_History *history )
 {
    static TA_Real outP[VORTEX_CAP], outM[VORTEX_CAP];
@@ -660,5 +763,8 @@ ErrorNumber test_func_vortex( TA_History *history )
       }
    }
 
-   return test_vortex_cancel();
+   e = test_vortex_cancel();
+   if( e != TA_TEST_PASS )
+      return e;
+   return test_vortex_rebuild_window();
 }
