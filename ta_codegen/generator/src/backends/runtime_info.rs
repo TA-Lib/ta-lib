@@ -1,19 +1,62 @@
-//! `TA_GetRuntimeInfo`'s analog in Rust, Java, C# and TypeScript.
+//! `TA_GetRuntimeInfo`'s analog in Rust, Java, C# and TypeScript, and the key
+//! table `ta_regtest` asks every server from.
 //!
-//! A key C answers is answered in every language, so a caller written against
-//! one probes the others without a rejection. None of them has an optional
-//! path a key reports, nor a `TA_Initialize`: each answers 0.
+//! A common key is answered in every backend, so a caller written against one
+//! probes the others without a rejection; no backend but C has an optional path
+//! a common key reports, nor a `TA_Initialize`, so each answers 0. A key that
+//! describes what only one backend has is answered there alone, and every other
+//! backend rejects it as unknown.
 
 use std::fmt::Write as _;
+use std::path::Path;
 
-/// Every key, in C's spelling.
-pub const KEYS: &[&str] = &["vmath.transcendental", "count.initialize", "count.shutdown"];
+/// Which backends answer a key.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Scope {
+    /// Every backend, C included.
+    Common,
+    /// TypeScript alone. `answer` is the expression computing it, and `max` the
+    /// largest value it takes: `ta_regtest` holds the server to `0..=max`.
+    TypeScript { answer: &'static str, max: usize },
+}
+
+/// One key, in C's spelling.
+#[derive(Clone, Copy, Debug)]
+pub struct Key {
+    pub name: &'static str,
+    pub scope: Scope,
+}
+
+/// `wasm.reason`'s values from 1 on, in order: `runtime/wasm.ts`'s `EngineReason`.
+/// The rendered table is a `Record<EngineReason, number>`, so `tsc` rejects a
+/// list that misses or invents a reason.
+pub const WASM_REASONS: &[&str] = &["not-loaded", "unavailable", "compile", "instantiate", "fma", "trap"];
+
+/// Every key: the one declaration of which backends answer it.
+pub const KEYS: &[Key] = &[
+    Key { name: "vmath.transcendental", scope: Scope::Common },
+    Key { name: "count.initialize", scope: Scope::Common },
+    Key { name: "count.shutdown", scope: Scope::Common },
+    Key {
+        name: "wasm.engine",
+        scope: Scope::TypeScript { answer: "engineStatus().engine === 'wasm' ? 1 : 0", max: 1 },
+    },
+    Key {
+        name: "wasm.reason",
+        scope: Scope::TypeScript { answer: "reasonCode(engineStatus().reason)", max: WASM_REASONS.len() },
+    },
+];
+
+/// The keys every backend answers.
+pub fn common() -> impl Iterator<Item = &'static str> {
+    KEYS.iter().filter(|k| k.scope == Scope::Common).map(|k| k.name)
+}
 
 /// Where the keys are described. The one description: no emitted doc repeats it.
 const SPEC: &str = "https://ta-lib.org/spec/abstract/#runtime-info";
 
 fn quoted(separator: &str) -> String {
-    KEYS.iter().map(|k| format!("\"{k}\"")).collect::<Vec<_>>().join(separator)
+    common().map(|k| format!("\"{k}\"")).collect::<Vec<_>>().join(separator)
 }
 
 /// `abstract_api::get_runtime_info`.
@@ -119,15 +162,32 @@ pub const JAVA_SERVER_HANDLER: &str =
         \x20       return \"{\\\"retCode\\\":\" + rc + \",\\\"value\\\":\" + value + \"}\";\n\
         \x20   }\n\n";
 
-/// The TypeScript `getRuntimeInfo`. It needs `TALibError` and `RetCode` in scope.
+/// The TypeScript `getRuntimeInfo`. It needs `TALibError`, `RetCode`,
+/// `engineStatus` and the type `EngineReason` in scope.
 pub fn ts_fn() -> String {
-    let cases = KEYS.iter().fold(String::new(), |mut acc, k| {
+    let mut cases = common().fold(String::new(), |mut acc, k| {
         let _ = writeln!(acc, "    case '{k}':");
         acc
     });
-    let union = KEYS.iter().map(|k| format!("'{k}'")).collect::<Vec<_>>().join(" | ");
+    cases.push_str("      return 0;\n");
+    for k in KEYS {
+        if let Scope::TypeScript { answer, .. } = k.scope {
+            let _ = write!(cases, "    case '{}':\n      return {answer};\n", k.name);
+        }
+    }
+    let reasons = WASM_REASONS.iter().zip(1..).fold(String::new(), |mut acc, (r, code)| {
+        let _ = writeln!(acc, "  '{r}': {code},");
+        acc
+    });
+    let union = KEYS.iter().map(|k| format!("'{}'", k.name)).collect::<Vec<_>>().join(" | ");
     format!(
-        "/** The keys {{@link getRuntimeInfo}} answers. */\n\
+        "const WASM_REASON: Readonly<Record<EngineReason, number>> = {{\n\
+         {reasons}\
+         }};\n\n\
+         function reasonCode(reason: EngineReason | null): number {{\n\
+         \x20 return reason === null ? 0 : WASM_REASON[reason];\n\
+         }}\n\n\
+         /** The keys {{@link getRuntimeInfo}} answers. */\n\
          export type RuntimeInfoKey = {union};\n\n\
          /**\n\
          \x20* Run-time state of this library, by key: the TypeScript analog of C's\n\
@@ -139,7 +199,6 @@ pub fn ts_fn() -> String {
          export function getRuntimeInfo(key: RuntimeInfoKey | (string & {{}})): number {{\n\
          \x20 switch (key) {{\n\
          {cases}\
-         \x20     return 0;\n\
          \x20   default:\n\
          \x20     throw new TALibError(RetCode.BAD_PARAM, `unknown runtime info key: ${{key}}`);\n\
          \x20 }}\n\
@@ -158,3 +217,36 @@ pub const TS_SERVER_HANDLER: &str = "function handleGetRuntimeInfo(p: Params): s
     \x20 }\n\
     \x20 return `{\"retCode\":${rc},\"value\":${value}}`;\n\
     }\n\n";
+
+/// `src/tools/ta_regtest/ta_runtime_info_keys.h`: [`KEYS`] for `ta_regtest`.
+pub fn regtest_header() -> String {
+    let mut o = String::from(super::variant_frame::LICENSE);
+    o.push_str(
+        "/* AUTO-GENERATED by ta_codegen. DO NOT EDIT.\n\
+         * Source of truth: ta_codegen/generator/src/backends/runtime_info.rs\n\
+         * (regenerate: cd ta_codegen/generator && cargo run -- generate)\n\
+         *\n\
+         * backend is \"\" for a key every backend answers, else the --backend=\n\
+         * name of the one backend that answers it; max bounds that key's value.\n\
+         */\n\n\
+         #ifndef TA_RUNTIME_INFO_KEYS_H\n\
+         #define TA_RUNTIME_INFO_KEYS_H\n\n\
+         typedef struct\n{\n   const char *key;\n   const char *backend;\n   int max;\n} RuntimeInfoKeyRow;\n\n\
+         static const RuntimeInfoKeyRow TA_RUNTIME_INFO_KEYS[] = {\n",
+    );
+    for k in KEYS {
+        let (backend, max) = match k.scope {
+            Scope::Common => ("", 0),
+            Scope::TypeScript { max, .. } => ("ts", max),
+        };
+        let _ = writeln!(o, "   {{ \"{}\", \"{backend}\", {max} }},", k.name);
+    }
+    o.push_str("};\n\n#endif /* TA_RUNTIME_INFO_KEYS_H */\n");
+    o
+}
+
+/// Write [`regtest_header`].
+pub fn generate_regtest_header(root: &Path) {
+    let path = root.join("src/tools/ta_regtest/ta_runtime_info_keys.h");
+    super::write_if_changed_silent(&path, &regtest_header());
+}

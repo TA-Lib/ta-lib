@@ -1038,7 +1038,8 @@ fn function_description(funcs: &[FuncDef]) -> String {
 
 fn runtime_info() -> String {
     let mut s = header();
-    s.push_str("import { RetCode, TALibError } from '../runtime/errors.ts';\n\n");
+    s.push_str("import { RetCode, TALibError } from '../runtime/errors.ts';\n");
+    s.push_str("import { engineStatus, type EngineReason } from '../runtime/wasm.ts';\n\n");
     s.push_str(&super::runtime_info::ts_fn());
     s
 }

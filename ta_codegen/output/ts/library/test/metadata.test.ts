@@ -232,6 +232,9 @@ test('call refuses an unbound input or output', () => {
 
 test('getRuntimeInfo and FunctionDescription', () => {
   assert.equal(getRuntimeInfo('vmath.transcendental'), 0);
+  // No entry with an engine is imported here: it is not loaded.
+  assert.equal(getRuntimeInfo('wasm.engine'), 0);
+  assert.equal(getRuntimeInfo('wasm.reason'), 1);
   rejects('TA_BAD_PARAM', () => getRuntimeInfo('no.such.key'));
   const xml = FunctionDescription.xml();
   assert.ok(xml.startsWith('<?xml'));

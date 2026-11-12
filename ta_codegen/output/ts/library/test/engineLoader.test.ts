@@ -54,10 +54,16 @@ import { test } from 'node:test';
 
 import type { EngineStatus } from 'ta-lib';
 import * as js from 'ta-lib/js';
+import { getRuntimeInfo } from 'ta-lib/metadata';
 import { defaultEntry, hooks } from './engineHooks.ts';
 
 const lib = (await import(defaultEntry)) as typeof import('ta-lib');
 const close = Float64Array.from({ length: 200 }, (_, i) => Math.round((50 + 5 * Math.sin(i / 6) + i / 30) * 100) / 100);
+
+/** `wasm.engine` and `wasm.reason`, which must agree with the engine's own status. */
+function info(): [number, number] {
+  return [getRuntimeInfo('wasm.engine'), getRuntimeInfo('wasm.reason')];
+}
 
 function bits(a: Float64Array): string {
   return Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('hex');
@@ -79,9 +85,11 @@ function forced(): number {
 }
 
 test('without its bytes the default entry answers from ta-lib/js and says why', () => {
+  assert.deepEqual(info(), [0, 1]);
   assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' });
   assert.equal(forced(), 1);
   assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' });
+  assert.deepEqual(info(), [0, 1]);
   hooks.setEngineMode('strict');
   try {
     assert.throws(() => lib.ema(close), hooks.StrictFallThrough);
@@ -95,10 +103,26 @@ test('a corrupted byte string is reported as a failed compile, never thrown', as
   for (const corrupt of ['AAAA', 'not base64 at all!']) {
     hooks.resetEngine();
     hooks.provideWasmBytes(corrupt);
+    assert.deepEqual(info(), [0, 1], `${corrupt}: asking compiled the bytes`);
+    assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'not-loaded' }, corrupt);
     assert.equal(forced(), 1, corrupt);
     assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'compile' }, corrupt);
+    assert.deepEqual(info(), [0, 3], corrupt);
     const status: EngineStatus = await lib.ready();
     assert.deepEqual(status, { engine: 'js', reason: 'compile' }, corrupt);
+  }
+});
+
+test('a module without the exports the engine needs is reported as a failed instantiate', async () => {
+  hooks.resetEngine();
+  hooks.provideWasmBytes('AGFzbQEAAAA=');
+  try {
+    assert.equal(forced(), 1);
+    assert.deepEqual(hooks.engineStatus(), { engine: 'js', reason: 'instantiate' });
+    assert.deepEqual(info(), [0, 4]);
+    assert.deepEqual(await lib.ready(), { engine: 'js', reason: 'instantiate' });
+  } finally {
+    hooks.resetEngine();
   }
 });
 
@@ -107,6 +131,7 @@ test('ready() imports the bytes and resolves to the WASM engine', async () => {
   const status: EngineStatus = await lib.ready();
   assert.deepEqual(status, { engine: 'wasm', reason: null });
   assert.equal(await lib.ready(), status);
+  assert.deepEqual(info(), [1, 0]);
   hooks.setEngineMode('strict');
   try {
     const entered = hooks.moduleCalls();

@@ -46,6 +46,7 @@ static int  g_floatCapableLangTested = 0;
 #include "ta_utility.h"  /* TA_IS_ZERO / TA_IS_ZERO_SCALED / TA_IS_ZERO_OR_NEG (predicate parity truth) */
 #include "fuzz_data.h"   /* shared, byte-identical input generator + output hasher */
 #include "ta_stream_frame.h"  /* in-process Open/OpenAndFill/Close dispatch (issue #256) */
+#include "ta_runtime_info_keys.h"
 #include "../ta_alloc_check.h"
 
 /* ---- Language definitions ---- */
@@ -5128,50 +5129,97 @@ static ErrorNumber codegen_check_gencode_digest( CodegenPipe *cp, const CodegenL
 /* What each language's library reports about itself, asked before any function
  * request: afterwards the C server's loops have loaded their own routines.
  *
- * The values are stated here per language. Rust, Java and C# have no kernel and
- * no TA_Initialize; the C server is this library in another process, which has
- * called TA_Initialize once, and ta_regtest held its own kernel answer to the
- * platform before any function ran.
+ * A common key is asked of every server, against values stated here per
+ * language. Rust, Java and C# have no kernel and no TA_Initialize; the C server
+ * is this library in another process, which has called TA_Initialize once, and
+ * ta_regtest held its own kernel answer to the platform before any function ran.
+ * A backend's own key is asked of that backend alone, and held to 0..max.
  */
 static long g_runtimeInfoChecked = 0;
 
+static const char *codegen_backend_name( const char *langName )
+{
+   return strcmp( langName, "tswasm" ) == 0 ? "ts" : langName;
+}
+
+/* 0 for a common key this check states no C value for. */
+static int codegen_runtime_info_want( const char *key, int isC, int *want )
+{
+   *want = 0;
+   if( !isC ) return 1;
+   if( strcmp( key, "vmath.transcendental" ) == 0 ) return TA_GetRuntimeInfo( key, want ) == TA_SUCCESS;
+   if( strcmp( key, "count.initialize" ) == 0 ) { *want = 1; return 1; }
+   return strcmp( key, "count.shutdown" ) == 0;
+}
+
+static ErrorNumber codegen_ask_runtime_info( CodegenPipe *cp, const CodegenLanguage *lang, const char *key,
+                                             int wantCode, int minValue, int maxValue )
+{
+   char req[128], resp[256];
+   ErrorNumber errNb;
+   int value;
+
+   (void)snprintf( req, sizeof(req), "{\"method\":\"TA_GetRuntimeInfo\",\"params\":{\"key\":\"%s\"}}", key );
+   errNb = codegen_pipe_call( cp, req, resp, (int)sizeof(resp) );
+   if( errNb != TA_TEST_PASS )
+   {
+      printf( "\nCODEGEN FAILED: the %s server did not answer TA_GetRuntimeInfo( \"%s\" )\n",
+              lang->display, key );
+      return errNb;
+   }
+   value = json_get_int( resp, "value" );
+   if( !strstr( resp, "\"retCode\":" ) || !strstr( resp, "\"value\":" )
+       || json_get_int( resp, "retCode" ) != wantCode
+       || value < minValue || value > maxValue )
+   {
+      printf( "\nCODEGEN FAILED: the %s server answers TA_GetRuntimeInfo( \"%s\" ) with\n"
+              "  %s\n  want retCode %d and a value in %d..%d\n",
+              lang->display, key, resp, wantCode, minValue, maxValue );
+      return TA_CODEGEN_RUNTIME_INFO;
+   }
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber codegen_check_runtime_info( CodegenPipe *cp, const CodegenLanguage *lang )
 {
-   static const char *const key[] = { "vmath.transcendental", "count.initialize", "count.shutdown", "vmath" };
    const int isC = strcmp( lang->name, "c" ) == 0;
-   int want[4] = { 0, 0, 0, 0 };
-   unsigned int i;
+   const char *backend = codegen_backend_name( lang->name );
+   unsigned int i, j;
+   ErrorNumber errNb;
 
-   if( isC )
+   for( i = 0; i < sizeof(TA_RUNTIME_INFO_KEYS)/sizeof(TA_RUNTIME_INFO_KEYS[0]); i++ )
    {
-      if( TA_GetRuntimeInfo( key[0], &want[0] ) != TA_SUCCESS ) return TA_CODEGEN_RUNTIME_INFO;
-      want[1] = 1;
+      const RuntimeInfoKeyRow *row = &TA_RUNTIME_INFO_KEYS[i];
+      int want;
+
+      if( row->backend[0] == '\0' )
+      {
+         if( !codegen_runtime_info_want( row->key, isC, &want ) )
+         {
+            printf( "\nCODEGEN FAILED: no value is stated here for the common key \"%s\" in %s\n",
+                    row->key, lang->display );
+            return TA_CODEGEN_RUNTIME_INFO;
+         }
+         errNb = codegen_ask_runtime_info( cp, lang, row->key, (int)TA_SUCCESS, want, want );
+      }
+      else
+      {
+         for( j = 0; j < NUM_LANGUAGES; j++ )
+            if( strcmp( codegen_backend_name( ALL_LANGUAGES[j].name ), row->backend ) == 0 ) break;
+         if( j == NUM_LANGUAGES )
+         {
+            printf( "\nCODEGEN FAILED: the runtime info key \"%s\" belongs to \"%s\", which no server is\n",
+                    row->key, row->backend );
+            return TA_CODEGEN_RUNTIME_INFO;
+         }
+         if( strcmp( row->backend, backend ) != 0 ) continue;
+         errNb = codegen_ask_runtime_info( cp, lang, row->key, (int)TA_SUCCESS, 0, row->max );
+      }
+      if( errNb != TA_TEST_PASS ) return errNb;
    }
 
-   for( i = 0; i < sizeof(key)/sizeof(key[0]); i++ )
-   {
-      const int wantCode = i < 3 ? (int)TA_SUCCESS : (int)TA_BAD_PARAM;
-      char req[128], resp[256];
-      ErrorNumber errNb;
-
-      (void)snprintf( req, sizeof(req), "{\"method\":\"TA_GetRuntimeInfo\",\"params\":{\"key\":\"%s\"}}", key[i] );
-      errNb = codegen_pipe_call( cp, req, resp, (int)sizeof(resp) );
-      if( errNb != TA_TEST_PASS )
-      {
-         printf( "\nCODEGEN FAILED: the %s server did not answer TA_GetRuntimeInfo( \"%s\" )\n",
-                 lang->display, key[i] );
-         return errNb;
-      }
-      if( !strstr( resp, "\"retCode\":" ) || !strstr( resp, "\"value\":" )
-          || json_get_int( resp, "retCode" ) != wantCode
-          || json_get_int( resp, "value" ) != want[i] )
-      {
-         printf( "\nCODEGEN FAILED: the %s server answers TA_GetRuntimeInfo( \"%s\" ) with\n"
-                 "  %s\n  want retCode %d and value %d\n",
-                 lang->display, key[i], resp, wantCode, want[i] );
-         return TA_CODEGEN_RUNTIME_INFO;
-      }
-   }
+   errNb = codegen_ask_runtime_info( cp, lang, "vmath", (int)TA_BAD_PARAM, 0, 0 );
+   if( errNb != TA_TEST_PASS ) return errNb;
 
    g_runtimeInfoChecked++;
    return TA_TEST_PASS;
@@ -5199,8 +5247,7 @@ static ErrorNumber test_codegen_for_language(
         if( strcmp(lang->name, "rust") == 0 )
             printf(" (is ./ta_codegen built?)");
         else
-            printf(" (run: ta_codegen build --backend=%s)",
-                   strcmp(lang->name, "tswasm") == 0 ? "ts" : lang->name);
+            printf(" (run: ta_codegen build --backend=%s)", codegen_backend_name(lang->name));
         printf("\n");
         return errNb;
     }
