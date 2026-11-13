@@ -763,7 +763,7 @@ TA_RetCode TA_ZLEMA_OpenAndFillInternal( struct TA_ZLEMA_Stream **stream, const 
 
 /* Block update entries and their blocked batch */
 #ifndef TA_KERN_BLOCK
-#define TA_KERN_BLOCK 128
+#define TA_KERN_BLOCK 64
 #endif
 TA_RetCode TA_AC_UpdateBlock( struct TA_AC_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] );
 TA_RetCode TA_ACCBANDS_UpdateBlock( struct TA_ACCBANDS_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
