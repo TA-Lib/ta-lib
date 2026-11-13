@@ -144,6 +144,16 @@ handed is stored on every bar, with everything that feeds it, where a local one
 is computed once. Both seams still call the shared frame, one per stride; drop
 either call and the compiler specialises the fill's loop differently.
 
+The exception to the table: in Java, C# and TypeScript a candlestick's
+`_OpenInternal` calls a private sink frame (`OpenSinkFrame`) in place of
+`_OpenImpl(.., 0)`: `_OpenImpl`'s checks, then a pass over the history that
+keeps only the carried state and decides the last bar once. Its `_OpenImpl`
+then serves stride 1 alone; leave it byte for byte: an exit to the frame ahead
+of its body, or a folded stride, makes the JIT compile the fill loop
+differently and moves single functions' fill time either way around an
+unchanged median. CDLHIKKAKE and CDLHIKKAKEMOD assign pattern state in their
+decisions and keep the table's form.
+
 Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
 The guard sits on the public frame because that is the only one handed an array
 it did not vet: the plain open sinks into fresh arrays, and a composed call's
