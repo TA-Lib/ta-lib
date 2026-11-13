@@ -256,6 +256,39 @@ struct Typing {
     ctx: RustRenderCtx,
     /// Names forced to `i32` in the state struct (extrema machinery).
     extrema_i32: HashSet<String>,
+    /// Where an open's output writes land.
+    stride: Stride,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Stride {
+    /// `outStride`, a parameter.
+    Param,
+    /// The one-element sink of the stride-0 frame.
+    Zero,
+    /// The caller's slices, of the stride-1 frame.
+    One,
+}
+
+impl Typing {
+    /// The same typing for a frame of a split opener, its loops windowed like
+    /// the batch body's.
+    fn frame(&self, func: &FuncDef, stride: Stride) -> Typing {
+        let mut ctx = self.ctx.clone();
+        ctx.window_loops = true;
+        ctx.int_params = super::rust_lang::int_param_names(func);
+        ctx.same_len_inputs = streaming::input_array_names(func).into_iter().collect();
+        Typing { ctx, extrema_i32: self.extrema_i32.clone(), stride }
+    }
+
+    /// Output `name` at the write that holds bar `bar` of the fill.
+    fn out_at(&self, name: &str, bar: &str) -> String {
+        match self.stride {
+            Stride::Param => format!("{name}[({bar}) * outStride]"),
+            Stride::Zero => format!("{name}[0]"),
+            Stride::One => format!("{name}[{bar}]"),
+        }
+    }
 }
 
 fn build_typing(func: &FuncDef, model: &StreamModel) -> Typing {
@@ -330,8 +363,10 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
             circbuf_len_of: HashMap::new(),
+            stream_step: false,
         },
         extrema_i32,
+        stride: Stride::Param,
     }
 }
 
@@ -608,11 +643,25 @@ fn fma_dispatch_stream(o: &mut String, func: &FuncDef, open_keeps_one_path: bool
     o.replace_range(line..end, &trio);
 }
 
-/// FMA runtime dispatch for `<n>_open_impl`: it runs the whole history per
-/// call, so the one call that cannot inline is paid once per open.
+/// FMA runtime dispatch for the body that runs an open's whole history:
+/// `<n>_open_impl`, or each stride's frame when the opener is split. An open
+/// enters one such body, so it pays the dispatch once.
 fn fma_dispatch_open(o: &mut String, func: &FuncDef) {
-    let verb = format!("{}_open_impl", snake(func));
-    let open = format!("    pub(crate) fn {verb}(\n");
+    let sn = snake(func);
+    let sink = format!("{sn}_open_sink_frame");
+    if o.contains(&format!("\n    fn {sink}(\n")) {
+        fma_dispatch_method(o, "    fn ", &sink);
+        fma_dispatch_method(o, "    fn ", &format!("{sn}_open_fill_frame"));
+    } else {
+        fma_dispatch_method(o, "    pub(crate) fn ", &format!("{sn}_open_impl"));
+    }
+}
+
+/// The dispatcher, fma clone and `_scalar` body of the method `{lead}{verb}(`,
+/// whose parameters sit on a line of their own. The dispatcher keeps the
+/// method's attributes.
+fn fma_dispatch_method(o: &mut String, lead: &str, verb: &str) {
+    let open = format!("{lead}{verb}(\n");
     let Some((line, end)) = method_at(o, open.trim_end()) else {
         return;
     };
@@ -630,7 +679,7 @@ fn fma_dispatch_open(o: &mut String, func: &FuncDef) {
         clean.iter().skip(1).map(|p| p.split_once(": ").map_or(p.as_str(), |(name, _)| name)).collect();
     let (clean, args) = (clean.join(", "), args.join(", "));
     let mut t = String::new();
-    let _ = writeln!(t, "    pub(crate) fn {verb}(\n        {clean},\n    ) -> {ret} {{");
+    let _ = writeln!(t, "{lead}{verb}(\n        {clean},\n    ) -> {ret} {{");
     let _ = writeln!(t, "        #[cfg(target_arch = \"x86_64\")]");
     let _ = writeln!(t, "        return ta_lib_dispatch::dispatch_fma!(self, {verb}_fma, {verb}_scalar, ({args}));");
     let _ = writeln!(t, "        #[cfg(not(target_arch = \"x86_64\"))]");
@@ -948,6 +997,11 @@ enum OutMode {
     /// sub-handle and fills that sub-call's destination (issue #192).
     FillInternal,
     Core,
+    /// `Core`'s signature over the checks and the branch to the two frames.
+    Frames,
+    /// The never-inlined frame of each stride.
+    SinkFrame,
+    FillFrame,
 }
 
 /// `<idx>` -> `<idx> * outStride`, as IR. Applied to every output subscript in
@@ -1085,7 +1139,7 @@ fn cur_capture_fields(func: &FuncDef, typing: &Typing) -> Vec<String> {
                 // alias, so the output name itself is mutably borrowed here.
                 format!("cur_{name}: sc_{name}[*outNBElement - 1]")
             } else {
-                format!("cur_{name}: {name}[(*outNBElement - 1) * outStride]")
+                format!("cur_{name}: {}", typing.out_at(name, "*outNBElement - 1"))
             }
         })
         .collect()
@@ -1341,6 +1395,7 @@ fn mentions(text: &str, ident: &str) -> bool {
 /// both arms for the dual-mode step (their field sets may differ — HMA).
 fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> RustRenderCtx {
     let mut ctx = typing.ctx.clone();
+    ctx.stream_step = true;
     for bar in streaming::input_array_names(func) {
         ctx.real_vars.insert(bar);
     }
@@ -2048,8 +2103,8 @@ fn map_return_code(v: &str) -> String {
 /// top-level CIRCBUF destroys dropped, and (when the open head already
 /// short-circuits it) the body's own dead identity branch deleted — in C it is
 /// merely dead code, but in Rust it may reference output arrays that do not
-/// exist in Scalar mode.
-fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
+/// exist in Scalar mode. Unless `strided`, every output index stays plain.
+fn build_open_body_rust(model: &StreamModel, body: &[Statement], strided: bool) -> Vec<Statement> {
     let outputs = model.outputs.clone();
     let fb_outputs = model.out_feedback.clone();
     let real_outs: HashSet<String> = model
@@ -2065,7 +2120,7 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
             // it reads what the previous bar wrote; at stride 0 it reads slot 0,
             // which still holds exactly that value.
             Expr::ArrayAccess(nm, idx)
-                if fb_outputs.contains(&nm) && streaming::is_prev_output_read(&idx) =>
+                if strided && fb_outputs.contains(&nm) && streaming::is_prev_output_read(&idx) =>
             {
                 Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx)))
             }
@@ -2088,11 +2143,8 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
                     }
                     other => other,
                 };
-                Some(Statement::Assign {
-                    target: Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx))),
-                    value,
-                    compound,
-                })
+                let idx = if strided { scale_by_stride(*idx) } else { *idx };
+                Some(Statement::Assign { target: Expr::ArrayAccess(nm, Box::new(idx)), value, compound })
             }
             Statement::Return { value } => {
                 let mapped = match value {
@@ -2114,6 +2166,12 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
+/// The open's batch region with the batch body's selects, taken before the
+/// region's stores are strided: the rewrite recognises only a plain store index.
+fn eager_selected(func: &FuncDef, body: &[Statement], helpers: &HelperRegistry) -> Vec<Statement> {
+    super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers)
+}
+
 /// The open-family emitter: `pub(crate) <name>_open_internal` (Scalar) or
 /// `pub <name>_open_and_fill` (Fill). `body` is the transcribed batch region
 /// (loop tier: `model.body`; dual-mode: `prologue ++ arm body ++
@@ -2131,15 +2189,20 @@ fn emit_open_internal(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
+    let selected = eager_selected(func, body, helpers);
+    if let Some((fill, sink)) = open_frames(func, model, typing, &selected, registry, helpers) {
+        emit_open_frames(o, func, model, typing, split, &fill, &sink, enums, registry, helpers, counter);
+        return;
+    }
     emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
-    emit_open_inits(o, func, &model.outputs, typing, registry, helpers);
+    emit_open_inits(o, func, &model.outputs, typing, registry, helpers, true);
 
     let fields = state_fields(func, model, typing);
     emit_identity_fast_path(o, func, model, &fields, typing, split, registry, helpers, counter);
 
     // --- transcribed batch body --------------------------------------------
-    let open_body = build_open_body_rust(model, body);
+    let open_body = build_open_body_rust(model, &selected, true);
     emit_open_region(
         o, func, model, typing, &open_body, enums, registry, helpers, counter, &[],
         &mut |o: &mut String| {
@@ -2147,6 +2210,83 @@ fn emit_open_internal(
         },
     );
     let _ = writeln!(o, "    }}\n");
+}
+
+/// A candlestick opener's two frames, each a whole cleaned region: stride 1's,
+/// and stride 0's from [`super::rust_open_frames::sink_body`]. `None` keeps the
+/// single strided body.
+fn open_frames(
+    func: &FuncDef,
+    model: &StreamModel,
+    typing: &Typing,
+    selected: &[Statement],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> Option<(Vec<Statement>, Vec<Statement>)> {
+    if !func.is_candlestick() || model.identity.is_some() {
+        return None;
+    }
+    let fill = fold_open_region(func, typing, &build_open_body_rust(model, selected, false), registry, helpers);
+    let outputs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
+    let pure = |n: &str| {
+        super::eager_select::is_pseudo_call(n)
+            || super::builtins::MathFn::from_name(n).is_some()
+            || helpers.get(n).is_some()
+            || n == super::rust_respell::SELECT_OTHER
+            || n == super::rust_respell::CANDLE_RANGE_DIFF
+    };
+    let sink = super::rust_open_frames::sink_body(&fill, &outputs, &pure)?;
+    Some((fill, sink))
+}
+
+/// `<n>_open_impl` as the checks both strides share and a branch to a
+/// never-inlined frame per stride, so each compiles for its own stride.
+#[allow(clippy::too_many_arguments)]
+fn emit_open_frames(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    typing: &Typing,
+    split: &StateSplit,
+    fill: &[Statement],
+    sink: &[Statement],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let sn = snake(func);
+    let inputs = streaming::input_array_names(func);
+    emit_open_sig(o, func, OutMode::Frames, enums);
+    emit_open_validation_head(o, func, OutMode::Core, enums);
+    let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
+    emit_anchor_guard(o);
+    let mut args = inputs.join(", ");
+    args.push_str(", startIdx");
+    for p in &func.optional_inputs {
+        let _ = write!(args, ", {}", p.name);
+    }
+    args.push_str(", outBegIdx, outNBElement");
+    for out in &func.outputs {
+        let _ = write!(args, ", {}", out.name);
+    }
+    let _ = writeln!(o, "        if outStride == 0 {{");
+    let _ = writeln!(o, "            self.{sn}_open_sink_frame({args})");
+    let _ = writeln!(o, "        }} else {{");
+    let _ = writeln!(o, "            self.{sn}_open_fill_frame({args})");
+    let _ = writeln!(o, "        }}");
+    let _ = writeln!(o, "    }}\n");
+    for (mode, frame, body) in [
+        (OutMode::SinkFrame, typing.frame(func, Stride::Zero), sink),
+        (OutMode::FillFrame, typing.frame(func, Stride::One), fill),
+    ] {
+        emit_open_sig(o, func, mode, enums);
+        emit_open_inits(o, func, &model.outputs, &frame, registry, helpers, false);
+        render_open_region(o, func, &frame, body, enums, registry, helpers, counter, &[], &mut |o: &mut String| {
+            emit_capture_and_publish(o, func, model, &model.state, &frame, split, registry, helpers, counter, &[]);
+        });
+        let _ = writeln!(o, "    }}\n");
+    }
 }
 
 /// Doc comment + signature line of `open_internal` (Scalar) / `open_and_fill`
@@ -2180,15 +2320,33 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
         // The merged worker: the union of both entry points' inputs. `startIdx`
         // is a parameter (OpenInternal needs it for sub-stream composition) and
         // `outStride` selects where the per-bar writes land.
-        OutMode::Core => {
+        OutMode::Core | OutMode::Frames => {
             let outs = open_out_params(func);
+            let what = if mode == OutMode::Core { "The single whole-history transcription" } else { "The checks" };
             let _ = writeln!(
                 o,
-                "    /// The single whole-history transcription behind [`Core::{sn}_open_internal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_open_and_fill`] (stride 1, caller slices)."
+                "    /// {what} behind [`Core::{sn}_open_internal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_open_and_fill`] (stride 1, caller slices)."
             );
+            if mode == OutMode::Frames {
+                let _ = writeln!(o, "    /// Each stride then runs in a frame of its own.");
+            }
             let _ = writeln!(
                 o,
                 "    pub(crate) fn {sn}_open_impl(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
+            );
+        }
+        OutMode::SinkFrame | OutMode::FillFrame => {
+            let outs = open_out_params(func);
+            let verb = if mode == OutMode::SinkFrame {
+                let _ = writeln!(o, "    /// Every bar but the last carries the state alone; the last is decided once.");
+                "sink"
+            } else {
+                "fill"
+            };
+            let _ = writeln!(o, "    #[inline(never)]");
+            let _ = writeln!(
+                o,
+                "    fn {sn}_open_{verb}_frame(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
         // Batch parameter order: inputs, optional params, then one slice per
@@ -2335,11 +2493,14 @@ fn emit_open_inits(
     typing: &Typing,
     registry: &Registry,
     helpers: &HelperRegistry,
+    anchor: bool,
 ) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
     let _ = writeln!(o, "        let historyLen: usize = {first}.len();");
-    emit_anchor_guard(o);
+    if anchor {
+        emit_anchor_guard(o);
+    }
     let _ = writeln!(o, "        let endIdx: usize = historyLen - 1;");
     // startIdx is always a parameter of the core: 0 from both public entry
     // points, the caller's own when a composed function opens this as a sub.
@@ -2398,7 +2559,7 @@ fn emit_capture_and_publish(
 /// prologs, `let mut` declarations for every top-level VarDecl, candle
 /// unpacking, VarDecl-init re-emission, then the statements, then `tail`: once
 /// inside each range-type copy, whose locals end with its block.
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 fn emit_open_region(
     o: &mut String,
     func: &FuncDef,
@@ -2412,8 +2573,20 @@ fn emit_open_region(
     inserts: &[(usize, String)],
     tail: &mut dyn FnMut(&mut String),
 ) {
-    // This backend's cleanup sequence, explicit so a pass can be made
-    // conditional later. C states none: every one of these would be wrong there.
+    let folded = fold_open_region(func, typing, body, registry, helpers);
+    render_open_region(o, func, typing, &folded, enums, registry, helpers, counter, inserts, tail);
+}
+
+/// This backend's cleanup sequence over an open region, explicit so a pass can
+/// be made conditional later. C states none: every one of these would be wrong
+/// there.
+fn fold_open_region(
+    func: &FuncDef,
+    typing: &Typing,
+    body: &[Statement],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> Vec<Statement> {
     let admits = |f: &str, a: &[Expr]| super::rust_lang::cross_call_split(f, a, registry).is_some();
     let folded = super::ir_cleanup::drop_answered_cross_call_guards(
         body,
@@ -2421,9 +2594,23 @@ fn emit_open_region(
         Some("Err(RetCode::InsufficientHistory)"),
     );
     let folded = super::ir_cleanup::drop_deallocation(&folded);
-    let folded = respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers);
-    let body: &[Statement] = &folded;
+    respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers)
+}
 
+/// [`emit_open_region`] over a region [`fold_open_region`] already cleaned.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn render_open_region(
+    o: &mut String,
+    func: &FuncDef,
+    typing: &Typing,
+    body: &[Statement],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    inserts: &[(usize, String)],
+    tail: &mut dyn FnMut(&mut String),
+) {
     let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
@@ -2509,6 +2696,11 @@ fn emit_open_region(
                 enums, registry, helpers, counter,
             ));
         }
+    };
+    let render = |o: &mut String, stmts: &[Statement], indent: usize| {
+        let mut t = String::new();
+        render(&mut t, stmts, indent);
+        o.push_str(&super::eager_select::lay_out(&t, false));
     };
     let copies = if inserts.is_empty() { super::rust_lang::range_type_copies(body, func) } else { None };
     let Some(copies) = copies else {
@@ -2846,7 +3038,7 @@ fn emit_capture(
     for name in &model.out_feedback {
         // At stride 0 this resolves to slot 0 — the scalar sink — so the one
         // expression serves both entry points.
-        f.push(format!("lastOut_{name}: {name}[(*outNBElement - 1) * outStride]"));
+        f.push(format!("lastOut_{name}: {}", typing.out_at(name, "*outNBElement - 1")));
     }
     // Seed the value accessor from the same slot: an Open that succeeded
     // produced at least one value, so `value()` is total on a live handle.
@@ -3803,7 +3995,7 @@ fn emit_dual_open(
     let mb = &dmp.mode_b;
     emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
-    emit_open_inits(o, func, &ma.outputs, typing, registry, helpers);
+    emit_open_inits(o, func, &ma.outputs, typing, registry, helpers, true);
 
     let opt_real_params: Vec<String> = func
         .optional_inputs
@@ -3837,7 +4029,7 @@ fn emit_dual_open(
         let mut body: Vec<Statement> = dmp.prologue.to_vec();
         body.extend_from_slice(arm.body);
         body.extend_from_slice(dmp.epilogue);
-        let open_body = build_open_body_rust(arm, &body);
+        let open_body = build_open_body_rust(arm, &eager_selected(func, &body, helpers), true);
         let mut s = String::new();
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let complement = dual_complement_literal(own, other);
@@ -3904,6 +4096,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
         circbuf_len_of: HashMap::new(),
+        stream_step: false,
     }
 }
 
@@ -4150,7 +4343,9 @@ fn emit_dispatch(
                     .join(" ")
             );
             match mode {
-                OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+                OutMode::Core | OutMode::Frames | OutMode::SinkFrame | OutMode::FillFrame => {
+                    unreachable!("dispatch tier is exempt from the merge")
+                }
                 OutMode::Scalar => {
                     let vals: Vec<String> = idp
                         .pairs
@@ -4183,7 +4378,9 @@ fn emit_dispatch(
         // alongside the sub-handle; the fills have already written theirs into
         // the caller's arrays.
         let binding = match mode {
-            OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+            OutMode::Core | OutMode::Frames | OutMode::SinkFrame | OutMode::FillFrame => {
+                unreachable!("dispatch tier is exempt from the merge")
+            }
             OutMode::Scalar => "let (sub, value, subRange)",
             // Exactly one arm runs, so the callee's own `OutRange` IS this
             // call's — carry it out of the match rather than round-tripping it
@@ -4201,7 +4398,9 @@ fn emit_dispatch(
                     .map(|e| render_expr(e, &ctx, &[], registry, helpers))
                     .collect();
                 match mode {
-                    OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+                    OutMode::Core | OutMode::Frames | OutMode::SinkFrame | OutMode::FillFrame => {
+                        unreachable!("dispatch tier is exempt from the merge")
+                    }
                     OutMode::Scalar => {
                         let opts = if opts.is_empty() {
                             String::new()
@@ -4324,7 +4523,9 @@ fn emit_dispatch(
             .join(" ");
         let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub, {cur_seed} }};");
         match mode {
-            OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+            OutMode::Core | OutMode::Frames | OutMode::SinkFrame | OutMode::FillFrame => {
+                unreachable!("dispatch tier is exempt from the merge")
+            }
             OutMode::Scalar => {
                 let _ = writeln!(o, "        Ok(({handle} {{ {cs_ctor}state, out: subRange }}, value))");
             }
@@ -4939,6 +5140,7 @@ fn composed_step_ctx(
         build_step_ctx(func, &[model], typing)
     } else {
         let mut c = typing.ctx.clone();
+        c.stream_step = true;
         for p in &func.optional_inputs {
             if p.param_type == ParamType::Real {
                 c.real_vars.insert(format!("sp.{}", p.name));
@@ -5253,7 +5455,7 @@ fn emit_composed_open(
 
     emit_open_sig(o, func, OutMode::Core, enums);
     emit_open_validation_head(o, func, OutMode::Core, enums);
-    emit_open_inits(o, func, outputs, typing, registry, helpers);
+    emit_open_inits(o, func, outputs, typing, registry, helpers, true);
     // The core already receives real `&mut usize` out-meta under the batch
     // names, so the transcribed tail (deref writes AND sub-call pass-through
     // args) renders exactly like the proven batch text with no shim.

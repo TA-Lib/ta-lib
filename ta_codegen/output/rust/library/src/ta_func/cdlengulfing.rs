@@ -364,8 +364,9 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// The single whole-history transcription behind [`Core::cdlengulfing_open_internal`]
+    /// The checks behind [`Core::cdlengulfing_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cdlengulfing_open_and_fill`] (stride 1, caller slices).
+    /// Each stride then runs in a frame of its own.
     pub(crate) fn cdlengulfing_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlengulfingStream, RetCode> {
@@ -381,6 +382,19 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        if outStride == 0 {
+            self.cdlengulfing_open_sink_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        } else {
+            self.cdlengulfing_open_fill_frame(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger)
+        }
+    }
+
+    /// Every bar but the last carries the state alone; the last is decided once.
+    #[inline(never)]
+    fn cdlengulfing_open_sink_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlengulfingStream, RetCode> {
+        let historyLen: usize = inOpen.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
@@ -410,30 +424,83 @@ impl Core {
         // - first: black (white) real body
         // - second: white (black) real body that engulfs the prior real body
         outIdx = 0;
-        loop {
-            if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
-                (inClose[i] >= inOpen[i - 1] &&
-                  inOpen[i] < inClose[i - 1] ||
-                 inClose[i] > inOpen[i - 1] &&
-                  inOpen[i] <= inClose[i - 1]) ||
-               (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
-                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                (inOpen[i] >= inClose[i - 1] &&
-                  inClose[i] < inOpen[i - 1] ||
-                 inOpen[i] > inClose[i - 1] &&
-                  inClose[i] <= inOpen[i - 1])
-            {
-                if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                } else {
-                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
-                }
-            } else {
-                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
-            }
+        while i < endIdx {
+            outIdx += 1;
             i += 1;
-            if !(i <= endIdx) { break; }
+        }
+        outInteger[0] = std::hint::select_unpredictable((((inClose[i] >= inOpen[i]) & (!(inClose[i - 1] >= inOpen[i - 1])) & // white engulfs black
+            (((inClose[i] >= inOpen[i - 1]) & (inOpen[i] < inClose[i - 1])) | ((inClose[i] > inOpen[i - 1]) & (inOpen[i] <= inClose[i - 1])))) | ((!(inClose[i] >= inOpen[i])) & (inClose[i - 1] >= inOpen[i - 1]) & // black engulfs white
+            (((inOpen[i] >= inClose[i - 1]) & (inClose[i] < inOpen[i - 1])) | ((inOpen[i] > inClose[i - 1]) & (inClose[i] <= inOpen[i - 1]))))), std::hint::select_unpredictable(((inOpen[i] != inClose[i - 1]) & (inClose[i] != inOpen[i - 1])), ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32), 0);
+        outIdx += 1;
+        i += 1;
+        // All done. Indicate the output limits and return.
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
+
+        // Capture the live batch state into the handle.
+        let state = CdlengulfingStreamState {
+            cur_outInteger: outInteger[0],
+            lag1_inOpen: inOpen[historyLen - 1],
+            lag1_inClose: inClose[historyLen - 1],
+        };
+        Ok(CdlengulfingStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+    }
+
+    #[inline(never)]
+    fn cdlengulfing_open_fill_frame(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CdlengulfingStream, RetCode> {
+        let historyLen: usize = inOpen.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut i: usize = 0_usize;
+        let mut outIdx: usize = 0_usize;
+        let mut lookbackTotal: usize = 0_usize;
+        // Identify the minimum number of price bar needed
+        // to calculate at least one output.
+        lookbackTotal = self.cdlengulfing_lookback()?;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < lookbackTotal {
+            startIdx = lookbackTotal;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
+        // Do the calculation using tight loops.
+        // Add-up the initial period, except for the last value.
+        i = startIdx;
+        // Proceed with the calculation for the requested range.
+        // Must have:
+        // - first: black (white) real body
+        // - second: white (black) real body that engulfs the prior real body
+        outIdx = 0;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i - 1..][.._wn + 1];
+            let _w1 = &inOpen[i - 1..][.._wn + 1];
+            let _w2 = &mut outInteger[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w2[_wk] = std::hint::select_unpredictable((((_w0[_wk + 1] >= _w1[_wk + 1]) & (!(_w0[_wk] >= _w1[_wk])) & // white engulfs black
+                    (((_w0[_wk + 1] >= _w1[_wk]) & (_w1[_wk + 1] < _w0[_wk])) | ((_w0[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] <= _w0[_wk])))) | ((!(_w0[_wk + 1] >= _w1[_wk + 1])) & (_w0[_wk] >= _w1[_wk]) & // black engulfs white
+                    (((_w1[_wk + 1] >= _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk])) | ((_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] <= _w1[_wk]))))), std::hint::select_unpredictable(((_w1[_wk + 1] != _w0[_wk]) & (_w0[_wk + 1] != _w1[_wk])), ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100) as i32, ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 80) as i32), 0);
+                outIdx += 1;
+                i += 1;
+            }
+        } else {
+            loop {
+                outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i] >= inOpen[i]) & (!(inClose[i - 1] >= inOpen[i - 1])) & // white engulfs black
+                    (((inClose[i] >= inOpen[i - 1]) & (inOpen[i] < inClose[i - 1])) | ((inClose[i] > inOpen[i - 1]) & (inOpen[i] <= inClose[i - 1])))) | ((!(inClose[i] >= inOpen[i])) & (inClose[i - 1] >= inOpen[i - 1]) & // black engulfs white
+                    (((inOpen[i] >= inClose[i - 1]) & (inClose[i] < inOpen[i - 1])) | ((inOpen[i] > inClose[i - 1]) & (inClose[i] <= inOpen[i - 1]))))), std::hint::select_unpredictable(((inOpen[i] != inClose[i - 1]) & (inClose[i] != inOpen[i - 1])), ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32), 0);
+                outIdx += 1;
+                i += 1;
+                if !(i <= endIdx) { break; }
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
@@ -441,7 +508,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = CdlengulfingStreamState {
-            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+            cur_outInteger: outInteger[*outNBElement - 1],
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inClose: inClose[historyLen - 1],
         };

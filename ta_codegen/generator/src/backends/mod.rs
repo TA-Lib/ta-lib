@@ -52,6 +52,7 @@ pub mod rust_lang;
 pub mod rust_phantom_io;
 pub mod rust_respell;
 pub mod rust_window;
+pub(crate) mod rust_open_frames;
 pub mod rust_stream;
 pub mod stmt_walk;
 pub mod stream_frame;

@@ -434,11 +434,7 @@ impl Core {
         trailingIdx = startIdx - ((optInTimePeriod) as usize);
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            if tempReal != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((inReal[inIdx] / tempReal) as f64);
-            } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
-            }
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(tempReal != 0.0, ((inReal[inIdx] / tempReal) as f64), 0.0);
             inIdx += 1;
         }
         // Set output limits.

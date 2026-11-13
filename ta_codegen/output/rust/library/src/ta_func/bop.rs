@@ -348,11 +348,7 @@ impl Core {
             // and that band zeroed the output for any instrument quoted below it
             // (issue #253).
             tempReal = inHigh[i] - inLow[i];
-            if tempReal <= 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
-            } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inClose[i] - inOpen[i]) / tempReal) as f64);
-            }
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, (((inClose[i] - inOpen[i]) / tempReal) as f64));
         }
         i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;

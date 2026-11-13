@@ -383,11 +383,7 @@ impl Core {
             // 1e-14 band is an absolute threshold and meaningless against an
             // unbounded volume scale. Same reasoning as the prevClose guard in
             // ta_codegen/input/nvi/nvi.c.
-            if inVolume[i] != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inHigh[i] - inLow[i]) / inVolume[i]) as f64);
-            } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
-            }
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = std::hint::select_unpredictable(inVolume[i] != 0.0, (((inHigh[i] - inLow[i]) / inVolume[i]) as f64), 0.0);
         }
         i = (endIdx as usize) + 1;
         (*outBegIdx) = startIdx;
