@@ -98,20 +98,41 @@ fn adapters(s: &mut String, func: &FuncDef) {
     );
 }
 
-fn table_row(func: &FuncDef) -> String {
+/// A whole-range-or-sub-range batch call with defaults, which `restart` makes
+/// for every function, kernel or not.
+fn range_adapter(s: &mut String, func: &FuncDef) {
+    let n = func.name.to_uppercase();
+    let mut args: Vec<String> = (0..input_array_names(func).len()).map(|j| format!("in[{j}]")).collect();
+    args.extend(opt_args(func));
+    let _ = writeln!(
+        s,
+        "static TA_RetCode {n}_rbatch( int s, int e, const double *const *in, void *const *out, int *beg, int *nb )\n{{\n   return TA_{n}( s, e, {}, beg, nb, {} );\n}}\n",
+        args.join(", "),
+        out_casts(func).join(", ")
+    );
+}
+
+fn io_fields(func: &FuncDef) -> String {
     let n = func.name.to_uppercase();
     let ins = input_array_names(func);
     let mut generic = 0;
     let slots: Vec<String> = ins.iter().map(|a| series_slot(a, &mut generic).to_string()).collect();
     let int_flags: Vec<&str> =
         func.outputs.iter().map(|o| if o.param_type == ParamType::Integer { "1" } else { "0" }).collect();
+    format!("\"{n}\", {}, {}, {{ {} }}, {{ {} }}", ins.len(), func.outputs.len(), slots.join(", "), int_flags.join(", "))
+}
+
+fn table_row(func: &FuncDef) -> String {
+    let n = func.name.to_uppercase();
     format!(
-        "   {{ \"{n}\", {}, {}, {{ {} }}, {{ {} }}, {n}_batch, {n}_open, {n}_block, {n}_update, {n}_value, {n}_range, {n}_close }},\n",
-        ins.len(),
-        func.outputs.len(),
-        slots.join(", "),
-        int_flags.join(", ")
+        "   {{ {}, {n}_batch, {n}_open, {n}_block, {n}_update, {n}_value, {n}_range, {n}_close, {n}_rbatch }},\n",
+        io_fields(func)
     )
+}
+
+fn restart_row(func: &FuncDef) -> String {
+    let n = func.name.to_uppercase();
+    format!("   {{ {}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, {n}_rbatch }},\n", io_fields(func))
 }
 
 /// The harness source and the census of which functions got a kernel.
@@ -144,6 +165,14 @@ pub fn generate(funcs: &[FuncDef]) -> (String, String) {
     }
     s.push_str(" */\n");
     s.push_str(HEAD);
+    for f in funcs {
+        assert!(
+            input_array_names(f).len() <= MAX_IO && f.outputs.len() <= MAX_IO,
+            "{}: more inputs or outputs than the harness carries",
+            f.name
+        );
+        range_adapter(&mut s, f);
+    }
     for f in &kerneled {
         assert!(
             input_array_names(f).len() <= MAX_IO && f.outputs.len() <= MAX_IO,
@@ -157,6 +186,11 @@ pub fn generate(funcs: &[FuncDef]) -> (String, String) {
         s.push_str(&table_row(f));
     }
     s.push_str("};\n#define NKFUNC ((int)(sizeof(kfuncs) / sizeof(kfuncs[0])))\n\n");
+    s.push_str("static const KFunc rfuncs[] = {\n");
+    for f in funcs {
+        s.push_str(&restart_row(f));
+    }
+    s.push_str("};\n#define NRFUNC ((int)(sizeof(rfuncs) / sizeof(rfuncs[0])))\n\n");
     s.push_str(DRIVER);
     (s, census)
 }
@@ -196,6 +230,7 @@ typedef TA_RetCode (*UpdateFn)( void *h, const double *bar, void *const *out );
 typedef TA_RetCode (*ValueFn)( const void *h, void *const *out );
 typedef TA_RetCode (*RangeFn)( const void *h, int *beg, int *nb );
 typedef TA_RetCode (*CloseFn)( void *h );
+typedef TA_RetCode (*RBatchFn)( int s, int e, const double *const *in, void *const *out, int *beg, int *nb );
 
 typedef struct {
    const char *name;
@@ -209,6 +244,7 @@ typedef struct {
    ValueFn value;
    RangeFn range;
    CloseFn close;
+   RBatchFn rbatch;
 } KFunc;
 
 "#;
@@ -638,6 +674,203 @@ static int runTime( int points, int block, int maxreps )
    return 0;
 }
 
+/* restart: is a batch call over [s, e] bitwise the same bars as one call over
+ * the whole range? */
+typedef struct {
+   int found, start, bar, k, count;
+   double maxRel;
+   char refTxt[64], gotTxt[64];
+} RDiff;
+
+static void elemText( const KFunc *f, int k, const void *p, char *buf, size_t len )
+{
+   if( f->outInt[k] )
+      snprintf( buf, len, "%d", *(const int *)p );
+   else
+      snprintf( buf, len, "%.17g", *(const double *)p );
+}
+
+static double relDiff( const KFunc *f, int k, const void *a, const void *b )
+{
+   double x, y, m;
+   if( f->outInt[k] )
+   {
+      x = *(const int *)a;
+      y = *(const int *)b;
+   }
+   else
+   {
+      x = *(const double *)a;
+      y = *(const double *)b;
+   }
+   if( x != x || y != y )
+      return x != x && y != y ? 0.0 : HUGE_VAL;
+   m = fabs( x ) > fabs( y ) ? fabs( x ) : fabs( y );
+   return m > 0.0 ? fabs( x - y ) / m : 0.0;
+}
+
+static void noteRange( RDiff *d, int s, const char *what )
+{
+   d->count++;
+   if( !d->found )
+   {
+      d->found = 1;
+      d->start = s;
+      d->bar = s;
+      d->k = 0;
+      snprintf( d->refTxt, sizeof d->refTxt, "%s", "range" );
+      snprintf( d->gotTxt, sizeof d->gotTxt, "%s", what );
+   }
+   d->maxRel = HUGE_VAL;
+}
+
+/* Calls [s, e] and compares it with ref, whose first bar is refBeg. */
+static void restartCall( const KFunc *f, const double *const *in, int s, int e, void *const *ref, int refBeg,
+                         void *const *got, RDiff *d )
+{
+   char what[64];
+   int beg = -1, nb = -1, i, k, bad;
+   double r;
+   TA_RetCode rc = f->rbatch( s, e, in, got, &beg, &nb );
+   if( rc != TA_SUCCESS || beg != s || nb != e - s + 1 )
+   {
+      snprintf( what, sizeof what, "rc %d outBegIdx %d outNBElement %d", (int)rc, beg, nb );
+      noteRange( d, s, what );
+      return;
+   }
+   for( i = 0; i < nb; i++ )
+   {
+      bad = 0;
+      for( k = 0; k < f->nOut; k++ )
+      {
+         const void *a = at( ref[k], f, k, s - refBeg + i ), *b = at( got[k], f, k, i );
+         if( memcmp( a, b, esz( f, k ) ) == 0 )
+            continue;
+         r = relDiff( f, k, a, b );
+         if( r > d->maxRel )
+            d->maxRel = r;
+         if( !d->found )
+         {
+            d->found = 1;
+            d->start = s;
+            d->bar = s + i;
+            d->k = k;
+            elemText( f, k, a, d->refTxt, sizeof d->refTxt );
+            elemText( f, k, b, d->gotTxt, sizeof d->gotTxt );
+         }
+         bad = 1;
+      }
+      d->count += bad;
+   }
+}
+
+/* 0 exact, 1 differs, 2 skipped. */
+static int restartOne( const KFunc *f, double *const *series, int n, void *const *ref, void *const *got, const char *shape )
+{
+   static const int offs[8] = { 1, 2, 7, 63, 64, 65, 500, 1000 };
+   const double *in[MAX_IO];
+   RDiff d;
+   int beg = 0, nb = 0, j, s, tried = 0;
+   TA_RetCode rc;
+
+   memset( &d, 0, sizeof d );
+   shiftIn( f, series, 0, in );
+   rc = f->rbatch( 0, n - 1, in, ref, &beg, &nb );
+   if( rc != TA_SUCCESS || nb <= 0 )
+   {
+      printf( "%s: %s skipped: batch returned %d with %d outputs\n", shape, f->name, (int)rc, nb );
+      return 2;
+   }
+   if( beg + nb != n )
+   {
+      printf( "%s: %s skipped: whole-range output ends at bar %d, not %d\n", shape, f->name, beg + nb - 1, n - 1 );
+      return 2;
+   }
+   for( j = 0; j < 9; j++ )
+   {
+      s = j < 8 ? beg + offs[j] : n - 2;
+      if( s <= beg || s > n - 1 || (j == 8 && s == beg + offs[7]) )
+         continue;
+      restartCall( f, in, s, n - 1, ref, beg, got, &d );
+      tried++;
+   }
+   s = beg + 100;
+   if( s + 511 <= n - 1 )
+   {
+      restartCall( f, in, s, s + 511, ref, beg, got, &d );
+      tried++;
+   }
+   if( !tried )
+   {
+      printf( "%s: %s skipped: no restart start after outBegIdx %d\n", shape, f->name, beg );
+      return 2;
+   }
+   if( !d.found )
+   {
+      printf( "%s: %s exact\n", shape, f->name );
+      return 0;
+   }
+   printf( "%s: %s differs at start %d bar %d output %d: %s vs %s (first of %d differing bars over all starts; max |rel "
+           "diff| %.3g)\n",
+           shape, f->name, d.start, d.bar, d.k, d.refTxt, d.gotTxt, d.count, d.maxRel );
+   return 1;
+}
+
+/* Every price and the volume of one bar in 97 times 1000, still in cents. */
+static void spikeSeries( int n, double *const *s )
+{
+   int i, q;
+   for( i = 48; i < n; i += 97 )
+      for( q = 0; q < NSERIES; q++ )
+         s[q][i] = cents( s[q][i] * 1000.0 );
+}
+
+static int runRestart( void )
+{
+   static const char *const verdict[3] = { "exact", "differs", "skipped" };
+   const int n = 3000;
+   double *series[NSERIES];
+   void *ref[MAX_IO], *got[MAX_IO];
+   int *res[2], sh, fi, tot[2][3], both = 0, anyDiff = 0, skippedBoth = 0;
+   const char *shapes[2] = { "walk", "spike" };
+
+   allocSeries( series, (size_t)n );
+   allocOuts( ref, (size_t)n );
+   allocOuts( got, (size_t)n );
+   memset( tot, 0, sizeof tot );
+   for( sh = 0; sh < 2; sh++ )
+   {
+      res[sh] = calloc( (size_t)NRFUNC, sizeof(int) );
+      if( !res[sh] )
+         return 2;
+      makeSeries( 1, n, series );
+      if( sh == 1 )
+         spikeSeries( n, series );
+      for( fi = 0; fi < NRFUNC; fi++ )
+      {
+         res[sh][fi] = restartOne( &rfuncs[fi], series, n, ref, got, shapes[sh] );
+         tot[sh][res[sh][fi]]++;
+      }
+      printf( "%s: %d exact, %d differs, %d skipped of %d\n", shapes[sh], tot[sh][0], tot[sh][1], tot[sh][2], NRFUNC );
+      fflush( stdout );
+   }
+   printf( "\nverdicts:\n" );
+   for( fi = 0; fi < NRFUNC; fi++ )
+   {
+      int w = res[0][fi], p = res[1][fi], k, ints = 0;
+      for( k = 0; k < rfuncs[fi].nOut; k++ )
+         ints += rfuncs[fi].outInt[k];
+      printf( "%s walk: %s, spike: %s [%s]\n", rfuncs[fi].name, verdict[w], verdict[p],
+              ints == 0 ? "real" : ints == rfuncs[fi].nOut ? "integer" : "mixed" );
+      both += w == 0 && p == 0;
+      anyDiff += w == 1 || p == 1;
+      skippedBoth += w != 1 && p != 1 && (w == 2 || p == 2);
+   }
+   printf( "restart: %d exact on both shapes, %d differ on at least one, %d skipped (no difference seen) of %d\n", both,
+           anyDiff, skippedBoth, NRFUNC );
+   return 0;
+}
+
 int main( int argc, char **argv )
 {
    if( TA_Initialize() != TA_SUCCESS )
@@ -649,6 +882,8 @@ int main( int argc, char **argv )
 #endif
    if( argc >= 2 && strcmp( argv[1], "check" ) == 0 )
       return runCheck();
+   if( argc >= 2 && strcmp( argv[1], "restart" ) == 0 )
+      return runRestart();
    if( argc >= 5 && strcmp( argv[1], "time" ) == 0 )
       return runTime( atoi( argv[2] ), atoi( argv[3] ), atoi( argv[4] ) );
    if( argc >= 3 && strcmp( argv[1], "spin" ) == 0 )
@@ -659,7 +894,7 @@ int main( int argc, char **argv )
          x += 1.0;
       return 0;
    }
-   printf( "usage: kern_harness check | time <points> <block> <maxreps> | spin <secs>\n"
+   printf( "usage: kern_harness check | restart | time <points> <block> <maxreps> | spin <secs>\n"
            "env: KERN_PERIOD (every optInTimePeriod), KERN_WARM_MS (time; default 300)\n" );
    return 2;
 }
