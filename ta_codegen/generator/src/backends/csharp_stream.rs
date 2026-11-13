@@ -576,12 +576,12 @@ fn emit_loop_shape(
     );
     emit_handle_class(o, func, &fields, &SubMembers::none(), frame.as_deref());
     emit_step(o, func, model, &step_settings, stream_fma, enums, registry, helpers, counter);
-    emit_open_body(
+    let sink_frame = emit_open_body(
         o, func, model, body, &fields, &step_settings, stream_fma, enums, registry, helpers,
         counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, model.open_needs_last_bar_only(), enums);
+    emit_open_wrappers(o, func, true, model.open_needs_last_bar_only(), sink_frame, enums);
 }
 
 /// Prefix every non-empty line of `s` with `extra` spaces — cosmetic re-indent
@@ -1805,10 +1805,11 @@ fn emit_out_meta_seed(o: &mut String) {
 }
 
 /// Output mode for the open family (mirrors `c_stream` / `java_stream`).
-/// `Core` is the ONE transcription both entry points share: output writes are
-/// subscripted `out[<idx> * outStride]`, so the filling entries pass stride 1
-/// and the caller's arrays while `OpenInternal` passes stride 0 and a
-/// one-element sink whose slot 0 ends holding the last history value.
+/// `Core` is the strided transcription: output writes are subscripted
+/// `out[<idx> * outStride]`, so the filling entries pass stride 1 and the
+/// caller's arrays while `OpenInternal` passes stride 0 and a one-element sink
+/// whose slot 0 ends holding the last history value, unless a sink frame serves
+/// it.
 /// `Scalar`/`Fill`/`FillInternal` survive as signature selectors for the two
 /// exempt tiers (`Dispatch`, `PeriodBank`), which hand-roll a body per entry.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1841,12 +1842,31 @@ fn map_open_return(v: &str) -> String {
     }
 }
 
+/// Where an open's output writes land.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Stride {
+    /// `outStride`, a parameter.
+    Param,
+    /// The one-element sink of the stride-0 frame.
+    Zero,
+}
+
+impl Stride {
+    /// Output `name` at the write that holds bar `bar` of the fill.
+    fn out_at(self, name: &str, bar: &str) -> String {
+        match self {
+            Stride::Param => format!("{name}[({bar}) * outStride]"),
+            Stride::Zero => format!("{name}[0]"),
+        }
+    }
+}
+
 /// Transcribe a batch body region for the C# open: output-array writes scaled by
-/// `outStride`, previous-output feedback reads scaled the same way, early-success
-/// returns mapped, the final top-level return dropped (capture +
-/// `return RetCode.Success` replace it), and the body's own dead identity branch
-/// deleted.
-fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
+/// `outStride` (unless `strided` is false: then every output index stays plain),
+/// previous-output feedback reads scaled the same way, early-success returns
+/// mapped, the final top-level return dropped (capture + `return RetCode.Success`
+/// replace it), and the body's own dead identity branch deleted.
+fn build_open_body_cs(model: &StreamModel, body: &[Statement], strided: bool) -> Vec<Statement> {
     let outputs = model.outputs.clone();
     let fb_outputs = model.out_feedback.clone();
     let fe = move |e: Expr| -> Expr {
@@ -1854,7 +1874,7 @@ fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement>
             // Previous-output feedback read, scaled like the writes: at stride 0
             // it reads slot 0, which still holds the previous bar's value.
             Expr::ArrayAccess(nm, idx)
-                if fb_outputs.contains(&nm) && streaming::is_prev_output_read(&idx) =>
+                if strided && fb_outputs.contains(&nm) && streaming::is_prev_output_read(&idx) =>
             {
                 Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx)))
             }
@@ -1868,7 +1888,7 @@ fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement>
                 value,
                 compound,
             } if outputs.contains(&nm) => Some(Statement::Assign {
-                target: Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx))),
+                target: Expr::ArrayAccess(nm, Box::new(if strided { scale_by_stride(*idx) } else { *idx })),
                 value,
                 compound,
             }),
@@ -1892,6 +1912,7 @@ fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement>
 }
 
 /// The open-body emitter: the merged `private RetCode <base>OpenImpl(...)`.
+/// Answers whether it also emitted a sink frame.
 #[allow(clippy::too_many_arguments)]
 fn emit_open_body(
     o: &mut String,
@@ -1905,10 +1926,11 @@ fn emit_open_body(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-) {
+) -> bool {
+    let sink = sink_frame_body(func, model, body, registry, helpers);
     emit_open_body_sig(o, func, OutMode::Core);
     emit_out_meta_seed(o);
-    let open_body = cleanup_open_body(&build_open_body_cs(model, body), registry);
+    let open_body = cleanup_open_body(&build_open_body_cs(model, body, true), registry);
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
     emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
     emit_open_region(
@@ -1916,12 +1938,86 @@ fn emit_open_body(
         &mut |o: &mut String| {
             emit_capture(
                 o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
-                Some(CurSource::StridedArray), "",
+                Some(CurSource::Out(Stride::Param)), "",
             );
         },
     );
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
+    let Some(sink) = sink else { return false };
+    emit_sink_frame(o, func, model, &sink, step_settings, stream_fma, enums, registry, helpers, counter);
+    true
+}
+
+/// A candlestick opener's stride-0 region, from [`super::open_frames::sink_body`]
+/// over its unstrided region. `None` leaves stride 0 to the strided body.
+fn sink_frame_body(
+    func: &FuncDef,
+    model: &StreamModel,
+    body: &[Statement],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> Option<Vec<Statement>> {
+    if !super::open_frames::is_framed(func, model) {
+        return None;
+    }
+    let fill = cleanup_open_body(&build_open_body_cs(model, body, false), registry);
+    let outputs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
+    let pure = |n: &str| super::open_frames::is_pure_call(n, helpers);
+    super::open_frames::sink_body(&fill, &outputs, &pure)
+}
+
+/// `<Base>OpenSinkFrame`: `OpenInternal`'s opener, which runs `OpenImpl`'s
+/// checks itself.
+#[allow(clippy::too_many_arguments)]
+fn emit_sink_frame(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    sink: &[Statement],
+    step_settings: &BTreeSet<String>,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    emit_sink_frame_sig(o, func);
+    emit_out_meta_seed(o);
+    emit_body_decls(o, func, sink);
+    emit_open_head(o, func, &model.outputs);
+    emit_open_validation(o, func, OutMode::Core, enums);
+    emit_anchor_guard(o);
+    emit_extras_and_candle(o, func, sink, registry, helpers, counter, stream_fma);
+    emit_open_region(
+        o, func, sink, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
+        &mut |o: &mut String| {
+            emit_capture(
+                o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter,
+                Some(CurSource::Out(Stride::Zero)), "",
+            );
+        },
+    );
+    let _ = writeln!(o, "      return RetCode.Success;");
+    let _ = writeln!(o, "   }}");
+}
+
+/// The sink frame's signature: `Core`'s without the stride.
+fn emit_sink_frame_sig(o: &mut String, func: &FuncDef) {
+    let base = pascal_words(&base_name(func));
+    let class = stream_class_name(func);
+    let mut params: Vec<String> = vec![format!("{class} sp")];
+    for input in streaming::input_array_names(func) {
+        params.push(format!("{} {input}", cs_series_in("double")));
+    }
+    params.push("int startIdx".to_string());
+    for p in &func.optional_inputs {
+        params.push(format!("{} {}", opt_param_type_str(p), p.name));
+    }
+    push_out_tail(&mut params, func);
+    o.push('\n');
+    let _ = writeln!(o, "   private RetCode {base}OpenSinkFrame( {} )", params.join(", "));
+    let _ = writeln!(o, "   {{");
 }
 
 /// The open-body signature. `Scalar` takes sp + inputs + startIdx + opts;
@@ -2517,13 +2613,9 @@ fn emit_capture(
             let _ = writeln!(o, "      sp.{name} = {name};");
         }
     }
+    let stride = CurSource::stride(cur_source);
     for name in &model.out_feedback {
-        // At stride 0 this resolves to slot 0 — the scalar sink — so the one
-        // expression serves both entry points.
-        let _ = writeln!(
-            o,
-            "      sp.lastOut_{name} = {name}[(outNBElement - 1) * outStride];"
-        );
+        let _ = writeln!(o, "      sp.lastOut_{name} = {};", stride.out_at(name, "outNBElement - 1"));
     }
     for lag in &model.lags {
         for k in 1..=lag.depth {
@@ -2587,18 +2679,28 @@ fn emit_capture(
 /// Where the open seeds the handle's `cur_*` fields from.
 #[derive(Clone, Copy)]
 enum CurSource {
-    /// The merged core's output slot, stride-scaled: the caller array's last
-    /// valid element at stride 1, the one-element sink's slot 0 at stride 0.
-    StridedArray,
+    /// The open's own output slot: the caller array's last valid element at
+    /// stride 1, the one-element sink's slot 0 at stride 0.
+    Out(Stride),
     /// The composed tier's `sc_<out>` scratch array.
     Scratch,
+}
+
+impl CurSource {
+    /// The slot an open's outputs are read back from.
+    fn stride(source: Option<Self>) -> Stride {
+        match source {
+            Some(CurSource::Out(stride)) => stride,
+            _ => Stride::Param,
+        }
+    }
 }
 
 /// Seed `sp.cur_*` at the end of an open body.
 fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
     for out in outputs {
         let expr = match source {
-            CurSource::StridedArray => format!("{out}[(outNBElement - 1) * outStride]"),
+            CurSource::Out(stride) => stride.out_at(out, "outNBElement - 1"),
             CurSource::Scratch => format!("sc_{out}[outNBElement - 1]"),
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
@@ -2808,20 +2910,22 @@ fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
 /// `OpenInternal` (the anchored plain open), the public `<base>Open`, and the
 /// public `<base>OpenAndFill`.
 ///
-/// `merged` says whether this function owns a `Core` — one stride-parameterized
-/// `<base>OpenImpl` every entry point reaches. When it does, the two internal
-/// seams ARE the implementation: `OpenInternal` synthesizes a one-element sink
-/// per output and calls the numerics at stride 0, and the public `OpenAndFill`
-/// hoists the aliasing guard and delegates to `OpenAndFillInternal`, exactly as
-/// `Open` delegates to `OpenInternal`. That symmetry is what makes the
-/// anchored fill seam reachable for every function rather than only the sixteen
-/// something composes over. Mirrors `java_stream::emit_open_wrappers`.
+/// `merged` says whether this function owns a `Core`, one stride-parameterized
+/// `<base>OpenImpl`. When it does, the two internal seams ARE the
+/// implementation: `OpenInternal` synthesizes a one-element sink per output and
+/// calls the numerics at stride 0, or the sink frame where there is one, and
+/// the public `OpenAndFill` hoists the aliasing guard and delegates to
+/// `OpenAndFillInternal`, exactly as `Open` delegates to `OpenInternal`. That
+/// symmetry is what makes the anchored fill seam reachable for every function
+/// rather than only the sixteen something composes over. Mirrors
+/// `java_stream::emit_open_wrappers`.
 #[allow(clippy::too_many_lines)]
 fn emit_open_wrappers(
     o: &mut String,
     func: &FuncDef,
     merged: bool,
     last_bar_only: bool,
+    sink_frame: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
     let base = pascal_words(&base_name(func));
@@ -2886,8 +2990,12 @@ fn emit_open_wrappers(
         }
         // Stride 0 lands every per-bar write on slot 0, so after the replay it
         // holds the last history value — what `sp.cur_*` is seeded from.
-        args.push("0".to_string());
-        let _ = writeln!(o, "      RetCode retCode = {cbase}OpenImpl({});", args.join(", "));
+        let call = if sink_frame {
+            format!("{cbase}OpenSinkFrame({})", args.join(", "))
+        } else {
+            format!("{cbase}OpenImpl({}, 0)", args.join(", "))
+        };
+        let _ = writeln!(o, "      RetCode retCode = {call};");
         if last_bar_only {
             let _ = writeln!(on_success, "         sp.outRangeBegIdx = Math.Max(startIdx, {});", lookback_call(func));
             let _ = writeln!(on_success, "         sp.outRangeCount = {history}.Length - sp.outRangeBegIdx;");
@@ -3314,7 +3422,7 @@ fn emit_dual_mode(
             let mut body: Vec<Statement> = dmp.prologue.to_vec();
             body.extend_from_slice(arm.body);
             body.extend_from_slice(dmp.epilogue);
-            let open_body = cleanup_open_body(&build_open_body_cs(arm, &body), registry);
+            let open_body = cleanup_open_body(&build_open_body_cs(arm, &body, true), registry);
             let mut s = String::new();
             emit_body_decls(&mut s, func, &open_body);
             emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
@@ -3326,7 +3434,7 @@ fn emit_dual_mode(
                 &mut |s: &mut String| {
                     emit_capture(
                         s, func, arm, &union_scalars, &step_settings, registry, helpers, stream_fma,
-                        counter, Some(CurSource::StridedArray), &complement,
+                        counter, Some(CurSource::Out(Stride::Param)), &complement,
                     );
                 },
             );
@@ -3338,7 +3446,7 @@ fn emit_dual_mode(
     }
     emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func, true, false, enums);
+    emit_open_wrappers(o, func, true, false, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -3688,7 +3796,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func, false, false, enums);
+    emit_open_wrappers(o, func, false, false, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
 }
 
@@ -4329,7 +4437,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func, false, false, enums);
+    emit_open_wrappers(o, func, false, false, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -5104,5 +5212,5 @@ fn emit_composed(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, false, enums);
+    emit_open_wrappers(o, func, true, false, false, enums);
 }

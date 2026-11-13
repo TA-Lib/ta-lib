@@ -653,6 +653,86 @@ public partial class Core
       return RetCode.Success;
    }
 
+   private RetCode Cdl3outsideOpenSinkFrame( Cdl3outsideStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen > IndexMax + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( startIdx >= historyLen ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = Cdl3outsideLookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first: black (white) real body
+       * - second: white (black) real body that engulfs the prior real body
+       * - third: candle that closes higher (lower) than the second candle
+       */
+      outIdx = 0;
+      while( i < endIdx ) {
+         outIdx += 1;
+         i += 1;
+      }
+      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
+           inClose[i - 1] > inOpen[i - 2] &&
+           inOpen[i - 1] < inClose[i - 2] &&
+           inClose[i] > inClose[i - 1] ||                        /* third candle higher */
+          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
+           inOpen[i - 1] > inClose[i - 2] &&
+           inClose[i - 1] < inOpen[i - 2] &&
+           inClose[i] < inClose[i - 1] )                         /* third candle lower */
+      {
+         outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+         outIdx += 1;
+      } else {
+         outInteger[0] = 0;
+         outIdx += 1;
+      }
+      i += 1;
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      sp.lag1_inOpen = inOpen[historyLen - 1];
+      sp.lag2_inOpen = inOpen[historyLen - 2];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.lag2_inClose = inClose[historyLen - 2];
+      sp.cur_outInteger = outInteger[0];
+      return RetCode.Success;
+   }
+
    /* Cdl3outsideOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal Cdl3outsideStream Cdl3outsideOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
@@ -674,7 +754,7 @@ public partial class Core
    {
       Cdl3outsideStream sp = new Cdl3outsideStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = Cdl3outsideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = Cdl3outsideOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {

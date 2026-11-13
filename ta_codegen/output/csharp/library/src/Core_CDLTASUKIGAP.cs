@@ -1408,6 +1408,455 @@ public partial class Core
       return RetCode.Success;
    }
 
+   private RetCode CdltasukigapOpenSinkFrame( CdltasukigapStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double NearPeriodTotal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int NearTrailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen > IndexMax + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( startIdx >= historyLen ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory;
+      }
+      int Near_rangeType = (int)this._candleSettings[(int)CandleSettingType.Near]._rangeType;
+      int Near_avgPeriod = this._candleSettings[(int)CandleSettingType.Near]._avgPeriod;
+      double Near_factor = this._candleSettings[(int)CandleSettingType.Near]._factor;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = CdltasukigapLookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.InsufficientHistory ;
+      }
+      if( Near_rangeType == 0 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx ) {
+            NearPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - upside (downside) gap
+          * - first candle after the window: white (black) candlestick
+          * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+          *   the previous real body inside the gap
+          * - the size of two real bodies should be near the same
+          * The meaning of "near" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         while( i < endIdx ) {
+            outIdx += 1;
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            NearPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1])) - (Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]));
+            i += 1;
+            NearTrailingIdx += 1;
+         }
+         if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                         /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                        /* and closes under the white rb */
+                inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 1] - inOpen[i - 1]))) / 1.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                        /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                        /* and closes above the black rb */
+                inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (Math.Abs(inClose[i - 1] - inOpen[i - 1]))) / 1.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else {
+            outInteger[0] = 0;
+            outIdx += 1;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += (Math.Abs(inClose[i - 1] - inOpen[i - 1])) - (Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1]));
+         i += 1;
+         NearTrailingIdx += 1;
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[0];
+      } else if( Near_rangeType == 1 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx ) {
+            NearPeriodTotal += (inHigh[i - 1] - inLow[i - 1]);
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - upside (downside) gap
+          * - first candle after the window: white (black) candlestick
+          * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+          *   the previous real body inside the gap
+          * - the size of two real bodies should be near the same
+          * The meaning of "near" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         while( i < endIdx ) {
+            outIdx += 1;
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            NearPeriodTotal += (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]);
+            i += 1;
+            NearTrailingIdx += 1;
+         }
+         if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                         /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                        /* and closes under the white rb */
+                inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                        /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                        /* and closes above the black rb */
+                inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : (inHigh[i - 1] - inLow[i - 1])) / 1.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else {
+            outInteger[0] = 0;
+            outIdx += 1;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += (inHigh[i - 1] - inLow[i - 1]) - (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]);
+         i += 1;
+         NearTrailingIdx += 1;
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[0];
+      } else if( Near_rangeType == 2 ) {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx ) {
+            NearPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - upside (downside) gap
+          * - first candle after the window: white (black) candlestick
+          * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+          *   the previous real body inside the gap
+          * - the size of two real bodies should be near the same
+          * The meaning of "near" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         while( i < endIdx ) {
+            outIdx += 1;
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            NearPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1]));
+            i += 1;
+            NearTrailingIdx += 1;
+         }
+         if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                         /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                        /* and closes under the white rb */
+                inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]))) / 2.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                        /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                        /* and closes above the black rb */
+                inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1]))) / 2.0))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else {
+            outInteger[0] = 0;
+            outIdx += 1;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) - ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1]));
+         i += 1;
+         NearTrailingIdx += 1;
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[0];
+      } else {
+         /* Do the calculation using tight loops. */
+         /* Add-up the initial period, except for the last value. */
+         NearPeriodTotal = 0;
+         NearTrailingIdx = startIdx - Near_avgPeriod;
+         i = NearTrailingIdx;
+         while( i < startIdx ) {
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+            i += 1;
+         }
+         i = startIdx;
+         /* Proceed with the calculation for the requested range.
+          * Must have:
+          * - upside (downside) gap
+          * - first candle after the window: white (black) candlestick
+          * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+          *   the previous real body inside the gap
+          * - the size of two real bodies should be near the same
+          * The meaning of "near" is specified with TA_SetCandleSettings
+          */
+         outIdx = 0;
+         while( i < endIdx ) {
+            outIdx += 1;
+            /* add the current range and subtract the first range: this is done after the pattern recognition
+             * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+             */
+            NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+            i += 1;
+            NearTrailingIdx += 1;
+         }
+         if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                         /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                        /* and closes under the white rb */
+                inClose[i] > MaxGt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                        /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                        /* and closes above the black rb */
+                inClose[i] < MinLt(inClose[i - 2], inOpen[i - 2]) && /* inside the gap */
+                Math.Abs(Math.Abs(inClose[i - 1] - inOpen[i - 1]) - Math.Abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* size of 2 rb near the same */
+            {
+               outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+               outIdx += 1;
+            } else {
+               outInteger[0] = 0;
+               outIdx += 1;
+            }
+         } else {
+            outInteger[0] = 0;
+            outIdx += 1;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+         i += 1;
+         NearTrailingIdx += 1;
+         /* All done. Indicate the output limits and return. */
+         outNBElement = outIdx;
+         outBegIdx = startIdx;
+         /* Capture the live batch state into the handle. */
+         int capLag_NearTrailingIdx = i - NearTrailingIdx;
+         int cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
+         if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
+            return RetCode.InternalError;
+         }
+         int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
+         double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
+         for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
+            capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+         }
+         sp.NearPeriodTotal = NearPeriodTotal;
+         sp.lag1_inOpen = inOpen[historyLen - 1];
+         sp.lag2_inOpen = inOpen[historyLen - 2];
+         sp.lag1_inHigh = inHigh[historyLen - 1];
+         sp.lag1_inLow = inLow[historyLen - 1];
+         sp.lag1_inClose = inClose[historyLen - 1];
+         sp.lag2_inClose = inClose[historyLen - 2];
+         sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+         sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+         sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+         sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+         sp.cs_Near_rangeType = Near_rangeType;
+         sp.cs_Near_avgPeriod = Near_avgPeriod;
+         sp.cs_Near_factor = Near_factor;
+         sp.cur_outInteger = outInteger[0];
+      }
+      return RetCode.Success;
+   }
+
    /* CdltasukigapOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CdltasukigapStream CdltasukigapOpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
@@ -1429,7 +1878,7 @@ public partial class Core
    {
       CdltasukigapStream sp = new CdltasukigapStream(this);
       int[] sink_outInteger = new int[1];
-      RetCode retCode = CdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger, 0);
+      RetCode retCode = CdltasukigapOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outInteger);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {

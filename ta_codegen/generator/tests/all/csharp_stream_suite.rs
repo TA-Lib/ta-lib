@@ -75,7 +75,7 @@ fn csharp_open_family_is_one_core_with_three_entries() {
     // The public fill reaches the numerics through the anchored seam, which is
     // what keeps that seam reachable for every function.
     for (entry, callee) in [
-        ("internal CdlhammerStream CdlhammerOpenInternal(", "CdlhammerOpenImpl("),
+        ("internal CdlhammerStream CdlhammerOpenInternal(", "CdlhammerOpenSinkFrame("),
         ("internal CdlhammerStream CdlhammerOpenAndFillInternal(", "CdlhammerOpenImpl("),
         ("public CdlhammerStream CdlhammerOpenAndFill(", "CdlhammerOpenAndFillInternal("),
         ("public CdlhammerStream CdlhammerOpen(", "CdlhammerOpenInternal("),
@@ -90,21 +90,130 @@ fn csharp_open_family_is_one_core_with_three_entries() {
 
 #[test]
 fn csharp_plain_open_uses_a_one_element_sink_at_stride_zero() {
-    let s = section("cdlhammer");
-    let body = body_of(&s, "internal CdlhammerStream CdlhammerOpenInternal(");
+    let s = section("cdlhikkake");
+    assert!(!s.contains("CdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
+    let body = body_of(&s, "internal CdlhikkakeStream CdlhikkakeOpenInternal(");
     assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
     assert!(body.contains(", 0);"), "the plain open passes stride 0:\n{body}");
-    let fill = body_of(&s, "internal CdlhammerStream CdlhammerOpenAndFillInternal(");
+    let fill = body_of(&s, "internal CdlhikkakeStream CdlhikkakeOpenAndFillInternal(");
     assert!(fill.contains(", 1);"), "the anchored fill passes stride 1:\n{fill}");
 }
 
 #[test]
 fn csharp_output_writes_are_stride_scaled() {
-    let s = section("cdlhammer");
+    let s = section("cdlhikkake");
+    assert!(!s.contains("CdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
     assert!(
-        s.contains("outInteger[outIdx++ * outStride] = 100;"),
+        s.contains("outInteger[outIdx++ * outStride] = 0;"),
         "per-bar output writes scale by the stride"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Split candlestick openers
+// ---------------------------------------------------------------------------
+
+/// Every streaming candlestick: its C# base name and stream section.
+fn candlestick_sections() -> Vec<(String, String)> {
+    let mut names: Vec<String> = common::discover_indicators()
+        .into_iter()
+        .filter(|n| {
+            let (func, _) = load(n);
+            func.streaming && func.is_candlestick()
+        })
+        .collect();
+    names.sort();
+    names
+        .into_iter()
+        .map(|n| {
+            let s = section(&n);
+            let at = s.find("private RetCode ").expect("an opener") + "private RetCode ".len();
+            let base = s[at..at + s[at..].find("OpenImpl(").expect("the opener is OpenImpl")].to_string();
+            (base, s)
+        })
+        .collect()
+}
+
+#[test]
+fn a_csharp_candlestick_open_internal_calls_its_sink_frame() {
+    let (mut framed, mut single) = (0usize, 0usize);
+    for (base, s) in candlestick_sections() {
+        let open = common::strip_block_comments(&body_of(&s, &format!("private RetCode {base}OpenImpl(")));
+        let sink = format!("private RetCode {base}OpenSinkFrame(");
+        assert!(!s.contains(&format!("{base}OpenFillFrame(")), "{base}: stride 1 runs the strided body, not a frame");
+        assert!(open.contains("* outStride] = "), "{base}: the opener keeps its strided body");
+        if !s.contains(&sink) {
+            single += 1;
+            continue;
+        }
+        framed += 1;
+        let internal = body_of(&s, &format!("Stream {base}OpenInternal("));
+        assert!(
+            internal.contains(&format!("{base}OpenSinkFrame(")) && !internal.contains(&format!("{base}OpenImpl(")),
+            "{base}OpenInternal opens through the sink frame:\n{internal}"
+        );
+        assert!(!common::calls_an_opener(&open, &base), "{base}OpenImpl calls another opener:\n{open}");
+        assert!(common::stride_only_scales(&open), "{base}OpenImpl branches on its stride:\n{open}");
+        let frame = common::strip_block_comments(&body_of(&s, &sink));
+        let guard = frame.find("if( startIdx >= historyLen ) {").unwrap_or_else(|| panic!("{base}: no anchor guard:\n{frame}"));
+        let head = &frame[..guard];
+        assert!(
+            !head.contains("while(") && !head.contains("for(") && !head.contains("do {"),
+            "{base}: the sink frame loops before its anchor guard:\n{frame}"
+        );
+        let from = open.find("int historyLen").expect("history length");
+        let at = open.find("if( startIdx >= historyLen ) {").expect("anchor guard");
+        let checks = &open[from..at + open[at..].find("}\n").expect("guard closes") + 2];
+        assert!(frame.contains(checks), "{base}: the sink frame runs other checks than OpenImpl:\n{checks}");
+        assert!(!frame.contains("outStride"), "{sink}: the frame has its stride built in");
+    }
+    // The misfits by construction: their decisions assign pattern state.
+    assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
+    assert!(framed >= 50, "only {framed} candlestick openers split");
+}
+
+/// The sink frame's history loop is the strided opener's pass with only its
+/// carried statements kept, in order; its last pass decides the last bar once,
+/// into slot 0, and runs the same carried statements.
+#[test]
+fn a_csharp_sink_frame_decides_only_the_last_bar() {
+    let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
+    for (base, s) in candlestick_sections() {
+        let sink = format!("private RetCode {base}OpenSinkFrame(");
+        if !s.contains(&sink) {
+            continue;
+        }
+        framed += 1;
+        let sink = body_of(&s, &sink);
+        let fill = body_of(&s, &format!("private RetCode {base}OpenImpl("));
+        let found = common::history_loops(&common::squeezed_lines(&sink));
+        let passes = common::fill_carried(&common::squeezed_lines(&fill), "outInteger");
+        assert_eq!(
+            found.len(),
+            sink.matches("outNBElement = outIdx;").count(),
+            "{base}: one loop over the history per region:\n{sink}"
+        );
+        assert_eq!(found.len(), passes.len(), "{base}: a history loop per storing loop of the opener");
+        for ((history, after), pass) in found.iter().zip(&passes) {
+            loops += 1;
+            carried += pass.len();
+            assert!(history.iter().any(|l| l == "outIdx+=1;"), "{base}: the history loop drops the output count:\n{history:#?}");
+            assert_eq!(&common::without_cursor_steps(history), pass, "{base}: the history loop is not the opener's carried pass");
+            common::assert_last_pass(&base, after, pass, "outInteger");
+        }
+        assert_eq!(
+            sink.matches("sp.cur_outInteger = outInteger[0];").count(),
+            found.len(),
+            "{base}: every region's capture reads the sink"
+        );
+        assert_eq!(
+            fill.matches("sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];").count(),
+            found.len(),
+            "{base}: every region's capture reads the caller's last element"
+        );
+        assert!(fill.contains("outInteger[outIdx++ * outStride] = "), "{base}: the opener stores at the strided index");
+    }
+    assert!(framed >= 50 && loops >= framed && carried >= 2 * loops, "{framed} sink frames, {loops} history loops, {carried} carried lines");
 }
 
 #[test]

@@ -408,3 +408,166 @@ pub fn render_c_stmt(stmt: &ir::Statement) -> String {
         stmt, 3, false, &enums, registry, &helpers, &inline_counter,
     )
 }
+
+// ---------------------------------------------------------------------------
+// Split candlestick openers (C#, Java and TypeScript frames)
+// ---------------------------------------------------------------------------
+
+/// `code` without its `/* */` comments.
+pub fn strip_block_comments(code: &str) -> String {
+    let mut bare = String::new();
+    let mut rest = code;
+    while let Some(i) = rest.find("/*") {
+        bare.push_str(&rest[..i]);
+        rest = &rest[i + rest[i..].find("*/").expect("a comment closes") + 2..];
+    }
+    bare.push_str(rest);
+    bare
+}
+
+/// A frame body's code lines, `/* */` comments dropped and whitespace
+/// removed, so C# and TypeScript spell a statement alike.
+pub fn squeezed_lines(code: &str) -> Vec<String> {
+    strip_block_comments(code)
+        .lines()
+        .map(|l| l.chars().filter(|c| !c.is_whitespace()).collect::<String>())
+        .filter(|l| !l.is_empty())
+        .collect()
+}
+
+fn brace_net(l: &str) -> isize {
+    l.matches('{').count().cast_signed() - l.matches('}').count().cast_signed()
+}
+
+/// The line that closes the block `lines[head]` opens.
+fn block_end(lines: &[String], head: usize) -> usize {
+    let mut depth = 0;
+    for (j, l) in lines.iter().enumerate().skip(head) {
+        depth += brace_net(l);
+        if depth == 0 {
+            return j;
+        }
+    }
+    panic!("the block at {:?} never closes", lines[head]);
+}
+
+/// Each loop of a squeezed sink frame over the bars before the last, and the
+/// lines after it up to the region's output count: `(loop body, after)`.
+pub fn history_loops(sink: &[String]) -> Vec<(Vec<String>, Vec<String>)> {
+    let mut out = Vec::new();
+    let mut k = 0;
+    while k < sink.len() {
+        if sink[k].starts_with("while(") && sink[k].ends_with("<endIdx){") {
+            let close = block_end(sink, k);
+            let end = (close..sink.len())
+                .find(|&j| sink[j].starts_with("outNBElement") && sink[j].ends_with("=outIdx;"))
+                .expect("a region ends");
+            out.push((sink[k + 1..close].to_vec(), sink[close + 1..end].to_vec()));
+            k = end;
+        }
+        k += 1;
+    }
+    out
+}
+
+/// Stores into `out` nested in a loop of squeezed `code`.
+pub fn stores_in_a_loop(code: &[String], out: &str) -> usize {
+    let store = format!("{out}[");
+    let mut open: Vec<bool> = Vec::new();
+    let mut found = 0;
+    for t in code {
+        if t.contains(&store) && open.iter().any(|&is_loop| is_loop) {
+            found += 1;
+        }
+        let is_loop = t.starts_with("while(") || t.starts_with("for(") || t.starts_with("do{");
+        let net = brace_net(t);
+        for _ in 0..net.max(0) {
+            open.push(is_loop);
+        }
+        for _ in 0..(-net).max(0) {
+            open.pop();
+        }
+    }
+    found
+}
+
+/// Squeezed `lines` grouped into top-level statements.
+fn statements(lines: &[String]) -> Vec<Vec<String>> {
+    let (mut out, mut cur) = (Vec::new(), Vec::new());
+    let (mut braces, mut parens) = (0isize, 0isize);
+    for (k, l) in lines.iter().enumerate() {
+        cur.push(l.clone());
+        braces += brace_net(l);
+        parens += l.matches('(').count().cast_signed() - l.matches(')').count().cast_signed();
+        let continues = lines.get(k + 1).is_some_and(|n| n.starts_with("else") || n.starts_with('{'));
+        if braces == 0 && parens == 0 && (l.ends_with(';') || l.ends_with('}')) && !continues {
+            out.push(std::mem::take(&mut cur));
+        }
+    }
+    assert!(cur.is_empty(), "a statement runs off the loop: {cur:?}");
+    out
+}
+
+/// Per storing loop of a squeezed strided open body, the lines of its carried
+/// statements: those that neither store `out` nor touch the `outIdx` cursor.
+pub fn fill_carried(fill: &[String], out: &str) -> Vec<Vec<String>> {
+    let store = format!("{out}[");
+    let mut passes = Vec::new();
+    let mut k = 0;
+    while k < fill.len() {
+        if fill[k] == "do{" {
+            let close = block_end(fill, k);
+            let body = &fill[k + 1..close];
+            if body.iter().any(|l| l.contains(&store)) {
+                passes.push(carried(body, out));
+            }
+            k = close;
+        }
+        k += 1;
+    }
+    passes
+}
+
+/// The lines of the statements of squeezed `lines` that neither store `out`
+/// nor touch the `outIdx` cursor.
+fn carried(lines: &[String], out: &str) -> Vec<String> {
+    let store = format!("{out}[");
+    statements(lines)
+        .into_iter()
+        .filter(|st| !st.iter().any(|l| l.contains(&store) || l.contains("outIdx")))
+        .flatten()
+        .collect()
+}
+
+/// A sink frame's last pass, `after` a history loop, against the opener's
+/// carried `pass`: it runs those lines in order, decides the last bar once
+/// into slot 0 and counts it.
+pub fn assert_last_pass(name: &str, after: &[String], pass: &[String], out: &str) {
+    assert_eq!(stores_in_a_loop(after, out), 0, "{name}: the last bar is decided in a loop:\n{after:#?}");
+    let stores = after.iter().map(|l| l.matches(&format!("{out}[")).count()).sum::<usize>();
+    assert!(
+        stores > 0 && stores == after.iter().map(|l| l.matches(&format!("{out}[0]=")).count()).sum::<usize>(),
+        "{name}: the last bar must be decided once, into slot 0:\n{after:#?}"
+    );
+    assert!(carried(after, out) == pass, "{name}: the last pass is not the opener's carried lines:\n{after:#?}");
+    assert!(after.iter().any(|l| l == "outIdx+=1;"), "{name}: the last pass drops the output count:\n{after:#?}");
+}
+
+/// `body` calls an opener of the function whose openers are named `<base>Open*`.
+pub fn calls_an_opener(body: &str, base: &str) -> bool {
+    body.match_indices(&format!("{base}Open"))
+        .any(|(i, _)| !body[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_'))
+}
+
+/// `body` reads its stride only to scale an output index.
+pub fn stride_only_scales(body: &str) -> bool {
+    body.matches("outStride").count() == body.matches("* outStride").count()
+}
+
+/// A history loop's lines without its `outIdx += <n>;` cursor steps.
+pub fn without_cursor_steps(history: &[String]) -> Vec<String> {
+    let is_step = |l: &str| {
+        l.strip_prefix("outIdx+=").and_then(|n| n.strip_suffix(';')).is_some_and(|n| n.parse::<usize>().is_ok())
+    };
+    history.iter().filter(|l| !is_step(l)).cloned().collect()
+}
