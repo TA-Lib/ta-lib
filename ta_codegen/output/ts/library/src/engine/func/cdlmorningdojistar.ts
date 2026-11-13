@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdlmorningdojistar.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 250;
 
 /**
  * A three-candle bullish reversal pattern: a long black candle, then a doji that

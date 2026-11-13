@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlbelthold.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 125;
 
 /**
  * Single-candle pattern with a long real body that opens at (or near) its extreme.

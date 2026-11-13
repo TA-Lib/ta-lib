@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlharami.ts';
 
-const WASM_FROM_BARS = 5000;
+const WASM_FROM_BARS = 60;
 
 /**
  * Two-candle pattern: a long real body followed by a short real body contained

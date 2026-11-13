@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlidentical3crows.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 30;
 
 /**
  * A three-candle bearish reversal pattern: three consecutive declining black

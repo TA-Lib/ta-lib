@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/wclprice.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 250;
 
 /**
  * Weighted Close Price: a per-bar price average giving the close double weight

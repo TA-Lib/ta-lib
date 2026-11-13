@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhammer.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 60;
 
 /**
  * Single-candle pattern: a small real body at the top of the range with a long

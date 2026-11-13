@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltristar.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 250;
 
 /**
  * A three-candle pattern of three consecutive doji where the middle doji is a star

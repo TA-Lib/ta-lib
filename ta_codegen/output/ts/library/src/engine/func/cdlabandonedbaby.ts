@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdlabandonedbaby.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 125;
 
 /**
  * A three-candle reversal pattern: a long body, then a gapped-away doji, then a

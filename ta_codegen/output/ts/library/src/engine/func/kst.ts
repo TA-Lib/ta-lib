@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kst.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 60;
 
 /**
  * Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four

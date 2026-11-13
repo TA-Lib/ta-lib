@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltasukigap.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 250;
 
 /**
  * A three-candle pattern: a real-body-gapping candle followed by an opposite-color

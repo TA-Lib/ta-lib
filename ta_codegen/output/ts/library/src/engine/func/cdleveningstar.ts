@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdleveningstar.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 125;
 
 /**
  * A three-candle bearish reversal pattern: a long white candle, a short-bodied

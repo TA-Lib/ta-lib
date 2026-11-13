@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhangingman.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 60;
 
 /**
  * Single candle with a small real body, a long lower shadow, and little/no upper

@@ -41,8 +41,6 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/minmax.ts';
 
-const WASM_FROM_BARS = 1000;
-
 /**
  * Returns both the lowest and highest values of the input over a rolling window of
  * the last timePeriod bars. An overlap-study companion to MIN and MAX that
@@ -85,17 +83,19 @@ const WASM_FROM_BARS = 1000;
  * @see [`maxindex`](https://ta-lib.org/functions/maxindex)
  */
 export function minmax(real: ArrayLike<number>, options?: MinmaxOptions): MinmaxResult {
-  let routed: MinmaxResult | null;
-  try {
-    routed = minmaxWasm(real, options);
-  } catch {
-    routed = fellThrough('threw');
-  }
-  if (routed !== null) {
-    return routed;
-  }
-  if (engineRoute.mode === 2) {
-    return strictFallThrough('MINMAX', minmaxJs(real, options));
+  if (engineRoute.mode !== 0) {
+    let routed: MinmaxResult | null;
+    try {
+      routed = minmaxWasm(real, options);
+    } catch {
+      routed = fellThrough('threw');
+    }
+    if (routed !== null) {
+      return routed;
+    }
+    if (engineRoute.mode === 2) {
+      return strictFallThrough('MINMAX', minmaxJs(real, options));
+    }
   }
   return minmaxJs(real, options);
 }
@@ -104,9 +104,6 @@ function minmaxWasm(real: ArrayLike<number>, options: MinmaxOptions | undefined)
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
-  }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outMin !== undefined || o.outMax !== undefined) {

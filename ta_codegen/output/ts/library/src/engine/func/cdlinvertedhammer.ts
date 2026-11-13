@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlinvertedhammer.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 60;
 
 /**
  * Single-candle pattern: a small real body with a long upper shadow and

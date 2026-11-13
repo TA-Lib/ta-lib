@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3blackcrows.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 1000;
 
 /**
  * A four-bar pattern: a white candle followed by three consecutive black (down)

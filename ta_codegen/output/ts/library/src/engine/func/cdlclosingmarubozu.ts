@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlclosingmarubozu.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 60;
 
 /**
  * Single-candle pattern: a long real body whose closing end has no or very short

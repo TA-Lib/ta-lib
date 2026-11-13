@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlrisefall3methods.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 125;
 
 /**
  * A five-candle continuation pattern: a long candle, three small counter-color

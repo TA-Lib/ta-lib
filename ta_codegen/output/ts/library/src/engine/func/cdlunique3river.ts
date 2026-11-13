@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlunique3river.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 2500;
 
 /**
  * A three-candle bullish reversal pattern: a long black candle, then a black

@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlgapsidesidewhite.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 250;
 
 /**
  * A three-candle pattern: a first candle followed by two white candles of similar

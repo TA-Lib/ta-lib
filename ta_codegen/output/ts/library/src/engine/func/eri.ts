@@ -41,8 +41,6 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/eri.ts';
 
-const WASM_FROM_BARS = 125;
-
 /**
  * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading
  * for a Living* (1993) — how far the bar's high and low sit from an EMA of the
@@ -97,17 +95,19 @@ const WASM_FROM_BARS = 125;
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
 export function eri(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult {
-  let routed: EriResult | null;
-  try {
-    routed = eriWasm(prices, options);
-  } catch {
-    routed = fellThrough('threw');
-  }
-  if (routed !== null) {
-    return routed;
-  }
-  if (engineRoute.mode === 2) {
-    return strictFallThrough('ERI', eriJs(prices, options));
+  if (engineRoute.mode !== 0) {
+    let routed: EriResult | null;
+    try {
+      routed = eriWasm(prices, options);
+    } catch {
+      routed = fellThrough('threw');
+    }
+    if (routed !== null) {
+      return routed;
+    }
+    if (engineRoute.mode === 2) {
+      return strictFallThrough('ERI', eriJs(prices, options));
+    }
   }
   return eriJs(prices, options);
 }
@@ -122,9 +122,6 @@ function eriWasm(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
-  }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outBullPower !== undefined || o.outBearPower !== undefined) {

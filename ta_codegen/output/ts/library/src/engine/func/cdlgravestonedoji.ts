@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlgravestonedoji.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 125;
 
 /**
  * Single-candle doji whose open and close sit at the low of the day, leaving a

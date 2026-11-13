@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdlmathold.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 1000;
 
 /**
  * A five-candle bullish continuation pattern: a long white candle, an upside

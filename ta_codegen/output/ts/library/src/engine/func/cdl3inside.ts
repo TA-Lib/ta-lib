@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3inside.ts';
 
-const WASM_FROM_BARS = 5000;
+const WASM_FROM_BARS = 500;
 
 /**
  * A three-candle reversal pattern: a long real body, then a short real body

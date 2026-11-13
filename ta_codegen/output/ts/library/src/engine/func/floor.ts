@@ -40,6 +40,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/floor.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Element-wise floor (round down to the nearest integer) of the input series.
  *
@@ -75,19 +77,17 @@ export * from '../../func/floor.ts';
  * @see [`ceil`](https://ta-lib.org/functions/ceil)
  */
 export function floor(real: ArrayLike<number>, options?: FloorOptions): FloorResult {
-  if (engineRoute.mode !== 0) {
-    let routed: FloorResult | null;
-    try {
-      routed = floorWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('FLOOR', floorJs(real, options));
-    }
+  let routed: FloorResult | null;
+  try {
+    routed = floorWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('FLOOR', floorJs(real, options));
   }
   return floorJs(real, options);
 }
@@ -96,6 +96,9 @@ function floorWasm(real: ArrayLike<number>, options: FloorOptions | undefined): 
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

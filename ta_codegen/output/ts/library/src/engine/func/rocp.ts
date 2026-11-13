@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rocp.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 10000;
 
 /**
  * Rate of change expressed as a fraction of the price timePeriod bars ago.

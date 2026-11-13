@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/adosc.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 60;
 
 /**
  * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the

@@ -41,8 +41,6 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/er.ts';
 
-const WASM_FROM_BARS = 50000;
-
 /**
  * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure
  * from *Smarter Trading* (1995) — the net directional movement over the period
@@ -91,17 +89,19 @@ const WASM_FROM_BARS = 50000;
  * @see [`vhf`](https://ta-lib.org/functions/vhf)
  */
 export function er(real: ArrayLike<number>, options?: ErOptions): ErResult {
-  let routed: ErResult | null;
-  try {
-    routed = erWasm(real, options);
-  } catch {
-    routed = fellThrough('threw');
-  }
-  if (routed !== null) {
-    return routed;
-  }
-  if (engineRoute.mode === 2) {
-    return strictFallThrough('ER', erJs(real, options));
+  if (engineRoute.mode !== 0) {
+    let routed: ErResult | null;
+    try {
+      routed = erWasm(real, options);
+    } catch {
+      routed = fellThrough('threw');
+    }
+    if (routed !== null) {
+      return routed;
+    }
+    if (engineRoute.mode === 2) {
+      return strictFallThrough('ER', erJs(real, options));
+    }
   }
   return erJs(real, options);
 }
@@ -110,9 +110,6 @@ function erWasm(real: ArrayLike<number>, options: ErOptions | undefined): ErResu
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
-  }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

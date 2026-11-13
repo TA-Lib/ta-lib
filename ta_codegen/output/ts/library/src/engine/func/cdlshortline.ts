@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlshortline.ts';
 
-const WASM_FROM_BARS = 60;
+const WASM_FROM_BARS = 30;
 
 /**
  * Single-candle pattern: a short real body with short upper and lower shadows (a

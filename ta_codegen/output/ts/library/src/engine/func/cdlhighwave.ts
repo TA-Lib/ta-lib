@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhighwave.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 250;
 
 /**
  * Single-candle pattern: a short real body with both a very long upper and a very

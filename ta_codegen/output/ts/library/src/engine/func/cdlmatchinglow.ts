@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlmatchinglow.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 250;
 
 /**
  * A two-candle pattern of two consecutive black (bearish) candles with equal

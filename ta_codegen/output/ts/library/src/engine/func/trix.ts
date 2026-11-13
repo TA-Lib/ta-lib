@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/trix.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 500;
 
 /**
  * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator

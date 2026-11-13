@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/dema.ts';
 
-const WASM_FROM_BARS = 60;
+const WASM_FROM_BARS = 500;
 
 /**
  * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce

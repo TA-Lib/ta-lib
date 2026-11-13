@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/vidya.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 125;
 
 /**
  * Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is

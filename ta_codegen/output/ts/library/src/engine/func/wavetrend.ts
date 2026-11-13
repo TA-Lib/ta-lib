@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/wavetrend.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 60;
 
 /**
  * WaveTrend Oscillator: how far the typical price sits from its own exponential

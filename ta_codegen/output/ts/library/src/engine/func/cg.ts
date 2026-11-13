@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cg.ts';
 
+const WASM_FROM_BARS = 10000;
+
 /**
  * John Ehlers' Center of Gravity oscillator: the balance point of the last
  * `timePeriod` values, each weighted by its value and placed at its position
@@ -106,19 +108,17 @@ export * from '../../func/cg.ts';
  * @see [`cti`](https://ta-lib.org/functions/cti)
  */
 export function cg(real: ArrayLike<number>, options?: CgOptions): CgResult {
-  if (engineRoute.mode !== 0) {
-    let routed: CgResult | null;
-    try {
-      routed = cgWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('CG', cgJs(real, options));
-    }
+  let routed: CgResult | null;
+  try {
+    routed = cgWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('CG', cgJs(real, options));
   }
   return cgJs(real, options);
 }
@@ -127,6 +127,9 @@ function cgWasm(real: ArrayLike<number>, options: CgOptions | undefined): CgResu
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

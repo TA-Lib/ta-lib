@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdldragonflydoji.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 125;
 
 /**
  * Single-candle pattern: a doji (open and close nearly equal) sitting at the top

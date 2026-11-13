@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlcounterattack.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 250;
 
 /**
  * A two-candle pattern of two long, opposite-colored real bodies whose closing

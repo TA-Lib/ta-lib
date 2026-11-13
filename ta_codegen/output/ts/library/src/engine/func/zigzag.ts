@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/zigzag.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 2500;
 
 /**
  * The percent-filter swing line. A leg runs from the last confirmed pivot to the

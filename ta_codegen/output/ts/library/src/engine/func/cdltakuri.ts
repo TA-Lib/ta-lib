@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdltakuri.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 125;
 
 /**
  * Single-candle pattern: a doji whose open and close sit at the high (no/very

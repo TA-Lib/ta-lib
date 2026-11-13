@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdl3starsinsouth.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 125;
 
 /**
  * A three-candle bullish reversal pattern of three consecutive black candles that

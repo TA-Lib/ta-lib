@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlharamicross.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 125;
 
 /**
  * A two-candle reversal pattern: a long real body followed by a doji whose real

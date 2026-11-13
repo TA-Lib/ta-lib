@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlupsidegap2crows.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 5000;
 
 /**
  * A three-candle bearish reversal pattern: a long white candle, then a small black

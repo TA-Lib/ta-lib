@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/kvo.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 60;
 
 /**
  * Klinger Volume Oscillator: each bar's volume is signed by the direction of its

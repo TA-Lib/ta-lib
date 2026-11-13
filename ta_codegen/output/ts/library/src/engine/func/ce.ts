@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/ce.ts';
 
-const WASM_FROM_BARS = 30;
+const WASM_FROM_BARS = 1000;
 
 /**
  * Le Beau's Chandelier Exit, a two-line volatility stop. The highest high of the

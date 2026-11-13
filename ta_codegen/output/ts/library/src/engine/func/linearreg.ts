@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/linearreg.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 250;
 
 /**
  * Least-squares straight-line fit over the last timePeriod bars, reported as the

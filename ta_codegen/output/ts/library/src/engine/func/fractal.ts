@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/fractal.ts';
 
+const WASM_FROM_BARS = 1000;
+
 /**
  * Williams Fractal: a causal swing-pivot detector. A bar is a swing high when its
  * high strictly exceeds the highs of the `leftBars` bars before it and the
@@ -108,19 +110,17 @@ export * from '../../func/fractal.ts';
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
  */
 export function fractal(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FractalOptions): FractalResult {
-  if (engineRoute.mode !== 0) {
-    let routed: FractalResult | null;
-    try {
-      routed = fractalWasm(prices, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('FRACTAL', fractalJs(prices, options));
-    }
+  let routed: FractalResult | null;
+  try {
+    routed = fractalWasm(prices, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('FRACTAL', fractalJs(prices, options));
   }
   return fractalJs(prices, options);
 }
@@ -134,6 +134,9 @@ function fractalWasm(prices: { open?: ArrayLike<number> | undefined; high: Array
   const n = seriesLength(inHighArg);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outSwingHigh !== undefined || o.outSwingLow !== undefined) {

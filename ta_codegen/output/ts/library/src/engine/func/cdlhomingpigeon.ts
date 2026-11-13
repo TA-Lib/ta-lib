@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlhomingpigeon.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 1000;
 
 /**
  * Two-candle pattern: a long black candle followed by a small black candle whose

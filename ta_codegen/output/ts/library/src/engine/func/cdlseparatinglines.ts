@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlseparatinglines.ts';
 
-const WASM_FROM_BARS = 30;
+const WASM_FROM_BARS = 250;
 
 /**
  * A two-candle continuation pattern: the second candle opposes the first in color,

@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/cdldarkcloudcover.ts';
 
-const WASM_FROM_BARS = 50000;
+const WASM_FROM_BARS = 1000;
 
 /**
  * A two-candle bearish reversal pattern: a long white candle followed by a black

@@ -41,8 +41,6 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/imi.ts';
 
-const WASM_FROM_BARS = 50000;
-
 /**
  * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
  * open-to-close body of each bar. Over a rolling window it ratios cumulative
@@ -84,17 +82,19 @@ const WASM_FROM_BARS = 50000;
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
 export function imi(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ImiOptions): ImiResult {
-  let routed: ImiResult | null;
-  try {
-    routed = imiWasm(prices, options);
-  } catch {
-    routed = fellThrough('threw');
-  }
-  if (routed !== null) {
-    return routed;
-  }
-  if (engineRoute.mode === 2) {
-    return strictFallThrough('IMI', imiJs(prices, options));
+  if (engineRoute.mode !== 0) {
+    let routed: ImiResult | null;
+    try {
+      routed = imiWasm(prices, options);
+    } catch {
+      routed = fellThrough('threw');
+    }
+    if (routed !== null) {
+      return routed;
+    }
+    if (engineRoute.mode === 2) {
+      return strictFallThrough('IMI', imiJs(prices, options));
+    }
   }
   return imiJs(prices, options);
 }
@@ -108,9 +108,6 @@ function imiWasm(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | u
   const n = seriesLength(inOpenArg);
   if (n < 1) {
     return fellThrough('input');
-  }
-  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
-    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

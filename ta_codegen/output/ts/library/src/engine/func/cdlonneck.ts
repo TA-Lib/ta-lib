@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlonneck.ts';
 
-const WASM_FROM_BARS = 1000;
+const WASM_FROM_BARS = 125;
 
 /**
  * A two-candle on-neck pattern: a long black candle followed by a white candle

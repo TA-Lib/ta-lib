@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlrickshawman.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 60;
 
 /**
  * Single-candle doji with two long shadows whose body sits near the midpoint of

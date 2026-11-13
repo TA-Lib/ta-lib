@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/accbands.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 5000;
 
 /**
  * Acceleration Bands: three overlap lines around price. The middle band is an SMA

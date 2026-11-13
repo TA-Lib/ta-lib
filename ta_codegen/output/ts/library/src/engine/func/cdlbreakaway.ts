@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlbreakaway.ts';
 
-const WASM_FROM_BARS = 10000;
+const WASM_FROM_BARS = 1000;
 
 /**
  * A five-candle reversal pattern: a long first candle, a same-colored second

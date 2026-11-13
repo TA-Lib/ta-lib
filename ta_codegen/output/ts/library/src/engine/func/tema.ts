@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/tema.ts';
 
-const WASM_FROM_BARS = 125;
+const WASM_FROM_BARS = 500;
 
 /**
  * Triple Exponential Moving Average: a smoothed price overlay built from three

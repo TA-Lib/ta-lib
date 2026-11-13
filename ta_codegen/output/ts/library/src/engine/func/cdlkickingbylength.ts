@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlkickingbylength.ts';
 
-const WASM_FROM_BARS = 30;
+const WASM_FROM_BARS = 125;
 
 /**
  * A two-candle pattern of two opposite-color marubozu (long body, very short

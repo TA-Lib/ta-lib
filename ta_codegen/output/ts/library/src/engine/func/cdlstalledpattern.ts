@@ -40,7 +40,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/cdlstalledpattern.ts';
 
-const WASM_FROM_BARS = 5000;
+const WASM_FROM_BARS = 30;
 
 /**
  * A three-candle pattern of three white candles with consecutively higher closes

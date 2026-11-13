@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/roc.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Rate-of-change momentum oscillator: the percent change of price versus the price
  * timePeriod bars earlier. Centered at zero with positive and negative values.
@@ -90,19 +92,17 @@ export * from '../../func/roc.ts';
  * @see [`rocr100`](https://ta-lib.org/functions/rocr100)
  */
 export function roc(real: ArrayLike<number>, options?: RocOptions): RocResult {
-  if (engineRoute.mode !== 0) {
-    let routed: RocResult | null;
-    try {
-      routed = rocWasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ROC', rocJs(real, options));
-    }
+  let routed: RocResult | null;
+  try {
+    routed = rocWasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ROC', rocJs(real, options));
   }
   return rocJs(real, options);
 }
@@ -111,6 +111,9 @@ function rocWasm(real: ArrayLike<number>, options: RocOptions | undefined): RocR
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

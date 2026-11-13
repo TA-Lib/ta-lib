@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, optionalReal, refused, routedO
 
 export * from '../../func/supertrend.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 1000;
 
 /**
  * An ATR-scaled trailing band that follows price on one side at a time and flips

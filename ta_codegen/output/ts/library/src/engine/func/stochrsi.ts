@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/stochrsi.ts';
 
-const WASM_FROM_BARS = 30;
+const WASM_FROM_BARS = 10000;
 
 /**
  * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead of

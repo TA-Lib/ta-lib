@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/macdv.ts';
 
-const WASM_FROM_BARS = 250;
+const WASM_FROM_BARS = 500;
 
 /**
  * MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a

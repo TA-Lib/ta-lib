@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/tsf.ts';
 
-const WASM_FROM_BARS = 500;
+const WASM_FROM_BARS = 250;
 
 /**
  * Time Series Forecast: fits a least-squares linear regression line over the last

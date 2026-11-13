@@ -41,6 +41,8 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/rocr100.ts';
 
+const WASM_FROM_BARS = 50000;
+
 /**
  * Rate-of-change ratio scaled by 100: current price as a percentage of the price
  * timePeriod bars ago. Momentum measure centered at 100 and always positive. Above
@@ -89,19 +91,17 @@ export * from '../../func/rocr100.ts';
  * @see [`mom`](https://ta-lib.org/functions/mom)
  */
 export function rocr100(real: ArrayLike<number>, options?: Rocr100Options): Rocr100Result {
-  if (engineRoute.mode !== 0) {
-    let routed: Rocr100Result | null;
-    try {
-      routed = rocr100Wasm(real, options);
-    } catch {
-      routed = fellThrough('threw');
-    }
-    if (routed !== null) {
-      return routed;
-    }
-    if (engineRoute.mode === 2) {
-      return strictFallThrough('ROCR100', rocr100Js(real, options));
-    }
+  let routed: Rocr100Result | null;
+  try {
+    routed = rocr100Wasm(real, options);
+  } catch {
+    routed = fellThrough('threw');
+  }
+  if (routed !== null) {
+    return routed;
+  }
+  if (engineRoute.mode === 2) {
+    return strictFallThrough('ROCR100', rocr100Js(real, options));
   }
   return rocr100Js(real, options);
 }
@@ -110,6 +110,9 @@ function rocr100Wasm(real: ArrayLike<number>, options: Rocr100Options | undefine
   const n = seriesLength(real);
   if (n < 1) {
     return fellThrough('input');
+  }
+  if (engineRoute.mode === 0 && n < WASM_FROM_BARS) {
+    return null;
   }
   const o = routedOptions(options);
   if (o === null || o.outReal !== undefined) {

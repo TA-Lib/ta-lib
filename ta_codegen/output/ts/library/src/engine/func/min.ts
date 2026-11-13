@@ -41,7 +41,7 @@ import { engineRoute, fellThrough, optionalInt32, refused, routedOptions, routed
 
 export * from '../../func/min.ts';
 
-const WASM_FROM_BARS = 60;
+const WASM_FROM_BARS = 1000;
 
 /**
  * Rolling minimum: the lowest input value over the trailing period.
