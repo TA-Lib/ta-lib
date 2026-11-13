@@ -176,7 +176,7 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 | Rust | crate `ta-lib`, lib target `ta_lib` |
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
 | C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
-| TypeScript | npm `ta-lib`, entry points `ta-lib` and `ta-lib/metadata` |
+| TypeScript | npm `ta-lib`, entry points `ta-lib`, `ta-lib/js` and `ta-lib/metadata` |
 
 ## 10. Exceptions: idiom loses
 

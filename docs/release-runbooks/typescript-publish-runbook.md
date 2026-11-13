@@ -11,8 +11,8 @@ This is a **per-release** procedure. The package version is locked to the repo `
 
 ## What ships
 
-One package publishes: `ta_codegen/output/ts/library/`, with two entry points, `ta-lib` and
-`ta-lib/metadata`. The tarball holds `package.json`, `README.md`, `LICENSE` and the compiled
+One package publishes: `ta_codegen/output/ts/library/`, with three entry points: `ta-lib`,
+`ta-lib/js` and `ta-lib/metadata`. The tarball holds `package.json`, `README.md`, `LICENSE` and the compiled
 `dist/`; sources and tests stay out. The tooling root, `ta_codegen/output/ts/package.json`, is
 private and never publishes.
 
@@ -74,8 +74,8 @@ left there, and the gates then compare some other commit's TypeScript with this 
 
 ```bash
 python3 scripts/build.py servers --language=c,ts
-(cd bin && ./ta_regtest --codegen    --language=c,ts)
-(cd bin && ./ta_regtest --xlang-hash --language=c,ts)
+(cd bin && ./ta_regtest --codegen    --language=c,ts,tswasm)
+(cd bin && ./ta_regtest --xlang-hash --language=c,ts,tswasm)
 ```
 
 Then check that npm can still take this version (see [Versions 0.9.0, 0.10.0 and
