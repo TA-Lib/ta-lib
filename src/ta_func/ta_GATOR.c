@@ -794,13 +794,13 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
    if( outStride ) sc_outUpper = outUpper;
    else
    {
-      sc_outUpper = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outUpper = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outUpper ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outLower = outLower;
    else
    {
-      sc_outLower = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outLower = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outLower ) { TA_Free( sc_outUpper ); return TA_ALLOC_ERR; }
    }
 
@@ -1377,7 +1377,7 @@ TA_LIB_API TA_RetCode TA_GATOR_Close( TA_GATOR_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_GATOR_KernImpl( struct TA_GATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outUpper[], double outLower[] )
+static TA_RetCode TA_GATOR_KernImpl( struct TA_GATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int histBar, int nbBar, double outUpper[], double outLower[] )
 {
    int lagPos0 = sp->lagPos0;
    int lagCap0 = sp->lagCap0;
@@ -1391,6 +1391,9 @@ static TA_RetCode TA_GATOR_KernImpl( struct TA_GATOR_Stream *sp, const double in
    int lagPos3 = sp->lagPos3;
    int lagCap3 = sp->lagCap3;
    double *lagBuf3 = sp->lagBuf3;
+   int recallLb0;
+   int recallBeg;
+   int recallNb;
    double pad_tempMP[TA_KERN_BLOCK];
    double pad_tempA[TA_KERN_BLOCK];
    double pad_tempB[TA_KERN_BLOCK];
@@ -1419,17 +1422,37 @@ static TA_RetCode TA_GATOR_KernImpl( struct TA_GATOR_Stream *sp, const double in
    int kernLen;
    int kernBar;
 
+   recallLb0 = TA_MEDPRICE_Lookback();
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         sp->lagPos0 = lagPos0;
-         sp->lagPos1 = lagPos1;
-         sp->lagPos2 = lagPos2;
-         sp->lagPos3 = lagPos3;
-         return subRc;
+         subRc = TA_MEDPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, &recallBeg, &recallNb, pad_tempMP );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            sp->lagPos0 = lagPos0;
+            sp->lagPos1 = lagPos1;
+            sp->lagPos2 = lagPos2;
+            sp->lagPos3 = lagPos3;
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->lagPos0 = lagPos0;
+            sp->lagPos1 = lagPos1;
+            sp->lagPos2 = lagPos2;
+            sp->lagPos3 = lagPos3;
+            return subRc;
+         }
       }
       subRc = TA_RMA_UpdateBlock( sp->sub1, pad_tempMP, kernLen, pad_tempA );
       if( subRc != TA_SUCCESS )
@@ -1547,7 +1570,7 @@ TA_RetCode TA_GATOR_UpdateBlock( struct TA_GATOR_Stream *stream, const double in
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !outUpper || !outLower ) return TA_BAD_PARAM;
-   return TA_GATOR_KernImpl( stream, inHigh, inLow, nbBar, outUpper, outLower );
+   return TA_GATOR_KernImpl( stream, inHigh, inLow, 0, nbBar, outUpper, outLower );
 }
 
 /* Private function, not in public API. */
@@ -1588,7 +1611,7 @@ TA_RetCode TA_GATOR_BlockBatch( int startIdx, int endIdx, const double inHigh[],
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_GATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outUpper + 1, outLower + 1 );
+      retCode = TA_GATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outUpper + 1, outLower + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_GATOR_Close( stream );

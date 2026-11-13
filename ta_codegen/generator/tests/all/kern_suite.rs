@@ -16,6 +16,13 @@ fn kernel_of(src: &str, n: &str) -> Option<String> {
     })
 }
 
+fn update_block_of(src: &str, n: &str) -> Option<String> {
+    let head = format!("TA_RetCode TA_{n}_UpdateBlock(");
+    let at = src.find(&head)?;
+    let end = at + src[at..].find("\n}\n")?;
+    Some(src[at..end].to_string())
+}
+
 fn block_batch_of(src: &str, n: &str) -> Option<String> {
     let head = format!("TA_RetCode TA_{n}_BlockBatch(");
     let at = src.find(&head)?;
@@ -41,8 +48,10 @@ fn a_plain_step_gets_a_hoisted_kernel() {
         }
         let decision = c_stream::kernel_decision(&func, registry);
         let n = name.to_uppercase();
-        let kernel = kernel_of(&c_stream::generate(&func, &enums, registry, helpers), &n);
-        assert_eq!(decision.is_ok(), kernel.is_some(), "{n}: the decision and the emission disagree");
+        let src = c_stream::generate(&func, &enums, registry, helpers);
+        let kernel = kernel_of(&src, &n);
+        assert_eq!(decision.is_ok(), update_block_of(&src, &n).is_some(), "{n}: the decision and the emission disagree");
+        assert!(kernel.is_none() || decision.is_ok(), "{n}: a kernel without a block entry");
         kerneled += usize::from(kernel.is_some());
         match name.as_str() {
             "sma" => {
@@ -57,7 +66,15 @@ fn a_plain_step_gets_a_hoisted_kernel() {
                 ]);
                 assert!(!k.contains("sp->optInTimePeriod = "), "a field the step only reads is stored back:\n{k}");
             }
-            "ma" | "mavp" => assert_eq!(decision, Err(KernDecline::HandRolled)),
+            "ma" => {
+                assert!(kernel.is_none(), "a dispatcher has no kernel of its own");
+                assert_lines("MA UpdateBlock", &update_block_of(&src, "MA").expect("MA has a block entry"), &[
+                    "retCode = TA_SMA_UpdateBlock( (struct TA_SMA_Stream *)stream->sub, inReal, nbBar, outReal );",
+                    "retCode = TA_MA_UpdateBlock_MAMA( (struct TA_MAMA_Stream *)stream->sub, inReal, nbBar, outReal );",
+                    "stream->outRangeCount += nbBar;",
+                ]);
+            }
+            "mavp" => assert_eq!(decision, Err(KernDecline::HandRolled)),
             _ => {}
         }
     }
@@ -79,6 +96,9 @@ impl CalleeLookup for MaComposed {
 impl KernLookup for MaComposed {
     fn block_entry(&self, callee: &str) -> BlockEntry {
         if callee == "ma" { BlockEntry::Composed } else { self.0.block_entry(callee) }
+    }
+    fn recall_eligible(&self, callee: &str) -> bool {
+        self.0.recall_eligible(callee)
     }
 }
 
@@ -106,7 +126,7 @@ fn a_composed_step_runs_each_pipeline_step_over_a_sub_block() {
     let k = kernel_of(&c_stream::generate(&stoch, &enums, registry, helpers), "STOCH").expect("STOCH has a kernel");
     assert_lines("STOCH kernel", &k, &[
         "pad_tempBuffer[kernBar] = cur_tempBuffer;",
-        "subRc = TA_MA_Update( sp->sub0, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );",
+        "subRc = TA_MA_UpdateBlock( sp->sub0, pad_tempBuffer, kernLen, pad_tempBuffer );",
         "outSlowK[kernBase + kernBar] = pad_tempBuffer[kernBar];",
         "sp->today = today;",
     ]);
@@ -114,6 +134,27 @@ fn a_composed_step_runs_each_pipeline_step_over_a_sub_block() {
         c_stream::kernel_decision(&stoch, &MaComposed(registry)),
         Err(KernDecline::Composed("an in-place sub-call into a composed kernel".to_string()))
     );
+}
+
+#[test]
+fn a_blocked_batch_re_calls_a_restart_exact_sub_only_on_the_callers_arrays() {
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let (func, enums) = common::load_indicator("ichimoku");
+    let src = c_stream::generate(&func, &enums, registry, helpers);
+    let k = kernel_of(&src, "ICHIMOKU").expect("ICHIMOKU has a kernel");
+    assert_lines("ICHIMOKU kernel", &k, &[
+        "recallLb0 = TA_MIDPRICE_Lookback( sp->optInTenkanPeriod );",
+        "if( histBar <= 0 || histBar < recallLb0 )",
+        "subRc = TA_MIDPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, sp->optInTenkanPeriod, &recallBeg, &recallNb, pad_tempT );",
+        "subRc = TA_MEDPRICE_UpdateBlock( sp->sub3, pad_tempT, pad_tempK, kernLen, outSenkouSpanA + kernBase );",
+    ]);
+    assert!(!k.contains("TA_MEDPRICE("), "a sub fed by a pad is re-called:\n{k}");
+    assert_eq!(c_stream::recall_subs(&func, registry), ["MIDPRICE"; 3]);
+    assert_lines("ICHIMOKU entries", &src, &[
+        "return TA_ICHIMOKU_KernImpl( stream, inHigh, inLow, 0, nbBar,",
+        "retCode = TA_ICHIMOKU_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, firstIdx + 1, endIdx - firstIdx,",
+    ]);
 }
 
 #[test]

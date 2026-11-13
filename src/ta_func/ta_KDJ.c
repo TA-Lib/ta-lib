@@ -322,19 +322,19 @@ static TA_OPEN_INLINE TA_RetCode TA_KDJ_OpenBody( struct TA_KDJ_Stream **stream,
    if( outStride ) sc_outK = outK;
    else
    {
-      sc_outK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outK = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outK ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outD = outD;
    else
    {
-      sc_outD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outD = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outD ) { TA_Free( sc_outK ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outJ = outJ;
    else
    {
-      sc_outJ = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outJ = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outJ ) { TA_Free( sc_outK ); TA_Free( sc_outD ); return TA_ALLOC_ERR; }
    }
 
@@ -560,7 +560,7 @@ TA_LIB_API TA_RetCode TA_KDJ_Close( TA_KDJ_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_KDJ_KernImpl( struct TA_KDJ_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outK[], double outD[], double outJ[] )
+static TA_RetCode TA_KDJ_KernImpl( struct TA_KDJ_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outK[], double outD[], double outJ[] )
 {
    double cur_outK;
    double cur_outD;
@@ -570,6 +570,7 @@ static TA_RetCode TA_KDJ_KernImpl( struct TA_KDJ_Stream *sp, const double inHigh
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -599,7 +600,7 @@ TA_RetCode TA_KDJ_UpdateBlock( struct TA_KDJ_Stream *stream, const double inHigh
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
-   return TA_KDJ_KernImpl( stream, inHigh, inLow, inClose, nbBar, outK, outD, outJ );
+   return TA_KDJ_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outK, outD, outJ );
 }
 
 /* Private function, not in public API. */
@@ -644,7 +645,7 @@ TA_RetCode TA_KDJ_BlockBatch( int startIdx, int endIdx, const double inHigh[], c
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_KDJ_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outK + 1, outD + 1, outJ + 1 );
+      retCode = TA_KDJ_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outK + 1, outD + 1, outJ + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_KDJ_Close( stream );

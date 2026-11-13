@@ -741,13 +741,13 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **str
    if( outStride ) sc_outSlowK = outSlowK;
    else
    {
-      sc_outSlowK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outSlowK = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outSlowK ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outSlowD = outSlowD;
    else
    {
-      sc_outSlowD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outSlowD = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outSlowD ) { TA_Free( sc_outSlowK ); return TA_ALLOC_ERR; }
    }
 
@@ -1299,7 +1299,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STOCH_KernImpl( struct TA_STOCH_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outSlowK[], double outSlowD[] )
+static TA_RetCode TA_STOCH_KernImpl( struct TA_STOCH_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outSlowK[], double outSlowD[] )
 {
    double lowest = sp->lowest;
    double highest = sp->highest;
@@ -1320,6 +1320,7 @@ static TA_RetCode TA_STOCH_KernImpl( struct TA_STOCH_Stream *sp, const double in
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -1395,35 +1396,29 @@ static TA_RetCode TA_STOCH_KernImpl( struct TA_STOCH_Stream *sp, const double in
          today += 1;
          pad_tempBuffer[kernBar] = cur_tempBuffer;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub0, pad_tempBuffer, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub0, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            sp->lowest = lowest;
-            sp->highest = highest;
-            sp->lowestIdx = lowestIdx;
-            sp->highestIdx = highestIdx;
-            sp->trailingIdx = trailingIdx;
-            sp->i = i;
-            sp->today = today;
-            return subRc;
-         }
+         sp->lowest = lowest;
+         sp->highest = highest;
+         sp->lowestIdx = lowestIdx;
+         sp->highestIdx = highestIdx;
+         sp->trailingIdx = trailingIdx;
+         sp->i = i;
+         sp->today = today;
+         return subRc;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub1, pad_tempBuffer, kernLen, outSlowD + kernBase );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub1, pad_tempBuffer[kernBar], &outSlowD[kernBase + kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            sp->lowest = lowest;
-            sp->highest = highest;
-            sp->lowestIdx = lowestIdx;
-            sp->highestIdx = highestIdx;
-            sp->trailingIdx = trailingIdx;
-            sp->i = i;
-            sp->today = today;
-            return subRc;
-         }
+         sp->lowest = lowest;
+         sp->highest = highest;
+         sp->lowestIdx = lowestIdx;
+         sp->highestIdx = highestIdx;
+         sp->trailingIdx = trailingIdx;
+         sp->i = i;
+         sp->today = today;
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
          outSlowK[kernBase + kernBar] = pad_tempBuffer[kernBar];
@@ -1446,7 +1441,7 @@ TA_RetCode TA_STOCH_UpdateBlock( struct TA_STOCH_Stream *stream, const double in
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
-   return TA_STOCH_KernImpl( stream, inHigh, inLow, inClose, nbBar, outSlowK, outSlowD );
+   return TA_STOCH_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outSlowK, outSlowD );
 }
 
 /* Private function, not in public API. */
@@ -1489,7 +1484,7 @@ TA_RetCode TA_STOCH_BlockBatch( int startIdx, int endIdx, const double inHigh[],
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_STOCH_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outSlowK + 1, outSlowD + 1 );
+      retCode = TA_STOCH_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outSlowK + 1, outSlowD + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_STOCH_Close( stream );

@@ -852,7 +852,7 @@ static TA_OPEN_INLINE TA_RetCode TA_PVO_OpenBody( struct TA_PVO_Stream **stream,
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -1189,7 +1189,7 @@ TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_PVO_KernImpl( struct TA_PVO_Stream *sp, const double inVolumeBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_PVO_KernImpl( struct TA_PVO_Stream *sp, const double inVolumeBlk[], int histBar, int nbBar, double outReal[] )
 {
    int slowLookback = sp->slowLookback;
    int windowed = sp->windowed;
@@ -1203,26 +1203,21 @@ static TA_RetCode TA_PVO_KernImpl( struct TA_PVO_Stream *sp, const double inVolu
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub0, inVolumeBlk + kernBase, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub0, inVolumeBlk[kernBase + kernBar], &pad_tempBuffer[kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            sp->zeroRun = zeroRun;
-            return subRc;
-         }
+         sp->zeroRun = zeroRun;
+         return subRc;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub1, inVolumeBlk + kernBase, kernLen, outReal + kernBase );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub1, inVolumeBlk[kernBase + kernBar], &outReal[kernBase + kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            sp->zeroRun = zeroRun;
-            return subRc;
-         }
+         sp->zeroRun = zeroRun;
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1270,7 +1265,7 @@ TA_RetCode TA_PVO_UpdateBlock( struct TA_PVO_Stream *stream, const double inVolu
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
-   return TA_PVO_KernImpl( stream, inVolume, nbBar, outReal );
+   return TA_PVO_KernImpl( stream, inVolume, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -1307,7 +1302,7 @@ TA_RetCode TA_PVO_BlockBatch( int startIdx, int endIdx, const double inVolume[],
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_PVO_KernImpl( stream, inVolume + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_PVO_KernImpl( stream, inVolume + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_PVO_Close( stream );

@@ -1199,11 +1199,16 @@ pub fn generate(
     let kerneled = match &plan {
         StreamPlan::Composed(cp) => composed_kern_plan(func, cp, registry)
             .map(|ck| emit_composed_kernel(&mut o, func, &ck, enums, registry, helpers))
-            .map(|()| true),
-        _ => kern_plan(func, &plan).map(|kp| emit_kernel(&mut o, func, &kp, enums, registry, helpers)).map(|()| false),
+            .map(|()| BlockRun::ComposedKern),
+        StreamPlan::Dispatch(dp) => dispatch_block_entry(dp, registry)
+            .map(|_| emit_dispatch_update_block(&mut o, func, dp, enums, registry, helpers, &counter))
+            .map(|()| BlockRun::UpdateBlock),
+        _ => kern_plan(func, &plan)
+            .map(|kp| emit_kernel(&mut o, func, &kp, enums, registry, helpers))
+            .map(|()| BlockRun::Kern),
     };
-    if let Ok(returns_code) = kerneled {
-        emit_block_batch(&mut o, func, returns_code);
+    if let Ok(run) = kerneled {
+        emit_block_batch(&mut o, func, run);
     }
 
     // Tier-independent: every tier retains into the same `cur_` fields and
@@ -2024,6 +2029,10 @@ fn emit_composed_open_head(
     // mode (`!outStride`, the caller's array is a single `double`) still
     // needs its own history-sized scratch.
     let alias_fill = cp.fill_scratch_may_alias_output(outputs);
+    // The batch tail writes at most endIdx - startIdx + 1 elements, the size a
+    // batch caller's output array is promised. Sizing by historyLen instead
+    // makes an open anchored late in a long series allocate the whole series.
+    let count = "(size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1)";
     for (k, out) in outputs.iter().enumerate() {
         let prior: String = outputs[..k]
             .iter()
@@ -2038,14 +2047,14 @@ fn emit_composed_open_head(
             let _ = writeln!(o, "   {{");
             let _ = writeln!(
                 o,
-                "      sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * (size_t)historyLen );"
+                "      sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * {count} );"
             );
             let _ = writeln!(o, "      if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
             let _ = writeln!(o, "   }}");
         } else {
             let _ = writeln!(
                 o,
-                "   sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * (size_t)historyLen );"
+                "   sc_{out} = ({ty} *)TA_Malloc( sizeof({ty}) * {count} );"
             );
             let _ = writeln!(o, "   if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
         }
@@ -2839,7 +2848,7 @@ fn emit_dispatch_open(
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
-        emit_open_arm_scratch(o, scratch.as_ref(), mode.fills());
+        emit_open_arm_scratch(o, scratch.as_ref(), mode);
         let _ = writeln!(o, "         retCode = {call};");
         if let (Some((_, name)), true) = (&scratch, mode.fills()) {
             let _ = writeln!(o, "         TA_Free( {name} );");
@@ -3029,13 +3038,19 @@ fn emit_dispatch(
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
-/// Declare an opener arm's scratch; where the arm fills, allocate `historyLen`
-/// elements for it, releasing the handle if that fails.
-fn emit_open_arm_scratch(o: &mut String, scratch: Option<&(&str, String)>, fills: bool) {
+/// Declare an opener arm's scratch; where the arm fills, allocate as many
+/// elements as the fill can write, releasing the handle if that fails. A fill
+/// anchored at `startIdx` writes at most `historyLen - startIdx`.
+fn emit_open_arm_scratch(o: &mut String, scratch: Option<&(&str, String)>, mode: DispatchOpen) {
     let Some((ty, name)) = scratch else { return };
-    if fills {
+    if mode.fills() {
+        let count = if mode == DispatchOpen::FillInternal {
+            "(startIdx < historyLen ? historyLen - startIdx : 1)"
+        } else {
+            "historyLen"
+        };
         let _ = writeln!(o, "         {ty} *{name};\n");
-        let _ = writeln!(o, "         {name} = ({ty} *)TA_Malloc( historyLen * sizeof({ty}) );");
+        let _ = writeln!(o, "         {name} = ({ty} *)TA_Malloc( {count} * sizeof({ty}) );");
         let _ = writeln!(o, "         if( !{name} )\n         {{");
         let _ = writeln!(o, "            TA_Free( sp );\n            return TA_ALLOC_ERR;\n         }}");
     } else {
@@ -6110,14 +6125,19 @@ pub enum BlockEntry {
     Composed,
 }
 
-/// A callee lookup that also answers which block entry each callee defines.
+/// A callee lookup that also answers which block entry each callee defines,
+/// and whether a blocked batch may re-call it in batch form.
 pub trait KernLookup: streaming::CalleeLookup {
     fn block_entry(&self, callee: &str) -> BlockEntry;
+    fn recall_eligible(&self, callee: &str) -> bool;
 }
 
 impl KernLookup for Registry {
     fn block_entry(&self, callee: &str) -> BlockEntry {
         self.full_def(callee).map_or(BlockEntry::None, |f| block_entry_of(&f, self))
+    }
+    fn recall_eligible(&self, callee: &str) -> bool {
+        self.full_def(callee).is_some_and(|f| recall_eligible_def(&f))
     }
 }
 
@@ -6128,6 +6148,44 @@ impl KernLookup for streaming::FuncsLookup<'_> {
             .find(|f| f.name.eq_ignore_ascii_case(callee))
             .map_or(BlockEntry::None, |f| block_entry_of(f, self))
     }
+    fn recall_eligible(&self, callee: &str) -> bool {
+        self.0.iter().find(|f| f.name.eq_ignore_ascii_case(callee)).is_some_and(recall_eligible_def)
+    }
+}
+
+/// PROTOTYPE DATA, generated from the kern harness `restart` sweep: the
+/// functions whose batch over a later sub-range equals the slice of one call
+/// over the whole range, bitwise, on both the walk and the spike series. To
+/// become a per-function attribute the sweep verifies.
+#[rustfmt::skip]
+const RESTART_EXACT: &[&str] = &[
+    "ACOS", "ADD", "ALMA", "AROON", "AROONOSC", "ASIN", "ATAN", "AVGDEV", "AVGPRICE", "BOP",
+    "CDL2CROWS", "CDL3BLACKCROWS", "CDL3INSIDE", "CDL3LINESTRIKE", "CDL3OUTSIDE",
+    "CDL3STARSINSOUTH", "CDL3WHITESOLDIERS", "CDLABANDONEDBABY", "CDLADVANCEBLOCK", "CDLBELTHOLD",
+    "CDLBREAKAWAY", "CDLCONCEALBABYSWALL", "CDLCOUNTERATTACK", "CDLDARKCLOUDCOVER", "CDLDOJI",
+    "CDLDOJISTAR", "CDLDRAGONFLYDOJI", "CDLENGULFING", "CDLEVENINGDOJISTAR", "CDLEVENINGSTAR",
+    "CDLGAPSIDESIDEWHITE", "CDLGRAVESTONEDOJI", "CDLHAMMER", "CDLHANGINGMAN", "CDLHARAMI",
+    "CDLHARAMICROSS", "CDLHIGHWAVE", "CDLHIKKAKE", "CDLHIKKAKEMOD", "CDLHOMINGPIGEON",
+    "CDLIDENTICAL3CROWS", "CDLINNECK", "CDLINVERTEDHAMMER", "CDLKICKING", "CDLKICKINGBYLENGTH",
+    "CDLLADDERBOTTOM", "CDLLONGLEGGEDDOJI", "CDLMARUBOZU", "CDLMATCHINGLOW", "CDLMATHOLD",
+    "CDLMORNINGDOJISTAR", "CDLMORNINGSTAR", "CDLONNECK", "CDLPIERCING", "CDLRICKSHAWMAN",
+    "CDLRISEFALL3METHODS", "CDLSEPARATINGLINES", "CDLSHOOTINGSTAR", "CDLSPINNINGTOP",
+    "CDLSTALLEDPATTERN", "CDLSTICKSANDWICH", "CDLTAKURI", "CDLTASUKIGAP", "CDLTHRUSTING",
+    "CDLTRISTAR", "CDLUNIQUE3RIVER", "CDLUPSIDEGAP2CROWS", "CDLXSIDEGAP3METHODS", "CEIL", "CG",
+    "CHOP", "CHOPTR", "COS", "COSH", "CRSI", "DIV", "DONCHIAN", "EXP", "FLOOR", "FRACTAL", "IBS",
+    "ICHIMOKU", "IMI", "LN", "LOG10", "MARKETFI", "MAX", "MAXINDEX", "MEDIAN", "MEDPRICE",
+    "MIDPOINT", "MIDPRICE", "MIN", "MININDEX", "MINMAX", "MINMAXINDEX", "MOM", "MULT",
+    "PERCENTILE", "PERCENTRANK", "ROC", "ROCP", "ROCR", "ROCR100", "RVOL", "SI", "SIN", "SINH",
+    "SQRT", "SUB", "TAN", "TANH", "TRANGE", "TYPPRICE", "VHF", "WCLPRICE", "WILLR",
+];
+
+/// Whether a blocked batch may replace a sub-stream's block update by one
+/// batch call on a window rebased onto the block. A `bar_index` output counts
+/// from the window's bar 0, so rebasing changes it even where the sweep saw
+/// a sub-range of the same array agree.
+fn recall_eligible_def(func: &FuncDef) -> bool {
+    RESTART_EXACT.iter().any(|n| n.eq_ignore_ascii_case(&func.name))
+        && !func.outputs.iter().any(|o| o.flags.iter().any(|f| f == "bar_index"))
 }
 
 /// The block entry `func` defines (`None` for a function with no stream tier).
@@ -6144,8 +6202,24 @@ fn kern_decide(func: &FuncDef, lookup: &dyn KernLookup) -> Result<BlockEntry, Ke
     let plan = streaming::validate_streamable(func, lookup).unwrap_or_else(|e| panic!("streaming gate: {e}"));
     match &plan {
         StreamPlan::Composed(cp) => composed_kern_plan(func, cp, lookup).map(|_| BlockEntry::Composed),
+        StreamPlan::Dispatch(dp) => dispatch_block_entry(dp, lookup),
         _ => kern_plan(func, &plan).map(|_| BlockEntry::Plain),
     }
+}
+
+/// A dispatcher's block entry forwards each block to the selected arm's, so it
+/// has one only when every arm Open can select does, and it is as weak as its
+/// weakest arm: one composed arm makes an in-place call unsafe.
+fn dispatch_block_entry(dp: &DispatchPlan, lookup: &dyn KernLookup) -> Result<BlockEntry, KernDecline> {
+    let mut entry = BlockEntry::Plain;
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        match lookup.block_entry(&arm.callee) {
+            BlockEntry::None => return Err(KernDecline::HandRolled),
+            BlockEntry::Composed => entry = BlockEntry::Composed,
+            BlockEntry::Plain => {}
+        }
+    }
+    Ok(entry)
 }
 
 /// One field of the handle as its struct declares it.
@@ -6306,6 +6380,30 @@ impl KernScan {
 /// Whether `func` gets a block kernel, and if not, why.
 pub fn kernel_decision(func: &FuncDef, lookup: &dyn KernLookup) -> Result<(), KernDecline> {
     kern_decide(func, lookup).map(|_| ())
+}
+
+/// The callee of every sub-call `func`'s composed kernel may run as one batch
+/// call per sub-block, in pipeline order.
+pub fn recall_subs(func: &FuncDef, lookup: &dyn KernLookup) -> Vec<String> {
+    if !func.streaming {
+        return Vec::new();
+    }
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let Ok(StreamPlan::Composed(cp)) = streaming::validate_streamable(&resolved, lookup) else {
+        return Vec::new();
+    };
+    composed_kern_plan(&resolved, &cp, lookup).map_or_else(
+        |_| Vec::new(),
+        |ck| {
+            ck.stages
+                .iter()
+                .filter_map(|s| match s {
+                    KStage::Sub { callee, recall: Some(_), .. } => Some(callee.to_uppercase()),
+                    _ => None,
+                })
+                .collect()
+        },
+    )
 }
 
 fn kern_plan<'p, 'a>(func: &FuncDef, plan: &'p StreamPlan<'a>) -> Result<KernPlan<'p, 'a>, KernDecline> {
@@ -6540,8 +6638,17 @@ enum KStage {
     Loop { body: Vec<Statement>, loads: Vec<String>, zeros: Vec<String>, stores: Vec<String> },
     /// One sub-handle over the sub-block: `srcs` are storages, `dsts` series
     /// names. A callee with no block entry (`block` false) takes one `Update`
-    /// per bar.
-    Sub { sub_idx: usize, callee: String, srcs: Vec<String>, dsts: Vec<String>, block: bool },
+    /// per bar. `recall` names the local holding the callee's lookback where
+    /// the sub may instead be one batch call on the caller's arrays.
+    Sub {
+        sub_idx: usize,
+        callee: String,
+        srcs: Vec<String>,
+        dsts: Vec<String>,
+        block: bool,
+        opt_args: Vec<Expr>,
+        recall: Option<String>,
+    },
 }
 
 struct ComposedKern {
@@ -6559,6 +6666,11 @@ struct ComposedKern {
     base: String,
     len: String,
     bar: String,
+    /// The kernel parameter counting the caller's bars before each input block.
+    hist: String,
+    /// The batch re-call's `outBegIdx` / `outNBElement` receivers.
+    recall_beg: String,
+    recall_nb: String,
 }
 
 enum Draft {
@@ -6744,12 +6856,16 @@ fn composed_kern_plan(
                 if entry == BlockEntry::Composed && sub.dsts.iter().any(|d| srcs.contains(&format!("cur_{d}"))) {
                     return refuse("an in-place sub-call into a composed kernel");
                 }
+                let recall = (lookup.recall_eligible(&sub.callee) && srcs.iter().all(|s| !s.starts_with("cur_")))
+                    .then(|| format!("recallLb{sub_idx}"));
                 Some(Draft::Sub(KStage::Sub {
                     sub_idx: *sub_idx,
                     callee: sub.callee.clone(),
                     srcs,
                     dsts: sub.dsts.clone(),
                     block: entry != BlockEntry::None,
+                    opt_args: sub.opt_args.clone(),
+                    recall,
                 }))
             }
             UpdateStep::Align { .. } => {
@@ -6912,6 +7028,7 @@ fn composed_kern_plan(
         s
     };
     let (base, len, bar) = (fresh("kernBase"), fresh("kernLen"), fresh("kernBar"));
+    let (hist, recall_beg, recall_nb) = (fresh("histBar"), fresh("recallBeg"), fresh("recallNb"));
 
     let to_local = |e: Expr| match e {
         Expr::Var(ref v) => KernScan::field_of(v).map_or(e.clone(), |f| Expr::Var(f.to_string())),
@@ -6941,9 +7058,10 @@ fn composed_kern_plan(
                 defined.extend(stores.iter().cloned());
                 stages.push(KStage::Loop { body, loads, zeros, stores });
             }
-            KStage::Sub { sub_idx, callee, srcs, dsts, block } => {
+            KStage::Sub { sub_idx, callee, srcs, dsts, block, opt_args, recall } => {
                 defined.extend(dsts.iter().cloned());
-                stages.push(KStage::Sub { sub_idx, callee, srcs, dsts, block });
+                let recall = recall.map(|stem| fresh(&stem));
+                stages.push(KStage::Sub { sub_idx, callee, srcs, dsts, block, opt_args, recall });
             }
         }
     }
@@ -6961,6 +7079,9 @@ fn composed_kern_plan(
         base,
         len,
         bar,
+        hist,
+        recall_beg,
+        recall_nb,
     })
 }
 
@@ -6973,6 +7094,42 @@ impl ComposedKern {
             Some(x) => format!("pad_{x}[{bar}]"),
             None => format!("{storage}Blk[{base} + {bar}]"),
         }
+    }
+
+    fn recall_decls(&self, lbs: &[String]) -> String {
+        let mut d = String::new();
+        for lb in lbs {
+            let _ = writeln!(d, "   int {lb};");
+        }
+        if !lbs.is_empty() {
+            let _ = writeln!(d, "   int {};\n   int {};", self.recall_beg, self.recall_nb);
+        }
+        d
+    }
+
+    /// One sub-handle stepped over the sub-block: one block call, or one
+    /// `Update` per bar where the callee has no block entry.
+    fn sub_step(&self, update: &str, sub_idx: usize, srcs: &[String], dsts: &[String], block: bool, fail: &str) -> String {
+        let (len, bar) = (&self.len, &self.bar);
+        let mut step = String::new();
+        if block {
+            let args: Vec<String> = srcs
+                .iter()
+                .map(|s| self.block(s))
+                .chain(std::iter::once(len.clone()))
+                .chain(dsts.iter().map(|d| self.block(d)))
+                .collect();
+            let _ = writeln!(step, "      subRc = {update}Block( sp->sub{sub_idx}, {} );", args.join(", "));
+            step.push_str(fail);
+        } else {
+            let args: Vec<String> =
+                srcs.iter().map(|s| self.elem(s)).chain(dsts.iter().map(|d| format!("&{}", self.elem(d)))).collect();
+            let _ = writeln!(step, "      for( {bar} = 0; {bar} < {len}; {bar}++ )\n      {{");
+            let _ = writeln!(step, "         subRc = {update}( sp->sub{sub_idx}, {} );", args.join(", "));
+            step.push_str(&indent3(fail));
+            let _ = writeln!(step, "      }}");
+        }
+        step
     }
 
     /// The sub-block's first element of a storage, as a pointer.
@@ -7046,6 +7203,10 @@ fn emit_composed_kernel(
     for (_, storage) in &ck.copies {
         touch(storage);
     }
+    let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let hist = &ck.hist;
+    let mut lookbacks = String::new();
+    let mut recall_lbs: Vec<String> = Vec::new();
     for stage in &ck.stages {
         match stage {
             KStage::Loop { body, loads, zeros, stores } => {
@@ -7070,36 +7231,21 @@ fn emit_composed_kernel(
                 let _ = writeln!(pipe, "      }}");
                 used_curs.extend(loads.iter().chain(zeros).chain(stores).cloned());
             }
-            KStage::Sub { sub_idx, callee, srcs, dsts, block } => {
+            KStage::Sub { sub_idx, callee, srcs, dsts, block, opt_args, recall } => {
                 let cpfx = callee_prefix(callee);
                 let dst_storage: Vec<String> = dsts.iter().map(|d| format!("cur_{d}")).collect();
                 for s in srcs.iter().filter(|s| !s.starts_with("cur_")) {
                     used_inputs.insert(s.clone());
                 }
-                if *block {
-                    let args: Vec<String> = srcs
-                        .iter()
-                        .map(|s| ck.block(s))
-                        .chain(std::iter::once(len.clone()))
-                        .chain(dst_storage.iter().map(|d| ck.block(d)))
-                        .collect();
-                    let _ = writeln!(pipe, "      subRc = {cpfx}_UpdateBlock( sp->sub{sub_idx}, {} );", args.join(", "));
-                    pipe.push_str(&fail);
-                } else {
-                    let args: Vec<String> = srcs
-                        .iter()
-                        .map(|s| ck.elem(s))
-                        .chain(dst_storage.iter().map(|d| format!("&{}", ck.elem(d))))
-                        .collect();
-                    let _ = writeln!(pipe, "      for( {bar} = 0; {bar} < {len}; {bar}++ )\n      {{");
-                    let _ = writeln!(pipe, "         subRc = {cpfx}_Update( sp->sub{sub_idx}, {} );", args.join(", "));
-                    let inner = fail.lines().fold(String::new(), |mut acc, l| {
-                        let _ = writeln!(acc, "   {l}");
-                        acc
-                    });
-                    pipe.push_str(&inner);
-                    let _ = writeln!(pipe, "      }}");
-                }
+                let step = ck.sub_step(&format!("{cpfx}_Update"), *sub_idx, srcs, &dst_storage, *block, &fail);
+                let Some(lb) = recall else {
+                    pipe.push_str(&step);
+                    continue;
+                };
+                let opts = opts_on_handle(opt_args, &params, registry, helpers, &counter);
+                let recall = Recall { lb, callee: &cpfx, srcs, dsts: &dst_storage, opts: &opts };
+                recall.emit(&mut lookbacks, &mut pipe, ck, &step, &fail);
+                recall_lbs.push(lb.clone());
             }
         }
     }
@@ -7117,7 +7263,7 @@ fn emit_composed_kernel(
     }
     let _ = writeln!(
         o,
-        "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_KernImpl( struct TA_{n}_Stream *sp, {sig_ins}int nbBar, {} )\n{{",
+        "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_KernImpl( struct TA_{n}_Stream *sp, {sig_ins}int {hist}, int nbBar, {} )\n{{",
         out_fill_arrays_sig(func)
     );
     for f in &ck.fields {
@@ -7126,6 +7272,7 @@ fn emit_composed_kernel(
     if !ck.settings.is_empty() {
         o.push_str(&emit_used_candle_unpacking(&ck.settings, &pipe, 3));
     }
+    o.push_str(&ck.recall_decls(&recall_lbs));
     for x in ck.pads.iter().filter(|x| used_pads.contains(*x)) {
         let _ = writeln!(o, "   {} pad_{x}[TA_KERN_BLOCK];", out_c_type(func, x));
     }
@@ -7143,6 +7290,10 @@ fn emit_composed_kernel(
     for a in inputs.iter().filter(|a| !used_inputs.contains(*a)) {
         let _ = writeln!(o, "   (void){a}Blk;");
     }
+    if recall_lbs.is_empty() {
+        let _ = writeln!(o, "   (void){hist};");
+    }
+    o.push_str(&lookbacks);
     let _ = writeln!(o, "   for( {base} = 0; {base} < nbBar; {base} += {len} )\n   {{");
     let _ = writeln!(o, "      {len} = nbBar - {base} < TA_KERN_BLOCK ? nbBar - {base} : TA_KERN_BLOCK;");
     o.push_str(&pipe);
@@ -7157,17 +7308,92 @@ fn emit_composed_kernel(
     emit_update_block(o, func, true);
 }
 
-/// `TA_<N>_UpdateBlock`: the kernel's private entry.
+/// One sub-call a composed kernel may run as a batch call on the caller's
+/// arrays, rebased so its first output lands on the sub-block's first bar.
+struct Recall<'r> {
+    lb: &'r str,
+    callee: &'r str,
+    srcs: &'r [String],
+    dsts: &'r [String],
+    opts: &'r [String],
+}
+
+impl Recall<'_> {
+    /// The lookback and the once-per-call decision into `pre`; into `pipe`,
+    /// the batch call, or `step` where the decision went the other way.
+    fn emit(&self, pre: &mut String, pipe: &mut String, ck: &ComposedKern, step: &str, fail: &str) {
+        let Recall { lb, callee, .. } = *self;
+        let (base, len, hist, rbeg, rnb) = (&ck.base, &ck.len, &ck.hist, &ck.recall_beg, &ck.recall_nb);
+        let lb_args = if self.opts.is_empty() { String::new() } else { format!(" {} ", self.opts.join(", ")) };
+        let _ = writeln!(pre, "   {lb} = {callee}_Lookback({lb_args});");
+        let _ = writeln!(pre, "   if( {hist} <= 0 || {hist} < {lb} )\n      {lb} = -1;");
+        let args: Vec<String> = [lb.to_string(), format!("{lb} + {len} - 1")]
+            .into_iter()
+            .chain(self.srcs.iter().map(|s| format!("{s}Blk + {base} - {lb}")))
+            .chain(self.opts.iter().cloned())
+            .chain([format!("&{rbeg}"), format!("&{rnb}")])
+            .chain(self.dsts.iter().map(|d| ck.block(d)))
+            .collect();
+        let _ = writeln!(pipe, "      if( {lb} >= 0 )\n      {{");
+        let _ = writeln!(pipe, "         subRc = {callee}( {} );", args.join(", "));
+        let _ = writeln!(pipe, "         if( subRc == TA_SUCCESS && ({rbeg} != {lb} || {rnb} != {len}) )");
+        let _ = writeln!(pipe, "            subRc = TA_BAD_PARAM;");
+        pipe.push_str(&indent3(fail));
+        let _ = writeln!(pipe, "      }}\n      else\n      {{");
+        pipe.push_str(&indent3(step));
+        let _ = writeln!(pipe, "      }}");
+    }
+}
+
+/// A sub-call's optional arguments as a kernel renders them: the caller's
+/// parameters read from the handle.
+fn opts_on_handle(
+    opt_args: &[Expr],
+    params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Vec<String> {
+    opt_args
+        .iter()
+        .map(|e| {
+            let e = streaming::rewrite_expr(e, &|x| match x {
+                Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp->{v}")),
+                other => other,
+            });
+            render_expression(&e, registry, helpers, counter)
+        })
+        .collect()
+}
+
+fn indent3(text: &str) -> String {
+    text.lines().fold(String::new(), |mut acc, l| {
+        let _ = writeln!(acc, "   {l}");
+        acc
+    })
+}
+
+fn update_block_guards(o: &mut String, func: &FuncDef) {
+    let args: Vec<String> = streaming::input_array_names(func)
+        .into_iter()
+        .chain(func.outputs.iter().map(|x| x.name.clone()))
+        .collect();
+    let _ = writeln!(o, "   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", args.iter().map(|a| format!("!{a}")).collect::<Vec<_>>().join(" || "));
+}
+
+/// `TA_<N>_UpdateBlock`: the kernel's private entry. A composed kernel is told
+/// no bar precedes the block, so a stream never takes the batch re-call and
+/// every sub-handle advances.
 fn emit_update_block(o: &mut String, func: &FuncDef, returns_code: bool) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
-    let args: Vec<String> = inputs.iter().cloned().chain(func.outputs.iter().map(|x| x.name.clone())).collect();
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", update_block_signature(func));
-    let _ = writeln!(o, "   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;");
-    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", args.iter().map(|a| format!("!{a}")).collect::<Vec<_>>().join(" || "));
+    update_block_guards(o, func);
     let call: Vec<String> = inputs
         .iter()
         .cloned()
+        .chain(returns_code.then(|| "0".to_string()))
         .chain(std::iter::once("nbBar".to_string()))
         .chain(func.outputs.iter().map(|x| x.name.clone()))
         .collect();
@@ -7176,6 +7402,103 @@ fn emit_update_block(o: &mut String, func: &FuncDef, returns_code: bool) {
     } else {
         let _ = writeln!(o, "   TA_{n}_KernImpl( stream, {} );\n   return TA_SUCCESS;\n}}\n", call.join(", "));
     }
+}
+
+/// `TA_<N>_UpdateBlock` for a dispatcher: the identity path in place, else the
+/// whole block handed to the selected arm's block entry in one call. An arm
+/// that discards an output goes through a frame holding a block-sized sink.
+#[allow(clippy::too_many_arguments)]
+fn emit_dispatch_update_block(
+    o: &mut String,
+    func: &FuncDef,
+    dp: &DispatchPlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let inputs = streaming::input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let case_of = |label: &str| render_c_switch_label(label, enums);
+    let ins_sig: String = inputs.iter().fold(String::new(), |mut s, a| {
+        let _ = write!(s, "const double {a}[], ");
+        s
+    });
+    let arms: Vec<_> = dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
+    let helper_of = |arm: &streaming::DispatchArm| format!("TA_{n}_UpdateBlock_{}", arm.callee.to_uppercase());
+
+    for arm in &arms {
+        let Some((ty, name)) = arm_scratch(arm, registry) else { continue };
+        let cp = callee_prefix(&arm.callee);
+        let outs: Vec<String> = arm
+            .out_map
+            .iter()
+            .map(|slot| match slot {
+                streaming::OutSlot::Forward(k) => format!("{} + blockBase", outputs[*k]),
+                streaming::OutSlot::Discard => name.clone(),
+            })
+            .collect();
+        let ins: Vec<String> = inputs.iter().map(|a| format!("{a} + blockBase")).collect();
+        let _ = writeln!(
+            o,
+            "static TA_NOINLINE TA_RetCode {}( struct {cp}_Stream *sub, {ins_sig}int nbBar, {} )\n{{",
+            helper_of(arm),
+            out_fill_arrays_sig(func)
+        );
+        let _ = writeln!(o, "   {ty} {name}[TA_KERN_BLOCK];\n   TA_RetCode retCode;\n   int blockBase;\n   int blockLen;\n");
+        let _ = writeln!(o, "   for( blockBase = 0; blockBase < nbBar; blockBase += blockLen )\n   {{");
+        let _ = writeln!(o, "      blockLen = nbBar - blockBase < TA_KERN_BLOCK ? nbBar - blockBase : TA_KERN_BLOCK;");
+        let _ = writeln!(o, "      retCode = {cp}_UpdateBlock( sub, {}, blockLen, {} );", ins.join(", "), outs.join(", "));
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) return retCode;\n   }}\n   return TA_SUCCESS;\n}}\n");
+    }
+
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", update_block_signature(func));
+    let _ = writeln!(o, "   TA_RetCode retCode;\n");
+    update_block_guards(o, func);
+    let mut tail = String::new();
+    for out in &outputs {
+        let _ = writeln!(tail, "   stream->cur_{out} = {out}[nbBar - 1];");
+    }
+    let _ = writeln!(tail, "   stream->{} += nbBar;", RANGE_HEAD_FIELDS[1]);
+    if let (Some(cond), Some(idp)) = (dispatch_identity_cond_on_handle(func, dp, registry, helpers, counter), &dp.identity) {
+        let _ = writeln!(o, "   if( {cond} )\n   {{\n      int blockBar;\n");
+        let _ = writeln!(o, "      for( blockBar = 0; blockBar < nbBar; blockBar++ )\n      {{");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(o, "         {out}[blockBar] = {inp}[blockBar];");
+        }
+        let _ = writeln!(o, "      }}");
+        for l in tail.lines() {
+            let _ = writeln!(o, "   {l}");
+        }
+        let _ = writeln!(o, "      return TA_SUCCESS;\n   }}");
+    }
+    let _ = writeln!(o, "   switch( stream->{} )\n   {{", dp.param);
+    let call_args: String = inputs.iter().cloned().chain(std::iter::once("nbBar".to_string())).collect::<Vec<_>>().join(", ");
+    for arm in &arms {
+        let cp = callee_prefix(&arm.callee);
+        let _ = writeln!(o, "   case {}:", case_of(&arm.label));
+        if arm_scratch(arm, registry).is_some() {
+            let _ = writeln!(
+                o,
+                "      retCode = {}( (struct {cp}_Stream *)stream->sub, {call_args}, {} );",
+                helper_of(arm),
+                outputs.join(", ")
+            );
+        } else {
+            let _ = writeln!(
+                o,
+                "      retCode = {cp}_UpdateBlock( (struct {cp}_Stream *)stream->sub, {call_args}, {} );",
+                dispatch_arm_out_args(arm, &outputs, registry, false)
+            );
+        }
+        let _ = writeln!(o, "      break;");
+    }
+    let _ = writeln!(o, "   default:\n      /* Unreachable: Open rejects arms without a sub-stream. */");
+    let _ = writeln!(o, "      return TA_INTERNAL_ERROR({});", crate::internal_error_ids::site("dispatch.Update"));
+    let _ = writeln!(o, "   }}\n   if( retCode != TA_SUCCESS ) return retCode;");
+    o.push_str(&tail);
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
 /// `TA_<N>_BlockBatch` prototype (no trailing `;`): the batch signature,
@@ -7193,13 +7516,24 @@ pub fn block_batch_signature(func: &FuncDef) -> String {
     )
 }
 
+/// What `TA_<N>_BlockBatch` runs over the range after its open.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum BlockRun {
+    /// A plain `KernImpl`, which cannot fail.
+    Kern,
+    /// A composed `KernImpl`, told how many bars precede its blocks.
+    ComposedKern,
+    /// The dispatcher's `UpdateBlock`.
+    UpdateBlock,
+}
+
 /// `TA_<N>_BlockBatch`: batch's answer over `[startIdx, endIdx]` from a handle
 /// whose open ends at the first output bar, then the kernel over the rest of
 /// the range on the caller's arrays. The open is anchored at the caller's own
 /// `startIdx`, not the clamped one and not a window start: a composed body
 /// seeds its sub-calls from the caller's `startIdx`, and an index output counts
 /// from the array's bar 0.
-fn emit_block_batch(o: &mut String, func: &FuncDef, returns_code: bool) {
+fn emit_block_batch(o: &mut String, func: &FuncDef, run: BlockRun) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
@@ -7230,15 +7564,17 @@ fn emit_block_batch(o: &mut String, func: &FuncDef, returns_code: bool) {
     let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
     let kern_args: Vec<String> = std::iter::once("stream".to_string())
         .chain(inputs.iter().map(|a| format!("{a} + firstIdx + 1")))
+        .chain((run == BlockRun::ComposedKern).then(|| "firstIdx + 1".to_string()))
         .chain(std::iter::once("endIdx - firstIdx".to_string()))
         .chain(outputs.iter().map(|x| format!("{x} + 1")))
         .collect();
     let _ = writeln!(o, "   if( endIdx > firstIdx )\n   {{");
-    if returns_code {
-        let _ = writeln!(o, "      retCode = TA_{n}_KernImpl( {} );", kern_args.join(", "));
-        let _ = writeln!(o, "      if( retCode != TA_SUCCESS )\n      {{\n         TA_{n}_Close( stream );\n         return retCode;\n      }}");
-    } else {
+    if run == BlockRun::Kern {
         let _ = writeln!(o, "      TA_{n}_KernImpl( {} );", kern_args.join(", "));
+    } else {
+        let entry = if run == BlockRun::UpdateBlock { "UpdateBlock" } else { "KernImpl" };
+        let _ = writeln!(o, "      retCode = TA_{n}_{entry}( {} );", kern_args.join(", "));
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS )\n      {{\n         TA_{n}_Close( stream );\n         return retCode;\n      }}");
     }
     let _ = writeln!(o, "   }}\n   TA_{n}_Close( stream );");
     let _ = writeln!(o, "   *outBegIdx = firstIdx;\n   *outNBElement = endIdx - firstIdx + 1;\n   return TA_SUCCESS;\n}}\n");

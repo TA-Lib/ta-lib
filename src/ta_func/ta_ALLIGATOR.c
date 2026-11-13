@@ -481,19 +481,19 @@ static TA_OPEN_INLINE TA_RetCode TA_ALLIGATOR_OpenBody( struct TA_ALLIGATOR_Stre
    if( outStride ) sc_outJaw = outJaw;
    else
    {
-      sc_outJaw = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outJaw = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outJaw ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outTeeth = outTeeth;
    else
    {
-      sc_outTeeth = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outTeeth = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outTeeth ) { TA_Free( sc_outJaw ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outLips = outLips;
    else
    {
-      sc_outLips = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outLips = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outLips ) { TA_Free( sc_outJaw ); TA_Free( sc_outTeeth ); return TA_ALLOC_ERR; }
    }
 
@@ -832,20 +832,39 @@ TA_LIB_API TA_RetCode TA_ALLIGATOR_Close( TA_ALLIGATOR_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_ALLIGATOR_KernImpl( struct TA_ALLIGATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outJaw[], double outTeeth[], double outLips[] )
+static TA_RetCode TA_ALLIGATOR_KernImpl( struct TA_ALLIGATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int histBar, int nbBar, double outJaw[], double outTeeth[], double outLips[] )
 {
+   int recallLb0;
+   int recallBeg;
+   int recallNb;
    double pad_tempMP[TA_KERN_BLOCK];
    TA_RetCode subRc;
    int kernBase;
    int kernLen;
 
+   recallLb0 = TA_MEDPRICE_Lookback();
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         return subRc;
+         subRc = TA_MEDPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, &recallBeg, &recallNb, pad_tempMP );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
       subRc = TA_RMA_UpdateBlock( sp->sub1, pad_tempMP, kernLen, outJaw + kernBase );
       if( subRc != TA_SUCCESS )
@@ -875,7 +894,7 @@ TA_RetCode TA_ALLIGATOR_UpdateBlock( struct TA_ALLIGATOR_Stream *stream, const d
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !outJaw || !outTeeth || !outLips ) return TA_BAD_PARAM;
-   return TA_ALLIGATOR_KernImpl( stream, inHigh, inLow, nbBar, outJaw, outTeeth, outLips );
+   return TA_ALLIGATOR_KernImpl( stream, inHigh, inLow, 0, nbBar, outJaw, outTeeth, outLips );
 }
 
 /* Private function, not in public API. */
@@ -918,7 +937,7 @@ TA_RetCode TA_ALLIGATOR_BlockBatch( int startIdx, int endIdx, const double inHig
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_ALLIGATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outJaw + 1, outTeeth + 1, outLips + 1 );
+      retCode = TA_ALLIGATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outJaw + 1, outTeeth + 1, outLips + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_ALLIGATOR_Close( stream );

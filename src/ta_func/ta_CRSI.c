@@ -482,7 +482,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -851,10 +851,13 @@ TA_LIB_API TA_RetCode TA_CRSI_Close( TA_CRSI_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_CRSI_KernImpl( struct TA_CRSI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_CRSI_KernImpl( struct TA_CRSI_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outReal[] )
 {
    double prevClose = sp->prevClose;
    double streak = sp->streak;
+   int recallLb2;
+   int recallBeg;
+   int recallNb;
    double pad_tempStreak[TA_KERN_BLOCK];
    double pad_tempStreakRSI[TA_KERN_BLOCK];
    double pad_tempRSI[TA_KERN_BLOCK];
@@ -868,6 +871,9 @@ static TA_RetCode TA_CRSI_KernImpl( struct TA_CRSI_Stream *sp, const double inRe
    int kernLen;
    int kernBar;
 
+   recallLb2 = TA_ROCP_Lookback( 1 );
+   if( histBar <= 0 || histBar < recallLb2 )
+      recallLb2 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -904,12 +910,27 @@ static TA_RetCode TA_CRSI_KernImpl( struct TA_CRSI_Stream *sp, const double inRe
          sp->streak = streak;
          return subRc;
       }
-      subRc = TA_ROCP_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempStreak );
-      if( subRc != TA_SUCCESS )
+      if( recallLb2 >= 0 )
       {
-         sp->prevClose = prevClose;
-         sp->streak = streak;
-         return subRc;
+         subRc = TA_ROCP( recallLb2, recallLb2 + kernLen - 1, inRealBlk + kernBase - recallLb2, 1, &recallBeg, &recallNb, pad_tempStreak );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb2 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            sp->prevClose = prevClose;
+            sp->streak = streak;
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_ROCP_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempStreak );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->prevClose = prevClose;
+            sp->streak = streak;
+            return subRc;
+         }
       }
       subRc = TA_PERCENTRANK_UpdateBlock( sp->sub3, pad_tempStreak, kernLen, outReal + kernBase );
       if( subRc != TA_SUCCESS )
@@ -939,7 +960,7 @@ TA_RetCode TA_CRSI_UpdateBlock( struct TA_CRSI_Stream *stream, const double inRe
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_CRSI_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_CRSI_KernImpl( stream, inReal, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -976,7 +997,7 @@ TA_RetCode TA_CRSI_BlockBatch( int startIdx, int endIdx, const double inReal[], 
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_CRSI_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_CRSI_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_CRSI_Close( stream );

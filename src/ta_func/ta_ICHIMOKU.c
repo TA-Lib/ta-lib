@@ -451,25 +451,25 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
    if( outStride ) sc_outTenkanSen = outTenkanSen;
    else
    {
-      sc_outTenkanSen = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outTenkanSen = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outTenkanSen ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outKijunSen = outKijunSen;
    else
    {
-      sc_outKijunSen = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outKijunSen = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outKijunSen ) { TA_Free( sc_outTenkanSen ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outSenkouSpanA = outSenkouSpanA;
    else
    {
-      sc_outSenkouSpanA = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outSenkouSpanA = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outSenkouSpanA ) { TA_Free( sc_outTenkanSen ); TA_Free( sc_outKijunSen ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outSenkouSpanB = outSenkouSpanB;
    else
    {
-      sc_outSenkouSpanB = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outSenkouSpanB = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outSenkouSpanB ) { TA_Free( sc_outTenkanSen ); TA_Free( sc_outKijunSen ); TA_Free( sc_outSenkouSpanA ); return TA_ALLOC_ERR; }
    }
 
@@ -847,8 +847,13 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Close( TA_ICHIMOKU_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_ICHIMOKU_KernImpl( struct TA_ICHIMOKU_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+static TA_RetCode TA_ICHIMOKU_KernImpl( struct TA_ICHIMOKU_Stream *sp, const double inHighBlk[], const double inLowBlk[], int histBar, int nbBar, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
 {
+   int recallLb0;
+   int recallLb1;
+   int recallLb2;
+   int recallBeg;
+   int recallNb;
    double pad_tempT[TA_KERN_BLOCK];
    double pad_tempK[TA_KERN_BLOCK];
    double cur_tempT;
@@ -860,23 +865,71 @@ static TA_RetCode TA_ICHIMOKU_KernImpl( struct TA_ICHIMOKU_Stream *sp, const dou
    int kernLen;
    int kernBar;
 
+   recallLb0 = TA_MIDPRICE_Lookback( sp->optInTenkanPeriod );
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
+   recallLb1 = TA_MIDPRICE_Lookback( sp->optInKijunPeriod );
+   if( histBar <= 0 || histBar < recallLb1 )
+      recallLb1 = -1;
+   recallLb2 = TA_MIDPRICE_Lookback( sp->optInSenkouBPeriod );
+   if( histBar <= 0 || histBar < recallLb2 )
+      recallLb2 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_MIDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempT );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         return subRc;
+         subRc = TA_MIDPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, sp->optInTenkanPeriod, &recallBeg, &recallNb, pad_tempT );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
-      subRc = TA_MIDPRICE_UpdateBlock( sp->sub1, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempK );
-      if( subRc != TA_SUCCESS )
+      else
       {
-         return subRc;
+         subRc = TA_MIDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempT );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
-      subRc = TA_MIDPRICE_UpdateBlock( sp->sub2, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, outSenkouSpanB + kernBase );
-      if( subRc != TA_SUCCESS )
+      if( recallLb1 >= 0 )
       {
-         return subRc;
+         subRc = TA_MIDPRICE( recallLb1, recallLb1 + kernLen - 1, inHighBlk + kernBase - recallLb1, inLowBlk + kernBase - recallLb1, sp->optInKijunPeriod, &recallBeg, &recallNb, pad_tempK );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb1 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_MIDPRICE_UpdateBlock( sp->sub1, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempK );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      if( recallLb2 >= 0 )
+      {
+         subRc = TA_MIDPRICE( recallLb2, recallLb2 + kernLen - 1, inHighBlk + kernBase - recallLb2, inLowBlk + kernBase - recallLb2, sp->optInSenkouBPeriod, &recallBeg, &recallNb, outSenkouSpanB + kernBase );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb2 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_MIDPRICE_UpdateBlock( sp->sub2, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, outSenkouSpanB + kernBase );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
       subRc = TA_MEDPRICE_UpdateBlock( sp->sub3, pad_tempT, pad_tempK, kernLen, outSenkouSpanA + kernBase );
       if( subRc != TA_SUCCESS )
@@ -908,7 +961,7 @@ TA_RetCode TA_ICHIMOKU_UpdateBlock( struct TA_ICHIMOKU_Stream *stream, const dou
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
-   return TA_ICHIMOKU_KernImpl( stream, inHigh, inLow, nbBar, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+   return TA_ICHIMOKU_KernImpl( stream, inHigh, inLow, 0, nbBar, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
 }
 
 /* Private function, not in public API. */
@@ -953,7 +1006,7 @@ TA_RetCode TA_ICHIMOKU_BlockBatch( int startIdx, int endIdx, const double inHigh
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_ICHIMOKU_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outTenkanSen + 1, outKijunSen + 1, outSenkouSpanA + 1, outSenkouSpanB + 1 );
+      retCode = TA_ICHIMOKU_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outTenkanSen + 1, outKijunSen + 1, outSenkouSpanA + 1, outSenkouSpanB + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_ICHIMOKU_Close( stream );

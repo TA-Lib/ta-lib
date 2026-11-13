@@ -847,7 +847,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -1188,7 +1188,7 @@ TA_LIB_API TA_RetCode TA_PERCENTB_Close( TA_PERCENTB_Stream *stream )
 
 /* Private function, not in public API. */
 TA_FMA_MULTIVERSION
-static TA_RetCode TA_PERCENTB_KernImpl( struct TA_PERCENTB_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_PERCENTB_KernImpl( struct TA_PERCENTB_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outReal[] )
 {
    double optInNbDevUp = sp->optInNbDevUp;
    double optInNbDevDn = sp->optInNbDevDn;
@@ -1208,6 +1208,7 @@ static TA_RetCode TA_PERCENTB_KernImpl( struct TA_PERCENTB_Stream *sp, const dou
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -1218,13 +1219,10 @@ static TA_RetCode TA_PERCENTB_KernImpl( struct TA_PERCENTB_Stream *sp, const dou
          cur_tempX = inReal;
          pad_tempX[kernBar] = cur_tempX;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_tempMA );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_tempMA[kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            return subRc;
-         }
+         return subRc;
       }
       subRc = TA_VAR_UpdateBlock( sp->sub1, inRealBlk + kernBase, kernLen, outReal + kernBase );
       if( subRc != TA_SUCCESS )
@@ -1274,7 +1272,7 @@ TA_RetCode TA_PERCENTB_UpdateBlock( struct TA_PERCENTB_Stream *stream, const dou
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_PERCENTB_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_PERCENTB_KernImpl( stream, inReal, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -1311,7 +1309,7 @@ TA_RetCode TA_PERCENTB_BlockBatch( int startIdx, int endIdx, const double inReal
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_PERCENTB_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_PERCENTB_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_PERCENTB_Close( stream );

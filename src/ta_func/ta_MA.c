@@ -880,7 +880,7 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
          TA_MAMA_Stream *sub = NULL;
          double *famaScratch;
 
-         famaScratch = (double *)TA_Malloc( historyLen * sizeof(double) );
+         famaScratch = (double *)TA_Malloc( (startIdx < historyLen ? historyLen - startIdx : 1) * sizeof(double) );
          if( !famaScratch )
          {
             TA_Free( sp );
@@ -1302,6 +1302,142 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break; /* identity-only or rejected arm: no sub-stream */
    }
    TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+static TA_NOINLINE TA_RetCode TA_MA_UpdateBlock_MAMA( struct TA_MAMA_Stream *sub, const double inReal[], int nbBar, double outReal[] )
+{
+   double famaScratch[TA_KERN_BLOCK];
+   TA_RetCode retCode;
+   int blockBase;
+   int blockLen;
+
+   for( blockBase = 0; blockBase < nbBar; blockBase += blockLen )
+   {
+      blockLen = nbBar - blockBase < TA_KERN_BLOCK ? nbBar - blockBase : TA_KERN_BLOCK;
+      retCode = TA_MAMA_UpdateBlock( sub, inReal + blockBase, blockLen, outReal + blockBase, famaScratch );
+      if( retCode != TA_SUCCESS ) return retCode;
+   }
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MA_UpdateBlock( struct TA_MA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   TA_RetCode retCode;
+
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
+   {
+      int blockBar;
+
+      for( blockBar = 0; blockBar < nbBar; blockBar++ )
+      {
+         outReal[blockBar] = inReal[blockBar];
+      }
+      stream->cur_outReal = outReal[nbBar - 1];
+      stream->outRangeCount += nbBar;
+      return TA_SUCCESS;
+   }
+   switch( stream->optInMAType )
+   {
+   case TA_MAType_SMA:
+      retCode = TA_SMA_UpdateBlock( (struct TA_SMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_EMA:
+      retCode = TA_EMA_UpdateBlock( (struct TA_EMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_WMA:
+      retCode = TA_WMA_UpdateBlock( (struct TA_WMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_DEMA:
+      retCode = TA_DEMA_UpdateBlock( (struct TA_DEMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_TEMA:
+      retCode = TA_TEMA_UpdateBlock( (struct TA_TEMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_TRIMA:
+      retCode = TA_TRIMA_UpdateBlock( (struct TA_TRIMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_KAMA:
+      retCode = TA_KAMA_UpdateBlock( (struct TA_KAMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_MAMA:
+      retCode = TA_MA_UpdateBlock_MAMA( (struct TA_MAMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_T3:
+      retCode = TA_T3_UpdateBlock( (struct TA_T3_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_HMA:
+      retCode = TA_HMA_UpdateBlock( (struct TA_HMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_ZLEMA:
+      retCode = TA_ZLEMA_UpdateBlock( (struct TA_ZLEMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_RMA:
+      retCode = TA_RMA_UpdateBlock( (struct TA_RMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_VIDYA:
+      retCode = TA_VIDYA_UpdateBlock( (struct TA_VIDYA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   case TA_MAType_ALMA:
+      retCode = TA_ALMA_UpdateBlock( (struct TA_ALMA_Stream *)stream->sub, inReal, nbBar, outReal );
+      break;
+   default:
+      /* Unreachable: Open rejects arms without a sub-stream. */
+      return TA_INTERNAL_ERROR(343);
+   }
+   if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outReal = outReal[nbBar - 1];
+   stream->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MA_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MA_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MA_Lookback( optInTimePeriod, optInMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MA_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, optInMAType, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_MA_UpdateBlock( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_MA_Close( stream );
+         return retCode;
+      }
+   }
+   TA_MA_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
    return TA_SUCCESS;
 }
 
