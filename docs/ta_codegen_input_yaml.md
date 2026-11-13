@@ -47,6 +47,7 @@ ta_codegen/input/
 | `inputs` | list | yes | Required input parameters |
 | `optional_inputs` | list | no | Optional parameters with defaults |
 | `outputs` | list | yes | Output parameters |
+| `c_block_batch_min_bars` | integer | no | Prototype, C only, published nowhere: from this many bars, `TA_<N>` with disjoint buffers runs `TA_<N>_BlockBatch`. Needs a function the C stream gives a block kernel |
 
 ### Naming
 

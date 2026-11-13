@@ -274,6 +274,19 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     s.push_str("   #include \"ta_defs.h\"\n");
     s.push_str("#endif\n\n");
 
+    // PROTOTYPE (#548): the guarded batch's test before its blocked batch.
+    s.push_str("#include <stddef.h>\n#include <stdint.h>\n\n");
+    s.push_str(
+        "/* Whether [a, a + aBytes) and [b, b + bBytes) share a byte. Neither end\n \
+         * address is formed, so a span ending at the top of memory cannot wrap. */\n\
+         static inline int TA_SpansOverlap( const void *a, size_t aBytes, const void *b, size_t bBytes )\n\
+         {\n   \
+            const uintptr_t pa = (uintptr_t)a;\n   \
+            const uintptr_t pb = (uintptr_t)b;\n   \
+            return pa <= pb ? pb - pa < aBytes : pa - pb < bBytes;\n\
+         }\n\n",
+    );
+
     // TA_<N>_OpenInternal is the startIdx-aware worker behind the public
     // TA_<N>_Open (a thin wrapper passing startIdx=0). Only generated code — a
     // composed function opening a sub-stream — calls it, and it does so cross-TU,

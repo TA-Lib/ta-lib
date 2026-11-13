@@ -183,3 +183,31 @@ fn every_kerneled_function_gets_a_block_batch_anchored_at_the_callers_start() {
     }
     assert!(seen > 0, "no function got a BlockBatch");
 }
+
+fn guarded_body_of(src: &str, head: &str) -> String {
+    let at = src.find(head).unwrap_or_else(|| panic!("no `{head}`"));
+    let end = at + src[at..].find("\n}\n").expect("the body ends");
+    src[at..end].to_string()
+}
+
+#[test]
+fn only_the_double_guarded_batch_of_a_function_with_a_bar_floor_hands_off_to_its_block_batch() {
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    let (kc, enums) = common::load_indicator("kc");
+    assert_eq!(kc.c_block_batch_min_bars, Some(20000));
+    let src = ta_codegen_lib::backends::c::generate(&kc, &enums, registry, helpers);
+    assert_lines("TA_KC", &guarded_body_of(&src, "TA_LIB_API TA_RetCode TA_KC("), &[
+        "   if( endIdx - startIdx + 1 >= 20000 )",
+        "TA_SpansOverlap( inClose, inBytes, outRealLowerBand, outRealBytes )",
+        "|| TA_SpansOverlap( outRealMiddleBand, outRealBytes, outRealLowerBand, outRealBytes ) ) )",
+        "return TA_KC_BlockBatch( startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand );",
+    ]);
+    assert!(!guarded_body_of(&src, "TA_RetCode TA_S_KC(").contains("BlockBatch"), "TA_S_KC hands off");
+
+    let mut bare = kc.clone();
+    bare.c_block_batch_min_bars = None;
+    let src = ta_codegen_lib::backends::c::generate(&bare, &enums, registry, helpers);
+    assert!(!guarded_body_of(&src, "TA_LIB_API TA_RetCode TA_KC(").contains("BlockBatch"), "KC without the key hands off");
+    assert!(block_batch_of(&src, "KC").is_some(), "the key decides the hand-off, not the BlockBatch");
+}

@@ -59,6 +59,10 @@ pub struct FuncDef {
     /// the stream analyzers. `None` keeps [`FuncDef::stream_source`] on exactly
     /// the selection every analyzer already made.
     pub resolved_stream_body: Option<Vec<Statement>>,
+    /// PROTOTYPE (#548), C only: from how many bars the double-precision
+    /// `TA_<N>` hands a call with disjoint buffers to `TA_<N>_BlockBatch`.
+    /// Published nowhere, so unlike an attribute it may change or go.
+    pub c_block_batch_min_bars: Option<u32>,
 }
 
 /// The API tier an alternate claims. `AllApi` appears only in a *claim*;

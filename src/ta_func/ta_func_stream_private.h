@@ -14,6 +14,18 @@
    #include "ta_defs.h"
 #endif
 
+#include <stddef.h>
+#include <stdint.h>
+
+/* Whether [a, a + aBytes) and [b, b + bBytes) share a byte. Neither end
+ * address is formed, so a span ending at the top of memory cannot wrap. */
+static inline int TA_SpansOverlap( const void *a, size_t aBytes, const void *b, size_t bBytes )
+{
+   const uintptr_t pa = (uintptr_t)a;
+   const uintptr_t pb = (uintptr_t)b;
+   return pa <= pb ? pb - pa < aBytes : pa - pb < bBytes;
+}
+
 /* Internal stream-open declarations (startIdx-aware; behind the public Open) */
 struct TA_AC_Stream;
 struct TA_ACCBANDS_Stream;

@@ -145,6 +145,16 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
    if( outFastK == outFastD )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inReal, inBytes, outFastK, outRealBytes )
+             || TA_SpansOverlap( inReal, inBytes, outFastD, outRealBytes )
+             || TA_SpansOverlap( outFastK, outRealBytes, outFastD, outRealBytes ) ) )
+         return TA_STOCHRSI_BlockBatch( startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD );
+   }
+
    /* Stochastic RSI
     *
     * Reference: "Stochastic RSI and Dynamic Momentum Index"

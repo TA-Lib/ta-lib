@@ -893,6 +893,7 @@ fn backends_render_max_min_fmax_fmin_abs() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
 
     let enums = std::collections::HashMap::new();
@@ -1930,6 +1931,7 @@ fn make_func_with_helper_call(
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     }
 }
 
@@ -2087,6 +2089,7 @@ fn inlining_counter_avoids_name_collisions() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();

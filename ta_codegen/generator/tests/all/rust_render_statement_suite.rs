@@ -1934,6 +1934,7 @@ fn rust_lookback_param_minus() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -1983,6 +1984,7 @@ fn rust_lookback_none() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -2190,6 +2192,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -2292,6 +2295,7 @@ fn rust_lookback_body_never_fuses_multiply_add() {
         streaming: false,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: None,
     };
     let enums = HashMap::new();
     let out = backends::rust_lang::generate(&func, &enums, make_registry(), &HelperRegistry::empty());
@@ -2382,6 +2386,7 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
             streaming: false,
             alternates: vec![],
             resolved_stream_body: None,
+            c_block_batch_min_bars: None,
         };
         let enums = HashMap::new();
         let registry = make_registry();

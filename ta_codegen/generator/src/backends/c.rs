@@ -5,8 +5,8 @@ use std::cell::Cell;
 use crate::candle_settings::{detect_candle_settings, emit_c_unpacking};
 use crate::helper_registry::{hoist_block_helpers, try_inline_expr, HelperRegistry};
 use crate::ir::{
-    BinOp, CircBuf, CircBufLayout, EnumDef, Expr, FuncDef, LookbackExpr, ParamType, Statement,
-    VarType,
+    BinOp, CircBuf, CircBufLayout, EnumDef, Expr, FuncDef, LookbackExpr, Output, ParamType,
+    Statement, VarType,
 };
 use crate::parser::enums::lookup_variant;
 use crate::registry::{Lang, Registry};
@@ -902,6 +902,55 @@ fn drop_unread_candle_decls(out: &mut String) {
     *out = kept;
 }
 
+/// PROTOTYPE (#548): the guarded batch hands a range of at least `min_bars`
+/// bars to `TA_<N>_BlockBatch` when no output shares a byte with an input or
+/// another output over the elements either side may touch. The blocked batch
+/// gives the same bits only on disjoint buffers, so every overlap, partial or
+/// exact, keeps the transcribed body.
+fn block_batch_dispatch(func: &FuncDef, min_bars: u32, registry: &Registry) -> String {
+    let n = &func.name;
+    assert!(min_bars > 0, "{n}: c_block_batch_min_bars is a bar count, at least 1");
+    assert!(
+        func.streaming && super::c_stream::kernel_decision(func, registry).is_ok(),
+        "{n}: c_block_batch_min_bars needs a TA_{n}_BlockBatch, and the C stream emits none"
+    );
+    let ins: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
+    assert!(
+        func.inputs.iter().all(|i| i.param_type == ParamType::Real) && ins == crate::streaming::input_array_names(func),
+        "{n}: TA_{n}_BlockBatch takes the batch's inputs as doubles, in order"
+    );
+    let bytes_of = |o: &Output| if o.param_type == ParamType::Integer { "outIntBytes" } else { "outRealBytes" };
+    let mut pairs: Vec<String> = Vec::new();
+    for o in &func.outputs {
+        for i in &ins {
+            pairs.push(format!("TA_SpansOverlap( {i}, inBytes, {}, {} )", o.name, bytes_of(o)));
+        }
+    }
+    for (k, a) in func.outputs.iter().enumerate() {
+        for b in &func.outputs[k + 1..] {
+            pairs.push(format!("TA_SpansOverlap( {}, {}, {}, {} )", a.name, bytes_of(a), b.name, bytes_of(b)));
+        }
+    }
+    let args: Vec<String> = ["startIdx", "endIdx"]
+        .into_iter()
+        .chain(ins.iter().copied())
+        .chain(func.optional_inputs.iter().map(|p| p.name.as_str()))
+        .chain(["outBegIdx", "outNBElement"])
+        .chain(func.outputs.iter().map(|o| o.name.as_str()))
+        .map(str::to_string)
+        .collect();
+    let mut s = format!("   if( endIdx - startIdx + 1 >= {min_bars} )\n   {{\n");
+    s.push_str("      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);\n");
+    for (name, ty) in [("outRealBytes", "double"), ("outIntBytes", "int")] {
+        if func.outputs.iter().any(|o| bytes_of(o) == name) {
+            s.push_str(&format!("      const size_t {name} = (size_t)(endIdx - startIdx + 1) * sizeof({ty});\n"));
+        }
+    }
+    s.push_str(&format!("      if( !( {} ) )\n", pairs.join("\n             || ")));
+    s.push_str(&format!("         return TA_{n}_BlockBatch( {} );\n   }}\n\n", args.join(", ")));
+    s
+}
+
 // Integer/enum optIn defaults and ranges come from f64 metadata but are whole
 // numbers; the `as i32` casts in the validation emitter are intentional.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity, clippy::cast_possible_truncation)]
@@ -1131,6 +1180,9 @@ fn gen_func_inner(
             }
         }
         out.push('\n');
+        if let (false, Some(min_bars)) = (single_precision, func.c_block_batch_min_bars) {
+            out.push_str(&block_batch_dispatch(func, min_bars, registry));
+        }
     }
 
     // Now that any sentinel has been substituted, derive the private extra params.

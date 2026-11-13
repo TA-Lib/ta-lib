@@ -86,3 +86,4 @@ outputs:
   - name: outKSTSignal
     type: real
     flags: [dash_line, zero, positive, negative]
+c_block_batch_min_bars: 20000
