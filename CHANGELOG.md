@@ -8,6 +8,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.4] Not Released Yet
 ### Added
+- TypeScript: the `ta-lib` package is on npm (`npm install ta-lib`). WebAssembly-accelerated,
+  with automatic TypeScript fallback. (#574)
 - New TA Functions:
   - ALLIGATOR: Williams Alligator, three smoothed moving averages of the median price (#584)
   - CE: Chandelier Exit, the highest high and lowest low offset by a multiple of the ATR (#568)
