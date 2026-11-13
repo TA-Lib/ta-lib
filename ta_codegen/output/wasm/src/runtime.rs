@@ -4,7 +4,7 @@
 //! `ta_codegen/generator/templates/wasm/runtime.rs` and is copied verbatim into
 //! the crate by `generate`.
 
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use std::sync::{LazyLock, Mutex, PoisonError};
 use ta_lib::{Core, OutRange, RetCode};
 
@@ -13,6 +13,11 @@ pub(crate) static CORE: LazyLock<Core> = LazyLock::new(Core::new);
 /// What an export returns when it refuses the call itself, before the crate
 /// sees it. No `RetCode` negates to it.
 pub(crate) const DECLINED: i32 = i32::MIN;
+
+/// What an export returns for a slice not wholly inside the region the last
+/// `scratch` call handed out: the glue and the module disagree about the
+/// frame, which is a defect, never a call to answer from TypeScript.
+pub(crate) const OUT_OF_FRAME: i32 = i32::MIN + 1;
 
 static OUT_RANGE: [AtomicU32; 2] = [AtomicU32::new(0), AtomicU32::new(0)];
 
@@ -38,6 +43,7 @@ pub(crate) fn entered() {
 }
 
 static SCRATCH: Mutex<Vec<f64>> = Mutex::new(Vec::new());
+static FRAME: [AtomicUsize; 2] = [AtomicUsize::new(0), AtomicUsize::new(0)];
 
 /// At least `bytes` bytes aligned for `f64`, kept across calls. A call that has
 /// to grow it moves it and may grow linear memory, so take the pointer, then
@@ -49,7 +55,29 @@ pub extern "C" fn scratch(bytes: usize) -> *mut f64 {
     if buf.len() < words {
         buf.resize(words, 0.0);
     }
+    let start = buf.as_ptr() as usize;
+    FRAME[0].store(start, Ordering::Relaxed);
+    FRAME[1].store(start.saturating_add(bytes), Ordering::Relaxed);
     buf.as_mut_ptr()
+}
+
+/// Every non-empty span lies inside the region the last `scratch` call handed out.
+fn in_frame(spans: &[(usize, usize)]) -> bool {
+    let (lo, hi) = (FRAME[0].load(Ordering::Relaxed), FRAME[1].load(Ordering::Relaxed));
+    spans.iter().all(|&(at, bytes)| bytes == 0 || (at >= lo && at <= hi && bytes <= hi - at))
+}
+
+/// 0, or the code an export returns before it forms a slice. Out of line:
+/// inlined, these checks are a twentieth of the module.
+#[inline(never)]
+pub(crate) fn refusal(outs: &[(usize, usize)], ins: &[(usize, usize)]) -> i32 {
+    if !in_frame(outs) || !in_frame(ins) {
+        OUT_OF_FRAME
+    } else if disjoint(outs, ins) {
+        0
+    } else {
+        DECLINED
+    }
 }
 
 /// `a * b + c` on run-time operands, through the instruction the crate's fused
@@ -92,7 +120,7 @@ pub(crate) fn span<T>(ptr: *const T, len: usize) -> (usize, usize) {
 /// Every output is disjoint from every other output and from every input:
 /// a `&mut` slice overlapping any other slice is undefined behaviour that the
 /// compiler optimises on, with no trap to show for it.
-pub(crate) fn disjoint(outs: &[(usize, usize)], ins: &[(usize, usize)]) -> bool {
+fn disjoint(outs: &[(usize, usize)], ins: &[(usize, usize)]) -> bool {
     let apart = |a: (usize, usize), b: (usize, usize)| {
         a.1 == 0 || b.1 == 0 || a.0.saturating_add(a.1) <= b.0 || b.0.saturating_add(b.1) <= a.0
     };

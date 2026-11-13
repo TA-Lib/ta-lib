@@ -184,10 +184,10 @@ fn wasm_declines_exactly_the_enum_members_whose_dispatch_reaches_a_transcendenta
     assert!(params > 0);
 }
 
-/// A routing-table entry, which the shipped table has none of. Under the
-/// threshold the call must go to `./js` without counting a fall-through (the
-/// strict gates read the counter) and without taking a frame (which loads the
-/// engine); from the threshold on it must route in table mode.
+/// A routing-table entry. Under the threshold the call must go to `./js`
+/// without counting a fall-through (the strict gates read the counter) and
+/// without taking a frame (which loads the engine); from the threshold on it
+/// must route in table mode.
 #[test]
 fn ts_engine_routes_a_tabled_function_from_its_bar_count() {
     let funcs = corpus();

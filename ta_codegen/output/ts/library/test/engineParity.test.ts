@@ -3021,8 +3021,6 @@ const ROWS: Row[] = [
   },
 ];
 
-const N = 400;
-
 function rng(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
@@ -3031,15 +3029,15 @@ function rng(seed: number): () => number {
   };
 }
 
-function walk(seed: number): Data {
+function walk(seed: number, n: number): Data {
   const rnd = rng(seed);
   const cents = (x: number): number => Math.round(x * 100) / 100;
   const d: Data = {
-    open: new Float64Array(N), high: new Float64Array(N), low: new Float64Array(N),
-    close: new Float64Array(N), volume: new Float64Array(N), periods: new Float64Array(N),
+    open: new Float64Array(n), high: new Float64Array(n), low: new Float64Array(n),
+    close: new Float64Array(n), volume: new Float64Array(n), periods: new Float64Array(n),
   };
   let c = 100;
-  for (let i = 0; i < N; i++) {
+  for (let i = 0; i < n; i++) {
     const open = cents(c + rnd() - 0.5);
     c = cents(Math.max(5, c + (rnd() - 0.5) * 3));
     d.open[i] = open;
@@ -3052,7 +3050,13 @@ function walk(seed: number): Data {
   return d;
 }
 
-const DATA = walk(20261112);
+function bytes(a: Arr): Buffer {
+  return Buffer.from(a.buffer, a.byteOffset, a.byteLength);
+}
+
+const N = 400;
+const CALL_SHAPED = ['options', 'parameter', 'input', 'range', 'rejected', 'declined'];
+const DATA = walk(20261112, N);
 
 function draw(p: Param, rnd: () => number): number {
   if (p.kind === 'enum') return p.members[Math.floor(rnd() * p.members.length)];
@@ -3064,10 +3068,6 @@ function draw(p: Param, rnd: () => number): number {
   const lo = Math.max(p.min, p.dflt - span);
   const hi = Math.min(p.max, p.dflt + span);
   return Math.round((lo + rnd() * (hi - lo)) * 100) / 100;
-}
-
-function bytes(a: Arr): Buffer {
-  return Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 }
 
 function outcome(f: Fn, args: unknown[]): { value?: Record<string, unknown>; error?: unknown } {
@@ -3108,6 +3108,8 @@ test('every routed function answers in WASM with the bits of ta-lib/js, in stric
             assert.ok(got.error instanceof TALibError, `${where}: ta-lib threw ${String(got.error)}, ta-lib/js ${want.error.code}`);
             assert.equal(got.error.code, want.error.code, where);
             assert.equal(got.error.message, want.error.message, where);
+            const reason = hooks.lastFallThrough();
+            assert.ok(CALL_SHAPED.includes(reason), `${where}: fell through as '${reason}', which no rejected call explains`);
             rejected++;
             continue;
           }

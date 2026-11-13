@@ -32,7 +32,9 @@
      which fails on a top-level await anywhere in the graph. Both must export
      the same names and compute the same SMA. Then engine.mjs: in strict mode a
      call through the default entry must run in WASM, with the bits of
-     ta-lib/js.
+     ta-lib/js. Last, esbuild bundles two consumers for Node: through the
+     default entry a routed call with no ready() must run in WASM, and the
+     ta-lib/js bundle's metafile must name no engine module and not the bytes.
 
 Run:  python3 scripts/ts_package_check.py [--allow-dirty] [--output DIR]
       python3 scripts/ts_package_check.py --write-api-snapshot
@@ -61,6 +63,7 @@ LIB_DIR = os.path.join(ROOT, LIB_REL)
 # resolve a bare name to one.
 NPM = "npm.cmd" if os.name == "nt" else "npm"
 TSC = os.path.join(TS_ROOT, "node_modules", ".bin", "tsc.cmd" if os.name == "nt" else "tsc")
+ESBUILD = os.path.join(TS_ROOT, "node_modules", ".bin", "esbuild.cmd" if os.name == "nt" else "esbuild")
 SRC_DIR = os.path.join(LIB_DIR, "src")
 CONSUMER_DIR = os.path.join(ROOT, "scripts", "ts_consumer_check")
 SNAPSHOT = os.path.join(TS_ROOT, "PublicAPI.Shipped.txt")
@@ -403,8 +406,10 @@ def consume(out_dir, manifest, tops):
             return ["engine.mjs: a strict-mode call through the default entry did not run in WASM "
                     "with the bits of ta-lib/js:\n%s%s" % (r.stdout, r.stderr.strip())]
         print("--- %s" % r.stdout.strip().splitlines()[-1])
+        failures = bundles(work)
+        if failures:
+            return failures
         got = results["import.mjs"]
-        failures = []
         for s in files:
             spec = name + s.removeprefix(".")
             want = manifest["version"]
@@ -427,6 +432,30 @@ def consume(out_dir, manifest, tops):
         return failures
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+def bundles(work):
+    if not os.path.exists(ESBUILD):
+        return ["no esbuild at %s after npm ci in %s" % (ESBUILD, TS_REL)]
+    if run([ESBUILD, "bundle_node.mjs", "--bundle", "--format=esm", "--platform=node",
+            "--outfile=bundled/node.mjs", "--log-level=warning"], cwd=work).returncode:
+        return ["esbuild could not bundle bundle_node.mjs for Node; see its output above"]
+    r = run(["node", os.path.join("bundled", "node.mjs")], cwd=work, capture=True)
+    if r.returncode:
+        return ["bundle_node.mjs, bundled for Node: a routed call did not run in WASM:\n%s%s"
+                % (r.stdout, r.stderr.strip())]
+    print("--- %s" % r.stdout.strip().splitlines()[-1])
+    if run([ESBUILD, "bundle_js.mjs", "--bundle", "--format=esm", "--platform=node",
+            "--outfile=bundled/js.mjs", "--metafile=bundled/js.meta.json", "--log-level=warning"],
+           cwd=work).returncode:
+        return ["esbuild could not bundle bundle_js.mjs for Node; see its output above"]
+    with open(os.path.join(work, "bundled", "js.meta.json")) as f:
+        inputs = json.load(f)["inputs"]
+    engine = sorted(i for i in inputs if "/dist/engine/" in i or i.endswith("/runtime/wasmBytes.js"))
+    if engine:
+        return ["a Node bundle of ta-lib/js loads %s" % ", ".join(engine[:3])]
+    print("--- bundle_js.mjs: a Node bundle of ta-lib/js loads no engine module and not the bytes")
+    return []
 
 
 def main():

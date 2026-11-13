@@ -3,7 +3,7 @@
 
 mod runtime;
 
-use runtime::{answer, disjoint, entered, enum_param, input, output, span, CORE, DECLINED};
+use runtime::{answer, entered, enum_param, input, output, refusal, span, CORE, DECLINED};
 
 #[no_mangle]
 pub unsafe extern "C" fn ac_batch(
@@ -19,8 +19,9 @@ pub unsafe extern "C" fn ac_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -43,8 +44,9 @@ pub unsafe extern "C" fn accbands_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
         return DECLINED;
@@ -65,8 +67,9 @@ pub unsafe extern "C" fn ad_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -85,8 +88,9 @@ pub unsafe extern "C" fn add_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -109,8 +113,9 @@ pub unsafe extern "C" fn adosc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -130,8 +135,9 @@ pub unsafe extern "C" fn adr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -152,8 +158,9 @@ pub unsafe extern "C" fn adx_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -174,8 +181,9 @@ pub unsafe extern "C" fn adxr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -202,8 +210,9 @@ pub unsafe extern "C" fn alligator_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outJaw, out_len), span(outTeeth, out_len), span(outLips, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outJaw, out_len), span(outTeeth, out_len), span(outLips, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outJaw), Some(outTeeth), Some(outLips),) = (input(inHigh, len), input(inLow, len), output(outJaw, out_len), output(outTeeth, out_len), output(outLips, out_len),) else {
         return DECLINED;
@@ -224,8 +233,9 @@ pub unsafe extern "C" fn ao_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -246,12 +256,13 @@ pub unsafe extern "C" fn apo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -271,8 +282,9 @@ pub unsafe extern "C" fn aroon_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outAroonDown, out_len), span(outAroonUp, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outAroonDown, out_len), span(outAroonUp, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outAroonDown), Some(outAroonUp),) = (input(inHigh, len), input(inLow, len), output(outAroonDown, out_len), output(outAroonUp, out_len),) else {
         return DECLINED;
@@ -292,8 +304,9 @@ pub unsafe extern "C" fn aroonosc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -315,8 +328,9 @@ pub unsafe extern "C" fn asi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -337,8 +351,9 @@ pub unsafe extern "C" fn atr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -357,8 +372,9 @@ pub unsafe extern "C" fn avgdev_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -379,8 +395,9 @@ pub unsafe extern "C" fn avgprice_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -404,12 +421,13 @@ pub unsafe extern "C" fn bbands_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inReal, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
         return DECLINED;
     };
@@ -430,12 +448,13 @@ pub unsafe extern "C" fn bbw_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -454,8 +473,9 @@ pub unsafe extern "C" fn beta_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -476,8 +496,9 @@ pub unsafe extern "C" fn bop_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -498,8 +519,9 @@ pub unsafe extern "C" fn cci_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -520,8 +542,9 @@ pub unsafe extern "C" fn cdl2crows_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -542,8 +565,9 @@ pub unsafe extern "C" fn cdl3blackcrows_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -564,8 +588,9 @@ pub unsafe extern "C" fn cdl3inside_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -586,8 +611,9 @@ pub unsafe extern "C" fn cdl3linestrike_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -608,8 +634,9 @@ pub unsafe extern "C" fn cdl3outside_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -630,8 +657,9 @@ pub unsafe extern "C" fn cdl3starsinsouth_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -652,8 +680,9 @@ pub unsafe extern "C" fn cdl3whitesoldiers_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -675,8 +704,9 @@ pub unsafe extern "C" fn cdlabandonedbaby_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -697,8 +727,9 @@ pub unsafe extern "C" fn cdladvanceblock_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -719,8 +750,9 @@ pub unsafe extern "C" fn cdlbelthold_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -741,8 +773,9 @@ pub unsafe extern "C" fn cdlbreakaway_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -763,8 +796,9 @@ pub unsafe extern "C" fn cdlclosingmarubozu_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -785,8 +819,9 @@ pub unsafe extern "C" fn cdlconcealbabyswall_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -807,8 +842,9 @@ pub unsafe extern "C" fn cdlcounterattack_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -830,8 +866,9 @@ pub unsafe extern "C" fn cdldarkcloudcover_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -852,8 +889,9 @@ pub unsafe extern "C" fn cdldoji_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -874,8 +912,9 @@ pub unsafe extern "C" fn cdldojistar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -896,8 +935,9 @@ pub unsafe extern "C" fn cdldragonflydoji_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -918,8 +958,9 @@ pub unsafe extern "C" fn cdlengulfing_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -941,8 +982,9 @@ pub unsafe extern "C" fn cdleveningdojistar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -964,8 +1006,9 @@ pub unsafe extern "C" fn cdleveningstar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -986,8 +1029,9 @@ pub unsafe extern "C" fn cdlgapsidesidewhite_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1008,8 +1052,9 @@ pub unsafe extern "C" fn cdlgravestonedoji_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1030,8 +1075,9 @@ pub unsafe extern "C" fn cdlhammer_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1052,8 +1098,9 @@ pub unsafe extern "C" fn cdlhangingman_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1074,8 +1121,9 @@ pub unsafe extern "C" fn cdlharami_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1096,8 +1144,9 @@ pub unsafe extern "C" fn cdlharamicross_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1118,8 +1167,9 @@ pub unsafe extern "C" fn cdlhighwave_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1140,8 +1190,9 @@ pub unsafe extern "C" fn cdlhikkake_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1162,8 +1213,9 @@ pub unsafe extern "C" fn cdlhikkakemod_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1184,8 +1236,9 @@ pub unsafe extern "C" fn cdlhomingpigeon_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1206,8 +1259,9 @@ pub unsafe extern "C" fn cdlidentical3crows_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1228,8 +1282,9 @@ pub unsafe extern "C" fn cdlinneck_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1250,8 +1305,9 @@ pub unsafe extern "C" fn cdlinvertedhammer_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1272,8 +1328,9 @@ pub unsafe extern "C" fn cdlkicking_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1294,8 +1351,9 @@ pub unsafe extern "C" fn cdlkickingbylength_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1316,8 +1374,9 @@ pub unsafe extern "C" fn cdlladderbottom_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1338,8 +1397,9 @@ pub unsafe extern "C" fn cdllongleggeddoji_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1360,8 +1420,9 @@ pub unsafe extern "C" fn cdllongline_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1382,8 +1443,9 @@ pub unsafe extern "C" fn cdlmarubozu_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1404,8 +1466,9 @@ pub unsafe extern "C" fn cdlmatchinglow_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1427,8 +1490,9 @@ pub unsafe extern "C" fn cdlmathold_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1450,8 +1514,9 @@ pub unsafe extern "C" fn cdlmorningdojistar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1473,8 +1538,9 @@ pub unsafe extern "C" fn cdlmorningstar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1495,8 +1561,9 @@ pub unsafe extern "C" fn cdlonneck_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1517,8 +1584,9 @@ pub unsafe extern "C" fn cdlpiercing_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1539,8 +1607,9 @@ pub unsafe extern "C" fn cdlrickshawman_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1561,8 +1630,9 @@ pub unsafe extern "C" fn cdlrisefall3methods_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1583,8 +1653,9 @@ pub unsafe extern "C" fn cdlseparatinglines_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1605,8 +1676,9 @@ pub unsafe extern "C" fn cdlshootingstar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1627,8 +1699,9 @@ pub unsafe extern "C" fn cdlshortline_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1649,8 +1722,9 @@ pub unsafe extern "C" fn cdlspinningtop_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1671,8 +1745,9 @@ pub unsafe extern "C" fn cdlstalledpattern_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1693,8 +1768,9 @@ pub unsafe extern "C" fn cdlsticksandwich_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1715,8 +1791,9 @@ pub unsafe extern "C" fn cdltakuri_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1737,8 +1814,9 @@ pub unsafe extern "C" fn cdltasukigap_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1759,8 +1837,9 @@ pub unsafe extern "C" fn cdlthrusting_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1781,8 +1860,9 @@ pub unsafe extern "C" fn cdltristar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1803,8 +1883,9 @@ pub unsafe extern "C" fn cdlunique3river_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1825,8 +1906,9 @@ pub unsafe extern "C" fn cdlupsidegap2crows_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1847,8 +1929,9 @@ pub unsafe extern "C" fn cdlxsidegap3methods_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outInteger),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -1871,8 +1954,9 @@ pub unsafe extern "C" fn ce_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outRealLong, out_len), span(outRealShort, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outRealLong, out_len), span(outRealShort, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outRealLong), Some(outRealShort),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outRealLong, out_len), output(outRealShort, out_len),) else {
         return DECLINED;
@@ -1890,8 +1974,9 @@ pub unsafe extern "C" fn ceil_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -1910,8 +1995,9 @@ pub unsafe extern "C" fn cg_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -1935,8 +2021,9 @@ pub unsafe extern "C" fn cksp_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outHighStop, out_len), span(outLowStop, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outHighStop, out_len), span(outLowStop, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outHighStop), Some(outLowStop),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outHighStop, out_len), output(outLowStop, out_len),) else {
         return DECLINED;
@@ -1958,8 +2045,9 @@ pub unsafe extern "C" fn cmf_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -1978,8 +2066,9 @@ pub unsafe extern "C" fn cmo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -1998,8 +2087,9 @@ pub unsafe extern "C" fn cmou_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2020,8 +2110,9 @@ pub unsafe extern "C" fn coppock_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2041,8 +2132,9 @@ pub unsafe extern "C" fn correl_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2063,8 +2155,9 @@ pub unsafe extern "C" fn crsi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2083,8 +2176,9 @@ pub unsafe extern "C" fn cti_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2102,8 +2196,9 @@ pub unsafe extern "C" fn cumsum_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2124,8 +2219,9 @@ pub unsafe extern "C" fn cvi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2144,8 +2240,9 @@ pub unsafe extern "C" fn dema_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2164,8 +2261,9 @@ pub unsafe extern "C" fn div_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2187,8 +2285,9 @@ pub unsafe extern "C" fn donchian_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inHigh, len), input(inLow, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
         return DECLINED;
@@ -2210,8 +2309,9 @@ pub unsafe extern "C" fn dosc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2230,8 +2330,9 @@ pub unsafe extern "C" fn dpo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2252,8 +2353,9 @@ pub unsafe extern "C" fn dx_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2273,8 +2375,9 @@ pub unsafe extern "C" fn efi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inClose), Some(inVolume), Some(outReal),) = (input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2293,8 +2396,9 @@ pub unsafe extern "C" fn ema_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2316,8 +2420,9 @@ pub unsafe extern "C" fn emv_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2336,8 +2441,9 @@ pub unsafe extern "C" fn er_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2359,8 +2465,9 @@ pub unsafe extern "C" fn eri_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outBullPower, out_len), span(outBearPower, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outBullPower, out_len), span(outBearPower, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outBullPower), Some(outBearPower),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outBullPower, out_len), output(outBearPower, out_len),) else {
         return DECLINED;
@@ -2378,8 +2485,9 @@ pub unsafe extern "C" fn floor_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2398,8 +2506,9 @@ pub unsafe extern "C" fn fosc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2421,8 +2530,9 @@ pub unsafe extern "C" fn fractal_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outSwingHigh, out_len), span(outSwingLow, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outSwingHigh, out_len), span(outSwingLow, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outSwingHigh), Some(outSwingLow),) = (input(inHigh, len), input(inLow, len), output(outSwingHigh, out_len), output(outSwingLow, out_len),) else {
         return DECLINED;
@@ -2448,8 +2558,9 @@ pub unsafe extern "C" fn gator_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outUpper, out_len), span(outLower, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outUpper, out_len), span(outLower, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outUpper), Some(outLower),) = (input(inHigh, len), input(inLow, len), output(outUpper, out_len), output(outLower, out_len),) else {
         return DECLINED;
@@ -2473,8 +2584,9 @@ pub unsafe extern "C" fn ha_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outHAOpen, out_len), span(outHAHigh, out_len), span(outHALow, out_len), span(outHAClose, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outHAOpen, out_len), span(outHAHigh, out_len), span(outHALow, out_len), span(outHAClose, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outHAOpen), Some(outHAHigh), Some(outHALow), Some(outHAClose),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outHAOpen, out_len), output(outHAHigh, out_len), output(outHALow, out_len), output(outHAClose, out_len),) else {
         return DECLINED;
@@ -2493,8 +2605,9 @@ pub unsafe extern "C" fn hma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2514,8 +2627,9 @@ pub unsafe extern "C" fn ibs_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2540,8 +2654,9 @@ pub unsafe extern "C" fn ichimoku_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outTenkanSen, out_len), span(outKijunSen, out_len), span(outSenkouSpanA, out_len), span(outSenkouSpanB, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outTenkanSen, out_len), span(outKijunSen, out_len), span(outSenkouSpanA, out_len), span(outSenkouSpanB, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outTenkanSen), Some(outKijunSen), Some(outSenkouSpanA), Some(outSenkouSpanB),) = (input(inHigh, len), input(inLow, len), output(outTenkanSen, out_len), output(outKijunSen, out_len), output(outSenkouSpanA, out_len), output(outSenkouSpanB, out_len),) else {
         return DECLINED;
@@ -2561,8 +2676,9 @@ pub unsafe extern "C" fn imi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2581,8 +2697,9 @@ pub unsafe extern "C" fn kama_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2607,8 +2724,9 @@ pub unsafe extern "C" fn kc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outRealUpperBand, out_len), span(outRealMiddleBand, out_len), span(outRealLowerBand, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outRealUpperBand), Some(outRealMiddleBand), Some(outRealLowerBand),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outRealUpperBand, out_len), output(outRealMiddleBand, out_len), output(outRealLowerBand, out_len),) else {
         return DECLINED;
@@ -2635,15 +2753,16 @@ pub unsafe extern "C" fn kdj_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outK, out_len), span(outD, out_len), span(outJ, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
         return DECLINED;
     };
     let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outK, out_len), span(outD, out_len), span(outJ, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
-    }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outK), Some(outD), Some(outJ),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outK, out_len), output(outD, out_len), output(outJ, out_len),) else {
         return DECLINED;
     };
@@ -2670,8 +2789,9 @@ pub unsafe extern "C" fn kst_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outKST, out_len), span(outKSTSignal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outKST, out_len), span(outKSTSignal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outKST), Some(outKSTSignal),) = (input(inReal, len), output(outKST, out_len), output(outKSTSignal, out_len),) else {
         return DECLINED;
@@ -2701,15 +2821,16 @@ pub unsafe extern "C" fn kstext_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outKST, out_len), span(outKSTSignal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInROCMAType) = enum_param(optInROCMAType, &[7, 15]) else {
         return DECLINED;
     };
     let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outKST, out_len), span(outKSTSignal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outKST), Some(outKSTSignal),) = (input(inReal, len), output(outKST, out_len), output(outKSTSignal, out_len),) else {
         return DECLINED;
     };
@@ -2727,8 +2848,9 @@ pub unsafe extern "C" fn kurtosis_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2753,8 +2875,9 @@ pub unsafe extern "C" fn kvo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outKVO, out_len), span(outKVOSignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outKVO, out_len), span(outKVOSignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outKVO), Some(outKVOSignal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outKVO, out_len), output(outKVOSignal, out_len),) else {
         return DECLINED;
@@ -2773,8 +2896,9 @@ pub unsafe extern "C" fn linearreg_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2793,8 +2917,9 @@ pub unsafe extern "C" fn linearreg_intercept_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2813,8 +2938,9 @@ pub unsafe extern "C" fn linearreg_slope_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2834,12 +2960,13 @@ pub unsafe extern "C" fn ma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -2861,8 +2988,9 @@ pub unsafe extern "C" fn macd_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outMACD), Some(outMACDSignal), Some(outMACDHist),) = (input(inReal, len), output(outMACD, out_len), output(outMACDSignal, out_len), output(outMACDHist, out_len),) else {
         return DECLINED;
@@ -2888,6 +3016,10 @@ pub unsafe extern "C" fn macdext_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInFastMAType) = enum_param(optInFastMAType, &[7, 15]) else {
         return DECLINED;
     };
@@ -2897,9 +3029,6 @@ pub unsafe extern "C" fn macdext_batch(
     let Some(optInSignalMAType) = enum_param(optInSignalMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outMACD), Some(outMACDSignal), Some(outMACDHist),) = (input(inReal, len), output(outMACD, out_len), output(outMACDSignal, out_len), output(outMACDHist, out_len),) else {
         return DECLINED;
     };
@@ -2919,8 +3048,9 @@ pub unsafe extern "C" fn macdfix_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMACD, out_len), span(outMACDSignal, out_len), span(outMACDHist, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outMACD), Some(outMACDSignal), Some(outMACDHist),) = (input(inReal, len), output(outMACD, out_len), output(outMACDSignal, out_len), output(outMACDHist, out_len),) else {
         return DECLINED;
@@ -2945,8 +3075,9 @@ pub unsafe extern "C" fn macdv_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMACDV, out_len), span(outMACDVSignal, out_len), span(outMACDVHist, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMACDV, out_len), span(outMACDVSignal, out_len), span(outMACDVHist, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outMACDV), Some(outMACDVSignal), Some(outMACDVHist),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outMACDV, out_len), output(outMACDVSignal, out_len), output(outMACDVHist, out_len),) else {
         return DECLINED;
@@ -2966,8 +3097,9 @@ pub unsafe extern "C" fn marketfi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -2988,8 +3120,9 @@ pub unsafe extern "C" fn massi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3011,12 +3144,13 @@ pub unsafe extern "C" fn mavp_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len), span(inPeriods, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len), span(inPeriods, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(inPeriods), Some(outReal),) = (input(inReal, len), input(inPeriods, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -3034,8 +3168,9 @@ pub unsafe extern "C" fn max_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3054,8 +3189,9 @@ pub unsafe extern "C" fn maxindex_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outInteger),) = (input(inReal, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -3074,8 +3210,9 @@ pub unsafe extern "C" fn mcgd_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3094,8 +3231,9 @@ pub unsafe extern "C" fn median_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3114,8 +3252,9 @@ pub unsafe extern "C" fn medprice_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3137,8 +3276,9 @@ pub unsafe extern "C" fn mfi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3157,8 +3297,9 @@ pub unsafe extern "C" fn midpoint_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3178,8 +3319,9 @@ pub unsafe extern "C" fn midprice_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3198,8 +3340,9 @@ pub unsafe extern "C" fn min_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3218,8 +3361,9 @@ pub unsafe extern "C" fn minindex_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outInteger, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outInteger, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outInteger),) = (input(inReal, len), output(outInteger, out_len),) else {
         return DECLINED;
@@ -3239,8 +3383,9 @@ pub unsafe extern "C" fn minmax_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMin, out_len), span(outMax, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMin, out_len), span(outMax, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outMin), Some(outMax),) = (input(inReal, len), output(outMin, out_len), output(outMax, out_len),) else {
         return DECLINED;
@@ -3260,8 +3405,9 @@ pub unsafe extern "C" fn minmaxindex_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMinIdx, out_len), span(outMaxIdx, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMinIdx, out_len), span(outMaxIdx, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outMinIdx), Some(outMaxIdx),) = (input(inReal, len), output(outMinIdx, out_len), output(outMaxIdx, out_len),) else {
         return DECLINED;
@@ -3282,8 +3428,9 @@ pub unsafe extern "C" fn minus_di_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3303,8 +3450,9 @@ pub unsafe extern "C" fn minus_dm_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3323,8 +3471,9 @@ pub unsafe extern "C" fn mom_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3343,8 +3492,9 @@ pub unsafe extern "C" fn mult_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3365,8 +3515,9 @@ pub unsafe extern "C" fn natr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3385,8 +3536,9 @@ pub unsafe extern "C" fn nvi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inClose), Some(inVolume), Some(outReal),) = (input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3405,8 +3557,9 @@ pub unsafe extern "C" fn obv_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(inVolume), Some(outReal),) = (input(inReal, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3428,12 +3581,13 @@ pub unsafe extern "C" fn percentb_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -3452,8 +3606,9 @@ pub unsafe extern "C" fn percentile_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3472,8 +3627,9 @@ pub unsafe extern "C" fn percentrank_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3494,8 +3650,9 @@ pub unsafe extern "C" fn plus_di_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3515,8 +3672,9 @@ pub unsafe extern "C" fn plus_dm_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3537,12 +3695,13 @@ pub unsafe extern "C" fn ppo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -3560,8 +3719,9 @@ pub unsafe extern "C" fn pvi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inClose), Some(inVolume), Some(outReal),) = (input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3582,12 +3742,13 @@ pub unsafe extern "C" fn pvo_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outReal, out_len)], &[span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInMAType) = enum_param(optInMAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outReal, out_len)], &[span(inVolume, len)]) {
-        return DECLINED;
-    }
     let (Some(inVolume), Some(outReal),) = (input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
     };
@@ -3605,8 +3766,9 @@ pub unsafe extern "C" fn pvt_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inClose), Some(inVolume), Some(outReal),) = (input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3626,8 +3788,9 @@ pub unsafe extern "C" fn qstick_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3646,8 +3809,9 @@ pub unsafe extern "C" fn rma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3666,8 +3830,9 @@ pub unsafe extern "C" fn roc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3686,8 +3851,9 @@ pub unsafe extern "C" fn rocp_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3706,8 +3872,9 @@ pub unsafe extern "C" fn rocr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3726,8 +3893,9 @@ pub unsafe extern "C" fn rocr100_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3746,8 +3914,9 @@ pub unsafe extern "C" fn rsi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3767,8 +3936,9 @@ pub unsafe extern "C" fn rvi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3789,8 +3959,9 @@ pub unsafe extern "C" fn rvir_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3809,8 +3980,9 @@ pub unsafe extern "C" fn rvol_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inVolume), Some(outReal),) = (input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3831,8 +4003,9 @@ pub unsafe extern "C" fn sar_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3859,8 +4032,9 @@ pub unsafe extern "C" fn sarext_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outReal),) = (input(inHigh, len), input(inLow, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3881,8 +4055,9 @@ pub unsafe extern "C" fn sharpe_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3904,8 +4079,9 @@ pub unsafe extern "C" fn si_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inOpen, len), span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inOpen), Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inOpen, len), input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3924,8 +4100,9 @@ pub unsafe extern "C" fn skew_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3944,8 +4121,9 @@ pub unsafe extern "C" fn sma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -3970,8 +4148,9 @@ pub unsafe extern "C" fn smi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outSMI, out_len), span(outSMISignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outSMI, out_len), span(outSMISignal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outSMI), Some(outSMISignal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outSMI, out_len), output(outSMISignal, out_len),) else {
         return DECLINED;
@@ -3992,8 +4171,9 @@ pub unsafe extern "C" fn sortino_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4011,8 +4191,9 @@ pub unsafe extern "C" fn sqrt_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4039,8 +4220,9 @@ pub unsafe extern "C" fn sqzmom_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outMomentum, out_len), span(outSqueeze, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outMomentum, out_len), span(outSqueeze, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outMomentum), Some(outSqueeze),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outMomentum, out_len), output(outSqueeze, out_len),) else {
         return DECLINED;
@@ -4061,8 +4243,9 @@ pub unsafe extern "C" fn stc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4082,8 +4265,9 @@ pub unsafe extern "C" fn stddev_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4109,15 +4293,16 @@ pub unsafe extern "C" fn stoch_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outSlowK, out_len), span(outSlowD, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInSlowK_MAType) = enum_param(optInSlowK_MAType, &[7, 15]) else {
         return DECLINED;
     };
     let Some(optInSlowD_MAType) = enum_param(optInSlowD_MAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outSlowK, out_len), span(outSlowD, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
-    }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outSlowK), Some(outSlowD),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outSlowK, out_len), output(outSlowD, out_len),) else {
         return DECLINED;
     };
@@ -4140,12 +4325,13 @@ pub unsafe extern "C" fn stochf_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outFastK, out_len), span(outFastD, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outFastK, out_len), span(outFastD, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
-    }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outFastK), Some(outFastD),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outFastK, out_len), output(outFastD, out_len),) else {
         return DECLINED;
     };
@@ -4167,12 +4353,13 @@ pub unsafe extern "C" fn stochrsi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
+    let refused = refusal(&[span(outFastK, out_len), span(outFastD, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
+    }
     let Some(optInFastD_MAType) = enum_param(optInFastD_MAType, &[7, 15]) else {
         return DECLINED;
     };
-    if !disjoint(&[span(outFastK, out_len), span(outFastD, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
-    }
     let (Some(inReal), Some(outFastK), Some(outFastD),) = (input(inReal, len), output(outFastK, out_len), output(outFastD, out_len),) else {
         return DECLINED;
     };
@@ -4190,8 +4377,9 @@ pub unsafe extern "C" fn sub_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal0, len), span(inReal1, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal0), Some(inReal1), Some(outReal),) = (input(inReal0, len), input(inReal1, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4210,8 +4398,9 @@ pub unsafe extern "C" fn sum_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4234,8 +4423,9 @@ pub unsafe extern "C" fn supertrend_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outSupertrend, out_len), span(outTrend, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outSupertrend, out_len), span(outTrend, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outSupertrend), Some(outTrend),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outSupertrend, out_len), output(outTrend, out_len),) else {
         return DECLINED;
@@ -4255,8 +4445,9 @@ pub unsafe extern "C" fn t3_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4275,8 +4466,9 @@ pub unsafe extern "C" fn tema_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4296,8 +4488,9 @@ pub unsafe extern "C" fn trange_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4316,8 +4509,9 @@ pub unsafe extern "C" fn trima_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4336,8 +4530,9 @@ pub unsafe extern "C" fn trix_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4356,8 +4551,9 @@ pub unsafe extern "C" fn tsf_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4377,8 +4573,9 @@ pub unsafe extern "C" fn tsi_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4398,8 +4595,9 @@ pub unsafe extern "C" fn typprice_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4422,8 +4620,9 @@ pub unsafe extern "C" fn ultosc_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4443,8 +4642,9 @@ pub unsafe extern "C" fn var_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4463,8 +4663,9 @@ pub unsafe extern "C" fn vhf_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4484,8 +4685,9 @@ pub unsafe extern "C" fn vidya_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4507,8 +4709,9 @@ pub unsafe extern "C" fn vortex_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outPlusVI, out_len), span(outMinusVI, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outPlusVI, out_len), span(outMinusVI, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outPlusVI), Some(outMinusVI),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outPlusVI, out_len), output(outMinusVI, out_len),) else {
         return DECLINED;
@@ -4529,8 +4732,9 @@ pub unsafe extern "C" fn vwap_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(inVolume), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4550,8 +4754,9 @@ pub unsafe extern "C" fn vwma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len), span(inVolume, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(inVolume), Some(outReal),) = (input(inReal, len), input(inVolume, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4571,8 +4776,9 @@ pub unsafe extern "C" fn wad_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4596,8 +4802,9 @@ pub unsafe extern "C" fn wavetrend_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outWT1, out_len), span(outWT2, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outWT1, out_len), span(outWT2, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outWT1), Some(outWT2),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outWT1, out_len), output(outWT2, out_len),) else {
         return DECLINED;
@@ -4617,8 +4824,9 @@ pub unsafe extern "C" fn wclprice_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4639,8 +4847,9 @@ pub unsafe extern "C" fn willr_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inHigh, len), span(inLow, len), span(inClose, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(inClose), Some(outReal),) = (input(inHigh, len), input(inLow, len), input(inClose, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4659,8 +4868,9 @@ pub unsafe extern "C" fn wma_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;
@@ -4683,8 +4893,9 @@ pub unsafe extern "C" fn zigzag_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outZigZag, out_len), span(outTrend, out_len), span(outPivotIdx, out_len)], &[span(inHigh, len), span(inLow, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outZigZag, out_len), span(outTrend, out_len), span(outPivotIdx, out_len)], &[span(inHigh, len), span(inLow, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inHigh), Some(inLow), Some(outZigZag), Some(outTrend), Some(outPivotIdx),) = (input(inHigh, len), input(inLow, len), output(outZigZag, out_len), output(outTrend, out_len), output(outPivotIdx, out_len),) else {
         return DECLINED;
@@ -4703,8 +4914,9 @@ pub unsafe extern "C" fn zlema_batch(
     out_len: usize,
 ) -> i32 {
     entered();
-    if !disjoint(&[span(outReal, out_len)], &[span(inReal, len)]) {
-        return DECLINED;
+    let refused = refusal(&[span(outReal, out_len)], &[span(inReal, len)]);
+    if refused != 0 {
+        return refused;
     }
     let (Some(inReal), Some(outReal),) = (input(inReal, len), output(outReal, out_len),) else {
         return DECLINED;

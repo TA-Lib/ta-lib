@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Fails unless a WebAssembly module imports nothing, contains at least one
-f64x2.relaxed_madd and no other relaxed-SIMD instruction.
+"""Fails unless a WebAssembly module imports nothing, uses f64x2.relaxed_madd
+in the indicator code and no other relaxed-SIMD instruction anywhere, carries
+no custom section and no path of the machine that built it.
 
 Decodes every instruction of every function body rather than searching for
 byte patterns, which immediates and constants would match. An opcode it does
-not know fails the check instead of being skipped.
+not know fails the check instead of being skipped. The fused instruction is
+counted outside the body of the `fma_probe` export, which holds one whatever
+the indicator code compiles to.
 
 Usage: check_wasm_module.py <module.wasm>
 """
+import os
 import sys
 
 RELAXED = {
@@ -33,6 +37,14 @@ RELAXED = {
     0x113: 'i32x4.relaxed_dot_i8x16_i7x16_add_s',
 }
 ALLOWED = 0x107
+PROBE_EXPORT = 'fma_probe'
+# Fewer bodies than this using the fused instruction means fmadd! no longer
+# compiles to it; the shipped module has several times as many.
+MIN_FUSED_BODIES = 20
+# Custom sections the shipped module may carry. Its release profile strips
+# them all, so a non-empty list is a deliberate change.
+ALLOWED_CUSTOM = ()
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SIMD_UNASSIGNED = {0x9a, 0xa2, 0xa5, 0xa6, 0xaf, 0xb0, 0xb2, 0xb3, 0xb4, 0xbb,
                    0xc2, 0xc5, 0xc6, 0xcf, 0xd0, 0xd2, 0xd3, 0xd4, 0xe2, 0xee}
 
@@ -71,6 +83,18 @@ class Reader:
         if self.pos + n > self.end:
             raise ValueError(f'read past the end at offset {self.pos}')
         self.pos += n
+
+    def name(self):
+        n = self.u()
+        start = self.pos
+        self.skip(n)
+        return self.data[start:self.pos].decode('utf-8', 'replace')
+
+    def limits(self):
+        flags = self.byte()
+        self.u()
+        if flags & 1:
+            self.u()
 
     def memarg(self):
         align = self.u()
@@ -147,31 +171,69 @@ def instruction(r, relaxed):
 
 
 def scan(data):
-    """(import count, {relaxed opcode: count}, function body count)."""
+    """{'imports', 'func_imports', 'exports' {name: (kind, index)}, 'custom'
+    [names], 'bodies' [{relaxed opcode: count}] in code-section order}."""
     if data[:8] != b'\0asm\x01\0\0\0':
         raise ValueError('not a WebAssembly 1.0 binary module')
     r = Reader(data, 8)
-    imports, relaxed, bodies = 0, {}, 0
+    found = {'imports': 0, 'func_imports': 0, 'exports': {}, 'custom': [], 'bodies': []}
     while r.pos < r.end:
         sid = r.byte()
         size = r.u()
         start = r.pos
-        if sid == 2:
-            imports = Reader(data, start, start + size).u()
+        sec = Reader(data, start, start + size)
+        if sid == 0:
+            found['custom'].append(sec.name())
+        elif sid == 2:
+            found['imports'] = sec.u()
+            for _ in range(found['imports']):
+                sec.name()
+                sec.name()
+                kind = sec.byte()
+                if kind == 0:
+                    found['func_imports'] += 1
+                    sec.u()
+                elif kind == 1:
+                    sec.byte()
+                    sec.limits()
+                elif kind == 2:
+                    sec.limits()
+                elif kind == 3:
+                    sec.byte()
+                    sec.byte()
+                elif kind == 4:
+                    sec.byte()
+                    sec.u()
+                else:
+                    raise ValueError(f'unknown import kind {kind:#x} at offset {sec.pos}')
+        elif sid == 7:
+            for _ in range(sec.u()):
+                name = sec.name()
+                kind = sec.byte()
+                found['exports'][name] = (kind, sec.u())
         elif sid == 10:
-            sec = Reader(data, start, start + size)
             for _ in range(sec.u()):
                 body_size = sec.u()
                 body = Reader(data, sec.pos, sec.pos + body_size)
                 for _ in range(body.u()):
                     body.u()
                     body.byte()
+                relaxed = {}
                 while body.pos < body.end:
                     instruction(body, relaxed)
                 sec.pos = body.end
-                bodies += 1
+                found['bodies'].append(relaxed)
         r.pos = start + size
-    return imports, relaxed, bodies
+    return found
+
+
+def build_paths():
+    """The build machine's paths a remapped, stripped module must not contain."""
+    paths = set()
+    for p in (ROOT, os.path.realpath(ROOT), os.path.expanduser('~')):
+        if p and p != os.sep and os.path.isabs(p):
+            paths.add(p.rstrip(os.sep) + os.sep)
+    return sorted(paths)
 
 
 def main():
@@ -182,24 +244,41 @@ def main():
     with open(path, 'rb') as f:
         data = f.read()
     try:
-        imports, relaxed, bodies = scan(data)
+        found = scan(data)
     except ValueError as e:
         print(f'Error: {path}: cannot decode: {e}')
         return 1
     errors = []
-    if imports:
-        errors.append(f'{imports} import(s); the module must import nothing')
+    if found['imports']:
+        errors.append(f"{found['imports']} import(s); the module must import nothing")
+    relaxed = {}
+    for body in found['bodies']:
+        for op, n in body.items():
+            relaxed[op] = relaxed.get(op, 0) + n
     for op, n in sorted(relaxed.items()):
         if op != ALLOWED:
             errors.append(f'{n} x {RELAXED[op]}; only {RELAXED[ALLOWED]} may appear')
-    if not relaxed.get(ALLOWED):
-        errors.append(f'no {RELAXED[ALLOWED]}: the fused sites are not using it')
+    probe = found['exports'].get(PROBE_EXPORT)
+    probe_body = None if probe is None or probe[0] != 0 else probe[1] - found['func_imports']
+    if probe_body is None or not 0 <= probe_body < len(found['bodies']):
+        errors.append(f'no function export {PROBE_EXPORT}')
+    fused = [i for i, body in enumerate(found['bodies']) if body.get(ALLOWED) and i != probe_body]
+    if len(fused) < MIN_FUSED_BODIES:
+        errors.append(f'{len(fused)} function bodies besides {PROBE_EXPORT} use {RELAXED[ALLOWED]}, '
+                      f'fewer than {MIN_FUSED_BODIES}: the fused sites are not using it')
+    for name in found['custom']:
+        if name not in ALLOWED_CUSTOM:
+            errors.append(f"custom section '{name}': the release profile must strip it")
+    for p in build_paths():
+        if p.encode() in data:
+            errors.append(f'contains the build path {p}: the source paths are not remapped')
     if errors:
         for e in errors:
             print(f'Error: {path}: {e}')
         return 1
-    print(f'{path}: {bodies} function bodies, no imports, '
-          f'{relaxed[ALLOWED]} x {RELAXED[ALLOWED]} and no other relaxed-SIMD instruction. OK.')
+    print(f"{path}: {len(found['bodies'])} function bodies, no imports, no custom section, "
+          f'{relaxed[ALLOWED]} x {RELAXED[ALLOWED]} in {len(fused)} bodies besides {PROBE_EXPORT}, '
+          f'no other relaxed-SIMD instruction. OK.')
     return 0
 
 

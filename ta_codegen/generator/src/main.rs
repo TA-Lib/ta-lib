@@ -828,6 +828,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::ts_doc::write_example_tests(all_funcs, &enums, &ts_lib.join("test/gen"));
         backends::ts_engine::generate(all_funcs, &enums, &registry, &root, &ts_lib);
         backends::ts_engine::generate_parity_test(all_funcs, &enums, &ts_lib.join("test"));
+        backends::ts_engine::generate_routing_test(all_funcs, &root, &ts_lib.join("test"));
     }
 
     // Whole-corpus, like the Rust probe above: a `--func=X` run must not shrink it.

@@ -66,6 +66,14 @@ jobs:
             exit 1
           fi
 
+      - name: Self-test the WASM routing-table script
+        shell: bash
+        run: |
+          if ! python3 scripts/wasm_routing_table.py --self-test; then
+            echo "::error::scripts/wasm_routing_table.py --self-test failed: the rule that turns timings into ta_codegen/input/wasm_routing.yaml no longer decides its fixtures as written."
+            exit 1
+          fi
+
       # Debug build on purpose: `cargo test` defaults to it, and the overflow
       # checks it turns on are the point. Do not add --release here.
       - name: Run the generated crate's doctests (debug, overflow checks armed)

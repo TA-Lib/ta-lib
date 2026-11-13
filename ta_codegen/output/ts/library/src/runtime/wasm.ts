@@ -83,6 +83,7 @@ const HIGH_WATER = 1 << 29;
 /** @internal Calls that threw inside the module before the engine is given up. */
 export const MAX_TRAPS = 3;
 const DECLINED = -2147483648;
+const OUT_OF_FRAME = -2147483647;
 /** Read from an array so that no compiler sees the probe's operands as constants. */
 const PROBE = [1 + 2 ** -30, -1];
 const FUSED = 2 ** -29 + 2 ** -60;
@@ -125,6 +126,7 @@ let fallThroughs = 0;
 let lastReason = '';
 let lastThrown: unknown = undefined;
 let highWater = HIGH_WATER;
+let budget = BUDGET;
 let retired = 0;
 
 /** @internal The live instance: its exports, and views over its memory that a call re-derives before use. */
@@ -261,6 +263,13 @@ export function resetEngine(): void {
 export function setHighWater(bytes: number): number {
   const previous = highWater;
   highWater = bytes;
+  return previous;
+}
+
+/** @internal Sets the most bytes a call may place in linear memory; returns the previous limit. */
+export function setBudget(bytes: number): number {
+  const previous = budget;
+  budget = bytes;
   return previous;
 }
 
@@ -490,7 +499,7 @@ export function routedSeries(x: unknown, n: number): Float64Array | null {
  * since taking it may grow memory. `null` once the call fell through.
  */
 export function wasmFrame(bytes: number): WasmEngine | null {
-  if (bytes > BUDGET) {
+  if (bytes > budget) {
     return fellThrough('budget');
   }
   const engine = current();
@@ -524,7 +533,11 @@ export function trapped(engine: WasmEngine, error: unknown): null {
   return fellThrough(error instanceof WebAssembly.RuntimeError ? 'trap' : 'threw');
 }
 
-/** @internal */
+/**
+ * @internal `'frame'`: the module found a slice outside the scratch it handed
+ * out, so the glue and the module disagree about the frame; every gate treats
+ * it as a defect.
+ */
 export function refused(code: number): null {
-  return fellThrough(code === DECLINED ? 'declined' : 'rejected');
+  return fellThrough(code === DECLINED ? 'declined' : code === OUT_OF_FRAME ? 'frame' : 'rejected');
 }

@@ -262,6 +262,12 @@ def self_test():
     quiet = _curve("K", [0.5] * 3)
     noisy_mid = [_row("K", 100, 100.0, 50.0), _row("K", 1000, 100.0, 50.0, iqr=80.0), _row("K", 10000, 100.0, 50.0)]
     cases = [
+        ("median of medians over sweeps outvotes a bad first sweep",
+         [_curve("H", [2.0, 2.0, 2.0]) + _curve("H", [0.5, 0.5, 0.5]) + _curve("H", [0.6, 0.6, 0.6]),
+          _curve("H", [0.5, 0.5, 0.5]), _curve("H", [0.5, 0.5, 0.5])], "batch:\n  H: 100\n"),
+        ("median IQR over sweeps outvotes a noisy first sweep",
+         [_curve("P", [0.5] * 3, iqr=80.0) + _curve("P", [0.5] * 3) + _curve("P", [0.5] * 3), _curve("P", [0.5] * 3),
+          _curve("P", [0.5] * 3)], "batch:\n  P: 100\n"),
         ("faster only above a size", three(_curve("A", [1.2, 0.8, 0.5])), "batch:\n  A: 1000\n"),
         ("faster small, slower larger, faster largest: only the tail counts",
          three(_curve("B", [0.5, 1.2, 0.8])), "batch:\n  B: 10000\n"),

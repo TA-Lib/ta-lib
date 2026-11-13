@@ -381,7 +381,8 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
 WASM_TARGET = 'wasm32-unknown-unknown'
 # The no-vectorize flags are load-bearing for values, not a performance choice.
 WASM_RUSTFLAGS = ['-C', 'target-feature=+simd128,+relaxed-simd',
-                  '-C', 'no-vectorize-loops', '-C', 'no-vectorize-slp']
+                  '-C', 'no-vectorize-loops', '-C', 'no-vectorize-slp',
+                  '-C', 'link-arg=--compress-relocations']
 
 def build_wasm(root_dir: str) -> int:
     """Builds bin/ta_lib.wasm from the committed crate and checks it."""

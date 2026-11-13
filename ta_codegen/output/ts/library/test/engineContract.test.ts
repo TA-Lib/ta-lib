@@ -58,6 +58,8 @@ import { beta, CoreBuilder, ema, FuncUnstId, ma, macd, MAType, ready, TALibError
 import * as js from 'ta-lib/js';
 import { hooks } from './engineHooks.ts';
 
+const { WASM_BASE64 } = (await import(new URL('../runtime/wasmBytes.js', import.meta.resolve('ta-lib')).href)) as { WASM_BASE64: string };
+
 const N = 300;
 const close = Float64Array.from({ length: N }, (_, i) => Math.round((100 + 10 * Math.sin(i / 9) + i / 40) * 100) / 100);
 
@@ -210,25 +212,128 @@ test('a Proxy input, and an element whose valueOf grows WASM memory by a re-entr
   assert.equal(check('Proxy over Float64Array, no traps', () => ema(bare), () => js.ema(bare)).fellThrough, 1);
 
   check('warm-up', () => ema(close), () => js.ema(close));
-  const before = hooks.wasmMemoryBytes();
+  let before = hooks.wasmMemoryBytes();
   assert.ok(before > 0, 'no live instance after a routed call');
-  const big = new Float64Array(4_000_000).fill(1);
-  let grown = 0;
-  const list: unknown[] = Array.from(close);
-  list[100] = {
+  // Each size outgrows the scratch the previous ones left, so every re-entrant call moves it.
+  for (const size of [1_000_000, 2_000_000, 4_000_000, 8_000_000]) {
+    const where = `valueOf grows memory by a ${size}-bar call`;
+    const big = new Float64Array(size).fill(1);
+    let grown = 0;
+    const list: unknown[] = Array.from(close);
+    list[100] = {
+      valueOf(): number {
+        if (grown === 0) {
+          ema(big, { timePeriod: 3 });
+          grown = hooks.wasmMemoryBytes();
+        }
+        return close[100];
+      },
+    };
+    const series = list as number[];
+    const r = check(where, () => ema(series), () => js.ema(series));
+    assert.ok(grown > before, `${where}: memory ${before} -> ${grown}: the re-entrant call did not grow it`);
+    assert.equal(r.fellThrough, 0, `${where}: fell through as '${hooks.lastFallThrough()}'`);
+    assert.equal(r.ran, 2, `${where}: the module did not count the re-entrant call and the outer one`);
+    before = grown;
+  }
+});
+
+test('a real parameter that is not a number, an integer or range bound that is not an int32, and a non-object prices fall through', () => {
+  const cases: [string, string, () => unknown, () => unknown][] = [
+    ["t3 vFactor '0.7'", 'parameter', () => routed.t3(close, { vFactor: '0.7' as never }), () => js.t3(close, { vFactor: '0.7' as never })],
+    ['t3 vFactor true', 'parameter', () => routed.t3(close, { vFactor: true as never }), () => js.t3(close, { vFactor: true as never })],
+    ["sar acceleration '0.02'", 'parameter', () => routed.sar({ high: close, low: close }, { acceleration: '0.02' as never }), () => js.sar({ high: close, low: close }, { acceleration: '0.02' as never })],
+    ['timePeriod 2**32 + 5', 'parameter', () => ema(close, { timePeriod: 2 ** 32 + 5 }), () => js.ema(close, { timePeriod: 2 ** 32 + 5 })],
+    ['startIdx 2.5', 'options', () => ema(close, { startIdx: 2.5 }), () => js.ema(close, { startIdx: 2.5 })],
+    ['prices 42', 'input', () => routed.atr(42 as never), () => js.atr(42 as never)],
+  ];
+  for (const [where, reason, viaDefault, viaJs] of cases) {
+    const r = check(where, viaDefault, viaJs);
+    assert.equal(r.fellThrough, 1, where);
+    assert.equal(hooks.lastFallThrough(), reason, where);
+    assert.equal(r.ran, 0, where);
+  }
+});
+
+test('an element whose conversion throws falls through and throws the ta-lib/js error; a Float64Array view at an offset runs in WASM', () => {
+  const big: unknown[] = Array.from(close);
+  big[5] = 5n;
+  const thrower: unknown[] = Array.from(close);
+  thrower[7] = {
     valueOf(): number {
-      if (grown === 0) {
-        ema(big, { timePeriod: 3 });
-        grown = hooks.wasmMemoryBytes();
-      }
-      return close[100];
+      throw new RangeError('valueOf refused');
     },
   };
-  const series = list as number[];
-  const r = check('valueOf grows memory', () => ema(series), () => js.ema(series));
-  assert.ok(grown > before, `memory ${before} -> ${grown}: the re-entrant call did not grow it`);
-  assert.equal(r.fellThrough, 0);
-  assert.equal(r.ran, 2, 'the module did not count the re-entrant call and the outer one');
+  for (const [where, list] of [['a BigInt element', big], ['a throwing valueOf', thrower]] as const) {
+    const series = list as number[];
+    const r = check(where, () => ema(series), () => js.ema(series));
+    assert.ok(r.got.error !== undefined, `${where}: ta-lib/js accepted it`);
+    assert.equal(r.fellThrough, 1, where);
+    assert.equal(hooks.lastFallThrough(), 'input', where);
+  }
+  const wide = new Float64Array(N + 16);
+  wide.set(close, 8);
+  const view = wide.subarray(8, 8 + N);
+  assert.equal(view.byteOffset, 64);
+  ranInWasm(check('subarray at byte 64', () => ema(view, { timePeriod: 9 }), () => js.ema(view, { timePeriod: 9 })), 'subarray at byte 64');
+});
+
+test('a call over the memory budget falls through as budget, and one at or under it runs in WASM', () => {
+  const bytes = N * 16;
+  const previous = hooks.setBudget(bytes + 1);
+  try {
+    assert.equal(previous, hooks.BUDGET, 'the default budget is not BUDGET');
+    ranInWasm(check('one byte under', () => ema(close), () => js.ema(close)), 'one byte under');
+    hooks.setBudget(bytes);
+    ranInWasm(check('at the budget', () => ema(close), () => js.ema(close)), 'at the budget');
+    hooks.setBudget(bytes - 1);
+    const over = check('one byte over', () => ema(close), () => js.ema(close));
+    assert.equal(over.fellThrough, 1, 'one byte over: did not fall through');
+    assert.equal(hooks.lastFallThrough(), 'budget', 'one byte over');
+    assert.equal(over.ran, 0, 'one byte over: entered the module');
+  } finally {
+    hooks.setBudget(previous);
+  }
+});
+
+test('an export refuses a slice outside its frame as a frame defect, and a misaligned or overlapping one as declined', () => {
+  const n = 64;
+  const w = hooks.wasmFrame(n * 16);
+  assert.ok(w !== null, 'no engine');
+  const at = w.base;
+  w.f64.set(close.subarray(0, n), at / 8);
+  const batch = (inAt: number, outAt: number, outLen = n): number => w.x.ema_batch(0, n - 1, inAt, n, 10, outAt, outLen);
+  const reason = (code: number): string => {
+    assert.ok(code < 0, `the export answered ${code}`);
+    hooks.refused(code);
+    return hooks.lastFallThrough();
+  };
+  assert.ok(batch(at, at + n * 8) > 0, 'the export refused a call inside its frame');
+  assert.equal(reason(batch(at, at + n * 8 + 8)), 'frame', 'an output 8 bytes past the frame');
+  assert.equal(reason(batch(at - 8, at + n * 8)), 'frame', 'an input 8 bytes before the frame');
+  assert.equal(reason(batch(at, at + n * 8 + 4, n - 1)), 'declined', 'a misaligned output');
+  assert.equal(reason(batch(at, at + 8 * 8)), 'declined', 'an output overlapping the input');
+});
+
+test('an export that grows linear memory itself answers with the range and bits of ta-lib/js', () => {
+  hooks.resetEngine();
+  hooks.provideWasmBytes(WASM_BASE64);
+  const n = 2_000_000;
+  const series = Float64Array.from({ length: n }, (_, i) => Math.round((100 + 10 * Math.sin(i / 9) + (i % 97) / 10) * 100) / 100);
+  assert.ok(hooks.wasmFrame(n * 24) !== null, 'no engine');
+  const before = hooks.wasmMemoryBytes();
+  const entered = hooks.moduleCalls();
+  hooks.setEngineMode('strict');
+  let got: Outcome;
+  try {
+    got = outcome(() => routed.stochrsi(series));
+  } finally {
+    hooks.setEngineMode('table');
+  }
+  const after = hooks.wasmMemoryBytes();
+  same(got, outcome(() => js.stochrsi(series)), 'stochrsi over 2,000,000 bars');
+  assert.equal(hooks.moduleCalls() - entered, 1);
+  assert.ok(after > before, `memory ${before} -> ${after}: the export did not grow it beyond its frame`);
 });
 
 test('a Float64Array whose length property claims more elements than it has falls through', () => {
