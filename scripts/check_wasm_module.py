@@ -45,6 +45,8 @@ MIN_FUSED_BODIES = 20
 # them all, so a non-empty list is a deliberate change.
 ALLOWED_CUSTOM = ()
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# What `build.py wasm` remaps ROOT to; a clone at this very path has nothing to remap.
+REMAPPED_ROOT = '/ta-lib'
 SIMD_UNASSIGNED = {0x9a, 0xa2, 0xa5, 0xa6, 0xaf, 0xb0, 0xb2, 0xb3, 0xb4, 0xbb,
                    0xc2, 0xc5, 0xc6, 0xcf, 0xd0, 0xd2, 0xd3, 0xd4, 0xe2, 0xee}
 
@@ -228,11 +230,18 @@ def scan(data):
 
 
 def build_paths():
-    """The build machine's paths a remapped, stripped module must not contain."""
+    """The build machine's paths a remapped, stripped module must not contain.
+
+    Each is a root plus a directory under it: a bare root can be a suffix of a
+    path the module rightly holds, the remap target or the standard library's.
+    """
     paths = set()
-    for p in (ROOT, os.path.realpath(ROOT), os.path.expanduser('~')):
-        if p and p != os.sep and os.path.isabs(p):
-            paths.add(p.rstrip(os.sep) + os.sep)
+    for root in (ROOT, os.path.realpath(ROOT)):
+        if root.rstrip(os.sep) != REMAPPED_ROOT:
+            paths.add(os.path.join(root, 'ta_codegen') + os.sep)
+    home = os.path.expanduser('~')
+    if os.path.isabs(home):
+        paths.update(os.path.join(home, d) + os.sep for d in ('.cargo', '.rustup'))
     return sorted(paths)
 
 

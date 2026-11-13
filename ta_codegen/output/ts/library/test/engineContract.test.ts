@@ -298,6 +298,8 @@ test('a call over the memory budget falls through as budget, and one at or under
 
 test('an export refuses a slice outside its frame as a frame defect, and a misaligned or overlapping one as declined', () => {
   const n = 64;
+  // A scratch larger than the frame: the frame is what was asked for, not what the buffer holds.
+  assert.ok(hooks.wasmFrame(n * 64) !== null, 'no engine');
   const w = hooks.wasmFrame(n * 16);
   assert.ok(w !== null, 'no engine');
   const at = w.base;
@@ -311,6 +313,7 @@ test('an export refuses a slice outside its frame as a frame defect, and a misal
   assert.ok(batch(at, at + n * 8) > 0, 'the export refused a call inside its frame');
   assert.equal(reason(batch(at, at + n * 8 + 8)), 'frame', 'an output 8 bytes past the frame');
   assert.equal(reason(batch(at - 8, at + n * 8)), 'frame', 'an input 8 bytes before the frame');
+  assert.equal(reason(batch(at + n * 16 + 8, at + n * 8)), 'frame', 'an input that starts past the frame');
   assert.equal(reason(batch(at, at + n * 8 + 4, n - 1)), 'declined', 'a misaligned output');
   assert.equal(reason(batch(at, at + 8 * 8)), 'declined', 'an output overlapping the input');
 });

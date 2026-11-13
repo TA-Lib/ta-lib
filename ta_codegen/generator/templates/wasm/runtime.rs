@@ -61,14 +61,13 @@ pub extern "C" fn scratch(bytes: usize) -> *mut f64 {
     buf.as_mut_ptr()
 }
 
-/// Every non-empty span lies inside the region the last `scratch` call handed out.
 fn in_frame(spans: &[(usize, usize)]) -> bool {
     let (lo, hi) = (FRAME[0].load(Ordering::Relaxed), FRAME[1].load(Ordering::Relaxed));
     spans.iter().all(|&(at, bytes)| bytes == 0 || (at >= lo && at <= hi && bytes <= hi - at))
 }
 
-/// 0, or the code an export returns before it forms a slice. Out of line:
-/// inlined, these checks are a twentieth of the module.
+/// 0, or the code an export returns before it forms a slice. Keep it out of
+/// line: inlined, it is copied into every export.
 #[inline(never)]
 pub(crate) fn refusal(outs: &[(usize, usize)], ins: &[(usize, usize)]) -> i32 {
     if !in_frame(outs) || !in_frame(ins) {

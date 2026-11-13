@@ -533,11 +533,7 @@ export function trapped(engine: WasmEngine, error: unknown): null {
   return fellThrough(error instanceof WebAssembly.RuntimeError ? 'trap' : 'threw');
 }
 
-/**
- * @internal `'frame'`: the module found a slice outside the scratch it handed
- * out, so the glue and the module disagree about the frame; every gate treats
- * it as a defect.
- */
+/** @internal `'frame'` is a defect in the glue, never a call to answer from TypeScript by design. */
 export function refused(code: number): null {
   return fellThrough(code === DECLINED ? 'declined' : code === OUT_OF_FRAME ? 'frame' : 'rejected');
 }
