@@ -207,6 +207,16 @@ Two source-level forms, and their limits:
 - STOCHRSI's second array is allocated inside STOCHF (`ta_codegen/input/stochf/stochf.c`), so either form needs a change there.
 - `PRAGMA TA_ALT={BATCH,...}` is the existing way for an input file to carry a batch-only body.
 
+### One mechanism, not one more implementation
+
+Owner, 2026-11-13: a strong motivation going forward is to avoid adding more alternative implementations of a function to the same library. A function already has a batch body, an open tier and a stream step, some with FMA frames or a `TA_ALT` body. Every option above adds another: a generated blocked batch, or a hand-written batch-only body. Count that cost when choosing, and prefer a form that replaces an existing implementation or is shared with another feature.
+
+The Arrow API is the feature to share with. Its segmented batch (`docs/RFC-Arrow-API.md`) runs a calculation on across chunk boundaries, and its result equals the same input in one chunk (within the exceptions that RFC names). That is the continuation this work needed at a block edge: the same state carried across the edge.
+
+- A block kernel per function could serve both: sub-blocks inside a composed body here, chunk and segment edges there.
+- What this work measured for that design: per-bar stream `Update` as the carry is 81.9% to 186.7% slower than batch; a kernel derived from the stream step is level with batch for 106 of 221 functions at a 5% tolerance; a batch re-call on the sub-range covers 89 more but needs the look-back bars contiguous before the edge, which a chunk boundary does not give without a copy of the tail; 26 have neither yet.
+- So the scope question for a restart is not only "which of the nine functions". It is whether the block kernel becomes the one resumable form that the segmented batch also uses, in which case it is built once for that purpose and #548 falls out of it for the functions that fault.
+
 ## To decide by measurement before resuming
 
 1. **Through ta-lib-python.** The wrapper allocates its output arrays on every call and numpy's own large frees move the same glibc thresholds, so the gain measured from C may shrink or vanish. `probe/pybench` compares three library builds (dev `dc4de9381b`; single allocation, which is dev plus `probe/one-alloc/one-alloc.patch`; blocked `9b26809129`) on wrapper `bf29beb338`, per function in a fresh process at 10,000 / 100,000 / 1,000,000 bars and as a 16-function suite in one process. Not run: the wrapper extension was not built on the timing hosts (check RUNPATH against RPATH with `readelf -d`, since `setup.py` sets `runtime_library_dirs`). If the gain does not survive there, stop.
@@ -216,3 +226,4 @@ Two source-level forms, and their limits:
 5. **BBANDS with a non-default MA type.** The census ran at defaults, where BBANDS takes a path with no malloc; whether another MA type faults is unknown.
 6. **MACDEXT: single allocation above a threshold against source-level re-call blocks**, on glibc and macOS at the threshold length. This picks the form for the first candidate.
 7. **Distro coverage.** Only the Xeon's distro was recorded (Ubuntu 24.10, glibc 2.40); the census and every Linux number assume that glibc's behaviour.
+8. **Shared with the segmented batch or not.** Time a block kernel against whatever carries the segmented batch across a chunk edge, on the functions that design ships first. If one form serves both, build it there; if not, #548 stays a per-function source change.
