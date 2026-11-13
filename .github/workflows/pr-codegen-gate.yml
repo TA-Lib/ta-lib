@@ -151,6 +151,12 @@ jobs:
         shell: bash
         run: python3 scripts/check_java_inline_budget.py /tmp/ta-java-main
 
+      # Over the limit, HotSpot never JIT-compiles the method; no test or
+      # output notices, and a -XX:-TieredCompilation bench hides it.
+      - name: No Java method crosses HotSpot's 8000-byte JIT limit
+        shell: bash
+        run: python3 scripts/check_java_method_size.py /tmp/ta-java-main
+
       # Hand-written, and the generator preserves them — so an API change lands
       # here only if someone carries it. Nothing else on this gate reads them.
       - name: Compile the hand-written Java suites against it
