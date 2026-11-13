@@ -3,7 +3,7 @@
     "sources_digest": "c6e14122ce54584fe28722013a461947",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "471ceef638fabd4e7a1a3315d0ba12437129d209f7a164378ae4dba8e85b3ea4",
+    "package_sha256": "7be5dedbc5c13a11b96b69da37a36523e71a77902081f6cbe79c9a49c014553c",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
