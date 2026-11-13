@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib-0.8.4-src.tar.gz",
-    "sources_digest": "c6e14122ce54584fe28722013a461947",
+    "sources_digest": "4e5d47bb629baab8f0d059547d9bdb4f",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "dcf3b71c22edb1e613bbbdb02bdc429763dedc75a1552bef65f96633d637e982",
+    "package_sha256": "6603f2ebb7389c92e32de4c8de9d2a23c49ab3812b95e9166662d801b1e50514",
     "ta_regtest_pass": "True",
     "dist_test_pass": "True"
 }
