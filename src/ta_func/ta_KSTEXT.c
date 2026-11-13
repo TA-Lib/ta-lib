@@ -807,13 +807,13 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
    if( outStride ) sc_outKST = outKST;
    else
    {
-      sc_outKST = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outKST = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outKST ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outKSTSignal = outKSTSignal;
    else
    {
-      sc_outKSTSignal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outKSTSignal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outKSTSignal ) { TA_Free( sc_outKST ); return TA_ALLOC_ERR; }
    }
 
@@ -1371,8 +1371,14 @@ TA_LIB_API TA_RetCode TA_KSTEXT_Close( TA_KSTEXT_Stream *stream )
 
 /* Private function, not in public API. */
 TA_FMA_MULTIVERSION
-static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double inRealBlk[], int nbBar, double outKST[], double outKSTSignal[] )
+static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outKST[], double outKSTSignal[] )
 {
+   int recallLb0;
+   int recallLb2;
+   int recallLb4;
+   int recallLb6;
+   int recallBeg;
+   int recallNb;
    double pad_kstBuffer[TA_KERN_BLOCK];
    double pad_tempBuffer[TA_KERN_BLOCK];
    double cur_kstBuffer;
@@ -1382,34 +1388,66 @@ static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double 
    int kernLen;
    int kernBar;
 
+   recallLb0 = TA_ROC_Lookback( sp->optInROC1Period );
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
+   recallLb2 = TA_ROC_Lookback( sp->optInROC2Period );
+   if( histBar <= 0 || histBar < recallLb2 )
+      recallLb2 = -1;
+   recallLb4 = TA_ROC_Lookback( sp->optInROC3Period );
+   if( histBar <= 0 || histBar < recallLb4 )
+      recallLb4 = -1;
+   recallLb6 = TA_ROC_Lookback( sp->optInROC4Period );
+   if( histBar <= 0 || histBar < recallLb6 )
+      recallLb6 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_ROC_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_kstBuffer );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         return subRc;
-      }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
-      {
-         subRc = TA_MA_Update( sp->sub1, pad_kstBuffer[kernBar], &pad_kstBuffer[kernBar] );
+         subRc = TA_ROC( recallLb0, recallLb0 + kernLen - 1, inRealBlk + kernBase - recallLb0, sp->optInROC1Period, &recallBeg, &recallNb, pad_kstBuffer );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
          if( subRc != TA_SUCCESS )
          {
             return subRc;
          }
       }
-      subRc = TA_ROC_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempBuffer );
-      if( subRc != TA_SUCCESS )
+      else
       {
-         return subRc;
-      }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
-      {
-         subRc = TA_MA_Update( sp->sub3, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         subRc = TA_ROC_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_kstBuffer );
          if( subRc != TA_SUCCESS )
          {
             return subRc;
          }
+      }
+      subRc = TA_MA_UpdateBlock( sp->sub1, pad_kstBuffer, kernLen, pad_kstBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      if( recallLb2 >= 0 )
+      {
+         subRc = TA_ROC( recallLb2, recallLb2 + kernLen - 1, inRealBlk + kernBase - recallLb2, sp->optInROC2Period, &recallBeg, &recallNb, pad_tempBuffer );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb2 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_ROC_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_MA_UpdateBlock( sp->sub3, pad_tempBuffer, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1418,18 +1456,28 @@ static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double 
          cur_kstBuffer = fma(2.0, cur_tempBuffer, cur_kstBuffer);
          pad_kstBuffer[kernBar] = cur_kstBuffer;
       }
-      subRc = TA_ROC_UpdateBlock( sp->sub4, inRealBlk + kernBase, kernLen, pad_tempBuffer );
-      if( subRc != TA_SUCCESS )
+      if( recallLb4 >= 0 )
       {
-         return subRc;
-      }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
-      {
-         subRc = TA_MA_Update( sp->sub5, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         subRc = TA_ROC( recallLb4, recallLb4 + kernLen - 1, inRealBlk + kernBase - recallLb4, sp->optInROC3Period, &recallBeg, &recallNb, pad_tempBuffer );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb4 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
          if( subRc != TA_SUCCESS )
          {
             return subRc;
          }
+      }
+      else
+      {
+         subRc = TA_ROC_UpdateBlock( sp->sub4, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_MA_UpdateBlock( sp->sub5, pad_tempBuffer, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1438,18 +1486,28 @@ static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double 
          cur_kstBuffer = fma(3.0, cur_tempBuffer, cur_kstBuffer);
          pad_kstBuffer[kernBar] = cur_kstBuffer;
       }
-      subRc = TA_ROC_UpdateBlock( sp->sub6, inRealBlk + kernBase, kernLen, pad_tempBuffer );
-      if( subRc != TA_SUCCESS )
+      if( recallLb6 >= 0 )
       {
-         return subRc;
-      }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
-      {
-         subRc = TA_MA_Update( sp->sub7, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         subRc = TA_ROC( recallLb6, recallLb6 + kernLen - 1, inRealBlk + kernBase - recallLb6, sp->optInROC4Period, &recallBeg, &recallNb, pad_tempBuffer );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb6 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
          if( subRc != TA_SUCCESS )
          {
             return subRc;
          }
+      }
+      else
+      {
+         subRc = TA_ROC_UpdateBlock( sp->sub6, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_MA_UpdateBlock( sp->sub7, pad_tempBuffer, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1458,13 +1516,10 @@ static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double 
          cur_kstBuffer = fma(4.0, cur_tempBuffer, cur_kstBuffer);
          pad_kstBuffer[kernBar] = cur_kstBuffer;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub8, pad_kstBuffer, kernLen, outKSTSignal + kernBase );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub8, pad_kstBuffer[kernBar], &outKSTSignal[kernBase + kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            return subRc;
-         }
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
          outKST[kernBase + kernBar] = pad_kstBuffer[kernBar];
@@ -1480,7 +1535,7 @@ TA_RetCode TA_KSTEXT_UpdateBlock( struct TA_KSTEXT_Stream *stream, const double 
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
-   return TA_KSTEXT_KernImpl( stream, inReal, nbBar, outKST, outKSTSignal );
+   return TA_KSTEXT_KernImpl( stream, inReal, 0, nbBar, outKST, outKSTSignal );
 }
 
 /* Private function, not in public API. */
@@ -1519,7 +1574,7 @@ TA_RetCode TA_KSTEXT_BlockBatch( int startIdx, int endIdx, const double inReal[]
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_KSTEXT_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outKST + 1, outKSTSignal + 1 );
+      retCode = TA_KSTEXT_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outKST + 1, outKSTSignal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_KSTEXT_Close( stream );

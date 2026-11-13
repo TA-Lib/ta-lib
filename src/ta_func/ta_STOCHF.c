@@ -670,13 +670,13 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHF_OpenBody( struct TA_STOCHF_Stream **s
    if( outStride ) sc_outFastK = outFastK;
    else
    {
-      sc_outFastK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outFastK = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outFastK ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outFastD = outFastD;
    else
    {
-      sc_outFastD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outFastD = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outFastD ) { TA_Free( sc_outFastK ); return TA_ALLOC_ERR; }
    }
 
@@ -1178,7 +1178,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STOCHF_KernImpl( struct TA_STOCHF_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outFastK[], double outFastD[] )
+static TA_RetCode TA_STOCHF_KernImpl( struct TA_STOCHF_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outFastK[], double outFastD[] )
 {
    double lowest = sp->lowest;
    double highest = sp->highest;
@@ -1199,6 +1199,7 @@ static TA_RetCode TA_STOCHF_KernImpl( struct TA_STOCHF_Stream *sp, const double 
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -1274,20 +1275,17 @@ static TA_RetCode TA_STOCHF_KernImpl( struct TA_STOCHF_Stream *sp, const double 
          today += 1;
          pad_tempBuffer[kernBar] = cur_tempBuffer;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub0, pad_tempBuffer, kernLen, outFastD + kernBase );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub0, pad_tempBuffer[kernBar], &outFastD[kernBase + kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            sp->lowest = lowest;
-            sp->highest = highest;
-            sp->lowestIdx = lowestIdx;
-            sp->highestIdx = highestIdx;
-            sp->trailingIdx = trailingIdx;
-            sp->i = i;
-            sp->today = today;
-            return subRc;
-         }
+         sp->lowest = lowest;
+         sp->highest = highest;
+         sp->lowestIdx = lowestIdx;
+         sp->highestIdx = highestIdx;
+         sp->trailingIdx = trailingIdx;
+         sp->i = i;
+         sp->today = today;
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
          outFastK[kernBase + kernBar] = pad_tempBuffer[kernBar];
@@ -1310,7 +1308,7 @@ TA_RetCode TA_STOCHF_UpdateBlock( struct TA_STOCHF_Stream *stream, const double 
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   return TA_STOCHF_KernImpl( stream, inHigh, inLow, inClose, nbBar, outFastK, outFastD );
+   return TA_STOCHF_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outFastK, outFastD );
 }
 
 /* Private function, not in public API. */
@@ -1353,7 +1351,7 @@ TA_RetCode TA_STOCHF_BlockBatch( int startIdx, int endIdx, const double inHigh[]
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_STOCHF_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outFastK + 1, outFastD + 1 );
+      retCode = TA_STOCHF_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outFastK + 1, outFastD + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_STOCHF_Close( stream );

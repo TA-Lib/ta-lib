@@ -279,7 +279,7 @@ static TA_OPEN_INLINE TA_RetCode TA_STDDEV_OpenBody( struct TA_STDDEV_Stream **s
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -498,7 +498,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STDDEV_KernImpl( struct TA_STDDEV_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_STDDEV_KernImpl( struct TA_STDDEV_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outReal[] )
 {
    double optInNbDev = sp->optInNbDev;
    double cur_outReal;
@@ -507,6 +507,7 @@ static TA_RetCode TA_STDDEV_KernImpl( struct TA_STDDEV_Stream *sp, const double 
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -538,7 +539,7 @@ TA_RetCode TA_STDDEV_UpdateBlock( struct TA_STDDEV_Stream *stream, const double 
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_STDDEV_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_STDDEV_KernImpl( stream, inReal, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -575,7 +576,7 @@ TA_RetCode TA_STDDEV_BlockBatch( int startIdx, int endIdx, const double inReal[]
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_STDDEV_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_STDDEV_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_STDDEV_Close( stream );

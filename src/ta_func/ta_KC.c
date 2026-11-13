@@ -445,19 +445,19 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
    if( outStride ) sc_outRealUpperBand = outRealUpperBand;
    else
    {
-      sc_outRealUpperBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outRealUpperBand = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outRealUpperBand ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outRealMiddleBand = outRealMiddleBand;
    else
    {
-      sc_outRealMiddleBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outRealMiddleBand = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outRealMiddleBand ) { TA_Free( sc_outRealUpperBand ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outRealLowerBand = outRealLowerBand;
    else
    {
-      sc_outRealLowerBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outRealLowerBand = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outRealLowerBand ) { TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); return TA_ALLOC_ERR; }
    }
 
@@ -803,9 +803,12 @@ TA_LIB_API TA_RetCode TA_KC_Close( TA_KC_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_KC_KernImpl( struct TA_KC_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+static TA_RetCode TA_KC_KernImpl( struct TA_KC_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
 {
    double optInNbDev = sp->optInNbDev;
+   int recallLb0;
+   int recallBeg;
+   int recallNb;
    double pad_tempTP[TA_KERN_BLOCK];
    double pad_tempATR[TA_KERN_BLOCK];
    double middle;
@@ -819,13 +822,29 @@ static TA_RetCode TA_KC_KernImpl( struct TA_KC_Stream *sp, const double inHighBl
    int kernLen;
    int kernBar;
 
+   recallLb0 = TA_TYPPRICE_Lookback();
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_TYPPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempTP );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         return subRc;
+         subRc = TA_TYPPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, inCloseBlk + kernBase - recallLb0, &recallBeg, &recallNb, pad_tempTP );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_TYPPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempTP );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
       subRc = TA_ATR_UpdateBlock( sp->sub1, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempATR );
       if( subRc != TA_SUCCESS )
@@ -863,7 +882,7 @@ TA_RetCode TA_KC_UpdateBlock( struct TA_KC_Stream *stream, const double inHigh[]
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   return TA_KC_KernImpl( stream, inHigh, inLow, inClose, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_KC_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 /* Private function, not in public API. */
@@ -908,7 +927,7 @@ TA_RetCode TA_KC_BlockBatch( int startIdx, int endIdx, const double inHigh[], co
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_KC_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outRealUpperBand + 1, outRealMiddleBand + 1, outRealLowerBand + 1 );
+      retCode = TA_KC_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outRealUpperBand + 1, outRealMiddleBand + 1, outRealLowerBand + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_KC_Close( stream );

@@ -328,7 +328,7 @@ static TA_OPEN_INLINE TA_RetCode TA_RVIR_OpenBody( struct TA_RVIR_Stream **strea
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -587,7 +587,7 @@ TA_LIB_API TA_RetCode TA_RVIR_Close( TA_RVIR_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_RVIR_KernImpl( struct TA_RVIR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_RVIR_KernImpl( struct TA_RVIR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int histBar, int nbBar, double outReal[] )
 {
    double pad_tempHigh[TA_KERN_BLOCK];
    double cur_tempHigh;
@@ -597,6 +597,7 @@ static TA_RetCode TA_RVIR_KernImpl( struct TA_RVIR_Stream *sp, const double inHi
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -628,7 +629,7 @@ TA_RetCode TA_RVIR_UpdateBlock( struct TA_RVIR_Stream *stream, const double inHi
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   return TA_RVIR_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_RVIR_KernImpl( stream, inHigh, inLow, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -667,7 +668,7 @@ TA_RetCode TA_RVIR_BlockBatch( int startIdx, int endIdx, const double inHigh[], 
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_RVIR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_RVIR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_RVIR_Close( stream );

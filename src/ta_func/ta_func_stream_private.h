@@ -899,6 +899,7 @@ TA_RetCode TA_LINEARREG_INTERCEPT_UpdateBlock( struct TA_LINEARREG_INTERCEPT_Str
 TA_RetCode TA_LINEARREG_SLOPE_UpdateBlock( struct TA_LINEARREG_SLOPE_Stream *stream, const double inReal[], int nbBar, double outReal[] );
 TA_RetCode TA_LN_UpdateBlock( struct TA_LN_Stream *stream, const double inReal[], int nbBar, double outReal[] );
 TA_RetCode TA_LOG10_UpdateBlock( struct TA_LOG10_Stream *stream, const double inReal[], int nbBar, double outReal[] );
+TA_RetCode TA_MA_UpdateBlock( struct TA_MA_Stream *stream, const double inReal[], int nbBar, double outReal[] );
 TA_RetCode TA_MACD_UpdateBlock( struct TA_MACD_Stream *stream, const double inReal[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDEXT_UpdateBlock( struct TA_MACDEXT_Stream *stream, const double inReal[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDFIX_UpdateBlock( struct TA_MACDFIX_Stream *stream, const double inReal[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] );
@@ -1141,6 +1142,7 @@ TA_RetCode TA_LINEARREG_INTERCEPT_BlockBatch( int startIdx, int endIdx, const do
 TA_RetCode TA_LINEARREG_SLOPE_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_LN_BlockBatch( int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_LOG10_BlockBatch( int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_MA_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_MACD_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDEXT_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDFIX_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );

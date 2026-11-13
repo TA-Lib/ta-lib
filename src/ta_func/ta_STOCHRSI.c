@@ -368,13 +368,13 @@ static TA_OPEN_INLINE TA_RetCode TA_STOCHRSI_OpenBody( struct TA_STOCHRSI_Stream
    if( outStride ) sc_outFastK = outFastK;
    else
    {
-      sc_outFastK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outFastK = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outFastK ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outFastD = outFastD;
    else
    {
-      sc_outFastD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outFastD = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outFastD ) { TA_Free( sc_outFastK ); return TA_ALLOC_ERR; }
    }
 
@@ -647,13 +647,14 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_STOCHRSI_KernImpl( struct TA_STOCHRSI_Stream *sp, const double inRealBlk[], int nbBar, double outFastK[], double outFastD[] )
+static TA_RetCode TA_STOCHRSI_KernImpl( struct TA_STOCHRSI_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outFastK[], double outFastD[] )
 {
    double pad_tempRSIBuffer[TA_KERN_BLOCK];
    TA_RetCode subRc;
    int kernBase;
    int kernLen;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -679,7 +680,7 @@ TA_RetCode TA_STOCHRSI_UpdateBlock( struct TA_STOCHRSI_Stream *stream, const dou
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   return TA_STOCHRSI_KernImpl( stream, inReal, nbBar, outFastK, outFastD );
+   return TA_STOCHRSI_KernImpl( stream, inReal, 0, nbBar, outFastK, outFastD );
 }
 
 /* Private function, not in public API. */
@@ -718,7 +719,7 @@ TA_RetCode TA_STOCHRSI_BlockBatch( int startIdx, int endIdx, const double inReal
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_STOCHRSI_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outFastK + 1, outFastD + 1 );
+      retCode = TA_STOCHRSI_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outFastK + 1, outFastD + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_STOCHRSI_Close( stream );

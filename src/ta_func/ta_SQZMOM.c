@@ -853,13 +853,13 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
    if( outStride ) sc_outMomentum = outMomentum;
    else
    {
-      sc_outMomentum = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outMomentum = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outMomentum ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outSqueeze = outSqueeze;
    else
    {
-      sc_outSqueeze = (int *)TA_Malloc( sizeof(int) * (size_t)historyLen );
+      sc_outSqueeze = (int *)TA_Malloc( sizeof(int) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outSqueeze ) { TA_Free( sc_outMomentum ); return TA_ALLOC_ERR; }
    }
 
@@ -1568,12 +1568,16 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Close( TA_SQZMOM_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_SQZMOM_KernImpl( struct TA_SQZMOM_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outMomentum[], int outSqueeze[] )
+static TA_RetCode TA_SQZMOM_KernImpl( struct TA_SQZMOM_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outMomentum[], int outSqueeze[] )
 {
    double optInNbDev = sp->optInNbDev;
    double optInFactorWide = sp->optInFactorWide;
    double optInFactorNormal = sp->optInFactorNormal;
    double optInFactorNarrow = sp->optInFactorNarrow;
+   int recallLb0;
+   int recallLb2;
+   int recallBeg;
+   int recallNb;
    double pad_tempDev[TA_KERN_BLOCK];
    double pad_tempKCM[TA_KERN_BLOCK];
    double pad_tempWork[TA_KERN_BLOCK];
@@ -1595,13 +1599,32 @@ static TA_RetCode TA_SQZMOM_KernImpl( struct TA_SQZMOM_Stream *sp, const double 
    int kernLen;
    int kernBar;
 
+   recallLb0 = TA_MIDPRICE_Lookback( sp->optInKCPeriod );
+   if( histBar <= 0 || histBar < recallLb0 )
+      recallLb0 = -1;
+   recallLb2 = TA_TRANGE_Lookback();
+   if( histBar <= 0 || histBar < recallLb2 )
+      recallLb2 = -1;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      subRc = TA_MIDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempDev );
-      if( subRc != TA_SUCCESS )
+      if( recallLb0 >= 0 )
       {
-         return subRc;
+         subRc = TA_MIDPRICE( recallLb0, recallLb0 + kernLen - 1, inHighBlk + kernBase - recallLb0, inLowBlk + kernBase - recallLb0, sp->optInKCPeriod, &recallBeg, &recallNb, pad_tempDev );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb0 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_MIDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempDev );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
       subRc = TA_SMA_UpdateBlock( sp->sub1, inCloseBlk + kernBase, kernLen, pad_tempKCM );
       if( subRc != TA_SUCCESS )
@@ -1616,10 +1639,23 @@ static TA_RetCode TA_SQZMOM_KernImpl( struct TA_SQZMOM_Stream *sp, const double 
          cur_tempDev = inClose - (cur_tempDev + cur_tempKCM) / 2.0;
          pad_tempDev[kernBar] = cur_tempDev;
       }
-      subRc = TA_TRANGE_UpdateBlock( sp->sub2, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempWork );
-      if( subRc != TA_SUCCESS )
+      if( recallLb2 >= 0 )
       {
-         return subRc;
+         subRc = TA_TRANGE( recallLb2, recallLb2 + kernLen - 1, inHighBlk + kernBase - recallLb2, inLowBlk + kernBase - recallLb2, inCloseBlk + kernBase - recallLb2, &recallBeg, &recallNb, pad_tempWork );
+         if( subRc == TA_SUCCESS && (recallBeg != recallLb2 || recallNb != kernLen) )
+            subRc = TA_BAD_PARAM;
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      else
+      {
+         subRc = TA_TRANGE_UpdateBlock( sp->sub2, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempWork );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
       }
       subRc = TA_SMA_UpdateBlock( sp->sub3, pad_tempWork, kernLen, pad_tempWork );
       if( subRc != TA_SUCCESS )
@@ -1683,7 +1719,7 @@ TA_RetCode TA_SQZMOM_UpdateBlock( struct TA_SQZMOM_Stream *stream, const double 
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
-   return TA_SQZMOM_KernImpl( stream, inHigh, inLow, inClose, nbBar, outMomentum, outSqueeze );
+   return TA_SQZMOM_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outMomentum, outSqueeze );
 }
 
 /* Private function, not in public API. */
@@ -1726,7 +1762,7 @@ TA_RetCode TA_SQZMOM_BlockBatch( int startIdx, int endIdx, const double inHigh[]
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_SQZMOM_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outMomentum + 1, outSqueeze + 1 );
+      retCode = TA_SQZMOM_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outMomentum + 1, outSqueeze + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_SQZMOM_Close( stream );

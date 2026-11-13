@@ -564,19 +564,19 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
    if( outStride ) sc_outMACD = outMACD;
    else
    {
-      sc_outMACD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outMACD = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outMACD ) { return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outMACDSignal = outMACDSignal;
    else
    {
-      sc_outMACDSignal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outMACDSignal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outMACDSignal ) { TA_Free( sc_outMACD ); return TA_ALLOC_ERR; }
    }
    if( outStride ) sc_outMACDHist = outMACDHist;
    else
    {
-      sc_outMACDHist = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outMACDHist = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outMACDHist ) { TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); return TA_ALLOC_ERR; }
    }
 
@@ -996,7 +996,7 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_MACDEXT_KernImpl( struct TA_MACDEXT_Stream *sp, const double inRealBlk[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+static TA_RetCode TA_MACDEXT_KernImpl( struct TA_MACDEXT_Stream *sp, const double inRealBlk[], int histBar, int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
 {
    double pad_slowMABuffer[TA_KERN_BLOCK];
    double pad_fastMABuffer[TA_KERN_BLOCK];
@@ -1009,24 +1009,19 @@ static TA_RetCode TA_MACDEXT_KernImpl( struct TA_MACDEXT_Stream *sp, const doubl
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_slowMABuffer );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_slowMABuffer[kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            return subRc;
-         }
+         return subRc;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub1, inRealBlk + kernBase, kernLen, pad_fastMABuffer );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub1, inRealBlk[kernBase + kernBar], &pad_fastMABuffer[kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            return subRc;
-         }
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1035,13 +1030,10 @@ static TA_RetCode TA_MACDEXT_KernImpl( struct TA_MACDEXT_Stream *sp, const doubl
          cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
          pad_fastMABuffer[kernBar] = cur_fastMABuffer;
       }
-      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      subRc = TA_MA_UpdateBlock( sp->sub2, pad_fastMABuffer, kernLen, outMACDSignal + kernBase );
+      if( subRc != TA_SUCCESS )
       {
-         subRc = TA_MA_Update( sp->sub2, pad_fastMABuffer[kernBar], &outMACDSignal[kernBase + kernBar] );
-         if( subRc != TA_SUCCESS )
-         {
-            return subRc;
-         }
+         return subRc;
       }
       for( kernBar = 0; kernBar < kernLen; kernBar++ )
       {
@@ -1066,7 +1058,7 @@ TA_RetCode TA_MACDEXT_UpdateBlock( struct TA_MACDEXT_Stream *stream, const doubl
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   return TA_MACDEXT_KernImpl( stream, inReal, nbBar, outMACD, outMACDSignal, outMACDHist );
+   return TA_MACDEXT_KernImpl( stream, inReal, 0, nbBar, outMACD, outMACDSignal, outMACDHist );
 }
 
 /* Private function, not in public API. */
@@ -1107,7 +1099,7 @@ TA_RetCode TA_MACDEXT_BlockBatch( int startIdx, int endIdx, const double inReal[
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_MACDEXT_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outMACD + 1, outMACDSignal + 1, outMACDHist + 1 );
+      retCode = TA_MACDEXT_KernImpl( stream, inReal + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outMACD + 1, outMACDSignal + 1, outMACDHist + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_MACDEXT_Close( stream );

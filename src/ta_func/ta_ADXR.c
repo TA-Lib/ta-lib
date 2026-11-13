@@ -329,7 +329,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ADXR_OpenBody( struct TA_ADXR_Stream **strea
    if( outStride ) sc_outReal = outReal;
    else
    {
-      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)(startIdx < endIdx ? endIdx - startIdx + 1 : 1) );
       if( !sc_outReal ) { return TA_ALLOC_ERR; }
    }
 
@@ -580,7 +580,7 @@ TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream )
 }
 
 /* Private function, not in public API. */
-static TA_RetCode TA_ADXR_KernImpl( struct TA_ADXR_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+static TA_RetCode TA_ADXR_KernImpl( struct TA_ADXR_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int histBar, int nbBar, double outReal[] )
 {
    int lagPos0 = sp->lagPos0;
    int lagCap0 = sp->lagCap0;
@@ -597,6 +597,7 @@ static TA_RetCode TA_ADXR_KernImpl( struct TA_ADXR_Stream *sp, const double inHi
    int kernLen;
    int kernBar;
 
+   (void)histBar;
    for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
    {
       kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
@@ -636,7 +637,7 @@ TA_RetCode TA_ADXR_UpdateBlock( struct TA_ADXR_Stream *stream, const double inHi
 {
    if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
-   return TA_ADXR_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_ADXR_KernImpl( stream, inHigh, inLow, inClose, 0, nbBar, outReal );
 }
 
 /* Private function, not in public API. */
@@ -677,7 +678,7 @@ TA_RetCode TA_ADXR_BlockBatch( int startIdx, int endIdx, const double inHigh[], 
    if( retCode != TA_SUCCESS ) return retCode;
    if( endIdx > firstIdx )
    {
-      retCode = TA_ADXR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      retCode = TA_ADXR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, firstIdx + 1, endIdx - firstIdx, outReal + 1 );
       if( retCode != TA_SUCCESS )
       {
          TA_ADXR_Close( stream );
