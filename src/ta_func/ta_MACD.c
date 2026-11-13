@@ -1056,6 +1056,52 @@ TA_RetCode TA_MACD_UpdateBlock( struct TA_MACD_Stream *stream, const double inRe
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_MACD_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   struct TA_MACD_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MACD_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outMACD )
+      return TA_BAD_PARAM;
+   if( !outMACDSignal )
+      return TA_BAD_PARAM;
+   if( !outMACDHist )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MACD_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_MACD_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outMACD + 1, outMACDSignal + 1, outMACDHist + 1 );
+   }
+   TA_MACD_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACD_Value( const TA_MACD_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;

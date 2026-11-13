@@ -1647,6 +1647,56 @@ TA_RetCode TA_MACDV_UpdateBlock( struct TA_MACDV_Stream *stream, const double in
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_MACDV_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] )
+{
+   struct TA_MACDV_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MACDV_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outMACDV )
+      return TA_BAD_PARAM;
+   if( !outMACDVSignal )
+      return TA_BAD_PARAM;
+   if( !outMACDVHist )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MACDV_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_MACDV_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outMACDV + 1, outMACDVSignal + 1, outMACDVHist + 1 );
+   }
+   TA_MACDV_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACDV_Value( const TA_MACDV_Stream *stream, double *outMACDV, double *outMACDVSignal, double *outMACDVHist )
 {
    if( !stream || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;

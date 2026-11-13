@@ -900,6 +900,52 @@ TA_RetCode TA_MACDFIX_UpdateBlock( struct TA_MACDFIX_Stream *stream, const doubl
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_MACDFIX_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   struct TA_MACDFIX_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MACDFIX_Lookback( optInSignalPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outMACD )
+      return TA_BAD_PARAM;
+   if( !outMACDSignal )
+      return TA_BAD_PARAM;
+   if( !outMACDHist )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MACDFIX_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_MACDFIX_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outMACD + 1, outMACDSignal + 1, outMACDHist + 1 );
+   }
+   TA_MACDFIX_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACDFIX_Value( const TA_MACDFIX_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;

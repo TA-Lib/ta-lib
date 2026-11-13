@@ -523,6 +523,15 @@ fn every_delay_line_allocation_holds_at_least_one_slot() {
     }
 }
 
+/// `text` without the C block kernel, which pushes each line once per bar of
+/// its own loop.
+fn without_c_kernel(text: &str, n: &str) -> String {
+    let head = format!("static TA_RetCode TA_{n}_KernImpl(");
+    let Some(at) = text.find(&head) else { return text.to_string() };
+    let end = at + text[at..].find("\n}\n").expect("the kernel closes") + 3;
+    format!("{}{}", &text[..at], &text[end..])
+}
+
 /// Any other store of the field is Open's capture of its own local.
 #[test]
 fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
@@ -537,7 +546,7 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
             continue;
         };
         for lang in ["c", "rust", "java", "csharp", "ts"] {
-            let text = render_stream(&func, &enums, lang);
+            let text = without_c_kernel(&render_stream(&func, &enums, lang), &func.name.to_uppercase());
             let lines: Vec<&str> = text.lines().map(str::trim).collect();
             for k in 0..cp.lines.len() {
                 let local = format!("lagPosL{k}");

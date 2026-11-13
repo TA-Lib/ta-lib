@@ -799,6 +799,54 @@ TA_RetCode TA_ZIGZAG_UpdateBlock( struct TA_ZIGZAG_Stream *stream, const double 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_ZIGZAG_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   struct TA_ZIGZAG_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_ZIGZAG_Lookback( optInSensitivity, optInMinTrendLength );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outZigZag )
+      return TA_BAD_PARAM;
+   if( !outTrend )
+      return TA_BAD_PARAM;
+   if( !outPivotIdx )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_ZIGZAG_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInSensitivity, optInMinTrendLength, outZigZag, outTrend, outPivotIdx );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_ZIGZAG_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outZigZag + 1, outTrend + 1, outPivotIdx + 1 );
+   }
+   TA_ZIGZAG_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ZIGZAG_Value( const TA_ZIGZAG_Stream *stream, double *outZigZag, int *outTrend, int *outPivotIdx )
 {
    if( !stream || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;

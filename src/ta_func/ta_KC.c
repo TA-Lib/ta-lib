@@ -802,6 +802,125 @@ TA_LIB_API TA_RetCode TA_KC_Close( TA_KC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_KC_KernImpl( struct TA_KC_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double optInNbDev = sp->optInNbDev;
+   double pad_tempTP[TA_KERN_BLOCK];
+   double pad_tempATR[TA_KERN_BLOCK];
+   double middle;
+   double tempReal;
+   double cur_tempATR;
+   double cur_outRealMiddleBand;
+   double cur_outRealUpperBand;
+   double cur_outRealLowerBand;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_TYPPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempTP );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_ATR_UpdateBlock( sp->sub1, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, pad_tempATR );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_EMA_UpdateBlock( sp->sub2, pad_tempTP, kernLen, outRealMiddleBand + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempATR = pad_tempATR[kernBar];
+         cur_outRealMiddleBand = outRealMiddleBand[kernBase + kernBar];
+         cur_outRealUpperBand = 0.0;
+         cur_outRealLowerBand = 0.0;
+         middle = cur_outRealMiddleBand;
+         tempReal = cur_tempATR * optInNbDev;
+         cur_outRealUpperBand = middle + tempReal;
+         cur_outRealLowerBand = middle - tempReal;
+         outRealUpperBand[kernBase + kernBar] = cur_outRealUpperBand;
+         outRealLowerBand[kernBase + kernBar] = cur_outRealLowerBand;
+      }
+   }
+   sp->cur_outRealUpperBand = outRealUpperBand[nbBar - 1];
+   sp->cur_outRealMiddleBand = outRealMiddleBand[nbBar - 1];
+   sp->cur_outRealLowerBand = outRealLowerBand[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KC_UpdateBlock( struct TA_KC_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   return TA_KC_KernImpl( stream, inHigh, inLow, inClose, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KC_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, int optInATRPeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   struct TA_KC_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_KC_Lookback( optInTimePeriod, optInATRPeriod, optInNbDev );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outRealUpperBand )
+      return TA_BAD_PARAM;
+   if( !outRealMiddleBand )
+      return TA_BAD_PARAM;
+   if( !outRealLowerBand )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_KC_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInTimePeriod, optInATRPeriod, optInNbDev, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_KC_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outRealUpperBand + 1, outRealMiddleBand + 1, outRealLowerBand + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_KC_Close( stream );
+         return retCode;
+      }
+   }
+   TA_KC_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KC_Value( const TA_KC_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;

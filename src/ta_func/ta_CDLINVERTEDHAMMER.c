@@ -1032,6 +1032,54 @@ TA_RetCode TA_CDLINVERTEDHAMMER_UpdateBlock( struct TA_CDLINVERTEDHAMMER_Stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_CDLINVERTEDHAMMER_BlockBatch( int startIdx, int endIdx, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   struct TA_CDLINVERTEDHAMMER_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_CDLINVERTEDHAMMER_Lookback(  );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inOpen )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outInteger )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_CDLINVERTEDHAMMER_OpenInternal( &stream, inOpen, inHigh, inLow, inClose, startIdx, firstIdx + 1, outInteger );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_CDLINVERTEDHAMMER_KernImpl( stream, inOpen + firstIdx + 1, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outInteger + 1 );
+   }
+   TA_CDLINVERTEDHAMMER_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Value( const TA_CDLINVERTEDHAMMER_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

@@ -759,6 +759,52 @@ TA_RetCode TA_EMV_UpdateBlock( struct TA_EMV_Stream *stream, const double inHigh
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_EMV_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inVolume[], int optInTimePeriod, double optInVolumeDivisor, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_EMV_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_EMV_Lookback( optInTimePeriod, optInVolumeDivisor );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inVolume )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_EMV_OpenInternal( &stream, inHigh, inLow, inVolume, startIdx, firstIdx + 1, optInTimePeriod, optInVolumeDivisor, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_EMV_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inVolume + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+   }
+   TA_EMV_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_EMV_Value( const TA_EMV_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

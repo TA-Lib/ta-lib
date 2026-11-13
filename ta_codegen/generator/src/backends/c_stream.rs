@@ -1196,8 +1196,14 @@ pub fn generate(
             emit_period_bank(&mut o, func, pbp, registry, helpers, &counter, enums);
         }
     }
-    if let Ok(kp) = kern_plan(func, &plan) {
-        emit_kernel(&mut o, func, &kp, enums, registry, helpers);
+    let kerneled = match &plan {
+        StreamPlan::Composed(cp) => composed_kern_plan(func, cp, registry)
+            .map(|ck| emit_composed_kernel(&mut o, func, &ck, enums, registry, helpers))
+            .map(|()| true),
+        _ => kern_plan(func, &plan).map(|kp| emit_kernel(&mut o, func, &kp, enums, registry, helpers)).map(|()| false),
+    };
+    if let Ok(returns_code) = kerneled {
+        emit_block_batch(&mut o, func, returns_code);
     }
 
     // Tier-independent: every tier retains into the same `cur_` fields and
@@ -1300,8 +1306,10 @@ fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
         if let Some(line) = def_line(o, &update_signature(func)) {
             o.insert_str(line, "TA_FMA_MULTIVERSION\n");
         }
-        if let Some(line) = def_line(o, &format!("static void TA_{n}_KernImpl(")) {
-            o.insert_str(line, "TA_FMA_MULTIVERSION\n");
+        for ret in ["void", "TA_RetCode"] {
+            if let Some(line) = def_line(o, &format!("static {ret} TA_{n}_KernImpl(")) {
+                o.insert_str(line, "TA_FMA_MULTIVERSION\n");
+            }
         }
     }
     if let Some(line) = fuses_at(o, &peek_signature(func)) {
@@ -6086,12 +6094,58 @@ fn emit_update(o: &mut String, func: &FuncDef, step_ret: bool) {
 /// Why a function's step gets no block kernel (`TA_<N>_KernImpl`).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum KernDecline {
-    /// The step answers a code and drives sub-streams through their `Update`.
-    Composed,
+    /// A composed pipeline the stage-per-sub-block rule cannot express.
+    Composed(String),
     /// `Dispatch` / `PeriodBank`: no transcribed step to hoist.
     HandRolled,
     /// A construct the hoisting rule does not cover.
     Construct(String),
+}
+
+/// The block entry a function's C stream defines.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlockEntry {
+    None,
+    Plain,
+    Composed,
+}
+
+/// A callee lookup that also answers which block entry each callee defines.
+pub trait KernLookup: streaming::CalleeLookup {
+    fn block_entry(&self, callee: &str) -> BlockEntry;
+}
+
+impl KernLookup for Registry {
+    fn block_entry(&self, callee: &str) -> BlockEntry {
+        self.full_def(callee).map_or(BlockEntry::None, |f| block_entry_of(&f, self))
+    }
+}
+
+impl KernLookup for streaming::FuncsLookup<'_> {
+    fn block_entry(&self, callee: &str) -> BlockEntry {
+        self.0
+            .iter()
+            .find(|f| f.name.eq_ignore_ascii_case(callee))
+            .map_or(BlockEntry::None, |f| block_entry_of(f, self))
+    }
+}
+
+/// The block entry `func` defines (`None` for a function with no stream tier).
+pub fn block_entry_of(func: &FuncDef, lookup: &dyn KernLookup) -> BlockEntry {
+    if !func.streaming {
+        return BlockEntry::None;
+    }
+    kern_decide(func, lookup).unwrap_or(BlockEntry::None)
+}
+
+fn kern_decide(func: &FuncDef, lookup: &dyn KernLookup) -> Result<BlockEntry, KernDecline> {
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
+    let plan = streaming::validate_streamable(func, lookup).unwrap_or_else(|e| panic!("streaming gate: {e}"));
+    match &plan {
+        StreamPlan::Composed(cp) => composed_kern_plan(func, cp, lookup).map(|_| BlockEntry::Composed),
+        _ => kern_plan(func, &plan).map(|_| BlockEntry::Plain),
+    }
 }
 
 /// One field of the handle as its struct declares it.
@@ -6250,11 +6304,8 @@ impl KernScan {
 }
 
 /// Whether `func` gets a block kernel, and if not, why.
-pub fn kernel_decision(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Result<(), KernDecline> {
-    let resolved = func.resolved_for(crate::ir::Lang::C);
-    let func: &FuncDef = &resolved;
-    let plan = streaming::validate_streamable(func, lookup).unwrap_or_else(|e| panic!("streaming gate: {e}"));
-    kern_plan(func, &plan).map(|_| ())
+pub fn kernel_decision(func: &FuncDef, lookup: &dyn KernLookup) -> Result<(), KernDecline> {
+    kern_decide(func, lookup).map(|_| ())
 }
 
 fn kern_plan<'p, 'a>(func: &FuncDef, plan: &'p StreamPlan<'a>) -> Result<KernPlan<'p, 'a>, KernDecline> {
@@ -6268,7 +6319,7 @@ fn kern_plan<'p, 'a>(func: &FuncDef, plan: &'p StreamPlan<'a>) -> Result<KernPla
             });
             (streaming::identity_step_branch(&dmp.mode_a, &CNames), Some(pred), vec![&dmp.mode_a, &dmp.mode_b])
         }
-        StreamPlan::Composed(_) => return Err(KernDecline::Composed),
+        StreamPlan::Composed(_) => return Err(KernDecline::Composed("not a loop step".to_string())),
         StreamPlan::Dispatch(_) | StreamPlan::PeriodBank(_) => return Err(KernDecline::HandRolled),
     };
     let mut struct_text = String::new();
@@ -6475,13 +6526,722 @@ fn emit_kernel(
         let _ = writeln!(o, "   sp->{0} = {0};", f.name);
     }
     let _ = writeln!(o, "   sp->{} += nbBar;\n}}\n", RANGE_HEAD_FIELDS[1]);
+    emit_update_block(o, func, false);
+}
 
+type NameSet = std::collections::BTreeSet<String>;
+
+/// One stage of a composed block kernel. Each runs over the whole sub-block
+/// before the next starts, which is exact only because no stage reads state
+/// another one writes (checked by [`composed_kern_plan`]).
+enum KStage {
+    /// Statements run once per bar; `loads`, `zeros` and `stores` name the
+    /// `cur_` scalars read from, reset in, and written back to their storage.
+    Loop { body: Vec<Statement>, loads: Vec<String>, zeros: Vec<String>, stores: Vec<String> },
+    /// One sub-handle over the sub-block: `srcs` are storages, `dsts` series
+    /// names. A callee with no block entry (`block` false) takes one `Update`
+    /// per bar.
+    Sub { sub_idx: usize, callee: String, srcs: Vec<String>, dsts: Vec<String>, block: bool },
+}
+
+struct ComposedKern {
+    stages: Vec<KStage>,
+    fields: Vec<HandleField>,
+    written: NameSet,
+    /// Outputs whose `cur_` scalar is the caller's output block itself.
+    routed: NameSet,
+    pads: Vec<String>,
+    /// `(output, storage)` for every output not routed.
+    copies: Vec<(String, String)>,
+    temps: Vec<(String, VarType)>,
+    curs: Vec<String>,
+    settings: NameSet,
+    base: String,
+    len: String,
+    bar: String,
+}
+
+enum Draft {
+    Loop { prefix: Vec<Statement>, body: Vec<Statement>, suffix: Vec<Statement> },
+    Sub(KStage),
+}
+
+/// Handle state a statement list references and writes: `sp->` fields and
+/// the map-state scalars, by field name.
+fn stage_state(stmts: &[Statement], map_state: &NameSet) -> (NameSet, NameSet) {
+    fn walk(list: &[Statement], f: &mut dyn FnMut(&Statement)) {
+        for st in list {
+            f(st);
+            for b in nested_stmt_bodies(st) {
+                walk(b, f);
+            }
+        }
+    }
+    let name_of = |v: &str| -> Option<String> {
+        v.strip_prefix("sp->").map(str::to_string).or_else(|| map_state.contains(v).then(|| v.to_string()))
+    };
+    let target = |e: &Expr| -> Option<String> {
+        match e {
+            Expr::Var(v) | Expr::ArrayAccess(v, _) => name_of(v),
+            _ => None,
+        }
+    };
+    let (mut refs, mut writes) = (NameSet::new(), NameSet::new());
+    walk(stmts, &mut |st| {
+        if let Statement::Assign { target: t, .. } = st {
+            writes.extend(target(t));
+        }
+    });
+    for st in stmts {
+        streaming::walk_stmt_exprs(st, &mut |e| {
+            streaming::walk_expr(e, &mut |x| match x {
+                Expr::Var(v) | Expr::ArrayAccess(v, _) => refs.extend(name_of(v)),
+                Expr::PreIncrement(i)
+                | Expr::PreDecrement(i)
+                | Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::AddressOf(i) => writes.extend(target(i)),
+                Expr::FuncCall(f, args) if !f.chars().any(|c| c.is_ascii_lowercase()) => {
+                    writes.extend(args.iter().filter_map(target));
+                }
+                _ => {}
+            });
+        });
+    }
+    refs.extend(writes.iter().cloned());
+    (refs, writes)
+}
+
+fn has_return(list: &[Statement]) -> bool {
+    list.iter().any(|st| matches!(st, Statement::Return { .. }) || nested_stmt_bodies(st).into_iter().any(has_return))
+}
+
+/// Every name a statement list reads or writes as a variable or array.
+fn idents_of(stmts: &[Statement]) -> NameSet {
+    let mut out = NameSet::new();
+    for st in stmts {
+        streaming::walk_stmt_exprs(st, &mut |e| {
+            streaming::walk_expr(e, &mut |x| {
+                if let Expr::Var(v) | Expr::ArrayAccess(v, _) | Expr::PointerDeref(v) = x {
+                    out.insert(v.clone());
+                }
+            });
+        });
+    }
+    out
+}
+
+/// Whether every path through `stmts` writes `name` before it reads it.
+fn written_before_read(stmts: &[Statement], name: &str) -> bool {
+    fn reads(e: &Expr, name: &str) -> bool {
+        let mut hit = false;
+        streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(v) | Expr::ArrayAccess(v, _) = x {
+                hit |= v == name;
+            }
+        });
+        hit
+    }
+    fn go(stmts: &[Statement], name: &str, mut set: bool) -> Option<bool> {
+        for st in stmts {
+            match st {
+                Statement::Assign { target, value, compound } => {
+                    let own = matches!(target, Expr::Var(v) if v == name);
+                    let idx_read = matches!(target, Expr::ArrayAccess(_, i) if reads(i, name));
+                    if !set && (reads(value, name) || idx_read || (own && *compound)) {
+                        return None;
+                    }
+                    set |= own;
+                }
+                Statement::If { condition, then_body, else_body, .. } => {
+                    if !set && reads(condition, name) {
+                        return None;
+                    }
+                    let a = go(then_body, name, set)?;
+                    let b = go(else_body, name, set)?;
+                    set = a && b;
+                }
+                other => {
+                    let mut hit = false;
+                    streaming::walk_stmt_exprs(other, &mut |e| hit |= reads(e, name));
+                    if hit && !set {
+                        return None;
+                    }
+                }
+            }
+        }
+        Some(set)
+    }
+    go(stmts, name, false).is_some()
+}
+
+/// The composed step as a block kernel: the producer, then each pipeline step
+/// over the whole sub-block, scalars carried between steps in stack pads.
+#[allow(clippy::too_many_lines)]
+fn composed_kern_plan(
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    lookup: &dyn KernLookup,
+) -> Result<ComposedKern, KernDecline> {
+    use streaming::{Consumer, DefSite, UpdateStep};
+    let refuse = |why: &str| Err(KernDecline::Composed(why.to_string()));
+    let names = ComposedNames { series: cp.series.clone().unwrap_or_default() };
+    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    let inputs = streaming::input_array_names(func);
+    let ms_names: NameSet = cp.map_state.iter().map(|m| m.name.clone()).collect();
+
+    let sub_step = |sub_idx: usize| {
+        cp.steps
+            .iter()
+            .position(|s| matches!(s, UpdateStep::Sub { sub_idx: k } if *k == sub_idx))
+            .expect("every sub-call is a step")
+    };
+    let def_pos = |d: usize| match cp.defs[d].site {
+        DefSite::Input | DefSite::Producer => 0,
+        DefSite::Sub { sub_idx, .. } => sub_step(sub_idx) + 1,
+        DefSite::Align { step } | DefSite::Map { step } => step + 1,
+    };
+
+    let mut main: Vec<Option<Draft>> = (0..=cp.steps.len()).map(|_| None).collect();
+    let mut extra: Vec<Vec<Vec<Statement>>> = vec![Vec::new(); cp.steps.len() + 1];
+    let mut temps: Vec<(String, VarType)> = cp.map_temps.clone();
+    let mut settings = NameSet::new();
+
+    if let Some(model) = &cp.producer {
+        let body = streaming::build_transition(model, &names).map_err(KernDecline::Composed)?;
+        let mut bad = None;
+        let mut sc = KernScan::default();
+        sc.stmts(&body, false);
+        for st in &body {
+            streaming::walk_stmt_exprs(st, &mut |e| {
+                streaming::walk_expr(e, &mut |x| {
+                    if matches!(x, Expr::PointerDeref(_)) {
+                        bad = Some("a producer that writes an output directly");
+                    }
+                });
+            });
+        }
+        if let Some(why) = bad {
+            return refuse(why);
+        }
+        if let Some(why) = sc.fail {
+            return refuse(&format!("{why} in the producer"));
+        }
+        temps.extend(model.temps.iter().cloned());
+        settings.extend(crate::candle_settings::detect_candle_settings(&model.steady_stmts));
+        main[0] = Some(Draft::Loop { prefix: Vec::new(), body, suffix: Vec::new() });
+    }
+
+    for (si, step) in cp.steps.iter().enumerate() {
+        let draft = match step {
+            UpdateStep::Sub { sub_idx } => {
+                let sub = &cp.subs[*sub_idx];
+                let (loads, srcs) = streaming::lower_sub_sources(cp, *sub_idx, &names);
+                if !loads.is_empty() {
+                    return refuse("a sub-call fed by a delay-line tap");
+                }
+                let entry = lookup.block_entry(&sub.callee);
+                if entry == BlockEntry::Composed && sub.dsts.iter().any(|d| srcs.contains(&format!("cur_{d}"))) {
+                    return refuse("an in-place sub-call into a composed kernel");
+                }
+                Some(Draft::Sub(KStage::Sub {
+                    sub_idx: *sub_idx,
+                    callee: sub.callee.clone(),
+                    srcs,
+                    dsts: sub.dsts.clone(),
+                    block: entry != BlockEntry::None,
+                }))
+            }
+            UpdateStep::Align { .. } => {
+                let body = streaming::lower_align_step(cp, si, &names);
+                (!body.is_empty()).then_some(Draft::Loop { prefix: Vec::new(), body, suffix: Vec::new() })
+            }
+            UpdateStep::Map { .. } => Some(Draft::Loop {
+                prefix: Vec::new(),
+                body: streaming::lower_map_step(cp, si, &names),
+                suffix: Vec::new(),
+            }),
+        };
+        main[si + 1] = draft;
+    }
+
+    for (k, line) in cp.lines.iter().enumerate() {
+        let dpos = def_pos(line.def);
+        let storage = cp.def_storage(line.def);
+        let mut readers = std::collections::BTreeSet::new();
+        for tap in &line.taps {
+            match &cp.edges[tap.edge].consumer {
+                Consumer::MapRead { step, .. } | Consumer::MapPrior { step, .. } | Consumer::Align { step } => {
+                    readers.insert(*step);
+                }
+                Consumer::SubSrc { .. } => return refuse("a sub-call fed by a delay-line tap"),
+                _ => return refuse("a delay-line tap read outside a combine step"),
+            }
+        }
+        if readers.len() > 1 {
+            return refuse("a delay line read by more than one step");
+        }
+        let snap = streaming::lag_snapshot(k, &storage);
+        let push = streaming::lag_push(k, &names);
+        let Some(&r) = readers.first() else {
+            extra[dpos].push(std::iter::once(snap).chain(push).collect());
+            continue;
+        };
+        let rpos = r + 1;
+        if rpos < dpos {
+            return refuse("a delay line read before its definition");
+        }
+        for d2 in (0..cp.defs.len()).filter(|d2| *d2 != line.def && cp.defs[*d2].site != DefSite::Input) {
+            let st2 = cp.def_storage(d2);
+            if st2 == storage && st2 == format!("cur_{}", cp.defs[d2].name) && dpos < def_pos(d2) && def_pos(d2) < rpos {
+                return refuse("a delay-line snapshot overwritten before its reader");
+            }
+        }
+        let Some(Draft::Loop { prefix, suffix, .. }) = main[rpos].as_mut() else {
+            return refuse("a delay line read by a step with no per-bar statements");
+        };
+        if rpos == dpos {
+            if line.taps.iter().any(|t| !t.ge1) {
+                return refuse("a depth-0 tap of a line its own step defines");
+            }
+            suffix.push(snap);
+        } else {
+            prefix.push(snap);
+        }
+        suffix.extend(push);
+    }
+
+    let mut drafts: Vec<KStage> = Vec::new();
+    for (m, ex) in main.into_iter().zip(extra) {
+        match m {
+            Some(Draft::Loop { prefix, body, suffix }) => drafts.push(KStage::Loop {
+                body: prefix.into_iter().chain(body).chain(suffix).collect(),
+                loads: Vec::new(),
+                zeros: Vec::new(),
+                stores: Vec::new(),
+            }),
+            Some(Draft::Sub(s)) => drafts.push(s),
+            None => {}
+        }
+        for body in ex {
+            drafts.push(KStage::Loop { body, loads: Vec::new(), zeros: Vec::new(), stores: Vec::new() });
+        }
+    }
+
+    let loop_bodies: Vec<&[Statement]> = drafts
+        .iter()
+        .filter_map(|s| match s {
+            KStage::Loop { body, .. } => Some(body.as_slice()),
+            KStage::Sub { .. } => None,
+        })
+        .collect();
+    let touched: Vec<(NameSet, NameSet)> = loop_bodies.iter().map(|b| stage_state(b, &ms_names)).collect();
+    for (i, (_, wi)) in touched.iter().enumerate() {
+        for (j, (rj, _)) in touched.iter().enumerate() {
+            if i != j && wi.intersection(rj).next().is_some() {
+                return refuse("handle state two pipeline steps share");
+            }
+        }
+    }
+    let idents: Vec<NameSet> = loop_bodies.iter().map(|b| idents_of(b)).collect();
+    for (t, _) in &temps {
+        let users: Vec<usize> = (0..idents.len()).filter(|i| idents[*i].contains(t)).collect();
+        if users.len() > 1 && users.iter().any(|i| !written_before_read(loop_bodies[*i], t)) {
+            return refuse("a step temporary carried from one pipeline step to the next");
+        }
+    }
+    let mut sc = KernScan::default();
+    for b in &loop_bodies {
+        sc.stmts(b, false);
+        for st in *b {
+            streaming::walk_stmt_exprs(st, &mut |e| sc.expr(e, &NameSet::new()));
+        }
+        if has_return(b) {
+            return refuse("a return in a per-bar step");
+        }
+    }
+    if let Some(why) = sc.fail.take() {
+        return refuse(&why);
+    }
+
+    let mut struct_text = String::new();
+    let extra_lines = composed_extra_fields(cp);
+    match &cp.producer {
+        Some(model) => emit_state_struct_ex(&mut struct_text, func, model, extra_lines),
+        None => emit_composed_struct_noproducer(&mut struct_text, func, extra_lines),
+    }
+    let declared = handle_fields(&struct_text);
+    let all_idents: NameSet = idents.iter().flatten().cloned().collect();
+    let mut used_fields = sc.fields.clone();
+    used_fields.extend(ms_names.iter().filter(|m| all_idents.contains(*m)).cloned());
+    let mut written = sc.written.clone();
+    written.extend(cp.map_state.iter().filter(|m| m.carried && all_idents.contains(&m.name)).map(|m| m.name.clone()));
+
+    let curs: Vec<String> = cp.cur_scalars();
+    let routed: NameSet = outputs.iter().filter(|o| cp.output_storage(o) == format!("cur_{o}")).cloned().collect();
+    let copies: Vec<(String, String)> =
+        outputs.iter().filter(|o| !routed.contains(*o)).map(|o| (o.clone(), cp.output_storage(o))).collect();
+    let pads: Vec<String> = curs.iter().filter(|c| !routed.contains(*c)).cloned().collect();
+
+    let (lag_reals, lag_ints) = streaming::lag_step_locals(cp, true);
+    temps.extend(lag_reals.into_iter().map(|r| (r, VarType::Real)));
+    temps.extend(lag_ints.into_iter().map(|i| (i, VarType::Integer)));
+    let mut locals: NameSet = temps.iter().map(|(t, _)| t.clone()).collect();
+    locals.extend(curs.iter().map(|c| format!("cur_{c}")));
+    locals.extend(pads.iter().map(|c| format!("pad_{c}")));
+    locals.extend(inputs.iter().cloned());
+    locals.extend(inputs.iter().map(|a| format!("{a}Blk")));
+    locals.extend(outputs.iter().cloned());
+    for set in &settings {
+        for prop in ["rangeType", "avgPeriod", "factor"] {
+            locals.insert(format!("{set}_{prop}"));
+        }
+    }
+    locals.extend(["nbBar", "sp", "subRc"].map(str::to_string));
+    if let Some(f) = sc.fields.iter().find(|f| locals.contains(*f)) {
+        return refuse(&format!("handle field `{f}` shares its name with a local of the step"));
+    }
+    if let Some(f) = used_fields.iter().find(|f| !declared.iter().any(|d| &d.name == *f)) {
+        return refuse(&format!("field `{f}` the handle does not declare"));
+    }
+    let fresh = |stem: &str| {
+        let mut s = stem.to_string();
+        while locals.contains(&s) || all_idents.contains(&s) || used_fields.contains(&s) {
+            s.push('_');
+        }
+        s
+    };
+    let (base, len, bar) = (fresh("kernBase"), fresh("kernLen"), fresh("kernBar"));
+
+    let to_local = |e: Expr| match e {
+        Expr::Var(ref v) => KernScan::field_of(v).map_or(e.clone(), |f| Expr::Var(f.to_string())),
+        Expr::ArrayAccess(ref v, ref i) => match KernScan::field_of(v) {
+            Some(f) => Expr::ArrayAccess(f.to_string(), i.clone()),
+            None => e,
+        },
+        other => other,
+    };
+    let mut defined = NameSet::new();
+    let mut stages = Vec::new();
+    for st in drafts {
+        match st {
+            KStage::Loop { body, .. } => {
+                let body = streaming::rewrite_stmts(&body, &to_local, &|s| Some(s));
+                let ids = idents_of(&body);
+                let refs: Vec<String> =
+                    curs.iter().filter(|c| ids.contains(&format!("cur_{c}"))).cloned().collect();
+                let mut assigned = NameSet::new();
+                for s in &body {
+                    collect_assigned_targets(s, &mut assigned);
+                }
+                let stores: Vec<String> =
+                    curs.iter().filter(|c| assigned.contains(&format!("cur_{c}"))).cloned().collect();
+                let loads = refs.iter().filter(|c| defined.contains(*c)).cloned().collect();
+                let zeros = refs.iter().filter(|c| !defined.contains(*c)).cloned().collect();
+                defined.extend(stores.iter().cloned());
+                stages.push(KStage::Loop { body, loads, zeros, stores });
+            }
+            KStage::Sub { sub_idx, callee, srcs, dsts, block } => {
+                defined.extend(dsts.iter().cloned());
+                stages.push(KStage::Sub { sub_idx, callee, srcs, dsts, block });
+            }
+        }
+    }
+    let fields = declared.into_iter().filter(|d| used_fields.contains(&d.name)).collect();
+    Ok(ComposedKern {
+        stages,
+        fields,
+        written,
+        routed,
+        pads,
+        copies,
+        temps,
+        curs,
+        settings,
+        base,
+        len,
+        bar,
+    })
+}
+
+impl ComposedKern {
+    /// The bar's element of a storage (`cur_<x>` or a bar input).
+    fn elem(&self, storage: &str) -> String {
+        let (base, bar) = (&self.base, &self.bar);
+        match storage.strip_prefix("cur_") {
+            Some(x) if self.routed.contains(x) => format!("{x}[{base} + {bar}]"),
+            Some(x) => format!("pad_{x}[{bar}]"),
+            None => format!("{storage}Blk[{base} + {bar}]"),
+        }
+    }
+
+    /// The sub-block's first element of a storage, as a pointer.
+    fn block(&self, storage: &str) -> String {
+        let base = &self.base;
+        match storage.strip_prefix("cur_") {
+            Some(x) if self.routed.contains(x) => format!("{x} + {base}"),
+            Some(x) => format!("pad_{x}"),
+            None => format!("{storage}Blk + {base}"),
+        }
+    }
+}
+
+/// `TA_<N>_KernImpl` for a composed step and its `TA_<N>_UpdateBlock`. After
+/// a block the handle is where `nbBar` calls of `Update` leave it.
+#[allow(clippy::too_many_lines)]
+fn emit_composed_kernel(
+    o: &mut String,
+    func: &FuncDef,
+    ck: &ComposedKern,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) {
+    let n = uname(func);
+    let counter = Cell::new(0usize);
+    let inputs = streaming::input_array_names(func);
+    let (base, len, bar) = (&ck.base, &ck.len, &ck.bar);
+    let zero = |x: &str| if out_c_type(func, x) == "int" { "0" } else { "0.0" };
+
+    let mut store_back = String::new();
+    for f in ck.fields.iter().filter(|f| !f.array && ck.written.contains(&f.name)) {
+        let _ = writeln!(store_back, "   sp->{0} = {0};", f.name);
+    }
+    let fail = {
+        let inner = store_back.lines().fold(String::new(), |mut acc, l| {
+            let _ = writeln!(acc, "      {l}");
+            acc
+        });
+        format!("      if( subRc != TA_SUCCESS )\n      {{\n{inner}         return subRc;\n      }}\n")
+    };
+
+    let mut pipe = String::new();
+    let mut used_inputs = NameSet::new();
+    let mut used_curs = NameSet::new();
+    let mut body_ids = NameSet::new();
+    let mut used_pads = NameSet::new();
+    let mut touch = |s: &str| {
+        if let Some(x) = s.strip_prefix("cur_") {
+            used_pads.insert(x.to_string());
+        }
+    };
+    for stage in &ck.stages {
+        match stage {
+            KStage::Loop { body, loads, stores, .. } => {
+                body_ids.extend(idents_of(body));
+                for x in loads.iter().chain(stores) {
+                    touch(&format!("cur_{x}"));
+                }
+            }
+            KStage::Sub { srcs, dsts, .. } => {
+                for s in srcs {
+                    touch(s);
+                }
+                for d in dsts {
+                    touch(&format!("cur_{d}"));
+                }
+            }
+        }
+    }
+    for (_, storage) in &ck.copies {
+        touch(storage);
+    }
+    for stage in &ck.stages {
+        match stage {
+            KStage::Loop { body, loads, zeros, stores } => {
+                let ids = idents_of(body);
+                let _ = writeln!(pipe, "      for( {bar} = 0; {bar} < {len}; {bar}++ )\n      {{");
+                for a in inputs.iter().filter(|a| ids.contains(*a)) {
+                    used_inputs.insert(a.clone());
+                    let _ = writeln!(pipe, "         double {a} = {a}Blk[{base} + {bar}];");
+                }
+                for x in loads {
+                    let _ = writeln!(pipe, "         cur_{x} = {};", ck.elem(&format!("cur_{x}")));
+                }
+                for x in zeros {
+                    let _ = writeln!(pipe, "         cur_{x} = {};", zero(x));
+                }
+                for s in body {
+                    pipe.push_str(&render_statement_stream(s, 9, enums, registry, helpers, &counter));
+                }
+                for x in stores {
+                    let _ = writeln!(pipe, "         {} = cur_{x};", ck.elem(&format!("cur_{x}")));
+                }
+                let _ = writeln!(pipe, "      }}");
+                used_curs.extend(loads.iter().chain(zeros).chain(stores).cloned());
+            }
+            KStage::Sub { sub_idx, callee, srcs, dsts, block } => {
+                let cpfx = callee_prefix(callee);
+                let dst_storage: Vec<String> = dsts.iter().map(|d| format!("cur_{d}")).collect();
+                for s in srcs.iter().filter(|s| !s.starts_with("cur_")) {
+                    used_inputs.insert(s.clone());
+                }
+                if *block {
+                    let args: Vec<String> = srcs
+                        .iter()
+                        .map(|s| ck.block(s))
+                        .chain(std::iter::once(len.clone()))
+                        .chain(dst_storage.iter().map(|d| ck.block(d)))
+                        .collect();
+                    let _ = writeln!(pipe, "      subRc = {cpfx}_UpdateBlock( sp->sub{sub_idx}, {} );", args.join(", "));
+                    pipe.push_str(&fail);
+                } else {
+                    let args: Vec<String> = srcs
+                        .iter()
+                        .map(|s| ck.elem(s))
+                        .chain(dst_storage.iter().map(|d| format!("&{}", ck.elem(d))))
+                        .collect();
+                    let _ = writeln!(pipe, "      for( {bar} = 0; {bar} < {len}; {bar}++ )\n      {{");
+                    let _ = writeln!(pipe, "         subRc = {cpfx}_Update( sp->sub{sub_idx}, {} );", args.join(", "));
+                    let inner = fail.lines().fold(String::new(), |mut acc, l| {
+                        let _ = writeln!(acc, "   {l}");
+                        acc
+                    });
+                    pipe.push_str(&inner);
+                    let _ = writeln!(pipe, "      }}");
+                }
+            }
+        }
+    }
+    for (out, storage) in &ck.copies {
+        if !storage.starts_with("cur_") {
+            used_inputs.insert(storage.clone());
+        }
+        let _ = writeln!(pipe, "      for( {bar} = 0; {bar} < {len}; {bar}++ )");
+        let _ = writeln!(pipe, "         {out}[{base} + {bar}] = {};", ck.elem(storage));
+    }
+
+    let mut sig_ins = String::new();
+    for a in &inputs {
+        let _ = write!(sig_ins, "const double {a}Blk[], ");
+    }
+    let _ = writeln!(
+        o,
+        "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_KernImpl( struct TA_{n}_Stream *sp, {sig_ins}int nbBar, {} )\n{{",
+        out_fill_arrays_sig(func)
+    );
+    for f in &ck.fields {
+        let _ = writeln!(o, "   {} = sp->{};", f.local_decl(), f.name);
+    }
+    if !ck.settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&ck.settings, &pipe, 3));
+    }
+    for x in ck.pads.iter().filter(|x| used_pads.contains(*x)) {
+        let _ = writeln!(o, "   {} pad_{x}[TA_KERN_BLOCK];", out_c_type(func, x));
+    }
+    for (name, ty) in ck.temps.iter().filter(|(t, _)| body_ids.contains(t)) {
+        let _ = writeln!(o, "   {};", c_decl(ty, name));
+    }
+    for x in ck.curs.iter().filter(|c| used_curs.contains(*c)) {
+        let _ = writeln!(o, "   {} cur_{x};", out_c_type(func, x));
+    }
+    let _ = writeln!(o, "   TA_RetCode subRc;\n   int {base};\n   int {len};");
+    if pipe.contains(&format!("for( {bar} = 0;")) {
+        let _ = writeln!(o, "   int {bar};");
+    }
+    let _ = writeln!(o);
+    for a in inputs.iter().filter(|a| !used_inputs.contains(*a)) {
+        let _ = writeln!(o, "   (void){a}Blk;");
+    }
+    let _ = writeln!(o, "   for( {base} = 0; {base} < nbBar; {base} += {len} )\n   {{");
+    let _ = writeln!(o, "      {len} = nbBar - {base} < TA_KERN_BLOCK ? nbBar - {base} : TA_KERN_BLOCK;");
+    o.push_str(&pipe);
+    let _ = writeln!(o, "   }}");
+    o.push_str(&store_back);
+    for out in &func.outputs {
+        let _ = writeln!(o, "   sp->cur_{0} = {0}[nbBar - 1];", out.name);
+    }
+    let _ = writeln!(o, "   sp->{} += nbBar;\n   return TA_SUCCESS;\n}}\n", RANGE_HEAD_FIELDS[1]);
+    assert!(!o.contains("sp->sp->"), "{n}: a handle access was rewritten twice");
+
+    emit_update_block(o, func, true);
+}
+
+/// `TA_<N>_UpdateBlock`: the kernel's private entry.
+fn emit_update_block(o: &mut String, func: &FuncDef, returns_code: bool) {
+    let n = uname(func);
+    let inputs = streaming::input_array_names(func);
     let args: Vec<String> = inputs.iter().cloned().chain(func.outputs.iter().map(|x| x.name.clone())).collect();
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", update_block_signature(func));
     let _ = writeln!(o, "   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", args.iter().map(|a| format!("!{a}")).collect::<Vec<_>>().join(" || "));
-    let call: Vec<String> = inputs.iter().cloned().chain(std::iter::once("nbBar".to_string())).chain(func.outputs.iter().map(|x| x.name.clone())).collect();
-    let _ = writeln!(o, "   TA_{n}_KernImpl( stream, {} );\n   return TA_SUCCESS;\n}}\n", call.join(", "));
+    let call: Vec<String> = inputs
+        .iter()
+        .cloned()
+        .chain(std::iter::once("nbBar".to_string()))
+        .chain(func.outputs.iter().map(|x| x.name.clone()))
+        .collect();
+    if returns_code {
+        let _ = writeln!(o, "   return TA_{n}_KernImpl( stream, {} );\n}}\n", call.join(", "));
+    } else {
+        let _ = writeln!(o, "   TA_{n}_KernImpl( stream, {} );\n   return TA_SUCCESS;\n}}\n", call.join(", "));
+    }
+}
+
+/// `TA_<N>_BlockBatch` prototype (no trailing `;`): the batch signature,
+/// private and hidden.
+pub fn block_batch_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    let mut ins = String::new();
+    for a in streaming::input_array_names(func) {
+        let _ = write!(ins, "const double {a}[], ");
+    }
+    format!(
+        "TA_RetCode TA_{n}_BlockBatch( int startIdx, int endIdx, {ins}{}int *outBegIdx, int *outNBElement, {} )",
+        opt_params_sig(func),
+        out_fill_arrays_sig(func)
+    )
+}
+
+/// `TA_<N>_BlockBatch`: batch's answer over `[startIdx, endIdx]` from a handle
+/// whose open ends at the first output bar, then the kernel over the rest of
+/// the range on the caller's arrays. The open is anchored at the caller's own
+/// `startIdx`, not the clamped one and not a window start: a composed body
+/// seeds its sub-calls from the caller's `startIdx`, and an index output counts
+/// from the array's bar 0.
+fn emit_block_batch(o: &mut String, func: &FuncDef, returns_code: bool) {
+    let n = uname(func);
+    let inputs = streaming::input_array_names(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", block_batch_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *stream;\n   TA_RetCode retCode;\n   int lookbackTotal;\n   int firstIdx;\n");
+    o.push_str("   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )\n      return TA_OUT_OF_RANGE_START_INDEX;\n");
+    o.push_str("   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )\n      return TA_OUT_OF_RANGE_END_INDEX;\n\n");
+    let _ = writeln!(o, "   lookbackTotal = TA_{n}_Lookback( {} );", opts.join(", "));
+    let _ = writeln!(o, "   if( lookbackTotal < 0 )\n      return TA_BAD_PARAM;");
+    for a in &inputs {
+        let _ = writeln!(o, "   if( !{a} )\n      return TA_BAD_PARAM;");
+    }
+    let _ = writeln!(o, "   if( !outBegIdx || !outNBElement )\n      return TA_BAD_PARAM;");
+    for x in &outputs {
+        let _ = writeln!(o, "   if( !{x} )\n      return TA_BAD_PARAM;");
+    }
+    let _ = writeln!(o);
+    let _ = writeln!(o, "   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;");
+    let _ = writeln!(o, "   if( firstIdx > endIdx )\n   {{\n      *outBegIdx = 0;\n      *outNBElement = 0;\n      return TA_SUCCESS;\n   }}");
+    let open_args: Vec<String> = std::iter::once("&stream".to_string())
+        .chain(inputs.iter().cloned())
+        .chain(["startIdx".to_string(), "firstIdx + 1".to_string()])
+        .chain(opts.iter().cloned())
+        .chain(outputs.iter().cloned())
+        .collect();
+    let _ = writeln!(o, "   retCode = TA_{n}_OpenInternal( {} );", open_args.join(", "));
+    let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
+    let kern_args: Vec<String> = std::iter::once("stream".to_string())
+        .chain(inputs.iter().map(|a| format!("{a} + firstIdx + 1")))
+        .chain(std::iter::once("endIdx - firstIdx".to_string()))
+        .chain(outputs.iter().map(|x| format!("{x} + 1")))
+        .collect();
+    let _ = writeln!(o, "   if( endIdx > firstIdx )\n   {{");
+    if returns_code {
+        let _ = writeln!(o, "      retCode = TA_{n}_KernImpl( {} );", kern_args.join(", "));
+        let _ = writeln!(o, "      if( retCode != TA_SUCCESS )\n      {{\n         TA_{n}_Close( stream );\n         return retCode;\n      }}");
+    } else {
+        let _ = writeln!(o, "      TA_{n}_KernImpl( {} );", kern_args.join(", "));
+    }
+    let _ = writeln!(o, "   }}\n   TA_{n}_Close( stream );");
+    let _ = writeln!(o, "   *outBegIdx = firstIdx;\n   *outNBElement = endIdx - firstIdx + 1;\n   return TA_SUCCESS;\n}}\n");
 }
 
 /// `Peek` — the transition against the caller's own handle, inline.

@@ -1045,6 +1045,131 @@ TA_LIB_API TA_RetCode TA_BBW_Close( TA_BBW_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static TA_RetCode TA_BBW_KernImpl( struct TA_BBW_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double optInNbDevUp = sp->optInNbDevUp;
+   double optInNbDevDn = sp->optInNbDevDn;
+   double pad_tempBuffer[TA_KERN_BLOCK];
+   double deviation;
+   double lower;
+   double middle;
+   double tempReal;
+   double upper;
+   double cur_tempBuffer;
+   double cur_outReal;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_VAR_UpdateBlock( sp->sub1, inRealBlk + kernBase, kernLen, outReal + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempBuffer = pad_tempBuffer[kernBar];
+         cur_outReal = outReal[kernBase + kernBar];
+         if( optInNbDevUp == optInNbDevDn )
+         {
+            middle = cur_tempBuffer;
+            tempReal = sqrt(cur_outReal) * optInNbDevUp;
+            upper = middle + tempReal;
+            lower = middle - tempReal;
+            cur_outReal = (upper - lower) / middle * 100.0;
+            if( middle == 0.0 )
+            {
+               cur_outReal = 0.0;
+            }
+         } else 
+         {
+            middle = cur_tempBuffer;
+            deviation = sqrt(cur_outReal);
+            upper = fma(deviation, optInNbDevUp, middle);
+            lower = middle - deviation * optInNbDevDn;
+            cur_outReal = (upper - lower) / middle * 100.0;
+            if( middle == 0.0 )
+            {
+               cur_outReal = 0.0;
+            }
+         }
+         outReal[kernBase + kernBar] = cur_outReal;
+      }
+   }
+   sp->cur_outReal = outReal[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BBW_UpdateBlock( struct TA_BBW_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   return TA_BBW_KernImpl( stream, inReal, nbBar, outReal );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BBW_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_BBW_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_BBW_Lookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_BBW_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_BBW_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_BBW_Close( stream );
+         return retCode;
+      }
+   }
+   TA_BBW_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_BBW_Value( const TA_BBW_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

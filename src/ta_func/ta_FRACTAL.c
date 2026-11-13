@@ -792,6 +792,52 @@ TA_RetCode TA_FRACTAL_UpdateBlock( struct TA_FRACTAL_Stream *stream, const doubl
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_FRACTAL_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInLeftBars, int optInRightBars, int *outBegIdx, int *outNBElement, int outSwingHigh[], int outSwingLow[] )
+{
+   struct TA_FRACTAL_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_FRACTAL_Lookback( optInLeftBars, optInRightBars );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outSwingHigh )
+      return TA_BAD_PARAM;
+   if( !outSwingLow )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_FRACTAL_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInLeftBars, optInRightBars, outSwingHigh, outSwingLow );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_FRACTAL_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outSwingHigh + 1, outSwingLow + 1 );
+   }
+   TA_FRACTAL_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_FRACTAL_Value( const TA_FRACTAL_Stream *stream, int *outSwingHigh, int *outSwingLow )
 {
    if( !stream || !outSwingHigh || !outSwingLow ) return TA_BAD_PARAM;

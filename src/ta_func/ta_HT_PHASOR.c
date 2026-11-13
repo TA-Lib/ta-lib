@@ -1906,6 +1906,50 @@ TA_RetCode TA_HT_PHASOR_UpdateBlock( struct TA_HT_PHASOR_Stream *stream, const d
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_HT_PHASOR_BlockBatch( int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[] )
+{
+   struct TA_HT_PHASOR_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_HT_PHASOR_Lookback(  );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outInPhase )
+      return TA_BAD_PARAM;
+   if( !outQuadrature )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_HT_PHASOR_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, outInPhase, outQuadrature );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_HT_PHASOR_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outInPhase + 1, outQuadrature + 1 );
+   }
+   TA_HT_PHASOR_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Value( const TA_HT_PHASOR_Stream *stream, double *outInPhase, double *outQuadrature )
 {
    if( !stream || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;

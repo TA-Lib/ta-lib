@@ -586,6 +586,100 @@ TA_LIB_API TA_RetCode TA_RVIR_Close( TA_RVIR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_RVIR_KernImpl( struct TA_RVIR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double pad_tempHigh[TA_KERN_BLOCK];
+   double cur_tempHigh;
+   double cur_outReal;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_RVI_UpdateBlock( sp->sub0, inHighBlk + kernBase, kernLen, pad_tempHigh );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_RVI_UpdateBlock( sp->sub1, inLowBlk + kernBase, kernLen, outReal + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempHigh = pad_tempHigh[kernBar];
+         cur_outReal = outReal[kernBase + kernBar];
+         cur_outReal = 0.5 * (cur_tempHigh + cur_outReal);
+         outReal[kernBase + kernBar] = cur_outReal;
+      }
+   }
+   sp->cur_outReal = outReal[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RVIR_UpdateBlock( struct TA_RVIR_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   return TA_RVIR_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RVIR_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_RVIR_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_RVIR_Lookback( optInTimePeriod, optInStdDevPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_RVIR_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInTimePeriod, optInStdDevPeriod, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_RVIR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_RVIR_Close( stream );
+         return retCode;
+      }
+   }
+   TA_RVIR_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_RVIR_Value( const TA_RVIR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

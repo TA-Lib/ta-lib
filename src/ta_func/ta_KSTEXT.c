@@ -1369,6 +1369,169 @@ TA_LIB_API TA_RetCode TA_KSTEXT_Close( TA_KSTEXT_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static TA_RetCode TA_KSTEXT_KernImpl( struct TA_KSTEXT_Stream *sp, const double inRealBlk[], int nbBar, double outKST[], double outKSTSignal[] )
+{
+   double pad_kstBuffer[TA_KERN_BLOCK];
+   double pad_tempBuffer[TA_KERN_BLOCK];
+   double cur_kstBuffer;
+   double cur_tempBuffer;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_ROC_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_kstBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub1, pad_kstBuffer[kernBar], &pad_kstBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_ROC_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub3, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_kstBuffer = pad_kstBuffer[kernBar];
+         cur_tempBuffer = pad_tempBuffer[kernBar];
+         cur_kstBuffer = fma(2.0, cur_tempBuffer, cur_kstBuffer);
+         pad_kstBuffer[kernBar] = cur_kstBuffer;
+      }
+      subRc = TA_ROC_UpdateBlock( sp->sub4, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub5, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_kstBuffer = pad_kstBuffer[kernBar];
+         cur_tempBuffer = pad_tempBuffer[kernBar];
+         cur_kstBuffer = fma(3.0, cur_tempBuffer, cur_kstBuffer);
+         pad_kstBuffer[kernBar] = cur_kstBuffer;
+      }
+      subRc = TA_ROC_UpdateBlock( sp->sub6, inRealBlk + kernBase, kernLen, pad_tempBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub7, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_kstBuffer = pad_kstBuffer[kernBar];
+         cur_tempBuffer = pad_tempBuffer[kernBar];
+         cur_kstBuffer = fma(4.0, cur_tempBuffer, cur_kstBuffer);
+         pad_kstBuffer[kernBar] = cur_kstBuffer;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub8, pad_kstBuffer[kernBar], &outKSTSignal[kernBase + kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+         outKST[kernBase + kernBar] = pad_kstBuffer[kernBar];
+   }
+   sp->cur_outKST = outKST[nbBar - 1];
+   sp->cur_outKSTSignal = outKSTSignal[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KSTEXT_UpdateBlock( struct TA_KSTEXT_Stream *stream, const double inReal[], int nbBar, double outKST[], double outKSTSignal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
+   return TA_KSTEXT_KernImpl( stream, inReal, nbBar, outKST, outKSTSignal );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KSTEXT_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outKST[], double outKSTSignal[] )
+{
+   struct TA_KSTEXT_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_KSTEXT_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outKST )
+      return TA_BAD_PARAM;
+   if( !outKSTSignal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_KSTEXT_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_KSTEXT_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outKST + 1, outKSTSignal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_KSTEXT_Close( stream );
+         return retCode;
+      }
+   }
+   TA_KSTEXT_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KSTEXT_Value( const TA_KSTEXT_Stream *stream, double *outKST, double *outKSTSignal )
 {
    if( !stream || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
