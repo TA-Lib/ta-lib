@@ -1,0 +1,3157 @@
+diff --git a/src/ta_func/ta_BBANDS.c b/src/ta_func/ta_BBANDS.c
+index cd24c86280..c28787fe1e 100644
+--- a/src/ta_func/ta_BBANDS.c
++++ b/src/ta_func/ta_BBANDS.c
+@@ -937,18 +937,13 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+-      tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
++      tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+       if( !tempBuffer1 )
+       {
+          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_ALLOC_ERR;
+       }
+-      tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
+-      if( !tempBuffer2 )
+-      {
+-         free( tempBuffer1 ); TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+-         return TA_ALLOC_ERR;
+-      }
++      tempBuffer2 = tempBuffer1 + (endIdx - startIdx + 1);
+       /* Calculate the middle band moving average. */
+       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+        * sub-call's own startIdx (the seeding point). */
+@@ -957,7 +952,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempBuffer1);
+-            free(tempBuffer2);
+             TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+             return subRc;
+          }
+@@ -967,7 +961,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+       {
+          dummyNBElement = 0;
+          free(tempBuffer1);
+-         free(tempBuffer2);
+          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return retCode;
+       }
+@@ -982,7 +975,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempBuffer1);
+-            free(tempBuffer2);
+             TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+             return subRc;
+          }
+@@ -992,7 +984,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+       {
+          dummyNBElement = 0;
+          free(tempBuffer1);
+-         free(tempBuffer2);
+          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return retCode;
+       }
+@@ -1015,14 +1006,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+       if( TA_UNLIKELY(dummyNBElement < 1) )
+       {
+          free(tempBuffer1);
+-         free(tempBuffer2);
+          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb0 - shiftIdx - dummyNBElement != 0) )
+       {
+          free(tempBuffer1);
+-         free(tempBuffer2);
+          TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INTERNAL_ERROR(521);
+       }
+@@ -1047,7 +1036,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream
+          }
+       }
+       free(tempBuffer1);
+-      free(tempBuffer2);
+ 
+       /* Capture the live producer state + sub handles. */
+       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
+diff --git a/src/ta_func/ta_CRSI.c b/src/ta_func/ta_CRSI.c
+index b83d40d532..9236f34691 100644
+--- a/src/ta_func/ta_CRSI.c
++++ b/src/ta_func/ta_CRSI.c
+@@ -155,24 +155,13 @@ TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
+     * up over the spare bars instead of starting cold at its own lookback.
+     */
+    anchorIdx = startIdx - lookbackTotal;
+-   tempStreak = malloc((endIdx - anchorIdx) * sizeof(double));
++   tempStreak = malloc((endIdx - anchorIdx) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+    if( !tempStreak )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double));
+-   if( !tempRSI )
+-   {
+-      free(tempStreak);
+-      return TA_ALLOC_ERR;
+-   }
+-   tempStreakRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+-   if( !tempStreakRSI )
+-   {
+-      free(tempStreak);
+-      free(tempRSI);
+-      return TA_ALLOC_ERR;
+-   }
++   tempRSI = tempStreak + (endIdx - anchorIdx);
++   tempStreakRSI = tempRSI + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1);
+    streak = 0.0;
+    prevClose = inReal[anchorIdx];
+    outIdx = 0;
+@@ -198,16 +187,12 @@ TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    retCode = TA_RSI(anchorIdx + TA_RSI_Lookback(optInTimePeriod),endIdx,inReal,optInTimePeriod,&tempBegIdx,&rsiNb,tempRSI);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    /* The streak is consumed: its buffer holds the returns. */
+@@ -215,16 +200,12 @@ TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    retCode = TA_PERCENTRANK(0,rocNb - 1,tempStreak,optInRankPeriod,outBegIdx,outNBElement,outReal);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -236,8 +217,6 @@ TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
+       outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + outReal[i]) / 3.0;
+    }
+    free(tempStreak);
+-   free(tempRSI);
+-   free(tempStreakRSI);
+    *outBegIdx= startIdx;
+    return TA_SUCCESS;
+ }
+@@ -307,24 +286,13 @@ TA_RetCode TA_S_CRSI( int    startIdx,
+       startIdx = lookbackTotal;
+    }
+    anchorIdx = startIdx - lookbackTotal;
+-   tempStreak = malloc((endIdx - anchorIdx) * sizeof(double));
++   tempStreak = malloc((endIdx - anchorIdx) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+    if( !tempStreak )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double));
+-   if( !tempRSI )
+-   {
+-      free(tempStreak);
+-      return TA_ALLOC_ERR;
+-   }
+-   tempStreakRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+-   if( !tempStreakRSI )
+-   {
+-      free(tempStreak);
+-      free(tempRSI);
+-      return TA_ALLOC_ERR;
+-   }
++   tempRSI = tempStreak + (endIdx - anchorIdx);
++   tempStreakRSI = tempRSI + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1);
+    streak = 0.0;
+    prevClose = (double)inReal[anchorIdx];
+    outIdx = 0;
+@@ -350,32 +318,24 @@ TA_RetCode TA_S_CRSI( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    retCode = TA_S_RSI(anchorIdx + TA_RSI_Lookback(optInTimePeriod),endIdx,inReal,optInTimePeriod,&tempBegIdx,&rsiNb,tempRSI);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    retCode = TA_S_ROCP(startIdx - optInRankPeriod,endIdx,inReal,1,&tempBegIdx,&rocNb,tempStreak);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       return retCode;
+    }
+    retCode = TA_PERCENTRANK(0,rocNb - 1,tempStreak,optInRankPeriod,outBegIdx,outNBElement,outReal);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -387,8 +347,6 @@ TA_RetCode TA_S_CRSI( int    startIdx,
+       outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + outReal[i]) / 3.0;
+    }
+    free(tempStreak);
+-   free(tempRSI);
+-   free(tempStreakRSI);
+    *outBegIdx= startIdx;
+    return TA_SUCCESS;
+ }
+@@ -523,24 +481,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+        * up over the spare bars instead of starting cold at its own lookback.
+        */
+       anchorIdx = startIdx - lookbackTotal;
+-      tempStreak = malloc((endIdx - anchorIdx) * sizeof(double));
++      tempStreak = malloc((endIdx - anchorIdx) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double) + (endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+       if( !tempStreak )
+       {
+          TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+          return TA_ALLOC_ERR;
+       }
+-      tempRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1) * sizeof(double));
+-      if( !tempRSI )
+-      {
+-         free( tempStreak ); TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+-         return TA_ALLOC_ERR;
+-      }
+-      tempStreakRSI = malloc((endIdx - anchorIdx - TA_RSI_Lookback(optInStreakPeriod)) * sizeof(double));
+-      if( !tempStreakRSI )
+-      {
+-         free( tempStreak ); free( tempRSI ); TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+-         return TA_ALLOC_ERR;
+-      }
++      tempRSI = tempStreak + (endIdx - anchorIdx);
++      tempStreakRSI = tempRSI + (endIdx - anchorIdx - TA_RSI_Lookback(optInTimePeriod) + 1);
+       streak = 0.0;
+       prevClose = inReal[anchorIdx];
+       outIdx = 0;
+@@ -569,8 +517,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempStreak);
+-            free(tempRSI);
+-            free(tempStreakRSI);
+             TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -579,8 +525,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempStreak);
+-         free(tempRSI);
+-         free(tempStreakRSI);
+          TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+          return retCode;
+       }
+@@ -591,8 +535,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempStreak);
+-            free(tempRSI);
+-            free(tempStreakRSI);
+             TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -601,8 +543,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempStreak);
+-         free(tempRSI);
+-         free(tempStreakRSI);
+          TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+          return retCode;
+       }
+@@ -614,8 +554,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempStreak);
+-            free(tempRSI);
+-            free(tempStreakRSI);
+             TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -624,8 +562,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempStreak);
+-         free(tempRSI);
+-         free(tempStreakRSI);
+          TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+          return retCode;
+       }
+@@ -636,8 +572,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempStreak);
+-            free(tempRSI);
+-            free(tempStreakRSI);
+             TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -646,8 +580,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempStreak);
+-         free(tempRSI);
+-         free(tempStreakRSI);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_RSI_Close( sub0 ); TA_RSI_Close( sub1 ); TA_ROCP_Close( sub2 ); TA_PERCENTRANK_Close( sub3 ); if( !outStride ) TA_Free( sc_outReal );
+@@ -660,8 +592,6 @@ static TA_OPEN_INLINE TA_RetCode TA_CRSI_OpenBody( struct TA_CRSI_Stream **strea
+          sc_outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + sc_outReal[i]) / 3.0;
+       }
+       free(tempStreak);
+-      free(tempRSI);
+-      free(tempStreakRSI);
+       dummyBegIdx = startIdx;
+ 
+       /* Capture the live producer state + sub handles. */
+diff --git a/src/ta_func/ta_GATOR.c b/src/ta_func/ta_GATOR.c
+index b70d6d6852..54480a7629 100644
+--- a/src/ta_func/ta_GATOR.c
++++ b/src/ta_func/ta_GATOR.c
+@@ -283,30 +283,15 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    localStart = lookbackTotal;
+    localEnd = endIdx - mpStartIdx;
+    nbElement = endIdx - startIdx + 1;
+-   tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double));
++   tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double) + (nbElement + maxBack) * sizeof(double) + (nbElement + maxBack) * sizeof(double));
+    if( !tempMP )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempA = malloc((nbElement + maxBack) * sizeof(double));
+-   if( !tempA )
+-   {
+-      free(tempMP);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempB = malloc((nbElement + maxBack) * sizeof(double));
+-   if( !tempB )
+-   {
+-      free(tempMP);
+-      free(tempA);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempA = tempMP + (endIdx - mpStartIdx + 1);
++   tempB = tempA + (nbElement + maxBack);
+    /* Every price is consumed here, before any output is written: an output
+     * may be aliased onto inHigh or inLow.
+     */
+@@ -314,8 +299,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -331,8 +314,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -341,8 +322,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -355,8 +334,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -365,8 +342,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -379,8 +354,6 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
+       outLower[i] = (tempA[i] < tempB[i]) ? tempA[i] - tempB[i] : tempB[i] - tempA[i];
+    }
+    free(tempMP);
+-   free(tempA);
+-   free(tempB);
+    *outBegIdx= startIdx;
+    *outNBElement= nbElement;
+    return TA_SUCCESS;
+@@ -499,36 +472,19 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+    localStart = lookbackTotal;
+    localEnd = endIdx - mpStartIdx;
+    nbElement = endIdx - startIdx + 1;
+-   tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double));
++   tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double) + (nbElement + maxBack) * sizeof(double) + (nbElement + maxBack) * sizeof(double));
+    if( !tempMP )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempA = malloc((nbElement + maxBack) * sizeof(double));
+-   if( !tempA )
+-   {
+-      free(tempMP);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempB = malloc((nbElement + maxBack) * sizeof(double));
+-   if( !tempB )
+-   {
+-      free(tempMP);
+-      free(tempA);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempA = tempMP + (endIdx - mpStartIdx + 1);
++   tempB = tempA + (nbElement + maxBack);
+    retCode = TA_S_MEDPRICE(mpStartIdx,endIdx,inHigh,inLow,&tempBegIdx,&tempNbElement,tempMP);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -537,8 +493,6 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -547,8 +501,6 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -561,8 +513,6 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -571,8 +521,6 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -582,8 +530,6 @@ TA_RetCode TA_S_GATOR( int    startIdx,
+       outLower[i] = (tempA[i] < tempB[i]) ? tempA[i] - tempB[i] : tempB[i] - tempA[i];
+    }
+    free(tempMP);
+-   free(tempA);
+-   free(tempB);
+    *outBegIdx= startIdx;
+    *outNBElement= nbElement;
+    return TA_SUCCESS;
+@@ -865,24 +811,14 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       localStart = lookbackTotal;
+       localEnd = endIdx - mpStartIdx;
+       nbElement = endIdx - startIdx + 1;
+-      tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double));
++      tempMP = malloc((endIdx - mpStartIdx + 1) * sizeof(double) + (nbElement + maxBack) * sizeof(double) + (nbElement + maxBack) * sizeof(double));
+       if( !tempMP )
+       {
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_ALLOC_ERR;
+       }
+-      tempA = malloc((nbElement + maxBack) * sizeof(double));
+-      if( !tempA )
+-      {
+-         free( tempMP ); TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+-         return TA_ALLOC_ERR;
+-      }
+-      tempB = malloc((nbElement + maxBack) * sizeof(double));
+-      if( !tempB )
+-      {
+-         free( tempMP ); free( tempA ); TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+-         return TA_ALLOC_ERR;
+-      }
++      tempA = tempMP + (endIdx - mpStartIdx + 1);
++      tempB = tempA + (nbElement + maxBack);
+       /* Every price is consumed here, before any output is written: an output
+        * may be aliased onto inHigh or inLow.
+        */
+@@ -893,8 +829,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempMP);
+-            free(tempA);
+-            free(tempB);
+             TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+             return subRc;
+          }
+@@ -903,8 +837,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+@@ -924,8 +856,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempMP);
+-            free(tempA);
+-            free(tempB);
+             TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+             return subRc;
+          }
+@@ -934,8 +864,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+@@ -949,8 +877,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempMP);
+-            free(tempA);
+-            free(tempB);
+             TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+             return subRc;
+          }
+@@ -959,8 +885,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+@@ -970,8 +894,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(nbElement < 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          *outBegIdx = 0; *outNBElement = 0; TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+@@ -979,8 +901,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(lagD0_0 < 0 || lagD0_0 > lagNb0 - 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INTERNAL_ERROR(522);
+       }
+@@ -988,8 +908,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(lagD1_0 < 0 || lagD1_0 > lagNb1 - 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INTERNAL_ERROR(523);
+       }
+@@ -998,8 +916,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(!lagBuf0) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_ALLOC_ERR;
+       }
+@@ -1011,8 +927,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(!lagBuf1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_ALLOC_ERR;
+       }
+@@ -1030,8 +944,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempMP);
+-            free(tempA);
+-            free(tempB);
+             TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+             return subRc;
+          }
+@@ -1040,8 +952,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+@@ -1055,8 +965,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempMP);
+-            free(tempA);
+-            free(tempB);
+             TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+             return subRc;
+          }
+@@ -1065,8 +973,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+@@ -1079,8 +985,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(nbElement < 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          *outBegIdx = 0; *outNBElement = 0; TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+@@ -1088,8 +992,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(lagD2_0 < 0 || lagD2_0 > lagNb2 - 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INTERNAL_ERROR(524);
+       }
+@@ -1097,8 +999,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(lagD3_0 < 0 || lagD3_0 > lagNb3 - 1) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_INTERNAL_ERROR(525);
+       }
+@@ -1107,8 +1007,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(!lagBuf2) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_ALLOC_ERR;
+       }
+@@ -1120,8 +1018,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+       if( TA_UNLIKELY(!lagBuf3) )
+       {
+          free(tempMP);
+-         free(tempA);
+-         free(tempB);
+          TA_MEDPRICE_Close( sub0 ); TA_RMA_Close( sub1 ); TA_RMA_Close( sub2 ); TA_RMA_Close( sub3 ); TA_RMA_Close( sub4 ); if( !outStride ) TA_Free( sc_outUpper ); if( !outStride ) TA_Free( sc_outLower ); TA_Free( lagBuf0 ); TA_Free( lagBuf1 ); TA_Free( lagBuf2 ); TA_Free( lagBuf3 );
+          return TA_ALLOC_ERR;
+       }
+@@ -1133,8 +1029,6 @@ static TA_OPEN_INLINE TA_RetCode TA_GATOR_OpenBody( struct TA_GATOR_Stream **str
+          sc_outLower[i] = (tempA[i] < tempB[i]) ? tempA[i] - tempB[i] : tempB[i] - tempA[i];
+       }
+       free(tempMP);
+-      free(tempA);
+-      free(tempB);
+       dummyBegIdx = startIdx;
+       dummyNBElement = nbElement;
+ 
+diff --git a/src/ta_func/ta_ICHIMOKU.c b/src/ta_func/ta_ICHIMOKU.c
+index d8437d39f1..300d6cf1a7 100644
+--- a/src/ta_func/ta_ICHIMOKU.c
++++ b/src/ta_func/ta_ICHIMOKU.c
+@@ -183,17 +183,12 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
+       return TA_SUCCESS;
+    }
+    n = endIdx - startIdx + 1;
+-   tempT = malloc(n * sizeof(double));
++   tempT = malloc(n * sizeof(double) + n * sizeof(double));
+    if( !tempT )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempK = malloc(n * sizeof(double));
+-   if( !tempK )
+-   {
+-      free(tempT);
+-      return TA_ALLOC_ERR;
+-   }
++   tempK = tempT + n;
+    /* An output may alias inHigh or inLow: no output is written before the
+     * last midprice call, which is the last read of either input.
+     */
+@@ -201,21 +196,18 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInKijunPeriod,&tempBegIdx,&tempNbElement,tempK);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,outSenkouSpanB);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+@@ -225,7 +217,6 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    for( i = 0; i < n; i += 1 )
+@@ -234,7 +225,6 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
+       outKijunSen[i] = tempK[i];
+    }
+    free(tempT);
+-   free(tempK);
+    *outBegIdx= startIdx;
+    *outNBElement= n;
+    return TA_SUCCESS;
+@@ -309,43 +299,34 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
+       return TA_SUCCESS;
+    }
+    n = endIdx - startIdx + 1;
+-   tempT = malloc(n * sizeof(double));
++   tempT = malloc(n * sizeof(double) + n * sizeof(double));
+    if( !tempT )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempK = malloc(n * sizeof(double));
+-   if( !tempK )
+-   {
+-      free(tempT);
+-      return TA_ALLOC_ERR;
+-   }
++   tempK = tempT + n;
+    retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInTenkanPeriod,&tempBegIdx,&tempNbElement,tempT);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInKijunPeriod,&tempBegIdx,&tempNbElement,tempK);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,outSenkouSpanB);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    retCode = TA_MEDPRICE(0,n - 1,tempT,tempK,&tempBegIdx,&tempNbElement,outSenkouSpanA);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempT);
+-      free(tempK);
+       return retCode;
+    }
+    for( i = 0; i < n; i += 1 )
+@@ -354,7 +335,6 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
+       outKijunSen[i] = tempK[i];
+    }
+    free(tempT);
+-   free(tempK);
+    *outBegIdx= startIdx;
+    *outNBElement= n;
+    return TA_SUCCESS;
+@@ -496,18 +476,13 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       n = endIdx - startIdx + 1;
+-      tempT = malloc(n * sizeof(double));
++      tempT = malloc(n * sizeof(double) + n * sizeof(double));
+       if( !tempT )
+       {
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_ALLOC_ERR;
+       }
+-      tempK = malloc(n * sizeof(double));
+-      if( !tempK )
+-      {
+-         free( tempT ); TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+-         return TA_ALLOC_ERR;
+-      }
++      tempK = tempT + n;
+       /* An output may alias inHigh or inLow: no output is written before the
+        * last midprice call, which is the last read of either input.
+        */
+@@ -518,7 +493,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempT);
+-            free(tempK);
+             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+             return subRc;
+          }
+@@ -527,7 +501,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return retCode;
+       }
+@@ -539,7 +512,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempT);
+-            free(tempK);
+             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+             return subRc;
+          }
+@@ -548,7 +520,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return retCode;
+       }
+@@ -560,7 +531,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempT);
+-            free(tempK);
+             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+             return subRc;
+          }
+@@ -569,7 +539,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return retCode;
+       }
+@@ -584,7 +553,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempT);
+-            free(tempK);
+             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+             return subRc;
+          }
+@@ -592,14 +560,12 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+       if( TA_UNLIKELY(lagNb0 - 1 - (n - 1) != 0) )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_INTERNAL_ERROR(526);
+       }
+       if( TA_UNLIKELY(lagNb1 - 1 - (n - 1) != 0) )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_INTERNAL_ERROR(527);
+       }
+@@ -607,28 +573,24 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return retCode;
+       }
+       if( TA_UNLIKELY(n < 1) )
+       {
+          free(tempT);
+-         free(tempK);
+          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb0 - n != 0) )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_INTERNAL_ERROR(528);
+       }
+       if( TA_UNLIKELY(lagNb1 - n != 0) )
+       {
+          free(tempT);
+-         free(tempK);
+          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
+          return TA_INTERNAL_ERROR(529);
+       }
+@@ -638,7 +600,6 @@ static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream
+          sc_outKijunSen[i] = tempK[i];
+       }
+       free(tempT);
+-      free(tempK);
+       dummyBegIdx = startIdx;
+       dummyNBElement = n;
+ 
+diff --git a/src/ta_func/ta_KC.c b/src/ta_func/ta_KC.c
+index c8faddcca2..587218185f 100644
+--- a/src/ta_func/ta_KC.c
++++ b/src/ta_func/ta_KC.c
+@@ -176,26 +176,18 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
+     * materialized only over the window the moving average reads.
+     */
+    tpStartIdx = startIdx - emaLookback;
+-   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
++   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+    if( !tempTP )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
+-   if( !tempATR )
+-   {
+-      free(tempTP);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempATR = tempTP + (endIdx - tpStartIdx + 1);
+    retCode = TA_TYPPRICE(tpStartIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -207,7 +199,6 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -219,7 +210,6 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
+    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outNBElement= 0;
+       return retCode;
+    }
+@@ -232,7 +222,6 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
+       outRealLowerBand[i] = middle - tempReal;
+    }
+    free(tempTP);
+-   free(tempATR);
+    return TA_SUCCESS;
+ }
+ 
+@@ -309,26 +298,18 @@ TA_RetCode TA_S_KC( int    startIdx,
+       startIdx = lookbackTotal;
+    }
+    tpStartIdx = startIdx - emaLookback;
+-   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
++   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+    if( !tempTP )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
+-   if( !tempATR )
+-   {
+-      free(tempTP);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempATR = tempTP + (endIdx - tpStartIdx + 1);
+    retCode = TA_S_TYPPRICE(tpStartIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -337,7 +318,6 @@ TA_RetCode TA_S_KC( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -346,7 +326,6 @@ TA_RetCode TA_S_KC( int    startIdx,
+    if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
+    {
+       free(tempTP);
+-      free(tempATR);
+       *outNBElement= 0;
+       return retCode;
+    }
+@@ -359,7 +338,6 @@ TA_RetCode TA_S_KC( int    startIdx,
+       outRealLowerBand[i] = middle - tempReal;
+    }
+    free(tempTP);
+-   free(tempATR);
+    return TA_SUCCESS;
+ }
+ 
+@@ -498,18 +476,13 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+        * materialized only over the window the moving average reads.
+        */
+       tpStartIdx = startIdx - emaLookback;
+-      tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
++      tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+       if( !tempTP )
+       {
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_ALLOC_ERR;
+       }
+-      tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
+-      if( !tempATR )
+-      {
+-         free( tempTP ); TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+-         return TA_ALLOC_ERR;
+-      }
++      tempATR = tempTP + (endIdx - tpStartIdx + 1);
+       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+        * sub-call's own startIdx (the seeding point). */
+       {
+@@ -517,7 +490,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempTP);
+-            free(tempATR);
+             TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+             return subRc;
+          }
+@@ -526,7 +498,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempTP);
+-         free(tempATR);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+@@ -543,7 +514,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempTP);
+-            free(tempATR);
+             TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+             return subRc;
+          }
+@@ -552,7 +522,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempTP);
+-         free(tempATR);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+@@ -569,7 +538,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempTP);
+-            free(tempATR);
+             TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+             return subRc;
+          }
+@@ -577,7 +545,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+       if( TA_UNLIKELY(lagNb0 - 1 - (endIdx - tpStartIdx) != 0) )
+       {
+          free(tempTP);
+-         free(tempATR);
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INTERNAL_ERROR(531);
+       }
+@@ -585,7 +552,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
+       {
+          free(tempTP);
+-         free(tempATR);
+          dummyNBElement = 0;
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return retCode;
+@@ -594,14 +560,12 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+       if( TA_UNLIKELY((int)dummyNBElement < 1) )
+       {
+          free(tempTP);
+-         free(tempATR);
+          *outBegIdx = 0; *outNBElement = 0; TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb1 - (int)dummyNBElement != 0) )
+       {
+          free(tempTP);
+-         free(tempATR);
+          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+          return TA_INTERNAL_ERROR(532);
+       }
+@@ -613,7 +577,6 @@ static TA_OPEN_INLINE TA_RetCode TA_KC_OpenBody( struct TA_KC_Stream **stream, c
+          sc_outRealLowerBand[i] = middle - tempReal;
+       }
+       free(tempTP);
+-      free(tempATR);
+ 
+       /* Capture the live producer state + sub handles. */
+       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
+diff --git a/src/ta_func/ta_KSTEXT.c b/src/ta_func/ta_KSTEXT.c
+index ccc669b0ee..4c1f1edb31 100644
+--- a/src/ta_func/ta_KSTEXT.c
++++ b/src/ta_func/ta_KSTEXT.c
+@@ -287,43 +287,34 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
+       lookbackMA = lookbackMA4;
+    }
+    tempInteger = endIdx - sigStart + 1 + lookbackMA;
+-   kstBuffer = malloc(tempInteger * sizeof(double));
++   kstBuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+    if( !kstBuffer )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempBuffer = malloc(tempInteger * sizeof(double));
+-   if( !tempBuffer )
+-   {
+-      free(kstBuffer);
+-      return TA_ALLOC_ERR;
+-   }
++   tempBuffer = kstBuffer + tempInteger;
+    retCode = TA_ROC(sigStart - lookbackMA1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_ROC(sigStart - lookbackMA2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -334,14 +325,12 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -352,14 +341,12 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -370,7 +357,6 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
+    memmove(outKST,&kstBuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+    retCode = TA_MA(0,kstNb - 1,kstBuffer,optInSignalPeriod,optInSignalMAType,&tempBegIdx,&sigNb,outKSTSignal);
+    free(kstBuffer);
+-   free(tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       return retCode;
+@@ -526,43 +512,34 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
+       lookbackMA = lookbackMA4;
+    }
+    tempInteger = endIdx - sigStart + 1 + lookbackMA;
+-   kstBuffer = malloc(tempInteger * sizeof(double));
++   kstBuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+    if( !kstBuffer )
+    {
+       return TA_ALLOC_ERR;
+    }
+-   tempBuffer = malloc(tempInteger * sizeof(double));
+-   if( !tempBuffer )
+-   {
+-      free(kstBuffer);
+-      return TA_ALLOC_ERR;
+-   }
++   tempBuffer = kstBuffer + tempInteger;
+    retCode = TA_S_ROC(sigStart - lookbackMA1,endIdx,inReal,optInROC1Period,&tempBegIdx,&rocNb,kstBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,kstBuffer,optInMA1Period,optInROCMAType,&tempBegIdx,&kstNb,kstBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_S_ROC(sigStart - lookbackMA2,endIdx,inReal,optInROC2Period,&tempBegIdx,&rocNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA2Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -573,14 +550,12 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA3Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -591,14 +566,12 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    retCode = TA_MA(0,rocNb - 1,tempBuffer,optInMA4Period,optInROCMAType,&tempBegIdx,&legNb,tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       free(kstBuffer);
+-      free(tempBuffer);
+       return retCode;
+    }
+    for( i = 0; i < kstNb; i += 1 )
+@@ -608,7 +581,6 @@ TA_RetCode TA_S_KSTEXT( int    startIdx,
+    memmove(outKST,&kstBuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+    retCode = TA_MA(0,kstNb - 1,kstBuffer,optInSignalPeriod,optInSignalMAType,&tempBegIdx,&sigNb,outKSTSignal);
+    free(kstBuffer);
+-   free(tempBuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       return retCode;
+@@ -893,18 +865,13 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          lookbackMA = lookbackMA4;
+       }
+       tempInteger = endIdx - sigStart + 1 + lookbackMA;
+-      kstBuffer = malloc(tempInteger * sizeof(double));
++      kstBuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+       if( !kstBuffer )
+       {
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_ALLOC_ERR;
+       }
+-      tempBuffer = malloc(tempInteger * sizeof(double));
+-      if( !tempBuffer )
+-      {
+-         free( kstBuffer ); TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+-         return TA_ALLOC_ERR;
+-      }
++      tempBuffer = kstBuffer + tempInteger;
+       /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
+        * sub-call's own startIdx (the seeding point). */
+       {
+@@ -912,7 +879,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -921,7 +887,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -932,7 +897,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -941,7 +905,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -952,7 +915,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -961,7 +923,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -972,7 +933,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -981,7 +941,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -989,14 +948,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( TA_UNLIKELY(kstNb < 1) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb0 - kstNb != 0) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INTERNAL_ERROR(533);
+       }
+@@ -1011,7 +968,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -1020,7 +976,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -1031,7 +986,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -1040,7 +994,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -1048,14 +1001,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( TA_UNLIKELY(kstNb < 1) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb1 - kstNb != 0) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INTERNAL_ERROR(534);
+       }
+@@ -1070,7 +1021,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -1079,7 +1029,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -1090,7 +1039,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+@@ -1099,7 +1047,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( retCode != TA_SUCCESS )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return retCode;
+       }
+@@ -1108,14 +1055,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( TA_UNLIKELY(kstNb < 1) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb2 - kstNb != 0) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INTERNAL_ERROR(535);
+       }
+@@ -1128,14 +1073,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+       if( TA_UNLIKELY(endIdx - startIdx < 0) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb3 - lookbackSignal - (endIdx - startIdx + 1) != 0) )
+       {
+          free(kstBuffer);
+-         free(tempBuffer);
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+          return TA_INTERNAL_ERROR(536);
+       }
+@@ -1147,14 +1090,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(kstBuffer);
+-            free(tempBuffer);
+             TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+             return subRc;
+          }
+       }
+       retCode = subRc;
+       free(kstBuffer);
+-      free(tempBuffer);
+       if( retCode != TA_SUCCESS )
+       {
+          TA_ROC_Close( sub0 ); TA_MA_Close( sub1 ); TA_ROC_Close( sub2 ); TA_MA_Close( sub3 ); TA_ROC_Close( sub4 ); TA_MA_Close( sub5 ); TA_ROC_Close( sub6 ); TA_MA_Close( sub7 ); TA_MA_Close( sub8 ); if( !outStride ) TA_Free( sc_outKST ); if( !outStride ) TA_Free( sc_outKSTSignal );
+diff --git a/src/ta_func/ta_MACDEXT.c b/src/ta_func/ta_MACDEXT.c
+index 94d70fef9c..6d96cd551e 100644
+--- a/src/ta_func/ta_MACDEXT.c
++++ b/src/ta_func/ta_MACDEXT.c
+@@ -235,21 +235,14 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+    }
+    /* Allocate intermediate buffer for fast/slow MA. */
+    tempInteger = endIdx - startIdx + 1 + lookbackSignal;
+-   fastMABuffer = malloc(tempInteger * sizeof(double));
++   fastMABuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+    if( !fastMABuffer )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   slowMABuffer = malloc(tempInteger * sizeof(double));
+-   if( !slowMABuffer )
+-   {
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      free(fastMABuffer);
+-      return TA_ALLOC_ERR;
+-   }
++   slowMABuffer = fastMABuffer + tempInteger;
+    /* Calculate the slow MA.
+     *
+     * Move back the startIdx to get enough data
+@@ -264,7 +257,6 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return retCode;
+    }
+    /* Calculate the fast MA. */
+@@ -274,14 +266,12 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return retCode;
+    }
+    /* Parano tests. Will be removed eventually. */
+    if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
+    {
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return TA_BAD_PARAM;
+    }
+    /* Calculate (fast MA) - (slow MA). */
+@@ -297,7 +287,6 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
+    /* Calculate the signal/trigger line. */
+    retCode = TA_MA(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
+    free(fastMABuffer);
+-   free(slowMABuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       *outBegIdx= 0;
+@@ -418,21 +407,14 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
+       return TA_SUCCESS;
+    }
+    tempInteger = endIdx - startIdx + 1 + lookbackSignal;
+-   fastMABuffer = malloc(tempInteger * sizeof(double));
++   fastMABuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+    if( !fastMABuffer )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   slowMABuffer = malloc(tempInteger * sizeof(double));
+-   if( !slowMABuffer )
+-   {
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      free(fastMABuffer);
+-      return TA_ALLOC_ERR;
+-   }
++   slowMABuffer = fastMABuffer + tempInteger;
+    tempInteger = startIdx - lookbackSignal;
+    retCode = TA_S_MA(tempInteger,endIdx,inReal,optInSlowPeriod,optInSlowMAType,&outBegIdx1,&outNbElement1,slowMABuffer);
+    if( retCode != TA_SUCCESS )
+@@ -440,7 +422,6 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return retCode;
+    }
+    retCode = TA_S_MA(tempInteger,endIdx,inReal,optInFastPeriod,optInFastMAType,&outBegIdx2,&outNbElement2,fastMABuffer);
+@@ -449,13 +430,11 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return retCode;
+    }
+    if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
+    {
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       return TA_BAD_PARAM;
+    }
+    for( i = 0; i < outNbElement1; i += 1 )
+@@ -465,7 +444,6 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
+    memmove(outMACD,&fastMABuffer[lookbackSignal],(endIdx - startIdx + 1) * sizeof(double));
+    retCode = TA_MA(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,outMACDSignal);
+    free(fastMABuffer);
+-   free(slowMABuffer);
+    if( retCode != TA_SUCCESS )
+    {
+       *outBegIdx= 0;
+@@ -636,18 +614,13 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+       }
+       /* Allocate intermediate buffer for fast/slow MA. */
+       tempInteger = endIdx - startIdx + 1 + lookbackSignal;
+-      fastMABuffer = malloc(tempInteger * sizeof(double));
++      fastMABuffer = malloc(tempInteger * sizeof(double) + tempInteger * sizeof(double));
+       if( !fastMABuffer )
+       {
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_ALLOC_ERR;
+       }
+-      slowMABuffer = malloc(tempInteger * sizeof(double));
+-      if( !slowMABuffer )
+-      {
+-         free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+-         return TA_ALLOC_ERR;
+-      }
++      slowMABuffer = fastMABuffer + tempInteger;
+       /* Calculate the slow MA.
+        *
+        * Move back the startIdx to get enough data
+@@ -663,7 +636,6 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(fastMABuffer);
+-            free(slowMABuffer);
+             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+             return subRc;
+          }
+@@ -674,7 +646,6 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return retCode;
+       }
+@@ -686,7 +657,6 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(fastMABuffer);
+-            free(slowMABuffer);
+             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+             return subRc;
+          }
+@@ -697,7 +667,6 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return retCode;
+       }
+@@ -706,7 +675,6 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal )
+       {
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_BAD_PARAM;
+       }
+@@ -715,14 +683,12 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+       if( TA_UNLIKELY(outNbElement1 < 1) )
+       {
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb0 - outNbElement1 != 0) )
+       {
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_INTERNAL_ERROR(538);
+       }
+@@ -738,14 +704,12 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+       if( TA_UNLIKELY(endIdx - startIdx < 0) )
+       {
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb1 - lookbackSignal - (endIdx - startIdx + 1) != 0) )
+       {
+          free(fastMABuffer);
+-         free(slowMABuffer);
+          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+          return TA_INTERNAL_ERROR(539);
+       }
+@@ -758,14 +722,12 @@ static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream *
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(fastMABuffer);
+-            free(slowMABuffer);
+             TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
+             return subRc;
+          }
+       }
+       retCode = subRc;
+       free(fastMABuffer);
+-      free(slowMABuffer);
+       if( retCode != TA_SUCCESS )
+       {
+          dummyBegIdx = 0;
+diff --git a/src/ta_func/ta_PERCENTB.c b/src/ta_func/ta_PERCENTB.c
+index 5bb44a6600..e86cddda9a 100644
+--- a/src/ta_func/ta_PERCENTB.c
++++ b/src/ta_func/ta_PERCENTB.c
+@@ -332,27 +332,19 @@ TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
+       *outNBElement= 0;
+       return TA_SUCCESS;
+    }
+-   tempMA = malloc((endIdx - startIdx + 1) * sizeof(double));
++   tempMA = malloc((endIdx - startIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+    if( !tempMA )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempX = malloc((endIdx - startIdx + 1) * sizeof(double));
+-   if( !tempX )
+-   {
+-      free(tempMA);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempX = tempMA + (endIdx - startIdx + 1);
+    /* Both before the variance: it may be written over inReal. */
+    retCode = TA_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&maBegIdx,&maNbElement,tempMA);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -361,7 +353,6 @@ TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -373,7 +364,6 @@ TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -412,7 +402,6 @@ TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
+       }
+    }
+    free(tempMA);
+-   free(tempX);
+    return TA_SUCCESS;
+ }
+ 
+@@ -646,26 +635,18 @@ TA_RetCode TA_S_PERCENTB( int    startIdx,
+       *outNBElement= 0;
+       return TA_SUCCESS;
+    }
+-   tempMA = malloc((endIdx - startIdx + 1) * sizeof(double));
++   tempMA = malloc((endIdx - startIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+    if( !tempMA )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempX = malloc((endIdx - startIdx + 1) * sizeof(double));
+-   if( !tempX )
+-   {
+-      free(tempMA);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempX = tempMA + (endIdx - startIdx + 1);
+    retCode = TA_S_MA(startIdx,endIdx,inReal,optInTimePeriod,optInMAType,&maBegIdx,&maNbElement,tempMA);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -674,7 +655,6 @@ TA_RetCode TA_S_PERCENTB( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -683,7 +663,6 @@ TA_RetCode TA_S_PERCENTB( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempMA);
+-      free(tempX);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -722,7 +701,6 @@ TA_RetCode TA_S_PERCENTB( int    startIdx,
+       }
+    }
+    free(tempMA);
+-   free(tempX);
+    return TA_SUCCESS;
+ }
+ 
+@@ -883,18 +861,13 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+-      tempX = malloc((endIdx - firstIdx + 1) * sizeof(double));
++      tempX = malloc((endIdx - firstIdx + 1) * sizeof(double) + (endIdx - startIdx + 1) * sizeof(double));
+       if( !tempX )
+       {
+          TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+          return TA_ALLOC_ERR;
+       }
+-      tempMA = malloc((endIdx - startIdx + 1) * sizeof(double));
+-      if( !tempMA )
+-      {
+-         free( tempX ); TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+-         return TA_ALLOC_ERR;
+-      }
++      tempMA = tempX + (endIdx - firstIdx + 1);
+       outIdx = 0;
+       today = firstIdx;
+       while( today <= endIdx )
+@@ -910,7 +883,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempX);
+-            free(tempMA);
+             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -919,7 +891,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempX);
+-         free(tempMA);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+@@ -932,7 +903,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempX);
+-            free(tempMA);
+             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return subRc;
+          }
+@@ -941,7 +911,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempX);
+-         free(tempMA);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+@@ -953,14 +922,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          if( TA_UNLIKELY((int)dummyNBElement < 1) )
+          {
+             free(tempX);
+-            free(tempMA);
+             *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return TA_INSUFFICIENT_HISTORY;
+          }
+          if( TA_UNLIKELY(lagNb0 - (int)dummyNBElement != 0) )
+          {
+             free(tempX);
+-            free(tempMA);
+             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return TA_INTERNAL_ERROR(542);
+          }
+@@ -970,14 +937,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          if( TA_UNLIKELY((int)dummyNBElement < 1) )
+          {
+             free(tempX);
+-            free(tempMA);
+             *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return TA_INSUFFICIENT_HISTORY;
+          }
+          if( TA_UNLIKELY(lagNb0 - (int)dummyNBElement != 0) )
+          {
+             free(tempX);
+-            free(tempMA);
+             TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+             return TA_INTERNAL_ERROR(543);
+          }
+@@ -1014,7 +979,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_St
+          }
+       }
+       free(tempX);
+-      free(tempMA);
+ 
+       /* Capture the live producer state + sub handles. */
+       if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_VAR_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
+diff --git a/src/ta_func/ta_SQZMOM.c b/src/ta_func/ta_SQZMOM.c
+index 71cbd28db4..5750561dc9 100644
+--- a/src/ta_func/ta_SQZMOM.c
++++ b/src/ta_func/ta_SQZMOM.c
+@@ -265,51 +265,17 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    stageLookback = TA_LINEARREG_Lookback(optInKCPeriod);
+    stageIdx = startIdx - stageLookback;
+    stageLen = n + stageLookback;
+-   tempDev = malloc(stageLen * sizeof(double));
++   tempDev = malloc(stageLen * sizeof(double) + stageLen * sizeof(double) + stageLen * sizeof(double) + n * sizeof(double) + n * sizeof(double));
+    if( !tempDev )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempWork = malloc(stageLen * sizeof(double));
+-   if( !tempWork )
+-   {
+-      free(tempDev);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempKCM = malloc(stageLen * sizeof(double));
+-   if( !tempKCM )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempMid = malloc(n * sizeof(double));
+-   if( !tempMid )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempSD = malloc(n * sizeof(double));
+-   if( !tempSD )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempWork = tempDev + stageLen;
++   tempKCM = tempWork + stageLen;
++   tempMid = tempKCM + stageLen;
++   tempSD = tempMid + n;
+    /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
+     * midprice is bit-identical to donchian's middle band.
+     */
+@@ -317,10 +283,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -329,10 +291,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -353,10 +311,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -365,10 +319,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -377,10 +327,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -389,10 +335,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -413,10 +355,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -439,10 +377,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+       outSqueeze[i] = ((3) ^ (((((2) ^ (((((1) ^ (((((-1) & -(int)(((lo < centre - optInFactorWide * band) & (up > centre + optInFactorWide * band))))) ^ (1)) & ((int)(((lo > centre - optInFactorWide * band) & (up < centre + optInFactorWide * band))) - 1)))) ^ (2)) & ((int)(((lo > centre - optInFactorNormal * band) & (up < centre + optInFactorNormal * band))) - 1)))) ^ (3)) & ((int)(((lo > centre - optInFactorNarrow * band) & (up < centre + optInFactorNarrow * band))) - 1)));
+    }
+    free(tempDev);
+-   free(tempWork);
+-   free(tempKCM);
+-   free(tempMid);
+-   free(tempSD);
+    *outBegIdx= startIdx;
+    *outNBElement= n;
+    return TA_SUCCESS;
+@@ -556,59 +490,21 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    stageLookback = TA_LINEARREG_Lookback(optInKCPeriod);
+    stageIdx = startIdx - stageLookback;
+    stageLen = n + stageLookback;
+-   tempDev = malloc(stageLen * sizeof(double));
++   tempDev = malloc(stageLen * sizeof(double) + stageLen * sizeof(double) + stageLen * sizeof(double) + n * sizeof(double) + n * sizeof(double));
+    if( !tempDev )
+    {
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return TA_ALLOC_ERR;
+    }
+-   tempWork = malloc(stageLen * sizeof(double));
+-   if( !tempWork )
+-   {
+-      free(tempDev);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempKCM = malloc(stageLen * sizeof(double));
+-   if( !tempKCM )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempMid = malloc(n * sizeof(double));
+-   if( !tempMid )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
+-   tempSD = malloc(n * sizeof(double));
+-   if( !tempSD )
+-   {
+-      free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      *outBegIdx= 0;
+-      *outNBElement= 0;
+-      return TA_ALLOC_ERR;
+-   }
++   tempWork = tempDev + stageLen;
++   tempKCM = tempWork + stageLen;
++   tempMid = tempKCM + stageLen;
++   tempSD = tempMid + n;
+    retCode = TA_S_MIDPRICE(stageIdx,endIdx,inHigh,inLow,optInKCPeriod,outBegIdx,outNBElement,tempDev);
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -617,10 +513,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -633,10 +525,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -645,10 +533,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -657,10 +541,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -669,10 +549,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -682,10 +558,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+    if( retCode != TA_SUCCESS )
+    {
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       *outBegIdx= 0;
+       *outNBElement= 0;
+       return retCode;
+@@ -700,10 +572,6 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
+       outSqueeze[i] = ((3) ^ (((((2) ^ (((((1) ^ (((((-1) & -(int)(((lo < centre - optInFactorWide * band) & (up > centre + optInFactorWide * band))))) ^ (1)) & ((int)(((lo > centre - optInFactorWide * band) & (up < centre + optInFactorWide * band))) - 1)))) ^ (2)) & ((int)(((lo > centre - optInFactorNormal * band) & (up < centre + optInFactorNormal * band))) - 1)))) ^ (3)) & ((int)(((lo > centre - optInFactorNarrow * band) & (up < centre + optInFactorNarrow * band))) - 1)));
+    }
+    free(tempDev);
+-   free(tempWork);
+-   free(tempKCM);
+-   free(tempMid);
+-   free(tempSD);
+    *outBegIdx= startIdx;
+    *outNBElement= n;
+    return TA_SUCCESS;
+@@ -937,36 +805,16 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       stageLookback = TA_LINEARREG_Lookback(optInKCPeriod);
+       stageIdx = startIdx - stageLookback;
+       stageLen = n + stageLookback;
+-      tempDev = malloc(stageLen * sizeof(double));
++      tempDev = malloc(stageLen * sizeof(double) + stageLen * sizeof(double) + stageLen * sizeof(double) + n * sizeof(double) + n * sizeof(double));
+       if( !tempDev )
+       {
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_ALLOC_ERR;
+       }
+-      tempWork = malloc(stageLen * sizeof(double));
+-      if( !tempWork )
+-      {
+-         free( tempDev ); TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+-         return TA_ALLOC_ERR;
+-      }
+-      tempKCM = malloc(stageLen * sizeof(double));
+-      if( !tempKCM )
+-      {
+-         free( tempDev ); free( tempWork ); TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+-         return TA_ALLOC_ERR;
+-      }
+-      tempMid = malloc(n * sizeof(double));
+-      if( !tempMid )
+-      {
+-         free( tempDev ); free( tempWork ); free( tempKCM ); TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+-         return TA_ALLOC_ERR;
+-      }
+-      tempSD = malloc(n * sizeof(double));
+-      if( !tempSD )
+-      {
+-         free( tempDev ); free( tempWork ); free( tempKCM ); free( tempMid ); TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+-         return TA_ALLOC_ERR;
+-      }
++      tempWork = tempDev + stageLen;
++      tempKCM = tempWork + stageLen;
++      tempMid = tempKCM + stageLen;
++      tempSD = tempMid + n;
+       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
+        * midprice is bit-identical to donchian's middle band.
+        */
+@@ -978,10 +826,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -990,10 +834,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1007,10 +847,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1019,10 +855,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1036,40 +868,24 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( TA_UNLIKELY(stageLen < 1) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb0 - stageLen - dummyBegIdx != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(544);
+       }
+       if( TA_UNLIKELY(lagNb2 - stageLen != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(545);
+       }
+       if( TA_UNLIKELY(lagNb1 - stageLen != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(546);
+       }
+@@ -1088,10 +904,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1100,10 +912,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1117,10 +925,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1128,10 +932,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( TA_UNLIKELY(lagNb3 - 1 - (stageLen - 1) != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(547);
+       }
+@@ -1139,10 +939,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1155,10 +951,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1167,10 +959,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1184,10 +972,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1196,10 +980,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1225,10 +1005,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          if( TA_UNLIKELY(subRc != TA_SUCCESS) )
+          {
+             free(tempDev);
+-            free(tempWork);
+-            free(tempKCM);
+-            free(tempMid);
+-            free(tempSD);
+             TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+             return subRc;
+          }
+@@ -1237,10 +1013,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( retCode != TA_SUCCESS )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          dummyBegIdx = 0;
+          dummyNBElement = 0;
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+@@ -1257,40 +1029,24 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+       if( TA_UNLIKELY(n < 1) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          *outBegIdx = 0; *outNBElement = 0; TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INSUFFICIENT_HISTORY;
+       }
+       if( TA_UNLIKELY(lagNb5 - n != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(548);
+       }
+       if( TA_UNLIKELY(lagNb4 - n != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(549);
+       }
+       if( TA_UNLIKELY(lagNb2 - n - kcmShift != 0) )
+       {
+          free(tempDev);
+-         free(tempWork);
+-         free(tempKCM);
+-         free(tempMid);
+-         free(tempSD);
+          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_LINEARREG_Close( sub6 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+          return TA_INTERNAL_ERROR(550);
+       }
+@@ -1319,10 +1075,6 @@ static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **s
+          }
+       }
+       free(tempDev);
+-      free(tempWork);
+-      free(tempKCM);
+-      free(tempMid);
+-      free(tempSD);
+       dummyBegIdx = startIdx;
+       dummyNBElement = n;
+ 
+diff --git a/ta_codegen/generator/src/backends/c.rs b/ta_codegen/generator/src/backends/c.rs
+index 49e72ddbb3..310e4c54fa 100644
+--- a/ta_codegen/generator/src/backends/c.rs
++++ b/ta_codegen/generator/src/backends/c.rs
+@@ -377,6 +377,23 @@ struct CRenderCtx<'a> {
+     fma: Option<&'a FmaVarSets>,
+ }
+ 
++/// `func` with its batch bodies' scratch allocation runs coalesced, and the
++/// stream source pinned to the uncoalesced body: the stream analysis needs the
++/// separate allocations, and its Open coalesces at render time instead.
++fn coalesced_allocations(func: &FuncDef) -> std::borrow::Cow<'_, FuncDef> {
++    use super::ir_cleanup::coalesce_allocations;
++    let body = coalesce_allocations(&func.body);
++    let private_body = coalesce_allocations(&func.private_body);
++    if body.is_none() && private_body.is_none() {
++        return std::borrow::Cow::Borrowed(func);
++    }
++    let mut out = func.clone();
++    out.resolved_stream_body = Some(func.stream_source().to_vec());
++    out.body = body.unwrap_or_else(|| func.body.clone());
++    out.private_body = private_body.unwrap_or_else(|| func.private_body.clone());
++    std::borrow::Cow::Owned(out)
++}
++
+ #[allow(clippy::implicit_hasher)]
+ pub fn generate(
+     func: &FuncDef,
+@@ -390,7 +407,8 @@ pub fn generate(
+     // the shipped Core.java straight from the unresolved definitions) and a
+     // path that skipped resolution would silently emit the base body.
+     let resolved = func.resolved_for(crate::ir::Lang::C);
+-    let func: &FuncDef = &resolved;
++    let coalesced = coalesced_allocations(&resolved);
++    let func: &FuncDef = &coalesced;
+     // Installed for the whole function so every CIRCBUF_INIT error path can
+     // release the buffers the CIRCBUFs before it already took.
+     let mut circbuf_order = Vec::new();
+diff --git a/ta_codegen/generator/src/backends/c_stream.rs b/ta_codegen/generator/src/backends/c_stream.rs
+index 6d4adbf105..440a5de23c 100644
+--- a/ta_codegen/generator/src/backends/c_stream.rs
++++ b/ta_codegen/generator/src/backends/c_stream.rs
+@@ -1806,6 +1806,7 @@ fn emit_composed_sub_open(
+     cleanup: &str,
+     open_map: &dyn Fn(Expr) -> Expr,
+     batch_stmt: &Statement,
++    open_tail: &[Statement],
+     enums: &HashMap<String, EnumDef>,
+     registry: &Registry,
+     helpers: &HelperRegistry,
+@@ -1888,7 +1889,7 @@ fn emit_composed_sub_open(
+     let _ = writeln!(o, "         {{");
+     for sf in &cp.series_frees {
+         if sf.tail_idx > sub.tail_idx {
+-            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter));
++            o.push_str(&render_statement(&open_tail[sf.tail_idx], 12, false, enums, registry, helpers, counter));
+         }
+     }
+     let _ = writeln!(o, "            {cleanup};");
+@@ -2055,7 +2056,8 @@ fn emit_composed_open_body(
+     let n = uname(func);
+     let alias_fill = cp.fill_scratch_may_alias_output(outputs);
+     let _ = writeln!(o, "\n   {{");
+-    let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
++    let (open_region, open_tail) = coalesced_open_parts(cp);
++    let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, &open_region, &open_tail, outputs, cleanup);
+     let mut region_c = String::new();
+     for s in &region_stmts {
+         region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
+@@ -2071,15 +2073,15 @@ fn emit_composed_open_body(
+     // smoothing overwrites the raw series right here — order is the whole
+     // point; the spike's wrong-order sabotage fails 4,394 legs).
+     let open_map = composed_open_expr_fn(outputs);
+-    let lag = LagOpenCtx { cp, cleanup, open_map: &open_map, enums, registry, helpers, counter };
++    let lag = LagOpenCtx { cp, open_tail: &open_tail, cleanup, open_map: &open_map, enums, registry, helpers, counter };
+     for (i, stmt) in tail_stmts.iter().enumerate() {
+         lag.emit_at(o, streaming::OpenAt::BeforeStmt(i), Some(i));
+         let mut fused = false;
+         for (si, sub) in cp.subs.iter().enumerate() {
+             if sub.tail_idx == i {
+                 fused |= emit_composed_sub_open(
+-                    o, cp, sub, si, outputs, cleanup, &open_map, stmt, enums, registry, helpers,
+-                    counter,
++                    o, cp, sub, si, outputs, cleanup, &open_map, stmt, &open_tail, enums, registry,
++                    helpers, counter,
+                 );
+             }
+         }
+@@ -2202,6 +2204,7 @@ fn lag_open_locals(cp: &streaming::ComposedPlan) -> Vec<(&'static str, String, &
+ /// Renders the composed Open's delay-line actions.
+ struct LagOpenCtx<'a> {
+     cp: &'a streaming::ComposedPlan<'a>,
++    open_tail: &'a [Statement],
+     cleanup: &'a str,
+     open_map: &'a dyn Fn(Expr) -> Expr,
+     enums: &'a HashMap<String, EnumDef>,
+@@ -2238,7 +2241,7 @@ impl LagOpenCtx<'_> {
+         if let Some(from) = replay_from {
+             for sf in self.cp.series_frees.iter().filter(|sf| sf.tail_idx >= from) {
+                 o.push_str(&render_statement(
+-                    &sf.stmt,
++                    &self.open_tail[sf.tail_idx],
+                     pad.len() + 3,
+                     false,
+                     self.enums,
+@@ -2429,12 +2432,30 @@ fn returns_alloc_err(body: &[Statement]) -> bool {
+     })
+ }
+ 
++/// The composed Open's region and tail with their scratch allocation runs
++/// coalesced as one body, which is what the Open renders. The plan is built
++/// from the uncoalesced body, because its alias analysis reads `x = y + n` as
++/// `x` sharing `y`'s series; so a replayed series free must render this tail's
++/// statement at its index, never the plan's copy.
++fn coalesced_open_parts(cp: &streaming::ComposedPlan) -> (Vec<Statement>, Vec<Statement>) {
++    let joined: Vec<Statement> = cp.region.iter().chain(cp.tail).cloned().collect();
++    match super::ir_cleanup::coalesce_allocations(&joined) {
++        Some(mut region) => {
++            let tail = region.split_off(cp.region.len());
++            (region, tail)
++        }
++        None => (cp.region.clone(), cp.tail.to_vec()),
++    }
++}
++
+ /// The transcribed (region, tail) statement lists for the composed Open:
+ /// out-meta pointers to dummies, output arrays renamed to scratch, early
+ /// returns mapped (success -> BAD_PARAM) with the cleanup prepended, final
+ /// tail return dropped.
+ fn build_composed_open_bodies(
+     cp: &streaming::ComposedPlan,
++    region: &[Statement],
++    tail: &[Statement],
+     outputs: &[String],
+     cleanup: &str,
+ ) -> (Vec<Statement>, Vec<Statement>) {
+@@ -2580,8 +2601,8 @@ fn build_composed_open_bodies(
+             }
+         }
+     };
+-    let region: Vec<Statement> = cp.region.clone();
+-    let mut tail: Vec<Statement> = cp.tail.to_vec();
++    let region: Vec<Statement> = region.to_vec();
++    let mut tail: Vec<Statement> = tail.to_vec();
+     if matches!(tail.last(), Some(Statement::Return { .. })) {
+         tail.pop();
+     }
+diff --git a/ta_codegen/generator/src/backends/ir_cleanup.rs b/ta_codegen/generator/src/backends/ir_cleanup.rs
+index db771385b5..c98a226bd4 100644
+--- a/ta_codegen/generator/src/backends/ir_cleanup.rs
++++ b/ta_codegen/generator/src/backends/ir_cleanup.rs
+@@ -18,8 +18,8 @@
+ //! The third argument is the code the surviving arm of a folded guard answers:
+ //! `None` in the batch tiers, where "success with nothing produced" is a legal
+ //! answer, and the insufficient-history code — in that backend's own spelling —
+-//! in the stream tiers, where it is not. C states no sequence at all: every
+-//! pass here would be wrong there.
++//! in the stream tiers, where it is not. C runs only [`coalesce_allocations`]:
++//! every other pass here would be wrong there.
+ //!
+ //! **Every pass is length-preserving.** A removed statement becomes an empty
+ //! `Statement::Block`, which renders to nothing through the shared default. The
+@@ -254,8 +254,8 @@ fn is_not_success(e: &Expr, var: &str) -> bool {
+ /// structural rule instead of one that has to know what `free` is.
+ ///
+ /// `TA_Free` is deliberately absent: it never enters the IR. It is text the C
+-/// emitters write for their own circbuf and scratch scaffolding, and C runs no
+-/// sequence from this module.
++/// emitters write for their own circbuf and scratch scaffolding, and C drops no
++/// deallocation.
+ ///
+ /// `CircBuf::Prolog` also renders empty in those backends, and is deliberately
+ /// NOT taken — it is a declaration, not a deallocation.
+@@ -309,6 +309,278 @@ fn collect_allocations(body: &[Statement], found: &RefCell<Vec<(String, Expr)>>)
+     }
+ }
+ 
++/// C only: a run of consecutive same-typed `x = malloc(E * sizeof(T)); if( !x )
++/// { ..; return ..; }` becomes one allocation sliced at the running offsets, and
++/// every free group keeps only the head's `free`.
++///
++/// Glibc returns blocks above its trim threshold to the kernel on `free`, so
++/// several series-length blocks freed together are page-faulted in again on
++/// every call; one block of the summed size is not.
++///
++/// A run is rewritten whole or not at all. What makes dropping the other frees
++/// and guards sound, and must stay checked: each local is assigned only by its
++/// own allocation; every other `free` of a run local sits in a group of
++/// consecutive frees naming each local once, with no later read in that block;
++/// a guard frees only earlier locals of its run; each `E` is pure and reads no
++/// run local, so its value at the head equals its value at its own slice.
++///
++/// `None` when no run qualifies.
++pub(crate) fn coalesce_allocations(body: &[Statement]) -> Option<Vec<Statement>> {
++    let mut runs = Vec::new();
++    collect_alloc_runs(body, &mut runs);
++    runs.retain(|run| run_is_coalescible(body, run));
++    (!runs.is_empty()).then(|| apply_alloc_runs(body, &runs))
++}
++
++#[derive(Clone)]
++struct AllocUnit {
++    name: String,
++    elem: String,
++    count: Expr,
++    bytes: Expr,
++    guard_frees: Vec<String>,
++}
++
++fn malloc_call(value: &Expr) -> Option<(&str, &Expr)> {
++    let call = match value {
++        Expr::Cast(_, inner) => inner.as_ref(),
++        v => v,
++    };
++    let Expr::FuncCall(f, args) = call else { return None };
++    match (StdlibFn::from_name(f), args.as_slice()) {
++        (Some(StdlibFn::Malloc), [bytes]) => Some((f.as_str(), bytes)),
++        _ => None,
++    }
++}
++
++fn freed_var(s: &Statement) -> Option<&str> {
++    match s {
++        Statement::Expr(Expr::FuncCall(f, args)) if matches!(StdlibFn::from_name(f), Some(StdlibFn::Free)) => {
++            match args.as_slice() {
++                [Expr::Var(x)] => Some(x.as_str()),
++                _ => None,
++            }
++        }
++        _ => None,
++    }
++}
++
++fn alloc_unit(alloc: &Statement, guard: &Statement) -> Option<AllocUnit> {
++    let Statement::Assign { target: Expr::Var(x), value, compound: false } = alloc else { return None };
++    let (_, bytes) = malloc_call(value)?;
++    let sizeof_type = |e: &Expr| match e {
++        Expr::FuncCall(f, a) if matches!(StdlibFn::from_name(f), Some(StdlibFn::Sizeof)) => match a.as_slice() {
++            [Expr::Var(t)] => Some(t.clone()),
++            _ => None,
++        },
++        _ => None,
++    };
++    let Expr::BinOp(l, BinOp::Mul, r) = bytes else { return None };
++    let (count, elem) = match (sizeof_type(r), sizeof_type(l)) {
++        (Some(t), _) => (l.as_ref().clone(), t),
++        (None, Some(t)) => (r.as_ref().clone(), t),
++        (None, None) => return None,
++    };
++    let Statement::If { condition: Expr::Not(tested), then_body, else_body, .. } = guard else { return None };
++    if !matches!(tested.as_ref(), Expr::Var(v) if v == x)
++        || !else_body.is_empty()
++        || !matches!(then_body.last(), Some(Statement::Return { .. }))
++    {
++        return None;
++    }
++    let mut guard_frees = Vec::new();
++    let mut other_free = false;
++    for_each_nested(then_body, &mut |s| {
++        if let Some(y) = freed_var(s) {
++            guard_frees.push(y.to_string());
++        } else {
++            crate::streaming::walk_stmt_own_exprs(s, &mut |e| {
++                crate::streaming::walk_expr(e, &mut |sub| {
++                    other_free |= matches!(sub, Expr::FuncCall(f, _) if matches!(StdlibFn::from_name(f), Some(StdlibFn::Free)));
++                });
++            });
++        }
++    });
++    if other_free {
++        return None;
++    }
++    Some(AllocUnit { name: x.clone(), elem, count, bytes: bytes.clone(), guard_frees })
++}
++
++fn for_each_nested(body: &[Statement], f: &mut dyn FnMut(&Statement)) {
++    for s in body {
++        f(s);
++        for nested in crate::streaming::nested_bodies(s).0 {
++            for_each_nested(nested, f);
++        }
++    }
++}
++
++fn collect_alloc_runs(body: &[Statement], runs: &mut Vec<Vec<AllocUnit>>) {
++    let mut j = 0;
++    while j < body.len() {
++        let Some(first) = body.get(j + 1).and_then(|g| alloc_unit(&body[j], g)) else {
++            for nested in crate::streaming::nested_bodies(&body[j]).0 {
++                collect_alloc_runs(nested, runs);
++            }
++            j += 1;
++            continue;
++        };
++        let mut run = vec![first];
++        j += 2;
++        while let Some(next) = body.get(j + 1).and_then(|g| alloc_unit(&body[j], g)) {
++            if next.elem != run[0].elem {
++                break;
++            }
++            run.push(next);
++            j += 2;
++        }
++        if run.len() >= 2 {
++            runs.push(run);
++        }
++    }
++}
++
++fn run_is_coalescible(body: &[Statement], run: &[AllocUnit]) -> bool {
++    let names: Vec<&str> = run.iter().map(|u| u.name.as_str()).collect();
++    let distinct: BTreeSet<&str> = names.iter().copied().collect();
++    if distinct.len() != names.len() {
++        return false;
++    }
++    let reads_run = |e: &Expr| names.iter().any(|n| expr_mentions(e, n));
++    for (i, u) in run.iter().enumerate() {
++        if !u.guard_frees.iter().all(|y| names[..i].contains(&y.as_str())) {
++            return false;
++        }
++        let pure = !crate::streaming::expr_effect(&u.count, &|f| {
++            f.ends_with("_lookback")
++                || matches!(StdlibFn::from_name(f), Some(StdlibFn::Sizeof))
++                || crate::backends::builtins::MathFn::from_name(f).is_some()
++        });
++        if !pure || reads_run(&u.count) {
++            return false;
++        }
++    }
++    single_assignment(body, &names) && frees_in_groups(body, &names)
++}
++
++fn single_assignment(body: &[Statement], names: &[&str]) -> bool {
++    let is_run_var = |e: &Expr| matches!(e, Expr::Var(v) if names.contains(&v.as_str()));
++    let mut assigns = 0usize;
++    let mut ok = true;
++    for_each_nested(body, &mut |s| {
++        match s {
++            Statement::Assign { target, .. } if is_run_var(target) => assigns += 1,
++            Statement::VarDecl { name, init: Some(_), .. } if names.contains(&name.as_str()) => ok = false,
++            Statement::For { var, .. } if names.contains(&var.as_str()) => ok = false,
++            _ => {}
++        }
++        crate::streaming::walk_stmt_own_exprs(s, &mut |e| {
++            crate::streaming::walk_expr(e, &mut |sub| match sub {
++                Expr::AddressOf(x)
++                | Expr::PostIncrement(x)
++                | Expr::PostDecrement(x)
++                | Expr::PreIncrement(x)
++                | Expr::PreDecrement(x)
++                    if is_run_var(x) =>
++                {
++                    ok = false;
++                }
++                _ => {}
++            });
++        });
++    });
++    ok && assigns == names.len()
++}
++
++fn frees_in_groups(body: &[Statement], names: &[&str]) -> bool {
++    let is_unit_alloc = |s: &Statement| {
++        matches!(s, Statement::Assign { target: Expr::Var(x), value, compound: false }
++            if names.contains(&x.as_str()) && malloc_call(value).is_some())
++    };
++    let mut skip_guard = false;
++    for (p, s) in body.iter().enumerate() {
++        if std::mem::take(&mut skip_guard) {
++            continue;
++        }
++        if is_unit_alloc(s) {
++            skip_guard = true;
++            continue;
++        }
++        if freed_var(s).is_some_and(|y| names.contains(&y)) {
++            let start = (0..p).rev().take_while(|&q| freed_var(&body[q]).is_some()).last().unwrap_or(p);
++            let end = (p..body.len()).take_while(|&q| freed_var(&body[q]).is_some()).last().unwrap_or(p);
++            let group: Vec<&str> =
++                body[start..=end].iter().filter_map(freed_var).filter(|y| names.contains(y)).collect();
++            let each_once = group.len() == names.len() && names.iter().all(|n| group.contains(n));
++            let read_after = body[end + 1..].iter().any(|t| names.iter().any(|n| stmt_mentions(t, n)));
++            if !each_once || read_after {
++                return false;
++            }
++            continue;
++        }
++        let mut stray_free = false;
++        crate::streaming::walk_stmt_own_exprs(s, &mut |e| {
++            crate::streaming::walk_expr(e, &mut |sub| {
++                if let Expr::FuncCall(f, args) = sub {
++                    stray_free |= matches!(StdlibFn::from_name(f), Some(StdlibFn::Free))
++                        && args.iter().any(|a| names.iter().any(|n| expr_mentions(a, n)));
++                }
++            });
++        });
++        if stray_free {
++            return false;
++        }
++        if !crate::streaming::nested_bodies(s).0.into_iter().all(|b| frees_in_groups(b, names)) {
++            return false;
++        }
++    }
++    true
++}
++
++fn apply_alloc_runs(body: &[Statement], runs: &[Vec<AllocUnit>]) -> Vec<Statement> {
++    let position = |x: &str| {
++        runs.iter().find_map(|run| run.iter().position(|u| u.name == x).map(|i| (run.as_slice(), i)))
++    };
++    let mut out = Vec::with_capacity(body.len());
++    let mut empty_guard = false;
++    for s in body {
++        if std::mem::take(&mut empty_guard) {
++            out.push(Statement::Block { body: Vec::new() });
++            continue;
++        }
++        if let Statement::Assign { target: Expr::Var(x), value, compound: false } = s {
++            if let (Some((run, i)), Some((f, _))) = (position(x), malloc_call(value)) {
++                let value = if i == 0 {
++                    let total = run[1..].iter().fold(run[0].bytes.clone(), |sum, u| {
++                        Expr::BinOp(Box::new(sum), BinOp::Add, Box::new(u.bytes.clone()))
++                    });
++                    let call = Expr::FuncCall(f.to_string(), vec![total]);
++                    match value {
++                        Expr::Cast(t, _) => Expr::Cast(t.clone(), Box::new(call)),
++                        _ => call,
++                    }
++                } else {
++                    empty_guard = true;
++                    Expr::BinOp(
++                        Box::new(Expr::Var(run[i - 1].name.clone())),
++                        BinOp::Add,
++                        Box::new(run[i - 1].count.clone()),
++                    )
++                };
++                out.push(Statement::Assign { target: Expr::Var(x.clone()), value, compound: false });
++                continue;
++            }
++        }
++        if freed_var(s).and_then(position).is_some_and(|(_, i)| i > 0) {
++            out.push(Statement::Block { body: Vec::new() });
++            continue;
++        }
++        out.push(recurse(s, &|b| apply_alloc_runs(b, runs)));
++    }
++    out
++}
++
+ fn is_deallocation(s: &Statement) -> bool {
+     match s {
+         Statement::Expr(Expr::FuncCall(f, _)) => {
+diff --git a/ta_codegen/generator/tests/all/render_features_suite.rs b/ta_codegen/generator/tests/all/render_features_suite.rs
+index 26b9b7ebf5..5f355778a3 100644
+--- a/ta_codegen/generator/tests/all/render_features_suite.rs
++++ b/ta_codegen/generator/tests/all/render_features_suite.rs
+@@ -2617,3 +2617,49 @@ TA_RetCode sma( int startIdx, int endIdx,
+     assert!(rust.contains("c_max("), "Rust must keep the unhinted max:\n{rust}");
+     assert!(csharp.contains("MaxGt("), "C# must keep the unhinted max:\n{csharp}");
+ }
++
++/// C allocates a run of same-typed scratch arrays as one block. Swept over every
++/// indicator, so a widened rule cannot pass on a name this test forgot. A count
++/// of 3 is the batch, `TA_S_` and stream Open bodies; BBANDS' batch body
++/// re-points its locals on the SMA path, which its Open never renders, so only
++/// the Open coalesces.
++#[test]
++fn c_coalesces_scratch_allocation_runs() {
++    let coalesced = |c: &str| {
++        c.lines().filter(|l| l.contains("malloc(") && l.contains("sizeof(double) + ")).count()
++    };
++    let mut fired = Vec::new();
++    for name in discover_indicators() {
++        let (func, enums) = load_indicator(&name);
++        let n = coalesced(&backends::c::generate(&func, &enums, make_registry(), make_helpers()));
++        if n > 0 {
++            fired.push((name, n));
++        }
++    }
++    let expected: Vec<(String, usize)> = [
++        ("bbands", 1),
++        ("crsi", 3),
++        ("gator", 3),
++        ("ichimoku", 3),
++        ("kc", 3),
++        ("kstext", 3),
++        ("macdext", 3),
++        ("percentb", 3),
++        ("sqzmom", 3),
++    ]
++    .iter()
++    .map(|(n, k)| ((*n).to_string(), *k))
++    .collect();
++    assert_eq!(fired, expected);
++
++    // A free group missing one local of the run declines the whole run.
++    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input/kc/kc.c");
++    let src = std::fs::read_to_string(path).unwrap();
++    let last = src.rfind("free( tempATR );").expect("kc frees tempATR");
++    let leaky = format!("{}{}", &src[..last], &src[last + "free( tempATR );".len()..]);
++    for (source, want) in [(src.as_str(), 2), (leaky.as_str(), 0)] {
++        let (func, enums) = load_indicator_with_source("kc", source);
++        let c = backends::c::generate(&func, &enums, make_registry(), make_helpers());
++        assert_eq!(coalesced(&c), want, "{c}");
++    }
++}
+diff --git a/ta_codegen/generator/tests/all/streaming_dispatch_suite.rs b/ta_codegen/generator/tests/all/streaming_dispatch_suite.rs
+index c6f0a9f615..b9092a8e7a 100644
+--- a/ta_codegen/generator/tests/all/streaming_dispatch_suite.rs
++++ b/ta_codegen/generator/tests/all/streaming_dispatch_suite.rs
+@@ -1876,6 +1876,18 @@ fn test_c_stoch_composed_stream_section() {
+     assert!(stream.contains("TA_STOCH_ReleaseImpl( stream );"));
+ }
+ 
++/// The local holding the heap block `series` lives in: itself, or the head of
++/// the coalesced allocation it is a slice of.
++fn heap_block_of<'s>(open: &'s str, series: &'s str) -> &'s str {
++    let slice = format!(" {series} = ");
++    let Some(at) = open.find(&slice) else { return series };
++    let rhs = &open[at + slice.len()..];
++    match rhs.split_once(" + ") {
++        Some((base, _)) if !base.contains('(') => heap_block_of(open, base),
++        _ => series,
++    }
++}
++
+ /// Every failure return a composed C Open inserts after a delay line's buffer
+ /// exists must free it, and the series the batch frees later: the
+ /// allocation-failure block and the handle-allocation failure free every line,
+@@ -1927,6 +1939,7 @@ fn test_c_composed_open_frees_every_delay_line_on_oom_paths() {
+                         found
+                     });
+                     if let Some(series) = series {
++                        let series = heap_block_of(open, series);
+                         assert!(
+                             block.contains(&format!("free({series})")) || block.contains(&format!("free( {series} )")),
+                             "{name}: line {k}'s allocation failure leaks `{series}`:\n{block}"
+@@ -1960,8 +1973,8 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
+     for (indicator, buffers) in [
+         ("adxr", &["adx"][..]),
+         ("apo", &["tempBuffer"]),
+-        ("bbands", &["tempBuffer1", "tempBuffer2"]),
+-        ("macdext", &["fastMABuffer", "slowMABuffer"]),
++        ("bbands", &["tempBuffer1"]),
++        ("macdext", &["fastMABuffer"]),
+         ("ppo", &["tempBuffer"]),
+         ("pvo", &["tempBuffer"]),
+         ("stoch", &["tempBuffer"]),
+@@ -2001,10 +2014,15 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
+ /// malloc fails, `tempBuffer1` must be freed or it leaks: the auto-injected
+ /// null-check must free every intermediate allocated before it. Same OOM
+ /// discipline as ADXR (each malloc-failure path frees everything allocated so
+-/// far — no goto, no fault-injection), caught here at generate time.
++/// far — no goto, no fault-injection), caught here at generate time. Adjacent,
++/// the two allocations coalesce into one block, so the fixture separates them.
+ #[test]
+ fn test_c_bbands_open_frees_prior_intermediate_on_oom() {
+-    let (mut func, enums) = load_indicator("bbands");
++    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input/bbands/bbands.c");
++    let src = std::fs::read_to_string(path).unwrap();
++    let second = "   tempBuffer2 = malloc(";
++    assert_eq!(src.matches(second).count(), 1);
++    let (mut func, enums) = load_indicator_with_source("bbands", &src.replace(second, &format!("   i = 0;\n{second}")));
+     func.streaming = true;
+     let registry = make_registry();
+     let helpers = HelperRegistry::empty();

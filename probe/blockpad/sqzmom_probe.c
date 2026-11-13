@@ -1,0 +1,1260 @@
+/* Probe for #548, never shipped: SQZMOM without series-length scratch.
+ *
+ * Variants, all with one signature and all compared bit for bit with the
+ * shipped TA_SQZMOM (ref):
+ *   blk   blocked over block-sized pads, SMA / VAR / LINEARREG hand-carried
+ *         (the shipped batch loops with their loop-carried locals saved),
+ *         MIDPRICE restarted on its own period grid, TRANGE on the sub-range
+ *   five  hand copy of the generated composition, five mallocs (control)
+ *   one   the same with one malloc sliced five ways
+ *   strm  the public TA_SQZMOM stream: opened on lookbackTotal+1 bars, then
+ *         one Update per later bar
+ *   sblk  blocked, every stateful sub-calculation carried by its own public
+ *         stream handle, Update loops grouped per handle over each block
+ *
+ * Build: build.sh.  Run: probe check | probe long |
+ *        probe time <points> <blockLen> <reps> [period] [fresh]
+ */
+#define _POSIX_C_SOURCE 200809L
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE 1   /* struct rusage's ru_minflt */
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <sys/resource.h>
+#ifdef __APPLE__
+#include <pthread.h>
+#include <pthread/qos.h>
+#endif
+#include "ta_libc.h"
+
+/* Every block continuation a blocked variant makes; the check reads it
+ * around each call so a block-edge count cannot be vacuous. */
+static long long probeEdges;
+
+/* The generated ta_SQZMOM.c squeeze expression, verbatim. */
+#define SQZ_LEVEL(lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow) \
+   ((3) ^ (((((2) ^ (((((1) ^ (((((-1) & -(int)(((lo < centre - optInFactorWide * band) & (up > centre + optInFactorWide * band))))) ^ (1)) & ((int)(((lo > centre - optInFactorWide * band) & (up < centre + optInFactorWide * band))) - 1)))) ^ (2)) & ((int)(((lo > centre - optInFactorNormal * band) & (up < centre + optInFactorNormal * band))) - 1)))) ^ (3)) & ((int)(((lo > centre - optInFactorNarrow * band) & (up < centre + optInFactorNarrow * band))) - 1)))
+
+#define IN(idx) in[(idx) - inBase]
+
+/* Built with -DPROBE_RESEED=1 the carried means re-seed at every block, which
+ * the comparison must report: the proof that it can fail. */
+#ifndef PROBE_RESEED
+#define PROBE_RESEED 0
+#endif
+
+/* ---- carried sub-calls ------------------------------------------------ */
+
+typedef struct { int live; double periodTotal; } SmaCarry;
+
+/* Outputs for input indices from..to. The first call's `from` is the start
+ * index of the batch call it stands for; later calls continue at to+1. */
+static void sma_blk( SmaCarry *s, const double *in, int inBase, int optInTimePeriod,
+                     int from, int to, double *outReal )
+{
+   double periodTotal, tempReal;
+   int i, trailingIdx, outIdx;
+
+   trailingIdx = from - (optInTimePeriod - 1);
+   if( !s->live || PROBE_RESEED )
+   {
+      periodTotal = 0.0;
+      i = trailingIdx;
+      if( optInTimePeriod > 1 )
+      {
+         while( i < from )
+         {
+            periodTotal += IN(i);
+            i = i + 1;
+         }
+      }
+      s->live = 1;
+   }
+   else
+   {
+      periodTotal = s->periodTotal;
+      i = from;
+   }
+   outIdx = 0;
+   while( i <= to )
+   {
+      periodTotal += IN(i);
+      i = i + 1;
+      tempReal = periodTotal;
+      periodTotal -= IN(trailingIdx);
+      trailingIdx = trailingIdx + 1;
+      outReal[outIdx] = tempReal / (double)optInTimePeriod;
+      outIdx = outIdx + 1;
+   }
+   s->periodTotal = periodTotal;
+}
+
+typedef struct
+{
+   int live, barsSinceReseed;
+   double shift, periodTotal1, periodTotal2, peakTotal2;
+} VarCarry;
+
+/* from <= to always: the shipped loop is a do/while. */
+static void var_blk( VarCarry *s, const double *in, int inBase, int optInTimePeriod,
+                     int from, int to, double *outReal )
+{
+   double tempReal, periodTotal1, periodTotal2, meanValue1, shift, variance, invPeriod, peakTotal2;
+   int i, j, outIdx, trailingIdx, nbInitialElementNeeded, barsSinceReseed, windowStart;
+
+   nbInitialElementNeeded = optInTimePeriod - 1;
+   invPeriod = 1.0 / (double)optInTimePeriod;
+   trailingIdx = from - nbInitialElementNeeded;
+   if( !s->live )
+   {
+      shift = IN(trailingIdx);
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < from; j += 1 )
+      {
+         tempReal = IN(j) - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+      }
+      barsSinceReseed = 32 * optInTimePeriod;
+      peakTotal2 = periodTotal2;
+      s->live = 1;
+   }
+   else
+   {
+      shift = s->shift;
+      periodTotal1 = s->periodTotal1;
+      periodTotal2 = s->periodTotal2;
+      peakTotal2 = s->peakTotal2;
+      barsSinceReseed = s->barsSinceReseed;
+   }
+   i = from;
+   outIdx = 0;
+   do
+   {
+      tempReal = IN(i) - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      tempReal = IN(trailingIdx) - shift;
+      periodTotal1 -= tempReal;
+      tempReal *= tempReal;
+      periodTotal2 -= tempReal;
+      trailingIdx += 1;
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += IN(j);
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = IN(j) - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) )
+         {
+            shift = IN(i);
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal = IN(j) - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         peakTotal2 = periodTotal2;
+         if( variance < 0.000000000001 * (periodTotal2 * invPeriod) )
+         {
+            variance = 0.0;
+         }
+         tempReal = IN(windowStart) - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[outIdx++] = variance;
+      i += 1;
+   } while( i <= to );
+   s->shift = shift;
+   s->periodTotal1 = periodTotal1;
+   s->periodTotal2 = periodTotal2;
+   s->peakTotal2 = peakTotal2;
+   s->barsSinceReseed = barsSinceReseed;
+}
+
+typedef struct
+{
+   int live, barsSinceReseed;
+   double SumXY, SumY, sumAbs, trailingValue;
+} LrCarry;
+
+static void lr_blk( LrCarry *s, const double *in, int inBase, int optInTimePeriod,
+                    int from, int to, double *outReal )
+{
+   int outIdx, today, lookbackTotal, trailingIdx, i, j, windowStart, barsSinceReseed;
+   double SumX, SumXY, SumY, SumXSqr, Divisor, m, b;
+   double tempValue1, tempValue2, trailingValue, weightedTrailing, sumAbs;
+
+   lookbackTotal = optInTimePeriod - 1;
+   outIdx = 0;
+   today = from;
+   trailingIdx = from - lookbackTotal;
+   SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+   SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
+   Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+   if( !s->live )
+   {
+      SumXY = 0;
+      SumY = 0;
+      sumAbs = 0;
+      for( i = optInTimePeriod; i-- != 0;  )
+      {
+         tempValue1 = IN(today - i);
+         SumY += tempValue1;
+         SumXY += (double)i * tempValue1;
+         sumAbs += fabs(tempValue1);
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      barsSinceReseed = 32 * optInTimePeriod;
+      trailingValue = IN(trailingIdx);
+      trailingIdx += 1;
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
+      today += 1;
+      s->live = 1;
+   }
+   else
+   {
+      SumXY = s->SumXY;
+      SumY = s->SumY;
+      sumAbs = s->sumAbs;
+      trailingValue = s->trailingValue;
+      barsSinceReseed = s->barsSinceReseed;
+   }
+   while( today <= to )
+   {
+      weightedTrailing = (double)optInTimePeriod * trailingValue;
+      SumXY = SumXY + SumY - weightedTrailing;
+      SumY = SumY - trailingValue + IN(today);
+      sumAbs = sumAbs - fabs(trailingValue) + fabs(IN(today));
+      barsSinceReseed -= 1;
+      if( barsSinceReseed <= 0 || fabs(weightedTrailing) > 100.0 * sumAbs )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = today - lookbackTotal;
+         SumY = 0;
+         SumXY = 0;
+         sumAbs = 0;
+         tempValue2 = (double)lookbackTotal;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempValue1 = IN(j);
+            SumY += tempValue1;
+            SumXY += tempValue2 * tempValue1;
+            sumAbs += fabs(tempValue1);
+            tempValue2 -= 1.0;
+         }
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = IN(trailingIdx);
+      trailingIdx += 1;
+      outReal[outIdx++] = fma(m, (double)(optInTimePeriod - 1), b);
+      today += 1;
+   }
+   s->SumXY = SumXY;
+   s->SumY = SumY;
+   s->sumAbs = sumAbs;
+   s->trailingValue = trailingValue;
+   s->barsSinceReseed = barsSinceReseed;
+}
+
+/* ---- blk: the blocked body, hand-carried loops ----------------------- */
+
+/* Pads hold bars [a-T, b] of a block [a, b], T = k-1: the tail the next
+ * block's windows reach back into. In/out buffers must not overlap. */
+static TA_RetCode sqzmom_blocked( int startIdx, int endIdx,
+                                  const double inHigh[], const double inLow[], const double inClose[],
+                                  int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                                  double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                                  int blockLen,
+                                  int *outBegIdx, int *outNBElement,
+                                  double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode;
+   int lookbackTotal, stageIdx, T, padLen, a, b, f, g, t, i, len, padBase, ob, on, first;
+   double *mem, *devPad, *kcmPad, *trPad, *raw, *bandPad, *midPad, *sdPad;
+   double dev, up, lo, centre, band;
+   SmaCarry kcm = {0}, bandS = {0}, mid = {0};
+   VarCarry var = {0};
+   LrCarry lr = {0};
+
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+      return TA_BAD_PARAM;
+   lookbackTotal = TA_SQZMOM_Lookback( optInBBPeriod, optInNbDev, optInKCPeriod,
+                                       optInFactorWide, optInFactorNormal, optInFactorNarrow );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   *outBegIdx = 0;
+   *outNBElement = 0;
+   if( lookbackTotal > endIdx )
+      return TA_SUCCESS;
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+   if( startIdx > endIdx )
+      return TA_SUCCESS;
+
+   T = optInKCPeriod - 1;
+   stageIdx = startIdx - T;
+   padLen = T + blockLen;
+   mem = malloc( (size_t)(3 * padLen + (padLen + T) + 3 * blockLen) * sizeof(double) );
+   if( !mem )
+      return TA_ALLOC_ERR;
+   devPad = mem;
+   kcmPad = devPad + padLen;
+   trPad = kcmPad + padLen;
+   raw = trPad + padLen;
+   bandPad = raw + padLen + T;
+   midPad = bandPad + blockLen;
+   sdPad = midPad + blockLen;
+
+   first = 1;
+   a = startIdx;
+   len = 0;
+   while( a <= endIdx )
+   {
+      b = a + blockLen - 1;
+      if( b > endIdx )
+         b = endIdx;
+      padBase = a - T;
+      if( first )
+         f = stageIdx;
+      else
+      {
+         f = a;
+         probeEdges++;
+         memmove( devPad, devPad + len, (size_t)T * sizeof(double) );
+         memmove( trPad, trPad + len, (size_t)T * sizeof(double) );
+      }
+      len = b - a + 1;
+
+      /* The extrema restart on the grid the single-range call scans. */
+      g = f - ((f - stageIdx) % optInKCPeriod);
+      retCode = TA_MIDPRICE( g, b, inHigh, inLow, optInKCPeriod, &ob, &on, raw );
+      if( retCode != TA_SUCCESS || ob != g || on != b - g + 1 )
+      {
+         free( mem );
+         return retCode != TA_SUCCESS ? retCode : TA_INTERNAL_ERROR(1);
+      }
+      sma_blk( &kcm, inClose, 0, optInKCPeriod, f, b, kcmPad + (f - padBase) );
+      for( t = f; t <= b; t++ )
+         devPad[t - padBase] = inClose[t] - (raw[t - g] + kcmPad[t - padBase]) / 2.0;
+
+      retCode = TA_TRANGE( f, b, inHigh, inLow, inClose, &ob, &on, trPad + (f - padBase) );
+      if( retCode != TA_SUCCESS || ob != f || on != b - f + 1 )
+      {
+         free( mem );
+         return retCode != TA_SUCCESS ? retCode : TA_INTERNAL_ERROR(2);
+      }
+      sma_blk( &bandS, trPad, padBase, optInKCPeriod, a, b, bandPad );
+      sma_blk( &mid, inClose, 0, optInBBPeriod, a, b, midPad );
+      var_blk( &var, inClose, 0, optInBBPeriod, a, b, sdPad );
+      for( i = 0; i < len; i += 1 )
+         sdPad[i] = sqrt(sdPad[i]);
+      lr_blk( &lr, devPad, padBase, optInKCPeriod, a, b, outMomentum + (a - startIdx) );
+
+      for( i = 0; i < len; i += 1 )
+      {
+         dev = sdPad[i] * optInNbDev;
+         up = midPad[i] + dev;
+         lo = midPad[i] - dev;
+         centre = kcmPad[i + T];
+         band = bandPad[i];
+         outSqueeze[a - startIdx + i] = SQZ_LEVEL( lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow );
+      }
+      first = 0;
+      a = b + 1;
+   }
+   free( mem );
+   *outBegIdx = startIdx;
+   *outNBElement = endIdx - startIdx + 1;
+   return TA_SUCCESS;
+}
+
+/* ---- five / one: the generated composition --------------------------- */
+
+/* The generated argument checks and range clamp, verbatim. */
+#define SQZ_VALIDATE() \
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) ) \
+      return TA_OUT_OF_RANGE_START_INDEX; \
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) ) \
+      return TA_OUT_OF_RANGE_END_INDEX; \
+   if( (int)optInBBPeriod == TA_INTEGER_DEFAULT ) \
+      optInBBPeriod = 20; \
+   else if( (int)optInBBPeriod < 2 || (int)optInBBPeriod > 100000 ) \
+      return TA_BAD_PARAM; \
+   if( optInNbDev == TA_REAL_DEFAULT ) \
+      optInNbDev = 2; \
+   else if( !(optInNbDev >= 0e0 && optInNbDev <= TA_REAL_MAX) ) \
+      return TA_BAD_PARAM; \
+   if( (int)optInKCPeriod == TA_INTEGER_DEFAULT ) \
+      optInKCPeriod = 20; \
+   else if( (int)optInKCPeriod < 2 || (int)optInKCPeriod > 100000 ) \
+      return TA_BAD_PARAM; \
+   if( optInFactorWide == TA_REAL_DEFAULT ) \
+      optInFactorWide = 2; \
+   else if( !(optInFactorWide >= 0e0 && optInFactorWide <= TA_REAL_MAX) ) \
+      return TA_BAD_PARAM; \
+   if( optInFactorNormal == TA_REAL_DEFAULT ) \
+      optInFactorNormal = 1.5; \
+   else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= TA_REAL_MAX) ) \
+      return TA_BAD_PARAM; \
+   if( optInFactorNarrow == TA_REAL_DEFAULT ) \
+      optInFactorNarrow = 1; \
+   else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= TA_REAL_MAX) ) \
+      return TA_BAD_PARAM; \
+   if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outMomentum || !outSqueeze ) \
+      return TA_BAD_PARAM; \
+   if( (const void *)outMomentum == (const void *)outSqueeze ) \
+      return TA_BAD_PARAM; \
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) \
+   { \
+      return TA_BAD_PARAM; \
+   } \
+   lookbackTotal = TA_SQZMOM_Lookback(optInBBPeriod,optInNbDev,optInKCPeriod,optInFactorWide,optInFactorNormal,optInFactorNarrow); \
+   if( lookbackTotal > endIdx ) \
+   { \
+      *outBegIdx= 0; \
+      *outNBElement= 0; \
+      return TA_SUCCESS; \
+   } \
+   if( startIdx < lookbackTotal ) \
+   { \
+      startIdx = lookbackTotal; \
+   } \
+   if( startIdx > endIdx ) \
+   { \
+      *outBegIdx= 0; \
+      *outNBElement= 0; \
+      return TA_SUCCESS; \
+   }
+
+#define FIVE_FREE() do { free(tempDev); free(tempWork); free(tempKCM); free(tempMid); free(tempSD); } while( 0 )
+#define FIVE_FAIL( rc ) do { FIVE_FREE(); *outBegIdx= 0; *outNBElement= 0; return (rc); } while( 0 )
+
+static TA_RetCode sqzmom_five( int startIdx, int endIdx,
+                               const double inHigh[], const double inLow[], const double inClose[],
+                               int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                               double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                               int blockLen,
+                               int *outBegIdx, int *outNBElement,
+                               double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode;
+   int lookbackTotal, stageLookback, stageIdx, stageLen, i, n;
+   int tempBegIdx, tempNbElement, kcmNb, sdNb, kcmShift;
+   double *tempDev, *tempWork, *tempKCM, *tempMid, *tempSD;
+   double dev, up, lo, centre, band;
+
+   (void)blockLen;
+   SQZ_VALIDATE()
+   n = endIdx - startIdx + 1;
+   stageLookback = TA_LINEARREG_Lookback(optInKCPeriod);
+   stageIdx = startIdx - stageLookback;
+   stageLen = n + stageLookback;
+   tempDev = malloc(stageLen * sizeof(double));
+   if( !tempDev )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   tempWork = malloc(stageLen * sizeof(double));
+   if( !tempWork )
+   {
+      free(tempDev);
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   tempKCM = malloc(stageLen * sizeof(double));
+   if( !tempKCM )
+   {
+      free(tempDev);
+      free(tempWork);
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   tempMid = malloc(n * sizeof(double));
+   if( !tempMid )
+   {
+      free(tempDev);
+      free(tempWork);
+      free(tempKCM);
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   tempSD = malloc(n * sizeof(double));
+   if( !tempSD )
+   {
+      free(tempDev);
+      free(tempWork);
+      free(tempKCM);
+      free(tempMid);
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   retCode = TA_MIDPRICE(stageIdx,endIdx,inHigh,inLow,optInKCPeriod,outBegIdx,outNBElement,tempDev);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   retCode = TA_SMA(stageIdx,endIdx,inClose,optInKCPeriod,&tempBegIdx,&kcmNb,tempKCM);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   for( i = 0; i < stageLen; i += 1 )
+   {
+      tempDev[i] = inClose[*outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
+   }
+   retCode = TA_TRANGE(stageIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempWork);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   retCode = TA_SMA(0,stageLen - 1,tempWork,optInKCPeriod,&tempBegIdx,&tempNbElement,tempWork);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   retCode = TA_SMA(startIdx,endIdx,inClose,optInBBPeriod,&tempBegIdx,&tempNbElement,tempMid);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   retCode = TA_STDDEV(startIdx,endIdx,inClose,optInBBPeriod,1.0,&tempBegIdx,&sdNb,tempSD);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   kcmShift = kcmNb - sdNb;
+   retCode = TA_LINEARREG(0,stageLen - 1,tempDev,optInKCPeriod,&tempBegIdx,&tempNbElement,outMomentum);
+   if( retCode != TA_SUCCESS ) FIVE_FAIL( retCode );
+   for( i = 0; i < n; i += 1 )
+   {
+      dev = tempSD[i] * optInNbDev;
+      up = tempMid[i] + dev;
+      lo = tempMid[i] - dev;
+      centre = tempKCM[i + kcmShift];
+      band = tempWork[i];
+      outSqueeze[i] = SQZ_LEVEL( lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow );
+   }
+   FIVE_FREE();
+   *outBegIdx= startIdx;
+   *outNBElement= n;
+   return TA_SUCCESS;
+}
+
+#define ONE_FAIL( rc ) do { free(mem); *outBegIdx= 0; *outNBElement= 0; return (rc); } while( 0 )
+
+static TA_RetCode sqzmom_one( int startIdx, int endIdx,
+                              const double inHigh[], const double inLow[], const double inClose[],
+                              int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                              double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                              int blockLen,
+                              int *outBegIdx, int *outNBElement,
+                              double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode;
+   int lookbackTotal, stageLookback, stageIdx, stageLen, i, n;
+   int tempBegIdx, tempNbElement, kcmNb, sdNb, kcmShift;
+   double *mem, *tempDev, *tempWork, *tempKCM, *tempMid, *tempSD;
+   double dev, up, lo, centre, band;
+
+   (void)blockLen;
+   SQZ_VALIDATE()
+   n = endIdx - startIdx + 1;
+   stageLookback = TA_LINEARREG_Lookback(optInKCPeriod);
+   stageIdx = startIdx - stageLookback;
+   stageLen = n + stageLookback;
+   mem = malloc((3 * (size_t)stageLen + 2 * (size_t)n) * sizeof(double));
+   if( !mem )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_ALLOC_ERR;
+   }
+   tempDev = mem;
+   tempWork = tempDev + stageLen;
+   tempKCM = tempWork + stageLen;
+   tempMid = tempKCM + stageLen;
+   tempSD = tempMid + n;
+   retCode = TA_MIDPRICE(stageIdx,endIdx,inHigh,inLow,optInKCPeriod,outBegIdx,outNBElement,tempDev);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   retCode = TA_SMA(stageIdx,endIdx,inClose,optInKCPeriod,&tempBegIdx,&kcmNb,tempKCM);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   for( i = 0; i < stageLen; i += 1 )
+   {
+      tempDev[i] = inClose[*outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
+   }
+   retCode = TA_TRANGE(stageIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempWork);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   retCode = TA_SMA(0,stageLen - 1,tempWork,optInKCPeriod,&tempBegIdx,&tempNbElement,tempWork);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   retCode = TA_SMA(startIdx,endIdx,inClose,optInBBPeriod,&tempBegIdx,&tempNbElement,tempMid);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   retCode = TA_STDDEV(startIdx,endIdx,inClose,optInBBPeriod,1.0,&tempBegIdx,&sdNb,tempSD);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   kcmShift = kcmNb - sdNb;
+   retCode = TA_LINEARREG(0,stageLen - 1,tempDev,optInKCPeriod,&tempBegIdx,&tempNbElement,outMomentum);
+   if( retCode != TA_SUCCESS ) ONE_FAIL( retCode );
+   for( i = 0; i < n; i += 1 )
+   {
+      dev = tempSD[i] * optInNbDev;
+      up = tempMid[i] + dev;
+      lo = tempMid[i] - dev;
+      centre = tempKCM[i + kcmShift];
+      band = tempWork[i];
+      outSqueeze[i] = SQZ_LEVEL( lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow );
+   }
+   free(mem);
+   *outBegIdx= startIdx;
+   *outNBElement= n;
+   return TA_SUCCESS;
+}
+
+/* ---- strm: the public composed stream -------------------------------- */
+
+static TA_RetCode sqzmom_strm( int startIdx, int endIdx,
+                               const double inHigh[], const double inLow[], const double inClose[],
+                               int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                               double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                               int blockLen,
+                               int *outBegIdx, int *outNBElement,
+                               double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode;
+   TA_SQZMOM_Stream *h = NULL;
+   int lookbackTotal, base, ob, on, t;
+
+   (void)blockLen;
+   SQZ_VALIDATE()
+   /* History of exactly lookbackTotal+1 bars: its one output is bar startIdx. */
+   base = startIdx - lookbackTotal;
+   retCode = TA_SQZMOM_OpenAndFill( &h, inHigh + base, inLow + base, inClose + base, lookbackTotal + 1,
+                                    optInBBPeriod, optInNbDev, optInKCPeriod,
+                                    optInFactorWide, optInFactorNormal, optInFactorNarrow,
+                                    &ob, &on, outMomentum, outSqueeze );
+   if( retCode != TA_SUCCESS || ob != lookbackTotal || on != 1 )
+   {
+      TA_SQZMOM_Close( h );
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return retCode != TA_SUCCESS ? retCode : TA_INTERNAL_ERROR(3);
+   }
+   for( t = startIdx + 1; t <= endIdx; t++ )
+   {
+      retCode = TA_SQZMOM_Update( h, inHigh[t], inLow[t], inClose[t],
+                                  &outMomentum[t - startIdx], &outSqueeze[t - startIdx] );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_SQZMOM_Close( h );
+         *outBegIdx = 0;
+         *outNBElement = 0;
+         return retCode;
+      }
+   }
+   TA_SQZMOM_Close( h );
+   *outBegIdx = startIdx;
+   *outNBElement = endIdx - startIdx + 1;
+   return TA_SUCCESS;
+}
+
+/* ---- sblk: blocked, carried by the sub-functions' stream handles ------ */
+
+/* Each handle is opened so that the bar it last consumed is startIdx and its
+ * rolling state began where the batch sub-call's does (TA_SQZMOM_OpenBody):
+ *   MIDPRICE(k), SMA(k) close, TRANGE   start at stageIdx = startIdx-(k-1)
+ *   SMA(k) over TR, LINEARREG(k) over DEV  first output at startIdx, their
+ *                                          window [stageIdx, startIdx]
+ *   SMA(b), STDDEV(b) close              start at startIdx
+ * The head arrays are period-sized: the k MID/KCM/TR/DEV values the TR-SMA
+ * and LINEARREG handles take as history. */
+static TA_RetCode sqzmom_sblk( int startIdx, int endIdx,
+                               const double inHigh[], const double inLow[], const double inClose[],
+                               int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                               double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                               int blockLen,
+                               int *outBegIdx, int *outNBElement,
+                               double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode;
+   int lookbackTotal, T, k, bb, stageIdx, n, P, a, e, len, i, ob, on, bad;
+   double *mem, *headMid, *headKcm, *headDev, *headTr;
+   double *midPad, *kcmPad, *devPad, *trPad, *bandPad, *bbPad, *sdPad;
+   double band0, mid0, sd0, dev, up, lo, centre, band;
+   TA_MIDPRICE_Stream *hMid = NULL;
+   TA_SMA_Stream *hKcm = NULL, *hBand = NULL, *hBB = NULL;
+   TA_TRANGE_Stream *hTr = NULL;
+   TA_STDDEV_Stream *hSd = NULL;
+   TA_LINEARREG_Stream *hLr = NULL;
+
+   SQZ_VALIDATE()
+   k = optInKCPeriod;
+   bb = optInBBPeriod;
+   T = k - 1;
+   stageIdx = startIdx - T;
+   n = endIdx - startIdx + 1;
+   P = blockLen;
+   if( P > n - 1 )
+      P = n - 1;
+   if( P < 1 )
+      P = 1;
+   mem = malloc( (size_t)(4 * k + 7 * P) * sizeof(double) );
+   if( !mem )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_ALLOC_ERR;
+   }
+   headMid = mem;
+   headKcm = headMid + k;
+   headDev = headKcm + k;
+   headTr = headDev + k;
+   midPad = headTr + k;
+   kcmPad = midPad + P;
+   devPad = kcmPad + P;
+   trPad = devPad + P;
+   bandPad = trPad + P;
+   bbPad = bandPad + P;
+   sdPad = bbPad + P;
+
+#define SBLK_CHECK( cond, rc ) \
+   do { if( !(cond) ) { retCode = (rc); goto fail; } } while( 0 )
+
+   retCode = TA_MIDPRICE_OpenAndFill( &hMid, inHigh + stageIdx - T, inLow + stageIdx - T, 2 * T + 1, k, &ob, &on, headMid );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   SBLK_CHECK( on == k, TA_INTERNAL_ERROR(10) );
+   retCode = TA_SMA_OpenAndFill( &hKcm, inClose + stageIdx - T, 2 * T + 1, k, &ob, &on, headKcm );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   SBLK_CHECK( on == k, TA_INTERNAL_ERROR(11) );
+   for( i = 0; i < k; i += 1 )
+      headDev[i] = inClose[stageIdx + i] - (headMid[i] + headKcm[i]) / 2.0;
+   retCode = TA_TRANGE_OpenAndFill( &hTr, inHigh + stageIdx - 1, inLow + stageIdx - 1, inClose + stageIdx - 1, k + 1, &ob, &on, headTr );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   SBLK_CHECK( on == k, TA_INTERNAL_ERROR(12) );
+   retCode = TA_SMA_Open( &hBand, headTr, k, k, &band0 );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   retCode = TA_SMA_Open( &hBB, inClose + startIdx - (bb - 1), bb, bb, &mid0 );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   retCode = TA_STDDEV_Open( &hSd, inClose + startIdx - (bb - 1), bb, bb, 1.0, &sd0 );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   retCode = TA_LINEARREG_Open( &hLr, headDev, k, k, &outMomentum[0] );
+   SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+   dev = sd0 * optInNbDev;
+   up = mid0 + dev;
+   lo = mid0 - dev;
+   centre = headKcm[T];
+   band = band0;
+   outSqueeze[0] = SQZ_LEVEL( lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow );
+
+   bad = 0;
+   for( a = startIdx + 1; a <= endIdx; a += P )
+   {
+      const double *h, *l, *c;
+      e = a + P - 1;
+      if( e > endIdx )
+         e = endIdx;
+      len = e - a + 1;
+      h = inHigh + a;
+      l = inLow + a;
+      c = inClose + a;
+      probeEdges++;
+#if PROBE_RESEED
+      /* Mutant: the Keltner centre re-seeded at every block, a correct value
+       * on a different rounding path. It must be one on the momentum path:
+       * a last-bit change in a band mean almost never moves the ordinal. */
+      TA_SMA_Close( hKcm );
+      hKcm = NULL;
+      retCode = TA_SMA_Open( &hKcm, inClose + (a - 1) - T, k, k, &band0 );
+      SBLK_CHECK( retCode == TA_SUCCESS, retCode );
+#endif
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_MIDPRICE_Update( hMid, h[i], l[i], &midPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_SMA_Update( hKcm, c[i], &kcmPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         devPad[i] = c[i] - (midPad[i] + kcmPad[i]) / 2.0;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_TRANGE_Update( hTr, h[i], l[i], c[i], &trPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_SMA_Update( hBand, trPad[i], &bandPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_SMA_Update( hBB, c[i], &bbPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_STDDEV_Update( hSd, c[i], &sdPad[i] ) != TA_SUCCESS;
+      for( i = 0; i < len; i += 1 )
+         bad |= TA_LINEARREG_Update( hLr, devPad[i], &outMomentum[a - startIdx + i] ) != TA_SUCCESS;
+      SBLK_CHECK( !bad, TA_BAD_PARAM );
+      for( i = 0; i < len; i += 1 )
+      {
+         dev = sdPad[i] * optInNbDev;
+         up = bbPad[i] + dev;
+         lo = bbPad[i] - dev;
+         centre = kcmPad[i];
+         band = bandPad[i];
+         outSqueeze[a - startIdx + i] = SQZ_LEVEL( lo, up, centre, band, optInFactorWide, optInFactorNormal, optInFactorNarrow );
+      }
+   }
+   retCode = TA_SUCCESS;
+fail:
+#undef SBLK_CHECK
+   TA_MIDPRICE_Close( hMid );
+   TA_SMA_Close( hKcm );
+   TA_TRANGE_Close( hTr );
+   TA_SMA_Close( hBand );
+   TA_SMA_Close( hBB );
+   TA_STDDEV_Close( hSd );
+   TA_LINEARREG_Close( hLr );
+   free( mem );
+   if( retCode != TA_SUCCESS )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return retCode;
+   }
+   *outBegIdx = startIdx;
+   *outNBElement = n;
+   return TA_SUCCESS;
+}
+
+/* ---- ref: the shipped function in the shared signature ---------------- */
+
+static TA_RetCode sqzmom_ref( int startIdx, int endIdx,
+                              const double inHigh[], const double inLow[], const double inClose[],
+                              int optInBBPeriod, double optInNbDev, int optInKCPeriod,
+                              double optInFactorWide, double optInFactorNormal, double optInFactorNarrow,
+                              int blockLen,
+                              int *outBegIdx, int *outNBElement,
+                              double outMomentum[], int outSqueeze[] )
+{
+   (void)blockLen;
+   return TA_SQZMOM( startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod,
+                     optInFactorWide, optInFactorNormal, optInFactorNarrow,
+                     outBegIdx, outNBElement, outMomentum, outSqueeze );
+}
+
+typedef TA_RetCode (*SqzFn)( int, int, const double *, const double *, const double *,
+                             int, double, int, double, double, double, int,
+                             int *, int *, double *, int * );
+
+typedef struct
+{
+   const char *name;
+   SqzFn fn;
+   int blocked;
+   long long compared, outputs, edges;
+   int fails;
+} Variant;
+
+/* Timing order; [0] is the oracle. */
+static Variant variants[] = {
+   { "ref",  sqzmom_ref,     0, 0, 0, 0, 0 },
+   { "blk",  sqzmom_blocked, 1, 0, 0, 0, 0 },
+   { "five", sqzmom_five,    0, 0, 0, 0, 0 },
+   { "one",  sqzmom_one,     0, 0, 0, 0, 0 },
+   { "strm", sqzmom_strm,    0, 0, 0, 0, 0 },
+   { "sblk", sqzmom_sblk,    1, 0, 0, 0, 0 },
+};
+#define NVAR ((int)(sizeof(variants)/sizeof(variants[0])))
+#define FAILCAP 20
+
+/* ---- input series ----------------------------------------------------- */
+
+static unsigned long long rngState;
+static double rnd( void )
+{
+   rngState = rngState * 6364136223846793005ULL + 1442695040888963407ULL;
+   return (double)(rngState >> 11) / 9007199254740992.0;
+}
+static double cents( double x ) { return floor( x * 100.0 + 0.5 ) / 100.0; }
+
+enum { S_WALK, S_PLATEAU, S_SPIKE, S_ZEROS, S_COUNT };
+static const char *shapeName[S_COUNT] = { "walk", "plateau", "spike", "zeros" };
+
+static void makeSeries( int shape, unsigned long long seed, int n,
+                        double *high, double *low, double *close )
+{
+   int i;
+   double c = 100.0, o, h, l;
+   rngState = seed;
+   for( i = 0; i < n; i++ )
+   {
+      o = c;
+      c = c * (1.0 + 0.02 * (rnd() - 0.5));
+      if( shape == S_PLATEAU && (i / 37) % 2 == 1 )
+         c = o;
+      if( shape == S_SPIKE && i % 53 == 17 )
+         c = c * 1000.0;
+      else if( shape == S_SPIKE && i % 53 == 18 )
+         c = c / 1000.0;
+      c = cents( c );
+      h = cents( (o > c ? o : c) * (1.0 + 0.003 * rnd()) );
+      l = cents( (o < c ? o : c) * (1.0 - 0.003 * rnd()) );
+      if( shape == S_PLATEAU && (i / 37) % 2 == 1 )
+      {
+         h = c;
+         l = c;
+      }
+      high[i] = h;
+      low[i] = l;
+      close[i] = c;
+      if( shape == S_ZEROS )
+      {
+         /* Stretches of mixed-sign zeros between ordinary bars. */
+         if( (i / 29) % 3 != 0 )
+         {
+            high[i] = (rnd() < 0.5) ? 0.0 : -0.0;
+            low[i] = (rnd() < 0.5) ? 0.0 : -0.0;
+            close[i] = (rnd() < 0.5) ? 0.0 : -0.0;
+         }
+         else
+         {
+            high[i] = h - 100.0 + 0.5;
+            low[i] = l - 100.0 - 0.5;
+            close[i] = c - 100.0;
+         }
+      }
+   }
+}
+
+/* ---- comparison ------------------------------------------------------- */
+
+typedef struct { int b, k; double nbdev, fw, fn, fa; } Params;
+
+/* ref against every variant; B-independent variants only when firstB. */
+static int compareAll( const double *high, const double *low, const double *close,
+                       int s, int e, const Params *p, int B, int firstB, int bufLen,
+                       double *refM, int *refS, double *vM, int *vS, const char *what )
+{
+   int rb = -7, rn = -7, vi, fails = 0;
+   TA_RetCode r1, r2;
+
+   r1 = TA_SQZMOM( s, e, high, low, close, p->b, p->nbdev, p->k, p->fw, p->fn, p->fa, &rb, &rn, refM, refS );
+   for( vi = 1; vi < NVAR; vi++ )
+   {
+      Variant *v = &variants[vi];
+      int vb = -7, vn = -7;
+      long long e0;
+      if( (!v->blocked && !firstB) || v->fails >= FAILCAP )
+         continue;
+      memset( vM, 0xA5, (size_t)bufLen * sizeof(double) );
+      memset( vS, 0x5A, (size_t)bufLen * sizeof(int) );
+      e0 = probeEdges;
+      r2 = v->fn( s, e, high, low, close, p->b, p->nbdev, p->k, p->fw, p->fn, p->fa, B, &vb, &vn, vM, vS );
+      v->compared++;
+      v->edges += probeEdges - e0;
+      if( r1 != r2 || rb != vb || rn != vn )
+      {
+         printf( "MISMATCH %s %s b=%d k=%d B=%d [%d,%d]: ret %d/%d beg %d/%d nb %d/%d\n",
+                 v->name, what, p->b, p->k, B, s, e, (int)r1, (int)r2, rb, vb, rn, vn );
+         v->fails++;
+         fails++;
+         continue;
+      }
+      if( r1 != TA_SUCCESS || rn == 0 )
+         continue;
+      v->outputs += rn;
+      if( memcmp( refM, vM, (size_t)rn * sizeof(double) ) != 0 ||
+          memcmp( refS, vS, (size_t)rn * sizeof(int) ) != 0 )
+      {
+         int i;
+         for( i = 0; i < rn; i++ )
+            if( memcmp( &refM[i], &vM[i], sizeof(double) ) != 0 || refS[i] != vS[i] )
+               break;
+         printf( "MISMATCH %s %s b=%d k=%d B=%d [%d,%d] at out %d (bar %d): mom %.17g/%.17g sqz %d/%d\n",
+                 v->name, what, p->b, p->k, B, s, e, i, rb + i, refM[i], vM[i], refS[i], vS[i] );
+         v->fails++;
+         fails++;
+      }
+   }
+   return fails;
+}
+
+static const Params paramSet[] = {
+   { 20, 20, 2.0, 2.0, 1.5, 1.0 },
+   {  2,  2, 2.0, 2.0, 1.5, 1.0 },
+   {  5,  3, 2.0, 2.0, 1.5, 1.0 },
+   {  3,  5, 1.0, 2.0, 2.0, 1.0 },
+   { 14, 20, 2.5, 3.0, 1.5, 0.5 },
+   { 30, 10, 2.0, 2.0, 1.5, 1.0 },
+};
+#define NPARAMS ((int)(sizeof(paramSet)/sizeof(paramSet[0])))
+
+/* Every start and end on a short series, every block length that matters. */
+static int runCheck( void )
+{
+   enum { N = 220 };
+   static double high[N], low[N], close[N], refM[N], vM[N];
+   static int refS[N], vS[N];
+   int shape, pi, bi, s, e, fails = 0, nB;
+   int Bs[16];
+
+   for( shape = 0; shape < S_COUNT; shape++ )
+   {
+      makeSeries( shape, 42 + (unsigned)shape, N, high, low, close );
+      for( pi = 0; pi < NPARAMS; pi++ )
+      {
+         const Params *p = &paramSet[pi];
+         nB = 0;
+         Bs[nB++] = 1; Bs[nB++] = 2; Bs[nB++] = 3; Bs[nB++] = 7;
+         if( p->k > 2 ) Bs[nB++] = p->k - 1;
+         Bs[nB++] = p->k; Bs[nB++] = p->k + 1;
+         Bs[nB++] = 32 * p->k - 1; Bs[nB++] = 32 * p->k; Bs[nB++] = 32 * p->k + 1;
+         Bs[nB++] = 64; Bs[nB++] = 1024;
+         for( bi = 0; bi < nB; bi++ )
+            for( s = 0; s < N; s++ )
+               for( e = s; e < N; e++ )
+                  fails += compareAll( high, low, close, s, e, p, Bs[bi], bi == 0, N,
+                                       refM, refS, vM, vS, shapeName[shape] );
+      }
+   }
+   return fails;
+}
+
+/* Long series: the 32*period countdowns fire many times, on and off block edges. */
+static int runLong( void )
+{
+   enum { N = 100000 };
+   double *high = malloc( N * sizeof(double) ), *low = malloc( N * sizeof(double) );
+   double *close = malloc( N * sizeof(double) ), *refM = malloc( N * sizeof(double) );
+   double *vM = malloc( N * sizeof(double) );
+   int *refS = malloc( N * sizeof(int) ), *vS = malloc( N * sizeof(int) );
+   static const int Bs[] = { 1, 7, 19, 20, 21, 639, 640, 641, 1000, 1024, 4096 };
+   static const int starts[] = { 0, 1, 38, 39, 40, 777, 50000 };
+   int shape, pi, bi, si, fails = 0;
+
+   for( shape = 0; shape < S_COUNT; shape++ )
+   {
+      makeSeries( shape, 4242 + (unsigned)shape, N, high, low, close );
+      for( pi = 0; pi < NPARAMS; pi++ )
+         for( bi = 0; bi < (int)(sizeof(Bs)/sizeof(Bs[0])); bi++ )
+            for( si = 0; si < (int)(sizeof(starts)/sizeof(starts[0])); si++ )
+            {
+               if( Bs[bi] == 1 && si > 1 )
+                  continue;
+               /* Bs[1] is the first length every start runs at. */
+               fails += compareAll( high, low, close, starts[si], N - 1 - si, &paramSet[pi], Bs[bi], bi == 1, N,
+                                    refM, refS, vM, vS, shapeName[shape] );
+            }
+   }
+   free( high ); free( low ); free( close ); free( refM ); free( vM ); free( refS ); free( vS );
+   return fails;
+}
+
+/* ---- timing ----------------------------------------------------------- */
+
+static double nowNs( void )
+{
+   struct timespec ts;
+   clock_gettime( CLOCK_MONOTONIC, &ts );
+   return (double)ts.tv_sec * 1e9 + (double)ts.tv_nsec;
+}
+static long minflt( void )
+{
+   struct rusage ru;
+   getrusage( RUSAGE_SELF, &ru );
+   return ru.ru_minflt;
+}
+static int cmpD( const void *x, const void *y )
+{
+   double a = *(const double *)x, b = *(const double *)y;
+   return (a > b) - (a < b);
+}
+
+/* PROBE_ONLY=ref,blk times those variants alone: the variants share one
+ * allocator, and glibc's mmap threshold moves with what any of them frees. */
+static int timed( const char *name )
+{
+   const char *only = getenv( "PROBE_ONLY" ), *hit;
+   size_t len = strlen( name );
+   if( !only || !*only )
+      return 1;
+   for( hit = strstr( only, name ); hit; hit = strstr( hit + 1, name ) )
+      if( (hit == only || hit[-1] == ',') && (hit[len] == 0 || hit[len] == ',') )
+         return 1;
+   return 0;
+}
+
+static int runTime( int n, int B, int reps, int period, int fresh )
+{
+   double *high = malloc( (size_t)n * sizeof(double) ), *low = malloc( (size_t)n * sizeof(double) );
+   double *close = malloc( (size_t)n * sizeof(double) ), *fixM = malloc( (size_t)n * sizeof(double) );
+   int *fixS = malloc( (size_t)n * sizeof(int) );
+   double *tNs = malloc( (size_t)NVAR * (size_t)reps * sizeof(double) );
+   int tCap = reps;
+   long faults[16] = {0};
+   Params p = paramSet[0];
+   int r, vi, ob, on, inner, j, used = 0, stable;
+   long f0;
+   double t0, sink = 0.0, lo1, lo2, tol = 0.01, warmUntil;
+   const char *tolEnv = getenv( "PROBE_TOL" );
+
+   if( n < 2 || B < 1 || reps < 2 || period < 2 )
+   {
+      printf( "time: bad arguments\n" );
+      return 2;
+   }
+   p.b = period;
+   p.k = period;
+   makeSeries( S_WALK, 7, n, high, low, close );
+   memset( fixM, 0, (size_t)n * sizeof(double) );
+   memset( fixS, 0, (size_t)n * sizeof(int) );
+   inner = 2000000 / n;
+   if( inner < 1 )
+      inner = 1;
+   if( tolEnv && atof( tolEnv ) > 0.0 )
+      tol = atof( tolEnv );
+   /* Warm-up reps for PROBE_WARM_MS (default 300), then at least two timed
+    * ones; stop as soon as every variant's two lowest times agree within tol,
+    * or at `reps`. A rep is already `inner` calls, so two agreeing reps
+    * reproduce the floor; the warm-up is by time because a process that has
+    * not reached its speed level yet agrees with itself too. */
+   warmUntil = nowNs() + 1e6 * (getenv( "PROBE_WARM_MS" ) ? atof( getenv( "PROBE_WARM_MS" ) ) : 300.0);
+   for( r = -1; r < reps; r++ )
+   {
+      for( vi = 0; vi < NVAR; vi++ )
+      {
+         SqzFn fn = variants[vi].fn;
+         if( !timed( variants[vi].name ) )
+            continue;
+         f0 = minflt();
+         t0 = nowNs();
+         for( j = 0; j < inner; j++ )
+         {
+            double *outM = fixM;
+            int *outS = fixS;
+            if( fresh )
+            {
+               outM = malloc( (size_t)n * sizeof(double) );
+               outS = malloc( (size_t)n * sizeof(int) );
+            }
+            on = 0;
+            fn( 0, n - 1, high, low, close, p.b, p.nbdev, p.k, p.fw, p.fn, p.fa, B, &ob, &on, outM, outS );
+            if( on > 0 )
+               sink += outM[on - 1] + outS[on / 2];
+            if( fresh )
+            {
+               free( outM );
+               free( outS );
+            }
+         }
+         if( r >= 0 )
+         {
+            tNs[vi * tCap + r] = (nowNs() - t0) / inner;
+            faults[vi] += minflt() - f0;
+         }
+      }
+      if( r < 0 )
+      {
+         if( nowNs() < warmUntil )
+            r = -2;
+         continue;
+      }
+      used = r + 1;
+      if( used < 2 )
+         continue;
+      stable = 1;
+      for( vi = 0; vi < NVAR; vi++ )
+      {
+         if( !timed( variants[vi].name ) )
+            continue;
+         lo1 = lo2 = 1e300;
+         for( j = 0; j < used; j++ )
+         {
+            double t = tNs[vi * tCap + j];
+            if( t < lo1 ) { lo2 = lo1; lo1 = t; }
+            else if( t < lo2 ) lo2 = t;
+         }
+         if( lo2 > lo1 * (1.0 + tol) )
+            stable = 0;
+      }
+      if( stable )
+         break;
+   }
+   printf( "time: points=%d blockLen=%d reps=%d/%d%s inner=%d period=%d fresh=%d tol=%g only=%s\n",
+           n, B, used, reps, used == reps && reps > 2 ? " (cap)" : "", inner, period, fresh, tol,
+           getenv( "PROBE_ONLY" ) ? getenv( "PROBE_ONLY" ) : "all" );
+   reps = used;
+   for( vi = 0; vi < NVAR; vi++ )
+   {
+      if( !timed( variants[vi].name ) )
+         continue;
+      double *t = &tNs[vi * tCap];
+      qsort( t, (size_t)reps, sizeof(double), cmpD );
+      printf( "  %-4s min %10.0f  2nd %10.0f  med %10.0f  max %10.0f ns/call  min %7.3f ns/bar  %8.2f minflt/call\n",
+              variants[vi].name, t[0], t[reps > 1 ? 1 : 0], t[reps / 2], t[reps - 1], t[0] / n,
+              (double)faults[vi] / ((double)reps * inner) );
+   }
+   printf( "  sink %g\n", sink );
+   free( high ); free( low ); free( close ); free( fixM ); free( fixS ); free( tNs );
+   return 0;
+}
+
+int main( int argc, char **argv )
+{
+   int fails, vi, vacuous = 0;
+   if( TA_Initialize() != TA_SUCCESS )
+      return 2;
+#ifdef __APPLE__
+   /* No affinity on Apple Silicon: the QoS class is what keeps the thread off the E-cores. */
+   pthread_set_qos_class_self_np( QOS_CLASS_USER_INITIATED, 0 );
+#endif
+   if( argc >= 2 && strcmp( argv[1], "check" ) == 0 )
+      fails = runCheck();
+   else if( argc >= 2 && strcmp( argv[1], "long" ) == 0 )
+      fails = runLong();
+   else if( argc >= 3 && strcmp( argv[1], "spin" ) == 0 )
+   {
+      /* Busy for that many seconds: brings a sleeping core up to frequency. */
+      double until = nowNs() + 1e9 * atof( argv[2] );
+      volatile double x = 0.0;
+      while( nowNs() < until )
+         x += 1.0;
+      return 0;
+   }
+   else if( argc >= 5 && strcmp( argv[1], "time" ) == 0 )
+      return runTime( atoi( argv[2] ), atoi( argv[3] ), atoi( argv[4] ),
+                      argc >= 6 ? atoi( argv[5] ) : 20, argc >= 7 ? atoi( argv[6] ) : 0 );
+   else
+   {
+      printf( "usage: probe check | probe long | probe spin <secs> | probe time <points> <blockLen> <reps> [period] [fresh]\n" );
+      return 2;
+   }
+   for( vi = 1; vi < NVAR; vi++ )
+   {
+      Variant *v = &variants[vi];
+      printf( "%s %-4s: %lld calls compared, %lld outputs, %lld block edges crossed, %d mismatch(es)%s\n",
+              argv[1], v->name, v->compared, v->outputs, v->edges, v->fails,
+              v->fails >= FAILCAP ? " (stopped at cap)" : "" );
+      if( v->outputs == 0 || (v->blocked && v->edges == 0) )
+         vacuous = 1;
+   }
+   if( vacuous )
+   {
+      printf( "VACUOUS: a variant compared no output, or a blocked one crossed no block edge\n" );
+      return 3;
+   }
+   printf( "%s: %s\n", argv[1], fails ? "FAIL" : "PASS" );
+   return fails ? 1 : 0;
+}
