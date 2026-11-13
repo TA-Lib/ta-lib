@@ -10,8 +10,19 @@
 //! exactly what the strided replay leaves there. Anything else answers `None`,
 //! and the opener keeps its single strided body.
 
-use crate::ir::{BinOp, Expr, Statement};
-use crate::streaming::{expr_effect, rewrite_stmts, walk_expr, walk_stmt_exprs};
+use crate::helper_registry::HelperRegistry;
+use crate::ir::{BinOp, Expr, FuncDef, Statement};
+use crate::streaming::{expr_effect, rewrite_stmts, walk_expr, walk_stmt_exprs, StreamModel};
+
+/// An opener whose body is offered to the split.
+pub(crate) fn is_framed(func: &FuncDef, model: &StreamModel) -> bool {
+    func.is_candlestick() && model.identity.is_none()
+}
+
+/// A call every backend may let a decision make.
+pub(crate) fn is_pure_call(n: &str, helpers: &HelperRegistry) -> bool {
+    super::eager_select::is_pseudo_call(n) || super::builtins::MathFn::from_name(n).is_some() || helpers.get(n).is_some()
+}
 
 /// `body` for the stride-0 frame, or `None` when it does not split.
 ///
@@ -19,43 +30,7 @@ use crate::streaming::{expr_effect, rewrite_stmts, walk_expr, walk_stmt_exprs};
 /// `pure` vouches for a call a decision may make.
 pub(crate) fn sink_body(body: &[Statement], outputs: &[String], pure: &dyn Fn(&str) -> bool) -> Option<Vec<Statement>> {
     let is_out = |n: &str| outputs.iter().any(|o| o == n);
-    let storing: Vec<usize> = (0..body.len()).filter(|&i| stores_output(&body[i], &is_out)).collect();
-    let [at] = storing[..] else { return None };
-    let Statement::DoWhile { condition, body: pass } = &body[at] else { return None };
-    let Expr::BinOp(counter, BinOp::LessEq, bound) = condition else { return None };
-    let Expr::Var(counter) = counter.as_ref() else { return None };
-    // A declaration in the pass would be hoisted to the frame's head once the
-    // last bar's copy of it sits at the top level.
-    if reads_output(body, &is_out) || returns_or_leaves(pass) || pass.iter().any(|s| matches!(s, Statement::VarDecl { .. })) {
-        return None;
-    }
-    let assigned = assigned_names(pass);
-    if mentions(bound, &|n| assigned.iter().any(|a| a == n)) {
-        return None;
-    }
-    let steps = pass.iter().filter(|s| is_unit_step(s, counter)).count();
-    if steps != 1 || assigned.iter().filter(|n| *n == counter).count() != 1 {
-        return None;
-    }
-    let cursor = store_cursor(pass, &is_out)?;
-
-    let decide = |s: &Statement| stores_output(s, &is_out) || stmt_mentions(s, &|n| n == cursor);
-    let clean = |e: &Expr| !expr_effect(e, pure) && !mentions(e, &|n| is_out(n) || n == cursor);
-    let mut path = Path { moved: 0, stored: false };
-    let mut moves = Vec::with_capacity(pass.len());
-    for s in pass {
-        let before = path.moved;
-        if decide(s) {
-            scan(std::slice::from_ref(s), &cursor, &is_out, &clean, &mut path)?;
-            moves.push(Some(path.moved - before));
-        } else {
-            moves.push(None);
-        }
-    }
-    if !path.stored {
-        return None;
-    }
-
+    let Split { at, counter, bound, pass, cursor, moves, .. } = split(body, &is_out, pure)?;
     let mut history = Vec::new();
     for (k, s) in pass.iter().enumerate() {
         match moves[k] {
@@ -67,7 +42,7 @@ pub(crate) fn sink_body(body: &[Statement], outputs: &[String], pure: &dyn Fn(&s
     }
     let mut out = body[..at].to_vec();
     out.push(Statement::While {
-        condition: Expr::BinOp(Box::new(Expr::Var(counter.clone())), BinOp::Less, bound.clone()),
+        condition: Expr::BinOp(Box::new(Expr::Var(counter.to_string())), BinOp::Less, Box::new(bound.clone())),
         body: history,
     });
     for (k, s) in pass.iter().enumerate() {
@@ -79,6 +54,58 @@ pub(crate) fn sink_body(body: &[Statement], outputs: &[String], pure: &dyn Fn(&s
     }
     out.extend_from_slice(&body[at + 1..]);
     Some(out)
+}
+
+/// The storing loop of a body that splits, and how each statement of its pass
+/// moves the store cursor: `Some(steps)` for a decision, `None` for a carried
+/// statement.
+struct Split<'a> {
+    at: usize,
+    counter: &'a str,
+    bound: &'a Expr,
+    pass: &'a [Statement],
+    cursor: String,
+    moves: Vec<Option<usize>>,
+}
+
+fn split<'a>(body: &'a [Statement], is_out: &dyn Fn(&str) -> bool, pure: &dyn Fn(&str) -> bool) -> Option<Split<'a>> {
+    let storing: Vec<usize> = (0..body.len()).filter(|&i| stores_output(&body[i], is_out)).collect();
+    let [at] = storing[..] else { return None };
+    let Statement::DoWhile { condition, body: pass } = &body[at] else { return None };
+    let Expr::BinOp(counter, BinOp::LessEq, bound) = condition else { return None };
+    let Expr::Var(counter) = counter.as_ref() else { return None };
+    // A declaration in the pass would be hoisted to the frame's head once the
+    // last bar's copy of it sits at the top level.
+    if reads_output(body, is_out) || returns_or_leaves(pass) || pass.iter().any(|s| matches!(s, Statement::VarDecl { .. })) {
+        return None;
+    }
+    let assigned = assigned_names(pass);
+    if mentions(bound, &|n| assigned.iter().any(|a| a == n)) {
+        return None;
+    }
+    let steps = pass.iter().filter(|s| is_unit_step(s, counter)).count();
+    if steps != 1 || assigned.iter().filter(|n| *n == counter).count() != 1 {
+        return None;
+    }
+    let cursor = store_cursor(pass, is_out)?;
+
+    let decide = |s: &Statement| stores_output(s, is_out) || stmt_mentions(s, &|n| n == cursor);
+    let clean = |e: &Expr| !expr_effect(e, pure) && !mentions(e, &|n| is_out(n) || n == cursor);
+    let mut path = Path { moved: 0, stored: false };
+    let mut moves = Vec::with_capacity(pass.len());
+    for s in pass {
+        let before = path.moved;
+        if decide(s) {
+            scan(std::slice::from_ref(s), &cursor, is_out, &clean, &mut path)?;
+            moves.push(Some(path.moved - before));
+        } else {
+            moves.push(None);
+        }
+    }
+    if !path.stored {
+        return None;
+    }
+    Some(Split { at, counter, bound, pass, cursor, moves })
 }
 
 #[derive(Clone, Copy)]
@@ -249,16 +276,22 @@ fn returns_or_leaves(pass: &[Statement]) -> bool {
     walk(pass, false)
 }
 
-/// Every variable assigned in `stmts`, once per assignment.
+/// Every variable assigned in `stmts`, once per assignment. A variable whose
+/// address is taken counts as assigned there.
 fn assigned_names(stmts: &[Statement]) -> Vec<String> {
     let mut out = Vec::new();
     each_stmt(stmts, &mut |s| {
-        if let Statement::Assign { target: Expr::Var(n), .. } = s {
+        if let Statement::Assign { target: Expr::Var(n) | Expr::PointerDeref(n), .. } = s {
             out.push(n.clone());
         }
         walk_stmt_exprs_shallow(s, &mut |e| {
             walk_expr(e, &mut |x| {
-                if let Expr::PostIncrement(v) | Expr::PreIncrement(v) | Expr::PostDecrement(v) | Expr::PreDecrement(v) = x {
+                if let Expr::PostIncrement(v)
+                | Expr::PreIncrement(v)
+                | Expr::PostDecrement(v)
+                | Expr::PreDecrement(v)
+                | Expr::AddressOf(v) = x
+                {
                     if let Expr::Var(n) = v.as_ref() {
                         out.push(n.clone());
                     }
@@ -329,5 +362,46 @@ fn walk_stmt_exprs_shallow(s: &Statement, f: &mut dyn FnMut(&Expr)) {
             f(value);
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn var(n: &str) -> Expr {
+        Expr::Var(n.to_string())
+    }
+
+    /// `do { <pass> } while( i <= endIdx );`, the pass storing `out[outIdx++]`
+    /// and stepping `i` before or after the store.
+    fn opener(step_first: bool) -> Vec<Statement> {
+        let store = Statement::Assign {
+            target: Expr::ArrayAccess("out".to_string(), Box::new(Expr::PostIncrement(Box::new(var("outIdx"))))),
+            value: Expr::IntLiteral(1),
+            compound: false,
+        };
+        let pass = if step_first { vec![step("i", 1), store] } else { vec![store, step("i", 1)] };
+        vec![Statement::DoWhile {
+            condition: Expr::BinOp(Box::new(var("i")), BinOp::LessEq, Box::new(var("endIdx"))),
+            body: pass,
+        }]
+    }
+
+    /// A counter or bound written through its address or a pointer keeps the
+    /// single body.
+    #[test]
+    fn a_write_through_an_address_or_a_pointer_does_not_split() {
+        let outs = ["out".to_string()];
+        let pure = |_: &str| true;
+        let by_address = Statement::Expr(Expr::FuncCall("advance".to_string(), vec![Expr::AddressOf(Box::new(var("i")))]));
+        let through_pointer =
+            Statement::Assign { target: Expr::PointerDeref("endIdx".to_string()), value: Expr::IntLiteral(3), compound: false };
+        for write in [by_address, through_pointer] {
+            let mut body = opener(false);
+            let Some(Statement::DoWhile { body: pass, .. }) = body.first_mut() else { unreachable!() };
+            pass.insert(0, write.clone());
+            assert!(sink_body(&body, &outs, &pure).is_none(), "sink_body splits around {write:?}");
+        }
     }
 }

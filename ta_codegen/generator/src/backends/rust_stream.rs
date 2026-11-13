@@ -2213,7 +2213,7 @@ fn emit_open_internal(
 }
 
 /// A candlestick opener's two frames, each a whole cleaned region: stride 1's,
-/// and stride 0's from [`super::rust_open_frames::sink_body`]. `None` keeps the
+/// and stride 0's from [`super::open_frames::sink_body`]. `None` keeps the
 /// single strided body.
 fn open_frames(
     func: &FuncDef,
@@ -2223,19 +2223,17 @@ fn open_frames(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> Option<(Vec<Statement>, Vec<Statement>)> {
-    if !func.is_candlestick() || model.identity.is_some() {
+    if !super::open_frames::is_framed(func, model) {
         return None;
     }
     let fill = fold_open_region(func, typing, &build_open_body_rust(model, selected, false), registry, helpers);
     let outputs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let pure = |n: &str| {
-        super::eager_select::is_pseudo_call(n)
-            || super::builtins::MathFn::from_name(n).is_some()
-            || helpers.get(n).is_some()
+        super::open_frames::is_pure_call(n, helpers)
             || n == super::rust_respell::SELECT_OTHER
             || n == super::rust_respell::CANDLE_RANGE_DIFF
     };
-    let sink = super::rust_open_frames::sink_body(&fill, &outputs, &pure)?;
+    let sink = super::open_frames::sink_body(&fill, &outputs, &pure)?;
     Some((fill, sink))
 }
 
@@ -3036,8 +3034,6 @@ fn emit_capture(
         }
     }
     for name in &model.out_feedback {
-        // At stride 0 this resolves to slot 0 — the scalar sink — so the one
-        // expression serves both entry points.
         f.push(format!("lastOut_{name}: {}", typing.out_at(name, "*outNBElement - 1")));
     }
     // Seed the value accessor from the same slot: an Open that succeeded
