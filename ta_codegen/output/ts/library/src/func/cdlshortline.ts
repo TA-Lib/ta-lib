@@ -696,6 +696,148 @@ function cdlshortlineOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdlshortlineOpenSinkFrame(
+  sp: CdlshortlineStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let BodyPeriodTotal = 0;
+  let ShadowPeriodTotal = 0;
+  let i = 0;
+  let outIdx = 0;
+  let BodyTrailingIdx = 0;
+  let ShadowTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const BodyShort_rangeType: number = core.candleSettings[CandleSettingType.BODY_SHORT].rangeType;
+  const BodyShort_avgPeriod = core.candleSettings[CandleSettingType.BODY_SHORT].avgPeriod;
+  const BodyShort_factor = core.candleSettings[CandleSettingType.BODY_SHORT].factor;
+  const ShadowShort_rangeType: number = core.candleSettings[CandleSettingType.SHADOW_SHORT].rangeType;
+  const ShadowShort_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_SHORT].avgPeriod;
+  const ShadowShort_factor = core.candleSettings[CandleSettingType.SHADOW_SHORT].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdlshortlineLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  BodyPeriodTotal = 0;
+  BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+  ShadowPeriodTotal = 0;
+  ShadowTrailingIdx = startIdx - ShadowShort_avgPeriod;
+  i = BodyTrailingIdx;
+  while (i < startIdx) {
+    BodyPeriodTotal += ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    i += 1;
+  }
+  i = ShadowTrailingIdx;
+  while (i < startIdx) {
+    ShadowPeriodTotal += ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    i += 1;
+  }
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - short real body
+   * - short upper and lower shadow
+   * The meaning of "short" is specified with TA_SetCandleSettings
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    BodyPeriodTotal += ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+    ShadowPeriodTotal += ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowTrailingIdx] - (((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inClose[ShadowTrailingIdx]) : (inOpen[ShadowTrailingIdx]))) + ((((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inOpen[ShadowTrailingIdx]) : (inClose[ShadowTrailingIdx])) - inLow[ShadowTrailingIdx])) : 0.0)));
+    i += 1;
+    BodyTrailingIdx += 1;
+    ShadowTrailingIdx += 1;
+  }
+  if (Math.abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod !== 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType === 2) ? 2.0 : 1.0)))) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < ((ShadowShort_factor * (((ShadowShort_avgPeriod !== 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowShort_rangeType === 2) ? 2.0 : 1.0)))) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < ((ShadowShort_factor * (((ShadowShort_avgPeriod !== 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowShort_rangeType === 2) ? 2.0 : 1.0))))) {
+    outInteger[0] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) | 0);
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  BodyPeriodTotal += ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+  ShadowPeriodTotal += ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowTrailingIdx] - (((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inClose[ShadowTrailingIdx]) : (inOpen[ShadowTrailingIdx]))) + ((((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inOpen[ShadowTrailingIdx]) : (inClose[ShadowTrailingIdx])) - inLow[ShadowTrailingIdx])) : 0.0)));
+  i += 1;
+  BodyTrailingIdx += 1;
+  ShadowTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const cap_BodyTrailingIdx = i - BodyTrailingIdx;
+  if (cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_BodyTrailingIdx = cap_BodyTrailingIdx > 0 ? cap_BodyTrailingIdx : 1;
+  const capRing_BodyTrailingIdx_derived = new Float64Array(allocN_BodyTrailingIdx);
+  for (let fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  const cap_ShadowTrailingIdx = i - ShadowTrailingIdx;
+  if (cap_ShadowTrailingIdx < 0 || cap_ShadowTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_ShadowTrailingIdx = cap_ShadowTrailingIdx > 0 ? cap_ShadowTrailingIdx : 1;
+  const capRing_ShadowTrailingIdx_derived = new Float64Array(allocN_ShadowTrailingIdx);
+  for (let fillJ = historyLen - cap_ShadowTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_ShadowTrailingIdx_derived[fillJ - (historyLen - cap_ShadowTrailingIdx)] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.BodyPeriodTotal = BodyPeriodTotal;
+  sp.ShadowPeriodTotal = ShadowPeriodTotal;
+  sp.ringPos_BodyTrailingIdx = 0;
+  sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+  sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+  sp.ringPos_ShadowTrailingIdx = 0;
+  sp.ringCap_ShadowTrailingIdx = cap_ShadowTrailingIdx;
+  sp.ring_ShadowTrailingIdx_derived = capRing_ShadowTrailingIdx_derived;
+  sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+  sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+  sp.cs_BodyShort_factor = BodyShort_factor;
+  sp.cs_ShadowShort_rangeType = ShadowShort_rangeType;
+  sp.cs_ShadowShort_avgPeriod = ShadowShort_avgPeriod;
+  sp.cs_ShadowShort_factor = ShadowShort_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdlshortlineOpenAndFillInternal(
   core: Core,
@@ -734,7 +876,7 @@ export function cdlshortlineOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdlshortlineOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

@@ -609,6 +609,97 @@ function cdlengulfingOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdlengulfingOpenSinkFrame(
+  sp: CdlengulfingStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let i = 0;
+  let outIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdlengulfingLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - first: black (white) real body
+   * - second: white (black) real body that engulfs the prior real body
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    i += 1;
+  }
+  if (((inClose[i] >= inOpen[i]) ? 1 : -1) === 1 &&
+       ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === -1 && /* white engulfs black */
+       (inClose[i] >= inOpen[i - 1] &&
+         inOpen[i] < inClose[i - 1] ||
+        inClose[i] > inOpen[i - 1] &&
+         inOpen[i] <= inClose[i - 1]) ||
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === -1 &&
+       ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === 1 &&  /* black engulfs white */
+       (inOpen[i] >= inClose[i - 1] &&
+         inClose[i] < inOpen[i - 1] ||
+        inOpen[i] > inClose[i - 1] &&
+         inClose[i] <= inOpen[i - 1]))
+  {
+    if (inOpen[i] !== inClose[i - 1] && inClose[i] !== inOpen[i - 1]) {
+      outInteger[0] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) | 0);
+      outIdx += 1;
+    } else {
+      outInteger[0] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 80) | 0);
+      outIdx += 1;
+    }
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  i += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdlengulfingOpenAndFillInternal(
   core: Core,
@@ -647,7 +738,7 @@ export function cdlengulfingOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdlengulfingOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

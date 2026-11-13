@@ -985,6 +985,233 @@ function cdlmatholdOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdlmatholdOpenSinkFrame(
+  sp: CdlmatholdStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  optInPenetration: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  const BodyPeriodTotal = new Float64Array(5);
+  let BodyPeriodTotalRange1 = 0;
+  let BodyPeriodTotalTrailRange1 = 0;
+  let BodyPeriodTotalRange2 = 0;
+  let BodyPeriodTotalTrailRange2 = 0;
+  let BodyPeriodTotalRange3 = 0;
+  let BodyPeriodTotalTrailRange3 = 0;
+  let i = 0;
+  let outIdx = 0;
+  let BodyShortTrailingIdx = 0;
+  let BodyLongTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (optInPenetration === Core.REAL_DEFAULT) {
+    optInPenetration = 0.5;
+  } else if (!(optInPenetration >= 0e0 && optInPenetration <= Core.REAL_MAX)) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const BodyLong_rangeType: number = core.candleSettings[CandleSettingType.BODY_LONG].rangeType;
+  const BodyLong_avgPeriod = core.candleSettings[CandleSettingType.BODY_LONG].avgPeriod;
+  const BodyLong_factor = core.candleSettings[CandleSettingType.BODY_LONG].factor;
+  const BodyShort_rangeType: number = core.candleSettings[CandleSettingType.BODY_SHORT].rangeType;
+  const BodyShort_avgPeriod = core.candleSettings[CandleSettingType.BODY_SHORT].avgPeriod;
+  const BodyShort_factor = core.candleSettings[CandleSettingType.BODY_SHORT].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdlmatholdLookbackPositional(optInPenetration, core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  BodyPeriodTotal[4] = 0;
+  BodyPeriodTotal[3] = 0;
+  BodyPeriodTotal[2] = 0;
+  BodyPeriodTotal[1] = 0;
+  BodyPeriodTotal[0] = 0;
+  BodyShortTrailingIdx = startIdx - BodyShort_avgPeriod;
+  BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+  i = BodyShortTrailingIdx;
+  while (i < startIdx) {
+    BodyPeriodTotal[3] = BodyPeriodTotal[3] + ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+    BodyPeriodTotal[2] = BodyPeriodTotal[2] + ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+    BodyPeriodTotal[1] = BodyPeriodTotal[1] + ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    i += 1;
+  }
+  i = BodyLongTrailingIdx;
+  while (i < startIdx) {
+    BodyPeriodTotal[4] = BodyPeriodTotal[4] + ((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)));
+    i += 1;
+  }
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - first candle: long white candle
+   * - upside gap between the first and the second bodies
+   * - second candle: small black candle
+   * - third and fourth candles: falling small real body candlesticks (commonly black) that hold within the long
+   *   white candle's body and are higher than the reaction days of the rising three methods
+   * - fifth candle: white candle that opens above the previous small candle's close and closes higher than the
+   *   high of the highest reaction day
+   * The meaning of "short" and "long" is specified with TA_SetCandleSettings;
+   * "hold within" means "a part of the real body must be within";
+   * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
+   * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
+   */
+  outIdx = 0;
+  BodyPeriodTotalRange2 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  BodyPeriodTotalTrailRange2 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyShortTrailingIdx - 2] - inOpen[BodyShortTrailingIdx - 2])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyShortTrailingIdx - 2] - inLow[BodyShortTrailingIdx - 2]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyShortTrailingIdx - 2] - (((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inClose[BodyShortTrailingIdx - 2]) : (inOpen[BodyShortTrailingIdx - 2]))) + ((((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inOpen[BodyShortTrailingIdx - 2]) : (inClose[BodyShortTrailingIdx - 2])) - inLow[BodyShortTrailingIdx - 2])) : 0.0)));
+  BodyPeriodTotalRange3 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+  BodyPeriodTotalTrailRange3 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyShortTrailingIdx - 3] - inOpen[BodyShortTrailingIdx - 3])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyShortTrailingIdx - 3] - inLow[BodyShortTrailingIdx - 3]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyShortTrailingIdx - 3] - (((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inClose[BodyShortTrailingIdx - 3]) : (inOpen[BodyShortTrailingIdx - 3]))) + ((((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inOpen[BodyShortTrailingIdx - 3]) : (inClose[BodyShortTrailingIdx - 3])) - inLow[BodyShortTrailingIdx - 3])) : 0.0)));
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0))) - ((BodyLong_rangeType === 0) ? (Math.abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[BodyLongTrailingIdx - 4] - (((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inClose[BodyLongTrailingIdx - 4]) : (inOpen[BodyLongTrailingIdx - 4]))) + ((((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inOpen[BodyLongTrailingIdx - 4]) : (inClose[BodyLongTrailingIdx - 4])) - inLow[BodyLongTrailingIdx - 4])) : 0.0))));
+    BodyPeriodTotalRange1 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    BodyPeriodTotalTrailRange1 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyShortTrailingIdx - 1] - inOpen[BodyShortTrailingIdx - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyShortTrailingIdx - 1] - inLow[BodyShortTrailingIdx - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyShortTrailingIdx - 1] - (((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inClose[BodyShortTrailingIdx - 1]) : (inOpen[BodyShortTrailingIdx - 1]))) + ((((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inOpen[BodyShortTrailingIdx - 1]) : (inClose[BodyShortTrailingIdx - 1])) - inLow[BodyShortTrailingIdx - 1])) : 0.0)));
+    BodyPeriodTotal[3] = BodyPeriodTotal[3] + (BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3);
+    BodyPeriodTotal[2] = BodyPeriodTotal[2] + (BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2);
+    BodyPeriodTotal[1] = BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+    BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+    BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+    BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+    BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
+    i += 1;
+    BodyShortTrailingIdx += 1;
+    BodyLongTrailingIdx += 1;
+  }
+  if (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) === 1 &&  /* white, black, 2 black or white, white */
+      ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) === -1 &&
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === 1 &&
+      ((inOpen[i - 3] < inClose[i - 3] ? inOpen[i - 3] : inClose[i - 3]) > (inOpen[i - 4] > inClose[i - 4] ? inOpen[i - 4] : inClose[i - 4])) && /* upside gap 1st to 2nd */
+      (inOpen[i - 2] < inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2]) < inClose[i - 4] && /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+      (inOpen[i - 1] < inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) < inClose[i - 4] &&
+      (inOpen[i - 2] < inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2]) > inClose[i - 4] - Math.abs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
+      (inOpen[i - 1] < inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) > inClose[i - 4] - Math.abs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration &&
+      (inClose[i - 2] > inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) < inOpen[i - 3] && /* 2nd to 4th are falling */
+      (inClose[i - 1] > inOpen[i - 1] ? inClose[i - 1] : inOpen[i - 1]) < (inClose[i - 2] > inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) &&
+      inOpen[i] > inClose[i - 1] &&                          /* 5th opens above the prior close */
+      inClose[i] > ((inHigh[i - 3] > inHigh[i - 2] ? inHigh[i - 3] : inHigh[i - 2]) > inHigh[i - 1] ? (inHigh[i - 3] > inHigh[i - 2] ? inHigh[i - 3] : inHigh[i - 2]) : inHigh[i - 1]) && /* 5th closes above the highest high of the reaction days */
+      Math.abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod !== 0) ? (BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType === 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
+      Math.abs(inClose[i - 3] - inOpen[i - 3]) < ((BodyShort_factor * (((BodyShort_avgPeriod !== 0) ? (BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)))) / ((BodyShort_rangeType === 2) ? 2.0 : 1.0)))) &&
+      Math.abs(inClose[i - 2] - inOpen[i - 2]) < ((BodyShort_factor * (((BodyShort_avgPeriod !== 0) ? (BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyShort_rangeType === 2) ? 2.0 : 1.0)))) &&
+      Math.abs(inClose[i - 1] - inOpen[i - 1]) < ((BodyShort_factor * (((BodyShort_avgPeriod !== 0) ? (BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyShort_rangeType === 2) ? 2.0 : 1.0)))))
+  {
+    outInteger[0] = 100;
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0))) - ((BodyLong_rangeType === 0) ? (Math.abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType === 1) ? (inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType === 2) ? ((inHigh[BodyLongTrailingIdx - 4] - (((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inClose[BodyLongTrailingIdx - 4]) : (inOpen[BodyLongTrailingIdx - 4]))) + ((((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inOpen[BodyLongTrailingIdx - 4]) : (inClose[BodyLongTrailingIdx - 4])) - inLow[BodyLongTrailingIdx - 4])) : 0.0))));
+  BodyPeriodTotalRange1 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+  BodyPeriodTotalTrailRange1 = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[BodyShortTrailingIdx - 1] - inOpen[BodyShortTrailingIdx - 1])) : ((BodyShort_rangeType === 1) ? (inHigh[BodyShortTrailingIdx - 1] - inLow[BodyShortTrailingIdx - 1]) : ((BodyShort_rangeType === 2) ? ((inHigh[BodyShortTrailingIdx - 1] - (((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inClose[BodyShortTrailingIdx - 1]) : (inOpen[BodyShortTrailingIdx - 1]))) + ((((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inOpen[BodyShortTrailingIdx - 1]) : (inClose[BodyShortTrailingIdx - 1])) - inLow[BodyShortTrailingIdx - 1])) : 0.0)));
+  BodyPeriodTotal[3] = BodyPeriodTotal[3] + (BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3);
+  BodyPeriodTotal[2] = BodyPeriodTotal[2] + (BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2);
+  BodyPeriodTotal[1] = BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+  BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+  BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+  BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+  BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
+  i += 1;
+  BodyShortTrailingIdx += 1;
+  BodyLongTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const capLag_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
+  const cap_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx + 5;
+  if (capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_BodyLongTrailingIdx = cap_BodyLongTrailingIdx > 0 ? cap_BodyLongTrailingIdx : 1;
+  const capRing_BodyLongTrailingIdx_derived = new Float64Array(allocN_BodyLongTrailingIdx);
+  for (let fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  const capLag_BodyShortTrailingIdx = i - BodyShortTrailingIdx;
+  const cap_BodyShortTrailingIdx = capLag_BodyShortTrailingIdx + 2;
+  if (capLag_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_BodyShortTrailingIdx = cap_BodyShortTrailingIdx > 0 ? cap_BodyShortTrailingIdx : 1;
+  const capRing_BodyShortTrailingIdx_derived = new Float64Array(allocN_BodyShortTrailingIdx);
+  for (let fillJ = historyLen - cap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_BodyShortTrailingIdx_derived[fillJ % cap_BodyShortTrailingIdx] = ((BodyShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.optInPenetration = optInPenetration;
+  sp.BodyPeriodTotal = BodyPeriodTotal;
+  sp.BodyPeriodTotalRange2 = BodyPeriodTotalRange2;
+  sp.BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange2;
+  sp.BodyPeriodTotalRange3 = BodyPeriodTotalRange3;
+  sp.BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange3;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag2_inOpen = inOpen[historyLen - 2];
+  sp.lag3_inOpen = inOpen[historyLen - 3];
+  sp.lag4_inOpen = inOpen[historyLen - 4];
+  sp.lag1_inHigh = inHigh[historyLen - 1];
+  sp.lag2_inHigh = inHigh[historyLen - 2];
+  sp.lag3_inHigh = inHigh[historyLen - 3];
+  sp.lag4_inHigh = inHigh[historyLen - 4];
+  sp.lag1_inLow = inLow[historyLen - 1];
+  sp.lag2_inLow = inLow[historyLen - 2];
+  sp.lag3_inLow = inLow[historyLen - 3];
+  sp.lag4_inLow = inLow[historyLen - 4];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.lag2_inClose = inClose[historyLen - 2];
+  sp.lag3_inClose = inClose[historyLen - 3];
+  sp.lag4_inClose = inClose[historyLen - 4];
+  sp.ringPos_BodyLongTrailingIdx = historyLen % cap_BodyLongTrailingIdx;
+  sp.ringCap_BodyLongTrailingIdx = cap_BodyLongTrailingIdx;
+  sp.ringLag_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx;
+  sp.ring_BodyLongTrailingIdx_derived = capRing_BodyLongTrailingIdx_derived;
+  sp.ringPos_BodyShortTrailingIdx = historyLen % cap_BodyShortTrailingIdx;
+  sp.ringCap_BodyShortTrailingIdx = cap_BodyShortTrailingIdx;
+  sp.ringLag_BodyShortTrailingIdx = capLag_BodyShortTrailingIdx;
+  sp.ring_BodyShortTrailingIdx_derived = capRing_BodyShortTrailingIdx_derived;
+  sp.cs_BodyLong_rangeType = BodyLong_rangeType;
+  sp.cs_BodyLong_avgPeriod = BodyLong_avgPeriod;
+  sp.cs_BodyLong_factor = BodyLong_factor;
+  sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+  sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+  sp.cs_BodyShort_factor = BodyShort_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdlmatholdOpenAndFillInternal(
   core: Core,
@@ -1028,7 +1255,7 @@ export function cdlmatholdOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdlmatholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdlmatholdOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

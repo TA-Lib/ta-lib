@@ -659,6 +659,127 @@ function cdlmatchinglowOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdlmatchinglowOpenSinkFrame(
+  sp: CdlmatchinglowStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let EqualPeriodTotal = 0;
+  let i = 0;
+  let outIdx = 0;
+  let EqualTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const Equal_rangeType: number = core.candleSettings[CandleSettingType.EQUAL].rangeType;
+  const Equal_avgPeriod = core.candleSettings[CandleSettingType.EQUAL].avgPeriod;
+  const Equal_factor = core.candleSettings[CandleSettingType.EQUAL].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdlmatchinglowLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  EqualPeriodTotal = 0;
+  EqualTrailingIdx = startIdx - Equal_avgPeriod;
+  i = EqualTrailingIdx;
+  while (i < startIdx) {
+    EqualPeriodTotal += ((Equal_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    i += 1;
+  }
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - first candle: black candle
+   * - second candle: black candle with the close equal to the previous close
+   * The meaning of "equal" is specified with TA_SetCandleSettings
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    EqualPeriodTotal += ((Equal_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Equal_rangeType === 0) ? (Math.abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : ((Equal_rangeType === 1) ? (inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) : ((Equal_rangeType === 2) ? ((inHigh[EqualTrailingIdx - 1] - (((inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1])) ? (inClose[EqualTrailingIdx - 1]) : (inOpen[EqualTrailingIdx - 1]))) + ((((inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1])) ? (inOpen[EqualTrailingIdx - 1]) : (inClose[EqualTrailingIdx - 1])) - inLow[EqualTrailingIdx - 1])) : 0.0)));
+    i += 1;
+    EqualTrailingIdx += 1;
+  }
+  if (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === -1 && /* first black */
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === -1 &&         /* second black */
+      inClose[i] <= inClose[i - 1] + ((Equal_factor * (((Equal_avgPeriod !== 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Equal_rangeType === 2) ? 2.0 : 1.0)))) && /* 1st and 2nd same close */
+      inClose[i] >= inClose[i - 1] - ((Equal_factor * (((Equal_avgPeriod !== 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Equal_rangeType === 2) ? 2.0 : 1.0)))))
+  {
+    outInteger[0] = 100;
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  EqualPeriodTotal += ((Equal_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Equal_rangeType === 0) ? (Math.abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : ((Equal_rangeType === 1) ? (inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) : ((Equal_rangeType === 2) ? ((inHigh[EqualTrailingIdx - 1] - (((inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1])) ? (inClose[EqualTrailingIdx - 1]) : (inOpen[EqualTrailingIdx - 1]))) + ((((inClose[EqualTrailingIdx - 1]) >= (inOpen[EqualTrailingIdx - 1])) ? (inOpen[EqualTrailingIdx - 1]) : (inClose[EqualTrailingIdx - 1])) - inLow[EqualTrailingIdx - 1])) : 0.0)));
+  i += 1;
+  EqualTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const capLag_EqualTrailingIdx = i - EqualTrailingIdx;
+  const cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 2;
+  if (capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_EqualTrailingIdx = cap_EqualTrailingIdx > 0 ? cap_EqualTrailingIdx : 1;
+  const capRing_EqualTrailingIdx_derived = new Float64Array(allocN_EqualTrailingIdx);
+  for (let fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.EqualPeriodTotal = EqualPeriodTotal;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag1_inHigh = inHigh[historyLen - 1];
+  sp.lag1_inLow = inLow[historyLen - 1];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
+  sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
+  sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
+  sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
+  sp.cs_Equal_rangeType = Equal_rangeType;
+  sp.cs_Equal_avgPeriod = Equal_avgPeriod;
+  sp.cs_Equal_factor = Equal_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdlmatchinglowOpenAndFillInternal(
   core: Core,
@@ -697,7 +818,7 @@ export function cdlmatchinglowOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdlmatchinglowOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdlmatchinglowOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

@@ -766,6 +766,157 @@ function cdltasukigapOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdltasukigapOpenSinkFrame(
+  sp: CdltasukigapStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let NearPeriodTotal = 0;
+  let i = 0;
+  let outIdx = 0;
+  let NearTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const Near_rangeType: number = core.candleSettings[CandleSettingType.NEAR].rangeType;
+  const Near_avgPeriod = core.candleSettings[CandleSettingType.NEAR].avgPeriod;
+  const Near_factor = core.candleSettings[CandleSettingType.NEAR].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdltasukigapLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  NearPeriodTotal = 0;
+  NearTrailingIdx = startIdx - Near_avgPeriod;
+  i = NearTrailingIdx;
+  while (i < startIdx) {
+    NearPeriodTotal += ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    i += 1;
+  }
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - upside (downside) gap
+   * - first candle after the window: white (black) candlestick
+   * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+   *   the previous real body inside the gap
+   * - the size of two real bodies should be near the same
+   * The meaning of "near" is specified with TA_SetCandleSettings
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    NearPeriodTotal += ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+    i += 1;
+    NearTrailingIdx += 1;
+  }
+  if (((inOpen[i - 1] < inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) > (inOpen[i - 2] > inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2])) && /* upside gap */
+      ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === 1 && /* 1st: white */
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === -1)          /* 2nd: black */
+  {
+    if (inOpen[i] < inClose[i - 1] &&
+        inOpen[i] > inOpen[i - 1] &&  /* that opens within the white rb */
+        inClose[i] < inOpen[i - 1] && /* and closes under the white rb */
+        inClose[i] > (inClose[i - 2] > inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) && /* inside the gap */
+        Math.abs(Math.abs(inClose[i - 1] - inOpen[i - 1]) - Math.abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0))))) /* size of 2 rb near the same */
+    {
+      outInteger[0] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) | 0);
+      outIdx += 1;
+    } else {
+      outInteger[0] = 0;
+      outIdx += 1;
+    }
+  } else if (((inOpen[i - 1] > inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) < (inOpen[i - 2] < inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2])) && /* downside gap */
+      ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === -1 && /* 1st: black */
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === 1)            /* 2nd: white */
+  {
+    if (inOpen[i] < inOpen[i - 1] &&
+        inOpen[i] > inClose[i - 1] && /* that opens within the black rb */
+        inClose[i] > inOpen[i - 1] && /* and closes above the black rb */
+        inClose[i] < (inClose[i - 2] < inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) && /* inside the gap */
+        Math.abs(Math.abs(inClose[i - 1] - inOpen[i - 1]) - Math.abs(inClose[i] - inOpen[i])) < ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0))))) /* size of 2 rb near the same */
+    {
+      outInteger[0] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) | 0);
+      outIdx += 1;
+    } else {
+      outInteger[0] = 0;
+      outIdx += 1;
+    }
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  NearPeriodTotal += ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0))) - ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+  i += 1;
+  NearTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const capLag_NearTrailingIdx = i - NearTrailingIdx;
+  const cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
+  if (capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_NearTrailingIdx = cap_NearTrailingIdx > 0 ? cap_NearTrailingIdx : 1;
+  const capRing_NearTrailingIdx_derived = new Float64Array(allocN_NearTrailingIdx);
+  for (let fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.NearPeriodTotal = NearPeriodTotal;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag2_inOpen = inOpen[historyLen - 2];
+  sp.lag1_inHigh = inHigh[historyLen - 1];
+  sp.lag1_inLow = inLow[historyLen - 1];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.lag2_inClose = inClose[historyLen - 2];
+  sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+  sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+  sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+  sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+  sp.cs_Near_rangeType = Near_rangeType;
+  sp.cs_Near_avgPeriod = Near_avgPeriod;
+  sp.cs_Near_factor = Near_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdltasukigapOpenAndFillInternal(
   core: Core,
@@ -804,7 +955,7 @@ export function cdltasukigapOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdltasukigapOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

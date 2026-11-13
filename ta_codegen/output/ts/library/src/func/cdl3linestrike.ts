@@ -809,6 +809,170 @@ function cdl3linestrikeOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdl3linestrikeOpenSinkFrame(
+  sp: Cdl3linestrikeStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  const NearPeriodTotal = new Float64Array(4);
+  let NearPeriodTotalRange2 = 0;
+  let NearPeriodTotalTrailRange2 = 0;
+  let NearPeriodTotalRange3 = 0;
+  let NearPeriodTotalTrailRange3 = 0;
+  let i = 0;
+  let outIdx = 0;
+  let NearTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const Near_rangeType: number = core.candleSettings[CandleSettingType.NEAR].rangeType;
+  const Near_avgPeriod = core.candleSettings[CandleSettingType.NEAR].avgPeriod;
+  const Near_factor = core.candleSettings[CandleSettingType.NEAR].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdl3linestrikeLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  NearPeriodTotal[3] = 0;
+  NearPeriodTotal[2] = 0;
+  NearTrailingIdx = startIdx - Near_avgPeriod;
+  i = NearTrailingIdx;
+  while (i < startIdx) {
+    NearPeriodTotal[3] = NearPeriodTotal[3] + ((Near_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+    NearPeriodTotal[2] = NearPeriodTotal[2] + ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+    i += 1;
+  }
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+   * each opening within or near the previous real body
+   * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+   * the first candle's open
+   * The meaning of "near" is specified with TA_SetCandleSettings
+   */
+  outIdx = 0;
+  NearPeriodTotalRange3 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+  NearPeriodTotalTrailRange3 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 3] - inOpen[NearTrailingIdx - 3])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 3] - inLow[NearTrailingIdx - 3]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 3] - (((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inClose[NearTrailingIdx - 3]) : (inOpen[NearTrailingIdx - 3]))) + ((((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inOpen[NearTrailingIdx - 3]) : (inClose[NearTrailingIdx - 3])) - inLow[NearTrailingIdx - 3])) : 0.0)));
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    NearPeriodTotalRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+    NearPeriodTotalTrailRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+    NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+    NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+    NearPeriodTotalRange3 = NearPeriodTotalRange2;
+    NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
+    i += 1;
+    NearTrailingIdx += 1;
+  }
+  if (((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) === ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
+      ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+      ((inClose[i] >= inOpen[i]) ? 1 : -1) === (-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) | 0) && /* 4th opposite color */
+      inOpen[i - 2] >= (inOpen[i - 3] < inClose[i - 3] ? inOpen[i - 3] : inClose[i - 3]) - ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0)))) && /* 2nd opens within/near 1st rb */
+      inOpen[i - 2] <= (inOpen[i - 3] > inClose[i - 3] ? inOpen[i - 3] : inClose[i - 3]) + ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0)))) &&
+      inOpen[i - 1] >= (inOpen[i - 2] < inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2]) - ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0)))) && /* 3rd opens within/near 2nd rb */
+      inOpen[i - 1] <= (inOpen[i - 2] > inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2]) + ((Near_factor * (((Near_avgPeriod !== 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((Near_rangeType === 2) ? 2.0 : 1.0)))) &&
+      (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === 1 &&  /* if three white */
+        inClose[i - 1] > inClose[i - 2] &&
+        inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
+        inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
+        inClose[i] < inOpen[i - 3] ||                         /* 4th closes below 1st open */
+       ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === -1 && /* if three black */
+        inClose[i - 1] < inClose[i - 2] &&
+        inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
+        inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
+        inClose[i] > inOpen[i - 3]))                          /* 4th closes above 1st open */
+  {
+    outInteger[0] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) | 0);
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  NearPeriodTotalRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  NearPeriodTotalTrailRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+  NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+  NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+  NearPeriodTotalRange3 = NearPeriodTotalRange2;
+  NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
+  i += 1;
+  NearTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const capLag_NearTrailingIdx = i - NearTrailingIdx;
+  const cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+  if (capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_NearTrailingIdx = cap_NearTrailingIdx > 0 ? cap_NearTrailingIdx : 1;
+  const capRing_NearTrailingIdx_derived = new Float64Array(allocN_NearTrailingIdx);
+  for (let fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.NearPeriodTotal = NearPeriodTotal;
+  sp.NearPeriodTotalRange3 = NearPeriodTotalRange3;
+  sp.NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag2_inOpen = inOpen[historyLen - 2];
+  sp.lag3_inOpen = inOpen[historyLen - 3];
+  sp.lag1_inHigh = inHigh[historyLen - 1];
+  sp.lag2_inHigh = inHigh[historyLen - 2];
+  sp.lag3_inHigh = inHigh[historyLen - 3];
+  sp.lag1_inLow = inLow[historyLen - 1];
+  sp.lag2_inLow = inLow[historyLen - 2];
+  sp.lag3_inLow = inLow[historyLen - 3];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.lag2_inClose = inClose[historyLen - 2];
+  sp.lag3_inClose = inClose[historyLen - 3];
+  sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
+  sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
+  sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
+  sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
+  sp.cs_Near_rangeType = Near_rangeType;
+  sp.cs_Near_avgPeriod = Near_avgPeriod;
+  sp.cs_Near_factor = Near_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdl3linestrikeOpenAndFillInternal(
   core: Core,
@@ -847,7 +1011,7 @@ export function cdl3linestrikeOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdl3linestrikeOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

@@ -90,7 +90,7 @@ fn ts_open_family_is_one_core_with_four_entries() {
     assert_eq!(s.matches("\nfunction cdlhammerOpenImpl(").count(), 1, "the numerics are emitted exactly once");
     assert!(signature_of(&s, "\nfunction cdlhammerOpenImpl(").contains("outStride: number"), "the numerics take a stride");
     for (entry, callee) in [
-        ("export function cdlhammerOpenInternal(", "cdlhammerOpenImpl("),
+        ("export function cdlhammerOpenInternal(", "cdlhammerOpenSinkFrame("),
         ("export function cdlhammerOpenAndFillInternal(", "cdlhammerOpenImpl("),
         ("export function cdlhammerOpenAndFillPositional(", "cdlhammerOpenAndFillInternal("),
         ("export function cdlhammerOpenPositional(", "cdlhammerOpenInternal("),
@@ -108,13 +108,118 @@ fn ts_open_family_is_one_core_with_four_entries() {
 
 #[test]
 fn ts_plain_open_uses_a_one_element_sink_at_stride_zero() {
-    let s = section("cdlhammer");
-    let body = body_of(&s, "export function cdlhammerOpenInternal(");
+    let s = section("cdlhikkake");
+    assert!(!s.contains("\nfunction cdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
+    let body = body_of(&s, "export function cdlhikkakeOpenInternal(");
     assert!(body.contains("new Int32Array(1)"), "an int output sinks into a 1-element array:\n{body}");
     assert!(body.contains(", 0);"), "the plain open passes stride 0:\n{body}");
-    let fill = body_of(&s, "export function cdlhammerOpenAndFillInternal(");
+    let fill = body_of(&s, "export function cdlhikkakeOpenAndFillInternal(");
     assert!(fill.contains(", 1);"), "the anchored fill passes stride 1:\n{fill}");
-    assert!(s.contains("outInteger[((outIdx++ * outStride) | 0)] = 100;"), "per-bar output writes scale by the stride");
+}
+
+#[test]
+fn ts_output_writes_are_stride_scaled() {
+    let s = section("cdlhikkake");
+    assert!(!s.contains("\nfunction cdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
+    assert!(s.contains("outInteger[((outIdx++ * outStride) | 0)] = 0;"), "per-bar output writes scale by the stride");
+}
+
+// ---------------------------------------------------------------------------
+// Split candlestick openers
+// ---------------------------------------------------------------------------
+
+/// Every streaming candlestick: its module's camelCase base and stream section.
+fn candlestick_sections() -> Vec<(String, String)> {
+    streaming_funcs()
+        .into_iter()
+        .filter(|name| load(name).0.is_candlestick())
+        .map(|name| {
+            let s = section(&name);
+            (name, s)
+        })
+        .collect()
+}
+
+fn opens_a_loop(line: &str) -> bool {
+    let t = line.trim_start();
+    t.starts_with("while (") || t.starts_with("for (") || t == "do {"
+}
+
+#[test]
+fn a_ts_candlestick_open_internal_calls_its_sink_frame() {
+    let (mut framed, mut single) = (0usize, 0usize);
+    for (name, s) in candlestick_sections() {
+        let sink = format!("\nfunction {name}OpenSinkFrame(");
+        let open = body_of(&s, &format!("\nfunction {name}OpenImpl("));
+        assert!(!s.contains(&format!("{name}OpenFillFrame(")), "{name}: stride 1 runs the strided body, not a frame");
+        assert!(open.contains(" * outStride) | 0)] = "), "{name}: the opener keeps its strided body");
+        if !s.contains(&sink) {
+            single += 1;
+            continue;
+        }
+        framed += 1;
+        let internal = body_of(&s, &format!("export function {name}OpenInternal("));
+        assert!(
+            internal.contains(&format!("{name}OpenSinkFrame(")) && !internal.contains(&format!("{name}OpenImpl(")),
+            "{name}OpenInternal opens through the sink frame:\n{internal}"
+        );
+        assert!(!common::calls_an_opener(&open, &name), "{name}OpenImpl calls another opener:\n{open}");
+        assert!(common::stride_only_scales(&open), "{name}OpenImpl branches on its stride:\n{open}");
+        let frame = body_of(&s, &sink);
+        let guard = frame.find("if (startIdx >= historyLen) {").unwrap_or_else(|| panic!("{name}: no anchor guard:\n{frame}"));
+        assert!(!frame[..guard].lines().any(opens_a_loop), "{name}: the sink frame loops before its anchor guard:\n{frame}");
+        let from = open.find("const historyLen").expect("history length");
+        let at = open.find("if (startIdx >= historyLen) {").expect("anchor guard");
+        let checks = &open[from..at + open[at..].find("}\n").expect("guard closes") + 2];
+        assert!(frame.contains(checks), "{name}: the sink frame runs other checks than OpenImpl:\n{checks}");
+        assert!(!s.contains(&format!("export function {name}OpenSinkFrame(")), "{name}: the sink frame is exported");
+        assert!(!signature_of(&s, &sink).contains("outStride"), "{name}: the sink frame takes a stride");
+        assert!(!frame.contains("outStride"), "{name}: the sink frame has its stride built in");
+        let regions = open.matches("outNBElement.value = outIdx;").count();
+        assert!(regions > 0, "{name}: the opener has no region");
+        assert_eq!(
+            open.matches("sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];").count(),
+            regions,
+            "{name}: every region's capture reads the caller's last element:\n{open}"
+        );
+    }
+    // The misfits by construction: their decisions assign pattern state.
+    assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
+    assert!(framed >= 50, "only {framed} candlestick openers split");
+}
+
+/// The sink frame's history loop is the strided opener's pass with only its
+/// carried statements kept, in order; its last pass decides the last bar once,
+/// into slot 0, and runs the same carried statements.
+#[test]
+fn a_ts_sink_frame_decides_only_the_last_bar() {
+    let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
+    for (name, s) in candlestick_sections() {
+        let head = format!("\nfunction {name}OpenSinkFrame(");
+        if !s.contains(&head) {
+            continue;
+        }
+        framed += 1;
+        let sink = body_of(&s, &head);
+        let fill = body_of(&s, &format!("\nfunction {name}OpenImpl("));
+        let found = common::history_loops(&common::squeezed_lines(&sink));
+        let passes = common::fill_carried(&common::squeezed_lines(&fill), "outInteger");
+        assert_eq!(found.len(), sink.matches("/* All done.").count(), "{name}: one loop over the history per region:\n{sink}");
+        assert_eq!(found.len(), passes.len(), "{name}: a history loop per storing loop of the opener");
+        for ((history, after), pass) in found.iter().zip(&passes) {
+            loops += 1;
+            carried += pass.len();
+            assert!(history.iter().any(|l| l == "outIdx+=1;"), "{name}: the history loop drops the output count:\n{history:#?}");
+            assert_eq!(&common::without_cursor_steps(history), pass, "{name}: the history loop is not the opener's carried pass");
+            common::assert_last_pass(&name, after, pass, "outInteger");
+        }
+        assert_eq!(
+            sink.matches("sp.cur_outInteger = outInteger[0];").count(),
+            found.len(),
+            "{name}: every region's capture reads the sink"
+        );
+    }
+    assert!(framed >= 50 && loops >= framed && carried >= 2 * loops, "{framed} sink frames, {loops} history loops, {carried} carried lines");
 }
 
 #[test]
@@ -240,16 +345,61 @@ fn the_stream_fuses_where_java_s_does() {
             .filter(|(i, _)| !s[..*i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_'))
             .count()
     };
-    let mut fusing = 0usize;
+    // Java's sink frame repeats its opener's sites.
+    let without_sink_frame = |s: String| {
+        let is_call = |i: usize| s[i..].split('\n').next().is_some_and(|l| l.ends_with(';'));
+        let Some(def) = s.match_indices("OpenSinkFrame(").map(|(i, _)| i).find(|&i| !is_call(i)) else {
+            return s;
+        };
+        let start = s[..def].rfind('\n').map_or(0, |n| n + 1);
+        let body = body_of(&s[start..], "OpenSinkFrame(");
+        let end = start + s[start..].find(&body).expect("the body follows its definition") + body.len();
+        format!("{}{}", &s[..start], &s[end..])
+    };
+    // A sink frame repeats its opener's sites, some of them twice: it is held
+    // to the opener's set of fused expressions and left out of the count.
+    let fused_set = |s: &str| -> BTreeSet<String> {
+        let mut out = BTreeSet::new();
+        for needle in ["fma(", "fmaSlow("] {
+            for (i, _) in s.match_indices(needle) {
+                if s[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_') {
+                    continue;
+                }
+                let mut depth = 0usize;
+                let end = s[i..]
+                    .char_indices()
+                    .find(|&(_, c)| {
+                        depth += usize::from(c == '(');
+                        depth -= usize::from(c == ')');
+                        c == ')' && depth == 0
+                    })
+                    .expect("a call closes")
+                    .0;
+                out.insert(s[i..=i + end].to_string());
+            }
+        }
+        out
+    };
+    let (mut fusing, mut sinks_fusing) = (0usize, 0usize);
     for name in streaming_funcs() {
         let (func, enums) = load(&name);
-        let ts = section_of(&backends::ts::generate(&func, &enums, registry, helpers)).expect("ts stream");
+        let mut ts = section_of(&backends::ts::generate(&func, &enums, registry, helpers)).expect("ts stream");
         let java = section_of(&backends::java::generate(&func, &enums, registry, helpers)).expect("java stream");
+        let java = without_sink_frame(java);
+        let head = format!("\nfunction {name}OpenSinkFrame(");
+        if ts.contains(&head) {
+            let sink = body_of(&ts, &head);
+            let open = body_of(&ts, &format!("\nfunction {name}OpenImpl("));
+            assert_eq!(fused_set(&sink), fused_set(&open), "{name}: the sink frame fuses other expressions than the opener");
+            sinks_fusing += usize::from(!fused_set(&sink).is_empty());
+            ts = ts.replacen(&sink, "", 1);
+        }
         let (t, j) = (fused_call(&ts, "fma(") + fused_call(&ts, "fmaSlow("), fused_call(&java, "Math.fma("));
         assert_eq!(t, j, "{name}: the TS stream fuses {t} sites, Java's {j}");
         fusing += usize::from(t > 0);
     }
     assert!(fusing >= 30, "only {fusing} streams fuse at all");
+    assert!(sinks_fusing > 0, "no sink frame fuses");
 }
 
 /// No per-bar allocation in a committing or peeking frame: a multi-output

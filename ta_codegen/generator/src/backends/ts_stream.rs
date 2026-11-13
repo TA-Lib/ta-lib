@@ -567,9 +567,9 @@ fn emit_loop_shape(o: &mut String, em: &Em, model: &StreamModel, body: &[Stateme
         .map(PeekFrame::falls_through);
     emit_handle_class(o, em, &fields, &Members::default(), frame.as_ref());
     emit_step(o, em, model, &fields, &step_settings);
-    emit_open_body(o, em, model, body, &fields, &step_settings);
+    let sink_frame = emit_open_body(o, em, model, body, &fields, &step_settings);
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, model.open_needs_last_bar_only());
+    emit_open_wrappers(o, em, true, model.open_needs_last_bar_only(), sink_frame);
     if em.svc.registry.in_tape_set(&em.func.name.to_lowercase()) {
         let tier = TapeTier { models: &[model], dual: None, fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1144,6 +1144,7 @@ fn cleanup_open_body(body: &[Statement], em: &Em) -> Vec<Statement> {
     super::ir_cleanup::drop_inert_guards(&folded)
 }
 
+/// Answers whether it also emitted a sink frame.
 fn emit_open_body(
     o: &mut String,
     em: &Em,
@@ -1151,9 +1152,11 @@ fn emit_open_body(
     body: &[Statement],
     fields: &[Field],
     step_settings: &BTreeSet<String>,
-) {
+) -> bool {
+    let strided = build_open_body_java(model, body);
+    let sink = sink_frame_body(em, model, &strided);
     emit_open_body_sig(o, em, OutMode::Core);
-    let open_body = cleanup_open_body(&build_open_body_java(model, body), em);
+    let open_body = cleanup_open_body(&strided, em);
     let ctx = em.open_ctx(&open_body);
     let mut s = String::new();
     emit_body_decls(&mut s, &open_body, &ctx);
@@ -1167,6 +1170,70 @@ fn emit_open_body(
     let _ = writeln!(s, "  return RetCode.SUCCESS;");
     o.push_str(&with_core(&s));
     let _ = writeln!(o, "}}");
+    let Some(sink) = sink else { return false };
+    emit_sink_frame(o, em, model, &sink, step_settings);
+    true
+}
+
+/// A candlestick opener's stride-0 region, from [`super::open_frames::sink_body`]
+/// over its unstrided region. `None` leaves stride 0 to the strided body.
+fn sink_frame_body(em: &Em, model: &StreamModel, strided: &[Statement]) -> Option<Vec<Statement>> {
+    if !super::open_frames::is_framed(em.func, model) {
+        return None;
+    }
+    let outputs = &model.outputs;
+    // The split recognises only a plain store index.
+    let unstrided = streaming::rewrite_stmts(
+        strided,
+        &|e| match e {
+            Expr::ArrayAccess(n, idx) if outputs.contains(&n) => match *idx {
+                Expr::BinOp(i, crate::ir::BinOp::Mul, s) if matches!(s.as_ref(), Expr::Var(v) if v == "outStride") => {
+                    Expr::ArrayAccess(n, i)
+                }
+                idx => Expr::ArrayAccess(n, Box::new(idx)),
+            },
+            other => other,
+        },
+        &|s| Some(s),
+    );
+    let fill = cleanup_open_body(&unstrided, em);
+    let helpers = em.svc.helpers;
+    let pure = |n: &str| super::open_frames::is_pure_call(n, helpers);
+    super::open_frames::sink_body(&fill, outputs, &pure)
+}
+
+/// `<n>OpenSinkFrame`: `OpenInternal`'s opener, which runs `OpenImpl`'s
+/// checks itself.
+fn emit_sink_frame(o: &mut String, em: &Em, model: &StreamModel, sink: &[Statement], step_settings: &BTreeSet<String>) {
+    emit_frame_sig(o, em);
+    let ctx = em.open_ctx(sink);
+    let mut s = String::new();
+    emit_body_decls(&mut s, sink, &ctx);
+    emit_open_head(&mut s, em);
+    emit_open_validation(&mut s, em, OutMode::Core);
+    emit_anchor_guard(&mut s);
+    emit_extras_and_candle(&mut s, em, sink, &ctx);
+    emit_open_region(&mut s, em, sink, &ctx, &[], &BTreeSet::new());
+    emit_capture(&mut s, em, model, &model.state, step_settings, &ctx, Some(CurSource::SlotZero), "");
+    let _ = writeln!(s, "  return RetCode.SUCCESS;");
+    o.push_str(&with_core(&s));
+    let _ = writeln!(o, "}}");
+}
+
+/// The sink frame takes `<n>OpenImpl`'s parameters but the stride, which it
+/// has built in.
+fn emit_frame_sig(o: &mut String, em: &Em) {
+    let func = em.func;
+    let mut params: Vec<String> = vec![format!("sp: {}", em.class())];
+    params.extend(internal_in_sig(func));
+    params.push("startIdx: number".to_string());
+    params.extend(opt_sig(func));
+    params.push("outBegIdx: MInteger".to_string());
+    params.push("outNBElement: MInteger".to_string());
+    for out in &func.outputs {
+        params.push(format!("{}: {}", out.name, arr_ty(out_ctype(func, &out.name))));
+    }
+    let _ = writeln!(o, "\nfunction {}OpenSinkFrame(\n  {},\n): RetCode {{", em.base(), params.join(",\n  "));
 }
 
 /// `const core = sp.core;` ahead of an open body that reads it.
@@ -1358,10 +1425,23 @@ fn emit_identity_fast_path(o: &mut String, em: &Em, model: &StreamModel, fields:
     let _ = writeln!(o, "    return RetCode.SUCCESS;\n  }}");
 }
 
+/// Where an output's last value sits once the region has run.
 #[derive(Clone, Copy)]
 enum CurSource {
     StridedArray,
+    /// The stride-0 frame's one-element sink.
+    SlotZero,
     Scratch,
+}
+
+impl CurSource {
+    fn last(self, out: &str) -> String {
+        match self {
+            CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
+            CurSource::SlotZero => format!("{out}[0]"),
+            CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
+        }
+    }
 }
 
 /// The capture epilogue: buffer capacities from the still-live batch locals,
@@ -1379,7 +1459,11 @@ fn emit_capture(
     extra_capture: &str,
 ) {
     emit_capture_buffers(o, model, ctx);
-    emit_capture_stores(o, em, model, scalars, step_settings, ctx);
+    let feedback = match cur_source {
+        Some(CurSource::SlotZero) => CurSource::SlotZero,
+        _ => CurSource::StridedArray,
+    };
+    emit_capture_stores(o, em, model, scalars, step_settings, ctx, feedback);
     o.push_str(extra_capture);
     if let Some(cs) = cur_source {
         emit_cur_capture(o, &model.outputs, cs);
@@ -1462,6 +1546,7 @@ fn emit_capture_stores(
     scalars: &[(String, VarType)],
     step_settings: &BTreeSet<String>,
     ctx: &TsCtx,
+    last: CurSource,
 ) {
     let func = em.func;
     for p in &func.optional_inputs {
@@ -1482,7 +1567,7 @@ fn emit_capture_stores(
         }
     }
     for name in &model.out_feedback {
-        let _ = writeln!(o, "  sp.lastOut_{name} = {name}[(outNBElement.value - 1) * outStride];");
+        let _ = writeln!(o, "  sp.lastOut_{name} = {};", last.last(name));
     }
     for lag in &model.lags {
         for k in 1..=lag.depth {
@@ -1533,11 +1618,7 @@ fn emit_capture_stores(
 
 fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
     for out in outputs {
-        let expr = match source {
-            CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
-            CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
-        };
-        let _ = writeln!(o, "  sp.cur_{out} = {expr};");
+        let _ = writeln!(o, "  sp.cur_{out} = {};", source.last(out));
     }
 }
 
@@ -1566,7 +1647,7 @@ fn internal_in_sig(func: &FuncDef) -> Vec<String> {
     streaming::input_array_names(func).iter().map(|i| format!("{i}: Float64Array")).collect()
 }
 
-fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
+fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only: bool, sink_frame: bool) {
     let func = em.func;
     let base = em.base();
     let class = em.class();
@@ -1595,8 +1676,12 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only:
             let _ = writeln!(o, "  const sink_{} = new {}(1);", out.name, arr_ty(out_ctype(func, &out.name)));
             args.push(format!("sink_{}", out.name));
         }
-        args.push("0".to_string());
-        let _ = writeln!(o, "  const retCode = {base}OpenImpl({});", args.join(", "));
+        let call = if sink_frame {
+            format!("{base}OpenSinkFrame({})", args.join(", "))
+        } else {
+            format!("{base}OpenImpl({}, 0)", args.join(", "))
+        };
+        let _ = writeln!(o, "  const retCode = {call};");
         if last_bar_only {
             let _ = writeln!(on_success, "    const begIdx = {};", em.lookback());
             let _ = writeln!(on_success, "    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;");
@@ -1667,13 +1752,13 @@ fn public_sig(func: &FuncDef, with_outputs: bool) -> Vec<String> {
     sig
 }
 
-fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
+fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool, last_bar_only: bool, sink_frame: bool) {
     let func = em.func;
     let base = em.base();
     let class = em.class();
     let names = ts_names(&func.name);
     let inputs = streaming::input_array_names(func);
-    emit_open_internal_seam(o, em, merged, last_bar_only);
+    emit_open_internal_seam(o, em, merged, last_bar_only, sink_frame);
 
     let _ = writeln!(o, "\n/** @internal */\nexport function {}(\n  {},\n): {class} {{", names.open_positional, public_sig(func, false).join(",\n  "));
     emit_public_open_guards(o, em, "open", false);
@@ -1901,7 +1986,7 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
     o.push_str(&with_core(&s));
     let _ = writeln!(o, "}}");
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, false);
+    emit_open_wrappers(o, em, true, false, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         let tier = TapeTier { models: &[ma, mb], dual: Some(dmp), fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1990,7 +2075,7 @@ fn emit_dispatch(o: &mut String, em: &Em, dp: &streaming::DispatchPlan) {
         emit_dispatch_open(o, em, dp, mode, &ctx);
     }
 
-    emit_open_wrappers(o, em, false, false);
+    emit_open_wrappers(o, em, false, false, false);
     emit_open_and_fill_internal_wrapper(o, em, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         emit_dispatch_tape(o, em, dp, &mut scratch);
@@ -2544,7 +2629,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     o.push_str(&with_core(&s));
     let _ = writeln!(o, "}}");
 
-    emit_open_wrappers(o, em, false, false);
+    emit_open_wrappers(o, em, false, false, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -2987,6 +3072,6 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
     emit_composed_step(o, em, cp, &step_settings, &outputs, &fields, false, &mut scratch);
     emit_composed_open(o, em, cp, &step_settings, &outputs);
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true, false);
+    emit_open_wrappers(o, em, true, false, false);
     emit_scratch_decls(o, &scratch);
 }

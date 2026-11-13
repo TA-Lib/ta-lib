@@ -786,6 +786,182 @@ function cdltakuriOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdltakuriOpenSinkFrame(
+  sp: CdltakuriStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let BodyDojiPeriodTotal = 0;
+  let ShadowVeryShortPeriodTotal = 0;
+  let ShadowVeryLongPeriodTotal = 0;
+  let i = 0;
+  let outIdx = 0;
+  let BodyDojiTrailingIdx = 0;
+  let ShadowVeryShortTrailingIdx = 0;
+  let ShadowVeryLongTrailingIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  const BodyDoji_rangeType: number = core.candleSettings[CandleSettingType.BODY_DOJI].rangeType;
+  const BodyDoji_avgPeriod = core.candleSettings[CandleSettingType.BODY_DOJI].avgPeriod;
+  const BodyDoji_factor = core.candleSettings[CandleSettingType.BODY_DOJI].factor;
+  const ShadowVeryLong_rangeType: number = core.candleSettings[CandleSettingType.SHADOW_VERY_LONG].rangeType;
+  const ShadowVeryLong_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_VERY_LONG].avgPeriod;
+  const ShadowVeryLong_factor = core.candleSettings[CandleSettingType.SHADOW_VERY_LONG].factor;
+  const ShadowVeryShort_rangeType: number = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].rangeType;
+  const ShadowVeryShort_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].avgPeriod;
+  const ShadowVeryShort_factor = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].factor;
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdltakuriLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  BodyDojiPeriodTotal = 0;
+  BodyDojiTrailingIdx = startIdx - BodyDoji_avgPeriod;
+  ShadowVeryShortPeriodTotal = 0;
+  ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
+  ShadowVeryLongPeriodTotal = 0;
+  ShadowVeryLongTrailingIdx = startIdx - ShadowVeryLong_avgPeriod;
+  i = BodyDojiTrailingIdx;
+  while (i < startIdx) {
+    BodyDojiPeriodTotal += ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    i += 1;
+  }
+  i = ShadowVeryShortTrailingIdx;
+  while (i < startIdx) {
+    ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    i += 1;
+  }
+  i = ShadowVeryLongTrailingIdx;
+  while (i < startIdx) {
+    ShadowVeryLongPeriodTotal += ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    i += 1;
+  }
+  /* Proceed with the calculation for the requested range.
+   *
+   * Must have:
+   * - doji body
+   * - open and close at the high of the day = no or very short upper shadow
+   * - very long lower shadow
+   * The meaning of "doji", "very short" and "very long" is specified with TA_SetCandleSettings
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    BodyDojiPeriodTotal += ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType === 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType === 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
+    ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx] - (((inClose[ShadowVeryShortTrailingIdx]) >= (inOpen[ShadowVeryShortTrailingIdx])) ? (inClose[ShadowVeryShortTrailingIdx]) : (inOpen[ShadowVeryShortTrailingIdx]))) + ((((inClose[ShadowVeryShortTrailingIdx]) >= (inOpen[ShadowVeryShortTrailingIdx])) ? (inOpen[ShadowVeryShortTrailingIdx]) : (inClose[ShadowVeryShortTrailingIdx])) - inLow[ShadowVeryShortTrailingIdx])) : 0.0)));
+    ShadowVeryLongPeriodTotal += ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[ShadowVeryLongTrailingIdx] - (((inClose[ShadowVeryLongTrailingIdx]) >= (inOpen[ShadowVeryLongTrailingIdx])) ? (inClose[ShadowVeryLongTrailingIdx]) : (inOpen[ShadowVeryLongTrailingIdx]))) + ((((inClose[ShadowVeryLongTrailingIdx]) >= (inOpen[ShadowVeryLongTrailingIdx])) ? (inOpen[ShadowVeryLongTrailingIdx]) : (inClose[ShadowVeryLongTrailingIdx])) - inLow[ShadowVeryLongTrailingIdx])) : 0.0)));
+    i += 1;
+    BodyDojiTrailingIdx += 1;
+    ShadowVeryShortTrailingIdx += 1;
+    ShadowVeryLongTrailingIdx += 1;
+  }
+  if (Math.abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod !== 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyDoji_rangeType === 2) ? 2.0 : 1.0)))) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod !== 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowVeryShort_rangeType === 2) ? 2.0 : 1.0)))) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod !== 0) ? (ShadowVeryLongPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowVeryLong_rangeType === 2) ? 2.0 : 1.0))))) {
+    outInteger[0] = 100;
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  BodyDojiPeriodTotal += ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx])) : ((BodyDoji_rangeType === 1) ? (inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx]) : ((BodyDoji_rangeType === 2) ? ((inHigh[BodyDojiTrailingIdx] - (((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inClose[BodyDojiTrailingIdx]) : (inOpen[BodyDojiTrailingIdx]))) + ((((inClose[BodyDojiTrailingIdx]) >= (inOpen[BodyDojiTrailingIdx])) ? (inOpen[BodyDojiTrailingIdx]) : (inClose[BodyDojiTrailingIdx])) - inLow[BodyDojiTrailingIdx])) : 0.0)));
+  ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx] - (((inClose[ShadowVeryShortTrailingIdx]) >= (inOpen[ShadowVeryShortTrailingIdx])) ? (inClose[ShadowVeryShortTrailingIdx]) : (inOpen[ShadowVeryShortTrailingIdx]))) + ((((inClose[ShadowVeryShortTrailingIdx]) >= (inOpen[ShadowVeryShortTrailingIdx])) ? (inOpen[ShadowVeryShortTrailingIdx]) : (inClose[ShadowVeryShortTrailingIdx])) - inLow[ShadowVeryShortTrailingIdx])) : 0.0)));
+  ShadowVeryLongPeriodTotal += ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[ShadowVeryLongTrailingIdx] - (((inClose[ShadowVeryLongTrailingIdx]) >= (inOpen[ShadowVeryLongTrailingIdx])) ? (inClose[ShadowVeryLongTrailingIdx]) : (inOpen[ShadowVeryLongTrailingIdx]))) + ((((inClose[ShadowVeryLongTrailingIdx]) >= (inOpen[ShadowVeryLongTrailingIdx])) ? (inOpen[ShadowVeryLongTrailingIdx]) : (inClose[ShadowVeryLongTrailingIdx])) - inLow[ShadowVeryLongTrailingIdx])) : 0.0)));
+  i += 1;
+  BodyDojiTrailingIdx += 1;
+  ShadowVeryShortTrailingIdx += 1;
+  ShadowVeryLongTrailingIdx += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  const cap_BodyDojiTrailingIdx = i - BodyDojiTrailingIdx;
+  if (cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx > 0 ? cap_BodyDojiTrailingIdx : 1;
+  const capRing_BodyDojiTrailingIdx_derived = new Float64Array(allocN_BodyDojiTrailingIdx);
+  for (let fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  const cap_ShadowVeryLongTrailingIdx = i - ShadowVeryLongTrailingIdx;
+  if (cap_ShadowVeryLongTrailingIdx < 0 || cap_ShadowVeryLongTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_ShadowVeryLongTrailingIdx = cap_ShadowVeryLongTrailingIdx > 0 ? cap_ShadowVeryLongTrailingIdx : 1;
+  const capRing_ShadowVeryLongTrailingIdx_derived = new Float64Array(allocN_ShadowVeryLongTrailingIdx);
+  for (let fillJ = historyLen - cap_ShadowVeryLongTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_ShadowVeryLongTrailingIdx_derived[fillJ - (historyLen - cap_ShadowVeryLongTrailingIdx)] = ((ShadowVeryLong_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryLong_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryLong_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  const cap_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
+  if (cap_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen) {
+    return RetCode.INTERNAL_ERROR;
+  }
+  const allocN_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx > 0 ? cap_ShadowVeryShortTrailingIdx : 1;
+  const capRing_ShadowVeryShortTrailingIdx_derived = new Float64Array(allocN_ShadowVeryShortTrailingIdx);
+  for (let fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++) {
+    capRing_ShadowVeryShortTrailingIdx_derived[fillJ - (historyLen - cap_ShadowVeryShortTrailingIdx)] = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+  }
+  sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+  sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+  sp.ShadowVeryLongPeriodTotal = ShadowVeryLongPeriodTotal;
+  sp.ringPos_BodyDojiTrailingIdx = 0;
+  sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
+  sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
+  sp.ringPos_ShadowVeryLongTrailingIdx = 0;
+  sp.ringCap_ShadowVeryLongTrailingIdx = cap_ShadowVeryLongTrailingIdx;
+  sp.ring_ShadowVeryLongTrailingIdx_derived = capRing_ShadowVeryLongTrailingIdx_derived;
+  sp.ringPos_ShadowVeryShortTrailingIdx = 0;
+  sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
+  sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
+  sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+  sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+  sp.cs_BodyDoji_factor = BodyDoji_factor;
+  sp.cs_ShadowVeryLong_rangeType = ShadowVeryLong_rangeType;
+  sp.cs_ShadowVeryLong_avgPeriod = ShadowVeryLong_avgPeriod;
+  sp.cs_ShadowVeryLong_factor = ShadowVeryLong_factor;
+  sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
+  sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
+  sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdltakuriOpenAndFillInternal(
   core: Core,
@@ -824,7 +1000,7 @@ export function cdltakuriOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdltakuriOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdltakuriOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {

@@ -613,6 +613,100 @@ function cdlxsidegap3methodsOpenImpl(
   return RetCode.SUCCESS;
 }
 
+function cdlxsidegap3methodsOpenSinkFrame(
+  sp: Cdlxsidegap3methodsStream,
+  inOpen: Float64Array,
+  inHigh: Float64Array,
+  inLow: Float64Array,
+  inClose: Float64Array,
+  startIdx: number,
+  outBegIdx: MInteger,
+  outNBElement: MInteger,
+  outInteger: Int32Array,
+): RetCode {
+  const core = sp.core;
+  let i = 0;
+  let outIdx = 0;
+  let lookbackTotal = 0;
+  const historyLen = inOpen.length;
+  let endIdx = historyLen - 1;
+  if (historyLen > Core.INDEX_MAX + 1) {
+    return RetCode.OUT_OF_RANGE_END_INDEX;
+  }
+  if (inHigh.length !== inOpen.length || inLow.length !== inOpen.length || inClose.length !== inOpen.length) {
+    return RetCode.BAD_PARAM;
+  }
+  if (startIdx >= historyLen) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Identify the minimum number of price bar needed
+   * to calculate at least one output.
+   */
+  lookbackTotal = cdlxsidegap3methodsLookbackPositional(core);
+  /* Move up the start index if there is not
+   * enough initial data.
+   */
+  if (startIdx < lookbackTotal) {
+    startIdx = lookbackTotal;
+  }
+  /* Make sure there is still something to evaluate. */
+  if (startIdx > endIdx) {
+    outBegIdx.value = 0;
+    outNBElement.value = 0;
+    return RetCode.INSUFFICIENT_HISTORY;
+  }
+  /* Do the calculation using tight loops. */
+  /* Add-up the initial period, except for the last value. */
+  i = startIdx;
+  /* Proceed with the calculation for the requested range.
+   * Must have:
+   * - first candle: white (black) candle
+   * - second candle: white (black) candle
+   * - upside (downside) gap between the first and the second real bodies
+   * - third candle: black (white) candle that opens within the second real body and closes within the first real body
+   */
+  outIdx = 0;
+  while (i < endIdx) {
+    outIdx += 1;
+    /* add the current range and subtract the first range: this is done after the pattern recognition
+     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+     */
+    i += 1;
+  }
+  if (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) && /* 1st and 2nd of same color */
+      ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === (-((inClose[i] >= inOpen[i]) ? 1 : -1) | 0) && /* 3rd opposite color */
+      inOpen[i] < (inClose[i - 1] > inOpen[i - 1] ? inClose[i - 1] : inOpen[i - 1]) && /* 3rd opens within 2nd rb */
+      inOpen[i] > (inClose[i - 1] < inOpen[i - 1] ? inClose[i - 1] : inOpen[i - 1]) &&
+      inClose[i] < (inClose[i - 2] > inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) && /* 3rd closes within 1st rb */
+      inClose[i] > (inClose[i - 2] < inOpen[i - 2] ? inClose[i - 2] : inOpen[i - 2]) &&
+      (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === 1 &&  /* when 1st is white */
+        ((inOpen[i - 1] < inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) > (inOpen[i - 2] > inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2])) || /* upside gap */
+       ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === -1 && /* when 1st is black */
+        ((inOpen[i - 1] > inClose[i - 1] ? inOpen[i - 1] : inClose[i - 1]) < (inOpen[i - 2] < inClose[i - 2] ? inOpen[i - 2] : inClose[i - 2])))) /* downside gap */
+  {
+    outInteger[0] = ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) * 100) | 0);
+    outIdx += 1;
+  } else {
+    outInteger[0] = 0;
+    outIdx += 1;
+  }
+  /* add the current range and subtract the first range: this is done after the pattern recognition
+   * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+   */
+  i += 1;
+  /* All done. Indicate the output limits and return. */
+  outNBElement.value = outIdx;
+  outBegIdx.value = startIdx;
+  sp.lag1_inOpen = inOpen[historyLen - 1];
+  sp.lag2_inOpen = inOpen[historyLen - 2];
+  sp.lag1_inClose = inClose[historyLen - 1];
+  sp.lag2_inClose = inClose[historyLen - 2];
+  sp.cur_outInteger = outInteger[0];
+  return RetCode.SUCCESS;
+}
+
 /** @internal */
 export function cdlxsidegap3methodsOpenAndFillInternal(
   core: Core,
@@ -651,7 +745,7 @@ export function cdlxsidegap3methodsOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);
-  const retCode = cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+  const retCode = cdlxsidegap3methodsOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
   if (retCode === RetCode.SUCCESS) {
