@@ -1267,6 +1267,110 @@ TA_LIB_API TA_RetCode TA_DX_Close( TA_DX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_DX_KernImpl( struct TA_DX_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevHigh = sp->prevHigh;
+   double prevLow = sp->prevLow;
+   double invPeriod = sp->invPeriod;
+   double prevClose = sp->prevClose;
+   double prevMinusDM = sp->prevMinusDM;
+   double prevPlusDM = sp->prevPlusDM;
+   double prevTR = sp->prevTR;
+   double lastOut_outReal = sp->lastOut_outReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempReal;
+      double diffP;
+      double diffM;
+      double minusSel;
+      double plusSel;
+      double minusDM1;
+      double plusDM1;
+      double minusDI;
+      double plusDI;
+
+      /* Calculate the prevMinusDM and prevPlusDM */
+      tempReal = inHigh;
+      diffP = tempReal - prevHigh;
+      /* Plus Delta */
+      prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = prevLow - tempReal;
+      /* Minus Delta */
+      prevLow = tempReal;
+      prevMinusDM -= prevMinusDM * invPeriod;
+      prevPlusDM -= prevPlusDM * invPeriod;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
+      prevMinusDM += minusDM1;
+      prevPlusDM += plusDM1;
+      /* Calculate the prevTR */
+      double _true_range_0;
+      double range_0 = prevHigh - prevLow;
+      double tmp_0 = fabs(prevHigh - prevClose);
+      if( tmp_0 > range_0 )
+      {
+         range_0 = tmp_0;
+      }
+      tmp_0 = fabs(prevLow - prevClose);
+      if( tmp_0 > range_0 )
+      {
+         range_0 = tmp_0;
+      }
+      _true_range_0 = range_0;
+      tempReal = _true_range_0;
+      prevTR = prevTR - prevTR * invPeriod + tempReal;
+      prevClose = inClose;
+      /* Calculate the DX. The value is rounded (see Wilder book). */
+      if( prevTR > 0.0 )
+      {
+         minusDI = (100.0 * (prevMinusDM / prevTR));
+         plusDI = (100.0 * (prevPlusDM / prevTR));
+         /* This loop is just to accumulate the initial DX */
+         tempReal = minusDI + plusDI;
+         if( !TA_IS_ZERO(tempReal) )
+         {
+            outReal[kernBar] = (100.0 * (fabs(minusDI - plusDI) / tempReal));
+         } else 
+         {
+            outReal[kernBar] = lastOut_outReal;
+         }
+      } else 
+      {
+         outReal[kernBar] = lastOut_outReal;
+      }
+      lastOut_outReal = outReal[kernBar];
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevHigh = prevHigh;
+   sp->prevLow = prevLow;
+   sp->prevClose = prevClose;
+   sp->prevMinusDM = prevMinusDM;
+   sp->prevPlusDM = prevPlusDM;
+   sp->prevTR = prevTR;
+   sp->lastOut_outReal = lastOut_outReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DX_UpdateBlock( struct TA_DX_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_DX_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_DX_Value( const TA_DX_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

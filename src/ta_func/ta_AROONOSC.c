@@ -788,6 +788,113 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Close( TA_AROONOSC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_AROONOSC_KernImpl( struct TA_AROONOSC_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double lowest = sp->lowest;
+   double highest = sp->highest;
+   double factor = sp->factor;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double tmp;
+      double aroon;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      /* Keep track of the lowestIdx */
+      tmp = x_inLow[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inLow[i & xMask];
+            if( tmp <= lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      /* Keep track of the highestIdx */
+      tmp = x_inHigh[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inHigh[i & xMask];
+            if( tmp >= highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      /* The oscillator is the following:
+       *  AroonUp   = factor*(optInTimePeriod-(today-highestIdx));
+       *  AroonDown = factor*(optInTimePeriod-(today-lowestIdx));
+       *  AroonOsc  = AroonUp-AroonDown;
+       *
+       * An arithmetic simplification give us:
+       *  Aroon = factor*(highestIdx-lowestIdx)
+       */
+      aroon = factor * (highestIdx - lowestIdx);
+      /* Note: Do not forget that input and output buffer can be the same,
+       *       so writing to the output is the last thing being done here.
+       */
+      outReal[kernBar] = aroon;
+      trailingIdx += 1;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->lowest = lowest;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_AROONOSC_UpdateBlock( struct TA_AROONOSC_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_AROONOSC_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AROONOSC_Value( const TA_AROONOSC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

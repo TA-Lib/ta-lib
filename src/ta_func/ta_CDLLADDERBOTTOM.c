@@ -1049,6 +1049,107 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Close( TA_CDLLADDERBOTTOM_Stream *strea
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLLADDERBOTTOM_KernImpl( struct TA_CDLLADDERBOTTOM_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double ShadowVeryShortPeriodTotal = sp->ShadowVeryShortPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag3_inOpen = sp->lag3_inOpen;
+   double lag4_inOpen = sp->lag4_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   double lag3_inClose = sp->lag3_inClose;
+   double lag4_inClose = sp->lag4_inClose;
+   int ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   int ringCap_ShadowVeryShortTrailingIdx = sp->ringCap_ShadowVeryShortTrailingIdx;
+   int ringLag_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx;
+   double *ring_ShadowVeryShortTrailingIdx_derived = sp->ring_ShadowVeryShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_ShadowVeryShortTrailingIdx;
+
+      ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      if( ((lag4_inClose >= lag4_inOpen) ? 1 : -1) == -1 &&
+          ((lag3_inClose >= lag3_inOpen) ? 1 : -1) == -1 &&
+          ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 )  /* 3 black candlesticks */
+      {
+         if( lag4_inOpen > lag3_inOpen &&
+             lag3_inOpen > lag2_inOpen &&                      /* with consecutively lower opens */
+             lag4_inClose > lag3_inClose &&
+             lag3_inClose > lag2_inClose &&                    /* and closes */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
+             (lag1_inHigh - TA_COLOR_MAX(lag1_inClose, lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) &&
+             ((inClose >= inOpen) ? 1 : -1) == 1 &&            /* 5th: white */
+             inOpen > lag1_inOpen &&                           /* that opens above prior candle's body */
+             inClose > lag1_inHigh )                           /* and closes above prior candle's high */
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + ringCap_ShadowVeryShortTrailingIdx - ringLag_ShadowVeryShortTrailingIdx - 1) % ringCap_ShadowVeryShortTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag4_inOpen = lag3_inOpen;
+      lag3_inOpen = lag2_inOpen;
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag4_inClose = lag3_inClose;
+      lag3_inClose = lag2_inClose;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+      if( ringPosL_ShadowVeryShortTrailingIdx >= ringCap_ShadowVeryShortTrailingIdx )
+      {
+         ringPosL_ShadowVeryShortTrailingIdx = 0;
+      }
+      ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag3_inOpen = lag3_inOpen;
+   sp->lag4_inOpen = lag4_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->lag3_inClose = lag3_inClose;
+   sp->lag4_inClose = lag4_inClose;
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLLADDERBOTTOM_UpdateBlock( struct TA_CDLLADDERBOTTOM_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLLADDERBOTTOM_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Value( const TA_CDLLADDERBOTTOM_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

@@ -1311,6 +1311,119 @@ TA_LIB_API TA_RetCode TA_PSO_Close( TA_PSO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_PSO_KernImpl( struct TA_PSO_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double emaK = sp->emaK;
+   double emaBeta = sp->emaBeta;
+   double highest = sp->highest;
+   double lowest = sp->lowest;
+   double ema1 = sp->ema1;
+   double ema2 = sp->ema2;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   double *x_inClose = sp->x_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tmp;
+      double fastK;
+      double nsk;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      x_inClose[today & xMask] = inClose;
+      /* Set the lowest low */
+      tmp = x_inLow[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         while( ++i <= today )
+         {
+            tmp = x_inLow[i & xMask];
+            if( tmp < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = x_inHigh[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         while( ++i <= today )
+         {
+            tmp = x_inHigh[i & xMask];
+            if( tmp > highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
+      {
+         fastK = (x_inClose[today & xMask] - lowest) / (highest - lowest) * 100.0;
+      } else 
+      {
+         fastK = 50.0;
+      }
+      nsk = 0.1 * (fastK - 50.0);
+      ema1 = fma(emaBeta, ema1, emaK * nsk);
+      ema2 = fma(emaBeta, ema2, emaK * ema1);
+      outReal[kernBar] = tanh(0.5 * ema2);
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->highest = highest;
+   sp->lowest = lowest;
+   sp->ema1 = ema1;
+   sp->ema2 = ema2;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PSO_UpdateBlock( struct TA_PSO_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_PSO_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PSO_Value( const TA_PSO_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

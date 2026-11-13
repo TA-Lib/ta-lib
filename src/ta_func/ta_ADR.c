@@ -520,6 +520,57 @@ TA_LIB_API TA_RetCode TA_ADR_Close( TA_ADR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ADR_KernImpl( struct TA_ADR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_derived = sp->ring_trailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double tempReal;
+      int ringPosL_trailingIdx;
+
+      if( ringCap_trailingIdx == 0 )
+      {
+         ring_trailingIdx_derived[0] = (double)(inHigh - inLow);
+      }
+      periodTotal += (double)(inHigh - inLow);
+      tempReal = periodTotal;
+      periodTotal -= ring_trailingIdx_derived[ringPos_trailingIdx];
+      outReal[kernBar] = tempReal / (double)optInTimePeriod;
+      cur_outReal = outReal[kernBar];
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_derived[ringPosL_trailingIdx] = (double)(inHigh - inLow);
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCap_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ADR_UpdateBlock( struct TA_ADR_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_ADR_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ADR_Value( const TA_ADR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

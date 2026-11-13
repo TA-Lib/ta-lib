@@ -841,6 +841,110 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Close( TA_CDLGAPSIDESIDEWHITE_Strea
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLGAPSIDESIDEWHITE_KernImpl( struct TA_CDLGAPSIDESIDEWHITE_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double NearPeriodTotal = sp->NearPeriodTotal;
+   double EqualPeriodTotal = sp->EqualPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   int ringCap_EqualTrailingIdx = sp->ringCap_EqualTrailingIdx;
+   int ringLag_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx;
+   double *ring_EqualTrailingIdx_derived = sp->ring_EqualTrailingIdx_derived;
+   int ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   int ringCap_NearTrailingIdx = sp->ringCap_NearTrailingIdx;
+   int ringLag_NearTrailingIdx = sp->ringLag_NearTrailingIdx;
+   double *ring_NearTrailingIdx_derived = sp->ring_NearTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_EqualTrailingIdx;
+      int ringPosL_NearTrailingIdx;
+
+      ring_EqualTrailingIdx_derived[ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
+      ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
+      if( ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == 1 && /* 2nd: white */
+          ((inClose >= inOpen) ? 1 : -1) == 1 )            /* 3rd: white */
+      {
+         if( ((((min(lag1_inOpen,lag1_inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+               ((min(inOpen,inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0)) ||
+              (((max(lag1_inOpen,lag1_inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0) &&
+               ((max(inOpen,inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0))) &&
+             fabs(inClose - inOpen) >= fabs(lag1_inClose - lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* same size 2 and 3 */
+             fabs(inClose - inOpen) <= fabs(lag1_inClose - lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) &&
+             inOpen >= lag1_inOpen - TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* same open 2 and 3 */
+             inOpen <= lag1_inOpen + TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) )
+         {
+            outInteger[kernBar] = ((min(lag1_inOpen,lag1_inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0) ? 100 : -100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + ringCap_NearTrailingIdx - ringLag_NearTrailingIdx - 1) % ringCap_NearTrailingIdx];
+      EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + ringCap_EqualTrailingIdx - ringLag_EqualTrailingIdx - 1) % ringCap_EqualTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+      if( ringPosL_EqualTrailingIdx >= ringCap_EqualTrailingIdx )
+      {
+         ringPosL_EqualTrailingIdx = 0;
+      }
+      ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+      ringPosL_NearTrailingIdx = ringPos_NearTrailingIdx;
+      ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+      if( ringPosL_NearTrailingIdx >= ringCap_NearTrailingIdx )
+      {
+         ringPosL_NearTrailingIdx = 0;
+      }
+      ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->NearPeriodTotal = NearPeriodTotal;
+   sp->EqualPeriodTotal = EqualPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+   sp->ringPos_NearTrailingIdx = ringPos_NearTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLGAPSIDESIDEWHITE_UpdateBlock( struct TA_CDLGAPSIDESIDEWHITE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLGAPSIDESIDEWHITE_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Value( const TA_CDLGAPSIDESIDEWHITE_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

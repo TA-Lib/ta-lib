@@ -355,6 +355,48 @@ TA_LIB_API TA_RetCode TA_PVT_Close( TA_PVT_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_PVT_KernImpl( struct TA_PVT_Stream *sp, const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevPVT = sp->prevPVT;
+   double prevClose = sp->prevClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double tempClose;
+
+      tempClose = inClose;
+      /* Exact test, never an epsilon band: a band carries the quote unit and
+       * would zero the indicator for every instrument priced under it (#253).
+       * A zero previous close contributes nothing rather than Inf/NaN (#112).
+       */
+      if( prevClose != 0.0 )
+      {
+         prevPVT += (tempClose - prevClose) / prevClose * inVolume;
+      }
+      outReal[kernBar] = prevPVT;
+      prevClose = tempClose;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevPVT = prevPVT;
+   sp->prevClose = prevClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PVT_UpdateBlock( struct TA_PVT_Stream *stream, const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_PVT_KernImpl( stream, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PVT_Value( const TA_PVT_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

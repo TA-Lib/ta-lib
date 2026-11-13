@@ -450,6 +450,58 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK_Close( TA_PERCENTRANK_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_PERCENTRANK_KernImpl( struct TA_PERCENTRANK_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inReal = sp->win_i_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int i;
+      int count;
+      double current;
+
+      win_i_inReal[winPos_i] = inReal;
+      current = inReal;
+      count = 0;
+      for( i = optInTimePeriod; i >= 1; i -= 1 )
+      {
+         if( win_i_inReal[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i] < current )
+         {
+            count += 1;
+         }
+      }
+      /* Divide, then scale. (count/N)*100 and 100*count/N are different
+       * doubles and the reference implementations round the first way.
+       */
+      outReal[kernBar] = (double)count / (double)optInTimePeriod * 100.0;
+      cur_outReal = outReal[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PERCENTRANK_UpdateBlock( struct TA_PERCENTRANK_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_PERCENTRANK_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PERCENTRANK_Value( const TA_PERCENTRANK_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

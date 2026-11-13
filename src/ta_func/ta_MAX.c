@@ -732,6 +732,69 @@ TA_LIB_API TA_RetCode TA_MAX_Close( TA_MAX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MAX_KernImpl( struct TA_MAX_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double highest = sp->highest;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tmp;
+
+      x_inReal[today & xMask] = inReal;
+      tmp = x_inReal[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inReal[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inReal[i & xMask];
+            if( tmp > highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      outReal[kernBar] = highest;
+      trailingIdx += 1;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MAX_UpdateBlock( struct TA_MAX_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_MAX_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAX_Value( const TA_MAX_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

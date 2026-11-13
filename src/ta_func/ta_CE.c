@@ -1344,6 +1344,156 @@ TA_LIB_API TA_RetCode TA_CE_Close( TA_CE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_CE_KernImpl( struct TA_CE_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outRealLong[], double outRealShort[] )
+{
+   double cur_outRealLong = sp->cur_outRealLong;
+   double cur_outRealShort = sp->cur_outRealShort;
+   double optInMultiplier = sp->optInMultiplier;
+   int lastP = sp->lastP;
+   double prevATR = sp->prevATR;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   double hhPre = sp->hhPre;
+   double llPre = sp->llPre;
+   int hhBuf_Idx = sp->hhBuf_Idx;
+   int maxIdx_hhBuf = sp->maxIdx_hhBuf;
+   double lag1_inClose = sp->lag1_inClose;
+   double *cb_hhBuf = sp->cb_hhBuf;
+   double *cb_llBuf = sp->cb_llBuf;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ip;
+      double val2;
+      double val3;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      double tempReal;
+      double sufHi;
+      double sufLo;
+      double highest;
+      double lowest;
+      double band;
+
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      /* Keep this shape: the prefix extreme selected in a local, the
+       * block-start override after it, one store. A store made only when the
+       * bar sets a new extreme, or the override ahead of the select, compiles
+       * to a data-dependent branch in the stream step, where the prefix lives
+       * in the handle.
+       */
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
+      {
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = cb_hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = cb_llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      cb_hhBuf[hhBuf_Idx] = tempHT;
+      cb_llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx = hhBuf_Idx + 1;
+      if( hhBuf_Idx > maxIdx_hhBuf )
+      {
+         hhBuf_Idx = 0;
+      }
+      band = optInMultiplier * prevATR;
+      outRealLong[kernBar] = highest - band;
+      outRealShort[kernBar] = lowest + band;
+      /* A completed block becomes its suffix extrema. Nothing this bar reads
+       * them, so the pass stays below the output stores, where the peek
+       * frame never runs it.
+       */
+      if( hhBuf_Idx == 0 )
+      {
+         sufHi = cb_hhBuf[lastP];
+         sufLo = cb_llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
+         {
+            ip -= 1;
+            tempReal = cb_hhBuf[ip];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            cb_hhBuf[ip] = sufHi;
+            tempReal = cb_llBuf[ip];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            cb_llBuf[ip] = sufLo;
+         }
+      }
+      cur_outRealLong = outRealLong[kernBar];
+      cur_outRealShort = outRealShort[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outRealLong = cur_outRealLong;
+   sp->cur_outRealShort = cur_outRealShort;
+   sp->prevATR = prevATR;
+   sp->hhPre = hhPre;
+   sp->llPre = llPre;
+   sp->hhBuf_Idx = hhBuf_Idx;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CE_UpdateBlock( struct TA_CE_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outRealLong[], double outRealShort[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outRealLong || !outRealShort ) return TA_BAD_PARAM;
+   TA_CE_KernImpl( stream, inHigh, inLow, inClose, nbBar, outRealLong, outRealShort );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CE_Value( const TA_CE_Stream *stream, double *outRealLong, double *outRealShort )
 {
    if( !stream || !outRealLong || !outRealShort ) return TA_BAD_PARAM;

@@ -523,6 +523,57 @@ TA_LIB_API TA_RetCode TA_QSTICK_Close( TA_QSTICK_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_QSTICK_KernImpl( struct TA_QSTICK_Stream *sp, const double inOpenBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_derived = sp->ring_trailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempReal;
+      int ringPosL_trailingIdx;
+
+      if( ringCap_trailingIdx == 0 )
+      {
+         ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
+      }
+      periodTotal += (double)(inClose - inOpen);
+      tempReal = periodTotal;
+      periodTotal -= ring_trailingIdx_derived[ringPos_trailingIdx];
+      outReal[kernBar] = tempReal / (double)optInTimePeriod;
+      cur_outReal = outReal[kernBar];
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_derived[ringPosL_trailingIdx] = (double)(inClose - inOpen);
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCap_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_QSTICK_UpdateBlock( struct TA_QSTICK_Stream *stream, const double inOpen[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_QSTICK_KernImpl( stream, inOpen, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_QSTICK_Value( const TA_QSTICK_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

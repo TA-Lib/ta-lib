@@ -441,6 +441,65 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Close( TA_CDLXSIDEGAP3METHODS_Strea
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLXSIDEGAP3METHODS_KernImpl( struct TA_CDLXSIDEGAP3METHODS_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int kernBar;
+
+   (void)inHighBlk;
+   (void)inLowBlk;
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+
+      if( ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == ((lag1_inClose >= lag1_inOpen) ? 1 : -1) && /* 1st and 2nd of same color */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* 3rd opposite color */
+          inOpen < max(lag1_inClose,lag1_inOpen) &&           /* 3rd opens within 2nd rb */
+          inOpen > min(lag1_inClose,lag1_inOpen) &&
+          inClose < max(lag2_inClose,lag2_inOpen) &&          /* 3rd closes within 1st rb */
+          inClose > min(lag2_inClose,lag2_inOpen) &&
+          ((((lag2_inClose >= lag2_inOpen) ? 1 : -1) == 1 &&  /* when 1st is white */
+            ((min(lag1_inOpen,lag1_inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0)) || /* upside gap */
+           (((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* when 1st is black */
+            ((max(lag1_inOpen,lag1_inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0))) ) /* downside gap */
+      {
+         outInteger[kernBar] = ((lag2_inClose >= lag2_inOpen) ? 1 : -1) * 100;
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLXSIDEGAP3METHODS_UpdateBlock( struct TA_CDLXSIDEGAP3METHODS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLXSIDEGAP3METHODS_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Value( const TA_CDLXSIDEGAP3METHODS_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

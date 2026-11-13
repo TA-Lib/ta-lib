@@ -353,6 +353,49 @@ TA_LIB_API TA_RetCode TA_BOP_Close( TA_BOP_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_BOP_KernImpl( struct TA_BOP_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempReal;
+
+      /* BOP is a fraction of the bar's own range, so it is scale-free and the
+       * divisor only has to be positive. An exact test, not the fixed
+       * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+       * and that band zeroed the output for any instrument quoted below it
+       * (issue #253).
+       */
+      tempReal = inHigh - inLow;
+      if( tempReal <= 0.0 )
+      {
+         outReal[kernBar] = 0.0;
+      } else 
+      {
+         outReal[kernBar] = (inClose - inOpen) / tempReal;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BOP_UpdateBlock( struct TA_BOP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_BOP_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_BOP_Value( const TA_BOP_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -1488,6 +1488,259 @@ TA_LIB_API TA_RetCode TA_CORREL_Close( TA_CORREL_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CORREL_KernImpl( struct TA_CORREL_Stream *sp, const double inReal0Blk[], const double inReal1Blk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double sumXY = sp->sumXY;
+   double sumX = sp->sumX;
+   double sumY = sp->sumY;
+   double sumX2 = sp->sumX2;
+   double sumY2 = sp->sumY2;
+   double shiftX = sp->shiftX;
+   double shiftY = sp->shiftY;
+   double peakX2 = sp->peakX2;
+   double peakY2 = sp->peakY2;
+   double invPeriod = sp->invPeriod;
+   int lookbackTotal = sp->lookbackTotal;
+   int trailingIdx = sp->trailingIdx;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int j = sp->j;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal0 = sp->x_inReal0;
+   double *x_inReal1 = sp->x_inReal1;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal0 = inReal0Blk[kernBar];
+      double inReal1 = inReal1Blk[kernBar];
+      double x;
+      double y;
+      double trailingX;
+      double trailingY;
+      double ssX;
+      double ssY;
+      double spXY;
+      double tempReal;
+      int windowStart;
+
+      x_inReal0[today & xMask] = inReal0;
+      x_inReal1[today & xMask] = inReal1;
+      /* Add the incoming value, measured against the shift. */
+      x = x_inReal0[today & xMask] - shiftX;
+      sumX += x;
+      sumX2 += x * x;
+      y = x_inReal1[today & xMask] - shiftY;
+      sumXY += x * y;
+      sumY += y;
+      sumY2 += y * y;
+      peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+      peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
+      ssX = sumX2 - sumX * sumX * invPeriod;
+      ssY = sumY2 - sumY * sumY * invPeriod;
+      spXY = sumXY - sumX * sumY * invPeriod;
+      /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+       * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+       * every 32 windows. Measure against that peak, not the current sum: the
+       * rounding the running sums carry scales with the peak, so once a series
+       * settles back near its shift, or an outlier leaves the window, the
+       * current sum holds nothing but that rounding. Each side keeps its own
+       * peak: one peak shared by two series of different scale fires on every
+       * bar. The collapse is seen on the first bar whose sums carry it, and the
+       * rebuild recomputes that bar's output before it is written.
+       *
+       * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+       * legitimate answer - two uncorrelated series - not a loss of digits, and
+       * reseeding on it would rebuild the window on every bar of ordinary data.
+       * This is where the analogy with TA_VAR stops: variance has one extracted
+       * quantity and all of it is signal.
+       *
+       * Reading the window here is safe when outReal aliases an input: the
+       * outputs written so far occupy [0, outIdx-1] while windowStart is
+       * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+       */
+      barsSinceReseed -= 1;
+      if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = today - lookbackTotal;
+         /* Both means in one pass over the window: the rebuild below is the
+          * only O(period) work on this function's hot path, so it is walked
+          * twice, not three times.
+          */
+         tempReal = 0.0;
+         shiftY = 0.0;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempReal += x_inReal0[j & xMask];
+            shiftY += x_inReal1[j & xMask];
+         }
+         shiftX = tempReal * invPeriod;
+         shiftY = shiftY * invPeriod;
+         sumY2 = 0.0;
+         sumX2 = sumY2;
+         sumY = sumX2;
+         sumX = sumY;
+         sumXY = sumX;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            x = x_inReal0[j & xMask] - shiftX;
+            sumX += x;
+            sumX2 += x * x;
+            y = x_inReal1[j & xMask] - shiftY;
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+         }
+         ssX = sumX2 - sumX * sumX * invPeriod;
+         ssY = sumY2 - sumY * sumY * invPeriod;
+         spXY = sumXY - sumX * sumY * invPeriod;
+         /* A side flat to within the rounding of its own mean leaves its sum of
+          * squares at that rounding, which would fire the trigger again on every
+          * bar. Anchored on one of its own values it cannot, short of squares
+          * that underflow. sumXY depends on both shifts, so all five sums are
+          * redone.
+          */
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 )
+         {
+            if( ssX < 0.000001 * sumX2 )
+            {
+               shiftX = x_inReal0[today & xMask];
+            }
+            if( ssY < 0.000001 * sumY2 )
+            {
+               shiftY = x_inReal1[today & xMask];
+            }
+            sumY2 = 0.0;
+            sumX2 = sumY2;
+            sumY = sumX2;
+            sumX = sumY;
+            sumXY = sumX;
+            for( j = windowStart; j <= today; j += 1 )
+            {
+               x = x_inReal0[j & xMask] - shiftX;
+               sumX += x;
+               sumX2 += x * x;
+               y = x_inReal1[j & xMask] - shiftY;
+               sumXY += x * y;
+               sumY += y;
+               sumY2 += y * y;
+            }
+            ssX = sumX2 - sumX * sumX * invPeriod;
+            ssY = sumY2 - sumY * sumY * invPeriod;
+            spXY = sumXY - sumX * sumY * invPeriod;
+         }
+         peakX2 = sumX2;
+         peakY2 = sumY2;
+         /* A sum of squares is non-negative by definition, but this one is
+          * extracted as a difference, so its SIGN is not guaranteed on a window
+          * sitting inside a flat stretch. Enforce the invariant HERE and not at
+          * the divide: a negative ssX always reseeds on the same bar, because
+          * the peak it is compared with is never negative, so the divide below
+          * can rely on both being >= 0 and needs no sign test of its own.
+          * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+          */
+         if( ssX < 0.0 )
+         {
+            ssX = 0.0;
+         }
+         if( ssY < 0.0 )
+         {
+            ssY = 0.0;
+         }
+      }
+      /* Save the trailing values before writing the output, since the input
+       * and output might be the same array.
+       */
+      trailingX = x_inReal0[trailingIdx & xMask] - shiftX;
+      trailingY = x_inReal1[trailingIdx & xMask] - shiftY;
+      trailingIdx += 1;
+      /* Output the new coefficient.
+       *
+       * Each sum of squares is tested against its OWN scale, not the pair
+       * against a fixed band. The product ssX*ssY carries the fourth power of
+       * the window's spread, so an absolute threshold on it rejects a perfectly
+       * well-defined correlation as soon as the data is small - and, worse,
+       * lets a pair of NEGATIVE sums through, their signs cancelling into a
+       * plausible-looking result of the wrong sign. Testing each factor
+       * separately is what forecloses both.
+       *
+       * The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+       * whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+       * that must never reach the square root. A plain `>` rejects it, and it
+       * is also the cheaper test: the two fabs() cost ~7% of this function's
+       * runtime, and buy a wrong answer.
+       *
+       * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+       * established both are positive, so the product needs no protection from
+       * a negative operand, and the second square root is worth ~14% of this
+       * function's runtime (measured, #395).
+       *
+       * The product is then tested on its own, because neither factor's test
+       * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+       * and ssY are still ordinary normals (#395). A zero divisor there gives
+       * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+       * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+       * not a band: an absolute band on the product is the #253 defect at a new
+       * address. At the other end the product overflows to +Inf and the quotient
+       * is 0.0, the degenerate answer anyway.
+       */
+      if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 )
+      {
+         tempReal = spXY / sqrt(ssX * ssY);
+         /* A correlation coefficient cannot leave [-1,1]; rounding in the
+          * three sums can still put it a few ulp outside.
+          */
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         } else if( tempReal < -1.0 )
+         {
+            tempReal = -1.0;
+         }
+         outReal[kernBar] = tempReal;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      /* Remove the trailing values (prepares the next window). */
+      sumX -= trailingX;
+      sumX2 -= trailingX * trailingX;
+      sumXY -= trailingX * trailingY;
+      sumY -= trailingY;
+      sumY2 -= trailingY * trailingY;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumXY = sumXY;
+   sp->sumX = sumX;
+   sp->sumY = sumY;
+   sp->sumX2 = sumX2;
+   sp->sumY2 = sumY2;
+   sp->shiftX = shiftX;
+   sp->shiftY = shiftY;
+   sp->peakX2 = peakX2;
+   sp->peakY2 = peakY2;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CORREL_UpdateBlock( struct TA_CORREL_Stream *stream, const double inReal0[], const double inReal1[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   TA_CORREL_KernImpl( stream, inReal0, inReal1, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CORREL_Value( const TA_CORREL_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -376,6 +376,50 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Close( TA_MARKETFI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MARKETFI_KernImpl( struct TA_MARKETFI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+
+      /* A zero-volume bar would divide by zero. Neither reference guards
+       * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+       * issue #112 settled that a successful call never emits NaN or Inf,
+       * so an untraded bar facilitated no movement and reports 0.
+       *
+       * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+       * 1e-14 band is an absolute threshold and meaningless against an
+       * unbounded volume scale. Same reasoning as the prevClose guard in
+       * ta_codegen/input/nvi/nvi.c.
+       */
+      if( inVolume != 0.0 )
+      {
+         outReal[kernBar] = (inHigh - inLow) / inVolume;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MARKETFI_UpdateBlock( struct TA_MARKETFI_Stream *stream, const double inHigh[], const double inLow[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_MARKETFI_KernImpl( stream, inHigh, inLow, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MARKETFI_Value( const TA_MARKETFI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

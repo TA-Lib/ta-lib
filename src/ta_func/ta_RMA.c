@@ -511,6 +511,38 @@ int TA_RMA_TapeDetach( struct TA_RMA_Stream *sp )
    return 0;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_RMA_KernImpl( struct TA_RMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevRMA = sp->prevRMA;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+
+      prevRMA = fma(wBeta, prevRMA, wAlpha * inReal);
+      outReal[kernBar] = prevRMA;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevRMA = prevRMA;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RMA_UpdateBlock( struct TA_RMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_RMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_RMA_Value( const TA_RMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

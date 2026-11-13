@@ -988,6 +988,131 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Close( TA_CDLKICKINGBYLENGTH_Stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLKICKINGBYLENGTH_KernImpl( struct TA_CDLKICKINGBYLENGTH_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double *ShadowVeryShortPeriodTotal = sp->ShadowVeryShortPeriodTotal;
+   double *BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double BodyLongPeriodTotalRange1 = sp->BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1 = sp->BodyLongPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange1 = sp->ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1 = sp->ShadowVeryShortPeriodTotalTrailRange1;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   int ringCap_ShadowVeryShortTrailingIdx = sp->ringCap_ShadowVeryShortTrailingIdx;
+   double *ring_ShadowVeryShortTrailingIdx_derived = sp->ring_ShadowVeryShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double BodyLongPeriodTotalRange0;
+      double BodyLongPeriodTotalTrailRange0;
+      double ShadowVeryShortPeriodTotalRange0;
+      double ShadowVeryShortPeriodTotalTrailRange0;
+      int ringPosL_BodyLongTrailingIdx;
+      int ringPosL_ShadowVeryShortTrailingIdx;
+
+      if( ringCap_BodyLongTrailingIdx == 0 )
+      {
+         ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      }
+      if( ringCap_ShadowVeryShortTrailingIdx == 0 )
+      {
+         ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      }
+      if( ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* opposite candles */
+          ((((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* gap */
+            ((inLow > lag1_inHigh) ? 1 : 0)) ||
+           (((lag1_inClose >= lag1_inOpen) ? 1 : -1) == 1 &&
+            ((inHigh < lag1_inLow) ? 1 : 0))) )
+      {
+         if( fabs(lag1_inClose - lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* 1st marubozu */
+             (lag1_inHigh - TA_COLOR_MAX(lag1_inClose, lag1_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) &&
+             (TA_COLOR_MIN(lag1_inClose, lag1_inOpen) - lag1_inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) &&
+             fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* 2nd marubozu */
+             (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+             (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) )
+         {
+            outInteger[kernBar] = ((((fabs(inClose - inOpen) > fabs(lag1_inClose - lag1_inOpen)) ? inClose : lag1_inClose) >= ((fabs(inClose - inOpen) > fabs(lag1_inClose - lag1_inOpen)) ? inOpen : lag1_inOpen)) ? 1 : -1) * 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyLongPeriodTotalRange0 = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      BodyLongPeriodTotalTrailRange0 = ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx];
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      ShadowVeryShortPeriodTotalTrailRange0 = ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx];
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
+      cur_outInteger = outInteger[kernBar];
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+      ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+      if( ringPosL_ShadowVeryShortTrailingIdx >= ringCap_ShadowVeryShortTrailingIdx )
+      {
+         ringPosL_ShadowVeryShortTrailingIdx = 0;
+      }
+      ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+   sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+   sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange1;
+   sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange1;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLKICKINGBYLENGTH_UpdateBlock( struct TA_CDLKICKINGBYLENGTH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLKICKINGBYLENGTH_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Value( const TA_CDLKICKINGBYLENGTH_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

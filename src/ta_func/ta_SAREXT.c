@@ -1619,6 +1619,198 @@ TA_LIB_API TA_RetCode TA_SAREXT_Close( TA_SAREXT_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SAREXT_KernImpl( struct TA_SAREXT_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double optInOffsetOnReverse = sp->optInOffsetOnReverse;
+   double optInAccelerationInitLong = sp->optInAccelerationInitLong;
+   double optInAccelerationLong = sp->optInAccelerationLong;
+   double optInAccelerationMaxLong = sp->optInAccelerationMaxLong;
+   double optInAccelerationInitShort = sp->optInAccelerationInitShort;
+   double optInAccelerationShort = sp->optInAccelerationShort;
+   double optInAccelerationMaxShort = sp->optInAccelerationMaxShort;
+   int isLong = sp->isLong;
+   double newHigh = sp->newHigh;
+   double newLow = sp->newLow;
+   double afLong = sp->afLong;
+   double afShort = sp->afShort;
+   double ep = sp->ep;
+   double sar = sp->sar;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double prevHigh;
+      double prevLow;
+
+      prevLow = newLow;
+      prevHigh = newHigh;
+      newLow = inLow;
+      newHigh = inHigh;
+      if( isLong == 1 )
+      {
+         /* Switch to short if the low penetrates the SAR value. */
+         if( newLow <= sar )
+         {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 0;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh )
+            {
+               sar = prevHigh;
+            }
+            if( sar < newHigh )
+            {
+               sar = newHigh;
+            }
+            /* Output the overide SAR */
+            if( optInOffsetOnReverse != 0.0 )
+            {
+               sar += sar * optInOffsetOnReverse;
+            }
+            outReal[kernBar] = -sar;
+            /* Adjust afShort and ep */
+            afShort = optInAccelerationInitShort;
+            ep = newLow;
+            /* Calculate the new SAR */
+            sar = fma(afShort, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh )
+            {
+               sar = prevHigh;
+            }
+            if( sar < newHigh )
+            {
+               sar = newHigh;
+            }
+         } else 
+         {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            outReal[kernBar] = sar;
+            /* Adjust afLong and ep. */
+            if( newHigh > ep )
+            {
+               ep = newHigh;
+               afLong += optInAccelerationLong;
+               if( afLong > optInAccelerationMaxLong )
+               {
+                  afLong = optInAccelerationMaxLong;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = fma(afLong, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow )
+            {
+               sar = prevLow;
+            }
+            if( sar > newLow )
+            {
+               sar = newLow;
+            }
+         }
+      /* Switch to long if the high penetrates the SAR value. */
+      } else if( newHigh >= sar )
+      {
+         /* Switch and Overide the SAR with the ep */
+         isLong = 1;
+         sar = ep;
+         /* Make sure the overide SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar > prevLow )
+         {
+            sar = prevLow;
+         }
+         if( sar > newLow )
+         {
+            sar = newLow;
+         }
+         /* Output the overide SAR */
+         if( optInOffsetOnReverse != 0.0 )
+         {
+            sar -= sar * optInOffsetOnReverse;
+         }
+         outReal[kernBar] = sar;
+         /* Adjust afLong and ep */
+         afLong = optInAccelerationInitLong;
+         ep = newHigh;
+         /* Calculate the new SAR */
+         sar = fma(afLong, ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar > prevLow )
+         {
+            sar = prevLow;
+         }
+         if( sar > newLow )
+         {
+            sar = newLow;
+         }
+      } else 
+      {
+         /* No switch */
+         /* Output the SAR (was calculated in the previous iteration) */
+         outReal[kernBar] = -sar;
+         /* Adjust afShort and ep. */
+         if( newLow < ep )
+         {
+            ep = newLow;
+            afShort += optInAccelerationShort;
+            if( afShort > optInAccelerationMaxShort )
+            {
+               afShort = optInAccelerationMaxShort;
+            }
+         }
+         /* Calculate the new SAR */
+         sar = fma(afShort, ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar < prevHigh )
+         {
+            sar = prevHigh;
+         }
+         if( sar < newHigh )
+         {
+            sar = newHigh;
+         }
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->isLong = isLong;
+   sp->newHigh = newHigh;
+   sp->newLow = newLow;
+   sp->afLong = afLong;
+   sp->afShort = afShort;
+   sp->ep = ep;
+   sp->sar = sar;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SAREXT_UpdateBlock( struct TA_SAREXT_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_SAREXT_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SAREXT_Value( const TA_SAREXT_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

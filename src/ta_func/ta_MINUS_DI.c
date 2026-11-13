@@ -1515,6 +1515,137 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Close( TA_MINUS_DI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MINUS_DI_KernImpl( struct TA_MINUS_DI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double prevHigh = sp->prevHigh;
+   double prevLow = sp->prevLow;
+   double prevClose = sp->prevClose;
+   double invPeriod = sp->invPeriod;
+   double prevMinusDM = sp->prevMinusDM;
+   double prevTR = sp->prevTR;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+
+      if( optInTimePeriod <= 1 )
+      {
+         double tempReal;
+         double diffP;
+         double diffM;
+
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         if( diffM > 0 && diffP < diffM )
+         {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            double _true_range_0;
+            double range_0 = prevHigh - prevLow;
+            double tmp_0 = fabs(prevHigh - prevClose);
+            if( tmp_0 > range_0 )
+            {
+               range_0 = tmp_0;
+            }
+            tmp_0 = fabs(prevLow - prevClose);
+            if( tmp_0 > range_0 )
+            {
+               range_0 = tmp_0;
+            }
+            _true_range_0 = range_0;
+            tempReal = _true_range_0;
+            if( tempReal <= 0.0 )
+            {
+               outReal[kernBar] = (double)0.0;
+            } else 
+            {
+               outReal[kernBar] = diffM / tempReal;
+            }
+         } else 
+         {
+            outReal[kernBar] = (double)0.0;
+         }
+         prevClose = inClose;
+         cur_outReal = outReal[kernBar];
+      }
+      else
+      {
+         double tempReal;
+         double diffP;
+         double diffM;
+         double minusDM1;
+
+         /* Calculate the prevMinusDM */
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         tempReal = diffM - diffP;
+         minusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffM);
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
+         /* Calculate the prevTR */
+         double _true_range_1;
+         double range_1 = prevHigh - prevLow;
+         double tmp_1 = fabs(prevHigh - prevClose);
+         if( tmp_1 > range_1 )
+         {
+            range_1 = tmp_1;
+         }
+         tmp_1 = fabs(prevLow - prevClose);
+         if( tmp_1 > range_1 )
+         {
+            range_1 = tmp_1;
+         }
+         _true_range_1 = range_1;
+         tempReal = _true_range_1;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
+         prevClose = inClose;
+         /* Calculate the DI. The value is rounded (see Wilder book). */
+         if( prevTR > 0.0 )
+         {
+            outReal[kernBar] = (100.0 * (prevMinusDM / prevTR));
+         } else 
+         {
+            outReal[kernBar] = 0.0;
+         }
+         cur_outReal = outReal[kernBar];
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevHigh = prevHigh;
+   sp->prevLow = prevLow;
+   sp->prevClose = prevClose;
+   sp->prevMinusDM = prevMinusDM;
+   sp->prevTR = prevTR;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MINUS_DI_UpdateBlock( struct TA_MINUS_DI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_MINUS_DI_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MINUS_DI_Value( const TA_MINUS_DI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -1286,6 +1286,224 @@ TA_LIB_API TA_RetCode TA_VORTEX_Close( TA_VORTEX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_VORTEX_KernImpl( struct TA_VORTEX_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outPlusVI[], double outMinusVI[] )
+{
+   double cur_outPlusVI = sp->cur_outPlusVI;
+   double cur_outMinusVI = sp->cur_outMinusVI;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int nullRun = sp->nullRun;
+   double prevHigh = sp->prevHigh;
+   double prevLow = sp->prevLow;
+   double prevClose = sp->prevClose;
+   double sTR = sp->sTR;
+   double sVMM = sp->sVMM;
+   double sVMP = sp->sVMP;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   int ringLag_trailingIdx = sp->ringLag_trailingIdx;
+   double *ring_trailingIdx_inHigh = sp->ring_trailingIdx_inHigh;
+   double *ring_trailingIdx_inLow = sp->ring_trailingIdx_inLow;
+   double *ring_trailingIdx_inClose = sp->ring_trailingIdx_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int i;
+      int live;
+      int seeded;
+      double curTR;
+      double curVMP;
+      double curVMM;
+      double trueRange;
+      double tempDouble;
+      double tempLT;
+      double tempHT;
+      double tempCY;
+      int ringPosL_trailingIdx;
+
+      ring_trailingIdx_inHigh[ringPos_trailingIdx] = inHigh;
+      ring_trailingIdx_inLow[ringPos_trailingIdx] = inLow;
+      ring_trailingIdx_inClose[ringPos_trailingIdx] = inClose;
+      /* Add on today's terms. */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      trueRange = tempHT - tempLT;
+      tempDouble = fabs(tempCY - tempHT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      tempDouble = fabs(tempCY - tempLT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      sTR += trueRange;
+      sVMP += fabs(inHigh - lag1_inLow);
+      sVMM += fabs(inLow - lag1_inHigh);
+      live = (trueRange <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      /* Once the whole window is flat, every TRUE-RANGE term in it is
+       * provably zero (nullRun counts exactly that), so sTR's only content
+       * is the running add/subtract's rounding residue -- purge it, and the
+       * exact division gate below recognizes the case with no absolute
+       * band. ONLY sTR: a zero true range (H == L == prevClose) does NOT
+       * zero that bar's vortex terms, which read the PREVIOUS bar's
+       * extremes -- a spread bar followed by a halt leaves |H - prevL| and
+       * |L - prevH| alive inside the window, and zeroing the numerator sums
+       * would poison both lines permanently (an unreachable negative -VI).
+       * ULTOSC can reseed all its totals because its predicate covers both
+       * of its per-bar terms; VORTEX's covers only the denominator's.
+       */
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         sTR = 0.0;
+      }
+      /* Record the current window sums, then retire the trailing bar's
+       * terms so the sums are ready for the next iteration.
+       */
+      curTR = sTR;
+      curVMP = sVMP;
+      curVMM = sVMM;
+      tempLT = ring_trailingIdx_inLow[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx) % ringCap_trailingIdx];
+      tempHT = ring_trailingIdx_inHigh[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx) % ringCap_trailingIdx];
+      tempCY = ring_trailingIdx_inClose[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx - 1) % ringCap_trailingIdx];
+      trueRange = tempHT - tempLT;
+      tempDouble = fabs(tempCY - tempHT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      tempDouble = fabs(tempCY - tempLT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      sTR -= trueRange;
+      sVMP -= fabs(ring_trailingIdx_inHigh[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx) % ringCap_trailingIdx] - ring_trailingIdx_inLow[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx - 1) % ringCap_trailingIdx]);
+      sVMM -= fabs(ring_trailingIdx_inLow[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx) % ringCap_trailingIdx] - ring_trailingIdx_inHigh[(ringPos_trailingIdx + ringCap_trailingIdx - ringLag_trailingIdx - 1) % ringCap_trailingIdx]);
+      /* Last operation is to write the outputs. Must be done after the
+       * trailing bar has been fully consumed: the caller is allowed to pass
+       * an output buffer aliasing any input, and the trailing reads above
+       * touch bars trailingIdx-1 == outIdx and trailingIdx == outIdx+1 --
+       * an emit-first order would have clobbered them (ULTOSC's own rule;
+       * ACCBANDS' multi-output form).
+       *
+       * Zero-denominator gate, on the DENOMINATOR itself and exact: the
+       * flat-run reseed above removes the running sums' residue, so
+       * `curTR > 0.0` is a precise test -- ULTOSC gates its divisions the
+       * same way after the same reseed. The flat-bar count alone is only a
+       * proxy for sTR == 0 in exact arithmetic: floating-point absorption
+       * can zero the running sum while the window still holds a live term
+       * (a large spread swallows a 1-ULP one; the later subtract leaves
+       * exactly 0.0 with nullRun far below n), and an ungated division
+       * then emits NaN/Inf, which VORTEX does not declare. An absolute
+       * TA_IS_ZERO band is no better: it zeroes legitimate ratios on any
+       * instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
+       * rejects it (VORTEX is homogeneous of degree 0).
+       */
+      if( curTR > 0.0 )
+      {
+         outPlusVI[kernBar] = curVMP / curTR;
+         outMinusVI[kernBar] = curVMM / curTR;
+      } else 
+      {
+         outPlusVI[kernBar] = 0.0;
+         outMinusVI[kernBar] = 0.0;
+      }
+      /* Every term is non-negative, so a sum below zero is the residue a
+       * term far larger than the rest of the window left when it retired.
+       * Tested on the sums the next bar adds to, not on the ones it outputs:
+       * a non-negative sum plus a non-negative term stays non-negative, and
+       * nothing a peek returns depends on it. The rebuild sums the retained
+       * terms oldest first, the state a call starting at the next bar primes.
+       * The first bar it reads only seeds the second, so an aliased output
+       * slot holding it changes nothing. Only the vortex sums are tested: a
+       * negative sTR fails the division gate and writes 0.0. Keep
+       * two compares rather than a min: the two sums have no order, and gcc
+       * may emit that select as a branch that mispredicts whenever they swap
+       * order.
+       */
+      if( TA_UNLIKELY(sVMP < 0.0 || sVMM < 0.0) )
+      {
+         sTR = 0.0;
+         sVMP = 0.0;
+         sVMM = 0.0;
+         seeded = 0;
+         for( i = optInTimePeriod; i >= 0; i -= 1 )
+         {
+            if( seeded > 1 )
+            {
+               tempLT = ring_trailingIdx_inLow[(ringPos_trailingIdx + ringCap_trailingIdx - i >= ringCap_trailingIdx) ? ringPos_trailingIdx + ringCap_trailingIdx - i - ringCap_trailingIdx : ringPos_trailingIdx + ringCap_trailingIdx - i];
+               tempHT = ring_trailingIdx_inHigh[(ringPos_trailingIdx + ringCap_trailingIdx - i >= ringCap_trailingIdx) ? ringPos_trailingIdx + ringCap_trailingIdx - i - ringCap_trailingIdx : ringPos_trailingIdx + ringCap_trailingIdx - i];
+               trueRange = tempHT - tempLT;
+               tempDouble = fabs(prevClose - tempHT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               tempDouble = fabs(prevClose - tempLT);
+               if( tempDouble > trueRange )
+               {
+                  trueRange = tempDouble;
+               }
+               sTR += trueRange;
+               sVMP += fabs(tempHT - prevLow);
+               sVMM += fabs(tempLT - prevHigh);
+            }
+            prevHigh = ring_trailingIdx_inHigh[(ringPos_trailingIdx + ringCap_trailingIdx - i >= ringCap_trailingIdx) ? ringPos_trailingIdx + ringCap_trailingIdx - i - ringCap_trailingIdx : ringPos_trailingIdx + ringCap_trailingIdx - i];
+            prevLow = ring_trailingIdx_inLow[(ringPos_trailingIdx + ringCap_trailingIdx - i >= ringCap_trailingIdx) ? ringPos_trailingIdx + ringCap_trailingIdx - i - ringCap_trailingIdx : ringPos_trailingIdx + ringCap_trailingIdx - i];
+            prevClose = ring_trailingIdx_inClose[(ringPos_trailingIdx + ringCap_trailingIdx - i >= ringCap_trailingIdx) ? ringPos_trailingIdx + ringCap_trailingIdx - i - ringCap_trailingIdx : ringPos_trailingIdx + ringCap_trailingIdx - i];
+            seeded += 1;
+         }
+      }
+      cur_outPlusVI = outPlusVI[kernBar];
+      cur_outMinusVI = outMinusVI[kernBar];
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag1_inClose = inClose;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCap_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outPlusVI = cur_outPlusVI;
+   sp->cur_outMinusVI = cur_outMinusVI;
+   sp->nullRun = nullRun;
+   sp->prevHigh = prevHigh;
+   sp->prevLow = prevLow;
+   sp->prevClose = prevClose;
+   sp->sTR = sTR;
+   sp->sVMM = sVMM;
+   sp->sVMP = sVMP;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VORTEX_UpdateBlock( struct TA_VORTEX_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outPlusVI[], double outMinusVI[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
+   TA_VORTEX_KernImpl( stream, inHigh, inLow, inClose, nbBar, outPlusVI, outMinusVI );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_VORTEX_Value( const TA_VORTEX_Stream *stream, double *outPlusVI, double *outMinusVI )
 {
    if( !stream || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;

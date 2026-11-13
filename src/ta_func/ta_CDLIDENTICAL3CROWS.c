@@ -1088,6 +1088,148 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Close( TA_CDLIDENTICAL3CROWS_Stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLIDENTICAL3CROWS_KernImpl( struct TA_CDLIDENTICAL3CROWS_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double *ShadowVeryShortPeriodTotal = sp->ShadowVeryShortPeriodTotal;
+   double *EqualPeriodTotal = sp->EqualPeriodTotal;
+   double ShadowVeryShortPeriodTotalRange1 = sp->ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1 = sp->ShadowVeryShortPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange2 = sp->ShadowVeryShortPeriodTotalRange2;
+   double ShadowVeryShortPeriodTotalTrailRange2 = sp->ShadowVeryShortPeriodTotalTrailRange2;
+   double EqualPeriodTotalRange2 = sp->EqualPeriodTotalRange2;
+   double EqualPeriodTotalTrailRange2 = sp->EqualPeriodTotalTrailRange2;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   int ringCap_EqualTrailingIdx = sp->ringCap_EqualTrailingIdx;
+   int ringLag_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx;
+   double *ring_EqualTrailingIdx_derived = sp->ring_EqualTrailingIdx_derived;
+   int ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   int ringCap_ShadowVeryShortTrailingIdx = sp->ringCap_ShadowVeryShortTrailingIdx;
+   double *ring_ShadowVeryShortTrailingIdx_derived = sp->ring_ShadowVeryShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double ShadowVeryShortPeriodTotalRange0;
+      double ShadowVeryShortPeriodTotalTrailRange0;
+      double EqualPeriodTotalRange1;
+      double EqualPeriodTotalTrailRange1;
+      int ringPosL_EqualTrailingIdx;
+      int ringPosL_ShadowVeryShortTrailingIdx;
+
+      ring_EqualTrailingIdx_derived[ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
+      if( ringCap_ShadowVeryShortTrailingIdx == 0 )
+      {
+         ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      }
+      if( ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* 2nd black */
+          ((inClose >= inOpen) ? 1 : -1) == -1 )            /* 3rd black */
+      {
+         if( (TA_COLOR_MIN(lag2_inClose, lag2_inOpen) - lag2_inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[2],lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* very short lower shadow */
+             (TA_COLOR_MIN(lag1_inClose, lag1_inOpen) - lag1_inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* very short lower shadow */
+             (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* very short lower shadow */
+             lag2_inClose > lag1_inClose && /* three declining */
+             lag1_inClose > inClose &&
+             lag1_inOpen <= lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal[2],lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 2nd black opens very close to 1st close */
+             lag1_inOpen >= lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal[2],lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) &&
+             inOpen <= lag1_inClose + TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* 3rd black opens very close to 2nd close */
+             inOpen >= lag1_inClose - TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) )
+         {
+            outInteger[kernBar] = -100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      ShadowVeryShortPeriodTotalRange0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      ShadowVeryShortPeriodTotalTrailRange0 = ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx];
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
+      EqualPeriodTotalRange1 = TA_STREAM_CANDLERANGE(Equal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose);
+      EqualPeriodTotalTrailRange1 = ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + ringCap_EqualTrailingIdx - ringLag_EqualTrailingIdx - 1) % ringCap_EqualTrailingIdx];
+      EqualPeriodTotal[2] = EqualPeriodTotal[2] + (EqualPeriodTotalRange2 - EqualPeriodTotalTrailRange2);
+      EqualPeriodTotal[1] = EqualPeriodTotal[1] + (EqualPeriodTotalRange1 - EqualPeriodTotalTrailRange1);
+      EqualPeriodTotalRange2 = EqualPeriodTotalRange1;
+      EqualPeriodTotalTrailRange2 = EqualPeriodTotalTrailRange1;
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+      if( ringPosL_EqualTrailingIdx >= ringCap_EqualTrailingIdx )
+      {
+         ringPosL_EqualTrailingIdx = 0;
+      }
+      ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+      ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+      if( ringPosL_ShadowVeryShortTrailingIdx >= ringCap_ShadowVeryShortTrailingIdx )
+      {
+         ringPosL_ShadowVeryShortTrailingIdx = 0;
+      }
+      ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange1;
+   sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange1;
+   sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+   sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+   sp->EqualPeriodTotalRange2 = EqualPeriodTotalRange2;
+   sp->EqualPeriodTotalTrailRange2 = EqualPeriodTotalTrailRange2;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLIDENTICAL3CROWS_UpdateBlock( struct TA_CDLIDENTICAL3CROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLIDENTICAL3CROWS_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Value( const TA_CDLIDENTICAL3CROWS_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

@@ -995,6 +995,67 @@ TA_LIB_API TA_RetCode TA_MACD_Close( TA_MACD_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_MACD_KernImpl( struct TA_MACD_Stream *sp, const double inRealBlk[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   double cur_outMACD = sp->cur_outMACD;
+   double cur_outMACDSignal = sp->cur_outMACDSignal;
+   double cur_outMACDHist = sp->cur_outMACDHist;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double prevFast = sp->prevFast;
+   double prevSlow = sp->prevSlow;
+   double prevSignal = sp->prevSignal;
+   double slowK = sp->slowK;
+   double fastK = sp->fastK;
+   double signalK = sp->signalK;
+   double slowBeta = sp->slowBeta;
+   double fastBeta = sp->fastBeta;
+   double signalBeta = sp->signalBeta;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double macdValue;
+      double tempReal;
+
+      tempReal = inReal;
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      macdValue = prevFast - prevSlow;
+      if( optInSignalPeriod == 1 )
+      {
+         prevSignal = macdValue;
+      } else 
+      {
+         prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
+      }
+      outMACD[kernBar] = macdValue;
+      outMACDSignal[kernBar] = prevSignal;
+      outMACDHist[kernBar] = macdValue - prevSignal;
+      cur_outMACD = outMACD[kernBar];
+      cur_outMACDSignal = outMACDSignal[kernBar];
+      cur_outMACDHist = outMACDHist[kernBar];
+   }
+   sp->cur_outMACD = cur_outMACD;
+   sp->cur_outMACDSignal = cur_outMACDSignal;
+   sp->cur_outMACDHist = cur_outMACDHist;
+   sp->prevFast = prevFast;
+   sp->prevSlow = prevSlow;
+   sp->prevSignal = prevSignal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACD_UpdateBlock( struct TA_MACD_Stream *stream, const double inReal[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   TA_MACD_KernImpl( stream, inReal, nbBar, outMACD, outMACDSignal, outMACDHist );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACD_Value( const TA_MACD_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;

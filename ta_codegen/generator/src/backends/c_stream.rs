@@ -1196,6 +1196,9 @@ pub fn generate(
             emit_period_bank(&mut o, func, pbp, registry, helpers, &counter, enums);
         }
     }
+    if let Ok(kp) = kern_plan(func, &plan) {
+        emit_kernel(&mut o, func, &kp, enums, registry, helpers);
+    }
 
     // Tier-independent: every tier retains into the same `cur_` fields and
     // leads its struct with the same range head, so one call here covers all
@@ -1295,6 +1298,9 @@ fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
     }
     if step_fuses {
         if let Some(line) = def_line(o, &update_signature(func)) {
+            o.insert_str(line, "TA_FMA_MULTIVERSION\n");
+        }
+        if let Some(line) = def_line(o, &format!("static void TA_{n}_KernImpl(")) {
             o.insert_str(line, "TA_FMA_MULTIVERSION\n");
         }
     }
@@ -6075,6 +6081,407 @@ fn emit_update(o: &mut String, func: &FuncDef, step_ret: bool) {
         emit_range_head_advance(o, "   ", "stream");
         let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     }
+}
+
+/// Why a function's step gets no block kernel (`TA_<N>_KernImpl`).
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum KernDecline {
+    /// The step answers a code and drives sub-streams through their `Update`.
+    Composed,
+    /// `Dispatch` / `PeriodBank`: no transcribed step to hoist.
+    HandRolled,
+    /// A construct the hoisting rule does not cover.
+    Construct(String),
+}
+
+/// One field of the handle as its struct declares it.
+struct HandleField {
+    ty: String,
+    name: String,
+    array: bool,
+}
+
+impl HandleField {
+    /// The kernel local's declaration. A fixed-size array binds as a pointer:
+    /// its elements are still read and written in the handle.
+    fn local_decl(&self) -> String {
+        if self.array {
+            format!("{} *{}", self.ty, self.name)
+        } else if self.ty.ends_with('*') {
+            format!("{}{}", self.ty, self.name)
+        } else {
+            format!("{} {}", self.ty, self.name)
+        }
+    }
+}
+
+/// The fields of a rendered `struct TA_<N>_Stream { ... };`, in declaration order.
+fn handle_fields(struct_text: &str) -> Vec<HandleField> {
+    let mut out = Vec::new();
+    for line in struct_text.lines() {
+        let t = line.trim();
+        if !t.ends_with(';') || t.starts_with("/*") || t.starts_with("struct ") || t == "};" {
+            continue;
+        }
+        let decl = t.trim_end_matches(';');
+        let (decl, array) = match decl.find('[') {
+            Some(i) => (&decl[..i], true),
+            None => (decl, false),
+        };
+        let Some((ty, name)) = decl.rsplit_once(' ') else { continue };
+        let stars = name.len() - name.trim_start_matches('*').len();
+        let ty = if stars > 0 { format!("{ty} {}", "*".repeat(stars)) } else { ty.to_string() };
+        out.push(HandleField { ty, name: name.trim_start_matches('*').to_string(), array });
+    }
+    out
+}
+
+struct KernArm<'p, 'a> {
+    model: &'p StreamModel<'a>,
+    body: Vec<Statement>,
+}
+
+/// A step lowered to a kernel body: every handle field it names is a local of
+/// the field's own name (`fma::stream_base` classifies `sp->x` and `x` alike,
+/// so no fusion site moves), each output write lands in the bar's element,
+/// and an early exit moves on to the next bar.
+struct KernPlan<'p, 'a> {
+    identity: Option<Statement>,
+    pred: Option<Expr>,
+    arms: Vec<KernArm<'p, 'a>>,
+    fields: Vec<HandleField>,
+    written: std::collections::BTreeSet<String>,
+    bar: String,
+    used_inputs: std::collections::BTreeSet<String>,
+}
+
+#[derive(Default)]
+struct KernScan {
+    fields: std::collections::BTreeSet<String>,
+    written: std::collections::BTreeSet<String>,
+    idents: std::collections::BTreeSet<String>,
+    locals: std::collections::BTreeSet<String>,
+    fail: Option<String>,
+}
+
+impl KernScan {
+    fn refuse(&mut self, why: String) {
+        self.fail.get_or_insert(why);
+    }
+
+    fn field_of(v: &str) -> Option<&str> {
+        v.strip_prefix("sp->")
+    }
+
+    fn expr(&mut self, e: &Expr, outputs: &std::collections::BTreeSet<String>) {
+        streaming::walk_expr(e, &mut |x| match x {
+            Expr::Var(v) | Expr::ArrayAccess(v, _) => {
+                if v == "sp" {
+                    self.refuse("the handle used as a value".to_string());
+                }
+                match Self::field_of(v) {
+                    Some(f) => {
+                        self.fields.insert(f.to_string());
+                        self.idents.insert(f.to_string());
+                    }
+                    None => {
+                        self.idents.insert(v.clone());
+                    }
+                }
+            }
+            Expr::PointerDeref(p) => {
+                if !outputs.contains(p) {
+                    self.refuse(format!("a dereference of `{p}`"));
+                }
+            }
+            Expr::PreIncrement(i)
+            | Expr::PreDecrement(i)
+            | Expr::PostIncrement(i)
+            | Expr::PostDecrement(i)
+            | Expr::AddressOf(i) => {
+                if let Expr::Var(v) = &**i {
+                    if let Some(f) = Self::field_of(v) {
+                        self.written.insert(f.to_string());
+                    }
+                }
+            }
+            // A macro may assign its argument.
+            Expr::FuncCall(_, args) => {
+                for a in args {
+                    if let Expr::Var(v) = a {
+                        if let Some(f) = Self::field_of(v) {
+                            self.written.insert(f.to_string());
+                        }
+                    }
+                }
+            }
+            _ => {}
+        });
+    }
+
+    fn stmts(&mut self, list: &[Statement], in_loop: bool) {
+        for st in list {
+            match st {
+                Statement::Assign { target: Expr::Var(v), .. } => {
+                    if let Some(f) = Self::field_of(v) {
+                        self.written.insert(f.to_string());
+                    }
+                }
+                Statement::Return { value: Some(_) } => self.refuse("a valued return".to_string()),
+                Statement::Return { value: None } if in_loop => {
+                    self.refuse("a return inside a loop of the step".to_string());
+                }
+                Statement::CircBuf(_) => self.refuse("a CIRCBUF statement".to_string()),
+                Statement::VarDecl { name, .. } | Statement::For { var: name, .. } => {
+                    self.locals.insert(name.clone());
+                }
+                _ => {}
+            }
+            let looped = in_loop
+                || matches!(
+                    st,
+                    Statement::While { .. } | Statement::DoWhile { .. } | Statement::For { .. } | Statement::ForC { .. }
+                );
+            for b in nested_stmt_bodies(st) {
+                self.stmts(b, looped);
+            }
+        }
+    }
+}
+
+/// Whether `func` gets a block kernel, and if not, why.
+pub fn kernel_decision(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Result<(), KernDecline> {
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
+    let plan = streaming::validate_streamable(func, lookup).unwrap_or_else(|e| panic!("streaming gate: {e}"));
+    kern_plan(func, &plan).map(|_| ())
+}
+
+fn kern_plan<'p, 'a>(func: &FuncDef, plan: &'p StreamPlan<'a>) -> Result<KernPlan<'p, 'a>, KernDecline> {
+    let (identity, pred, models): (Option<Statement>, Option<Expr>, Vec<&'p StreamModel<'a>>) = match plan {
+        StreamPlan::Loop(model) => (None, None, vec![model]),
+        StreamPlan::DualMode(dmp) => {
+            let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+            let pred = streaming::rewrite_expr(&dmp.predicate, &|x| match x {
+                Expr::Var(v) if params.contains(&v) => Expr::Var(format!("sp->{v}")),
+                other => other,
+            });
+            (streaming::identity_step_branch(&dmp.mode_a, &CNames), Some(pred), vec![&dmp.mode_a, &dmp.mode_b])
+        }
+        StreamPlan::Composed(_) => return Err(KernDecline::Composed),
+        StreamPlan::Dispatch(_) | StreamPlan::PeriodBank(_) => return Err(KernDecline::HandRolled),
+    };
+    let mut struct_text = String::new();
+    match plan {
+        StreamPlan::DualMode(dmp) => emit_dual_state_struct(&mut struct_text, func, &dmp.mode_a, &dmp.mode_b),
+        _ => emit_state_struct(&mut struct_text, func, models[0]),
+    }
+    let declared = handle_fields(&struct_text);
+
+    let inputs = streaming::input_array_names(func);
+    let outputs: std::collections::BTreeSet<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    let mut sc = KernScan::default();
+    let mut raw: Vec<Vec<Statement>> = Vec::new();
+    for m in &models {
+        let t = streaming::build_transition(m, &CNames).map_err(KernDecline::Construct)?;
+        raw.push(t);
+    }
+    let mut pieces: Vec<&[Statement]> = raw.iter().map(Vec::as_slice).collect();
+    if let Some(s) = &identity {
+        pieces.push(std::slice::from_ref(s));
+    }
+    for list in pieces {
+        sc.stmts(list, false);
+        for st in list {
+            streaming::walk_stmt_exprs(st, &mut |e| sc.expr(e, &outputs));
+        }
+    }
+    if let Some(p) = &pred {
+        sc.expr(p, &outputs);
+    }
+    if let Some(why) = sc.fail.take() {
+        return Err(KernDecline::Construct(why));
+    }
+
+    let mut locals = sc.locals.clone();
+    for m in &models {
+        locals.extend(streaming::step_temps(m, None).into_iter().map(|(n, _)| n));
+        for set in crate::candle_settings::detect_candle_settings(&m.steady_stmts) {
+            for prop in ["rangeType", "avgPeriod", "factor"] {
+                locals.insert(format!("{set}_{prop}"));
+            }
+        }
+    }
+    locals.extend(inputs.iter().cloned());
+    locals.extend(inputs.iter().map(|a| format!("{a}Blk")));
+    locals.extend(outputs.iter().cloned());
+    locals.extend(["nbBar".to_string(), "sp".to_string()]);
+    if let Some(f) = sc.fields.iter().find(|f| locals.contains(*f)) {
+        return Err(KernDecline::Construct(format!("handle field `{f}` shares its name with a local of the step")));
+    }
+    if let Some(f) = sc.fields.iter().find(|f| !declared.iter().any(|d| &d.name == *f)) {
+        return Err(KernDecline::Construct(format!("field `{f}` the handle does not declare")));
+    }
+
+    let mut bar = "kernBar".to_string();
+    while locals.contains(&bar) || sc.idents.contains(&bar) {
+        bar.push('_');
+    }
+    let rewrite = |list: &[Statement]| {
+        streaming::rewrite_stmts(
+            list,
+            &|e| match e {
+                Expr::Var(ref v) => KernScan::field_of(v).map_or(e.clone(), |f| Expr::Var(f.to_string())),
+                Expr::ArrayAccess(ref v, ref i) => match KernScan::field_of(v) {
+                    Some(f) => Expr::ArrayAccess(f.to_string(), i.clone()),
+                    None => e,
+                },
+                Expr::PointerDeref(ref p) if outputs.contains(p) => {
+                    Expr::ArrayAccess(p.clone(), Box::new(Expr::Var(bar.clone())))
+                }
+                other => other,
+            },
+            &|s| match s {
+                Statement::Return { value: None } => Some(Statement::Continue),
+                other => Some(other),
+            },
+        )
+    };
+    let arms = models.iter().zip(&raw).map(|(m, t)| KernArm { model: m, body: rewrite(t) }).collect();
+    let identity = identity.map(|s| rewrite(std::slice::from_ref(&s)).pop().expect("one statement in, one out"));
+    let pred = pred.map(|p| {
+        streaming::rewrite_expr(&p, &|e| match e {
+            Expr::Var(ref v) => KernScan::field_of(v).map_or(e.clone(), |f| Expr::Var(f.to_string())),
+            other => other,
+        })
+    });
+    let fields = declared.into_iter().filter(|d| sc.fields.contains(&d.name)).collect();
+    let used_inputs = inputs.iter().filter(|a| sc.idents.contains(*a)).cloned().collect();
+    Ok(KernPlan { identity, pred, arms, fields, written: sc.written, bar, used_inputs })
+}
+
+/// `TA_<N>_UpdateBlock` prototype (no trailing `;`): private, hidden like the
+/// other internal entries.
+pub fn update_block_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    let mut ins = String::new();
+    for a in streaming::input_array_names(func) {
+        let _ = write!(ins, "const double {a}[], ");
+    }
+    format!(
+        "TA_RetCode TA_{n}_UpdateBlock( struct TA_{n}_Stream *stream, {ins}int nbBar, {} )",
+        out_fill_arrays_sig(func)
+    )
+}
+
+fn kern_arm_text(
+    arm: &KernArm,
+    indent: usize,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> (String, String) {
+    let pad = " ".repeat(indent);
+    let mut decls = String::new();
+    for (name, ty) in streaming::step_temps(arm.model, None) {
+        let _ = writeln!(decls, "{pad}{};", c_decl(&ty, &name));
+    }
+    let mut body = String::new();
+    for s in &arm.body {
+        body.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter));
+    }
+    (decls, body)
+}
+
+/// `TA_<N>_KernImpl`, the step run over `nbBar` bars on hoisted state, and
+/// `TA_<N>_UpdateBlock`, its entry. After a block the handle is where `nbBar`
+/// calls of `Update` leave it, so every accessor answers alike.
+fn emit_kernel(
+    o: &mut String,
+    func: &FuncDef,
+    kp: &KernPlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) {
+    let n = uname(func);
+    let counter = Cell::new(0usize);
+    let bar = &kp.bar;
+    let inputs = streaming::input_array_names(func);
+
+    let mut loop_body = String::new();
+    let mut loop_decls = String::new();
+    for a in inputs.iter().filter(|a| kp.used_inputs.contains(*a)) {
+        let _ = writeln!(loop_decls, "      double {a} = {a}Blk[{bar}];");
+    }
+    if let [arm] = kp.arms.as_slice() {
+        let (decls, body) = kern_arm_text(arm, 6, enums, registry, helpers, &counter);
+        loop_decls.push_str(&decls);
+        loop_body.push_str(&body);
+    } else {
+        if let Some(s) = &kp.identity {
+            loop_body.push_str(&render_statement_stream(s, 6, enums, registry, helpers, &counter));
+        }
+        let pred = kp.pred.as_ref().expect("a dual-mode kernel has a predicate");
+        let _ = writeln!(loop_body, "      if( {} )\n      {{", render_expression(pred, registry, helpers, &counter));
+        for (k, arm) in kp.arms.iter().enumerate() {
+            if k == 1 {
+                let _ = writeln!(loop_body, "      }}\n      else\n      {{");
+            }
+            let (decls, body) = kern_arm_text(arm, 9, enums, registry, helpers, &counter);
+            loop_body.push_str(&decls);
+            if !decls.is_empty() {
+                let _ = writeln!(loop_body);
+            }
+            loop_body.push_str(&body);
+        }
+        let _ = writeln!(loop_body, "      }}");
+    }
+    assert!(!loop_body.contains("sp->"), "{n}: a handle access survived the kernel rewrite");
+
+    let mut settings = std::collections::BTreeSet::new();
+    for arm in &kp.arms {
+        settings.extend(crate::candle_settings::detect_candle_settings(&arm.model.steady_stmts));
+    }
+
+    let mut sig_ins = String::new();
+    for a in &inputs {
+        let _ = write!(sig_ins, "const double {a}Blk[], ");
+    }
+    let _ = writeln!(
+        o,
+        "/* Private function, not in public API. */\nstatic void TA_{n}_KernImpl( struct TA_{n}_Stream *sp, {sig_ins}int nbBar, {} )\n{{",
+        out_fill_arrays_sig(func)
+    );
+    for f in &kp.fields {
+        let _ = writeln!(o, "   {} = sp->{};", f.local_decl(), f.name);
+    }
+    if !settings.is_empty() {
+        o.push_str(&emit_used_candle_unpacking(&settings, &loop_body, 3));
+    }
+    let _ = writeln!(o, "   int {bar};\n");
+    for a in inputs.iter().filter(|a| !kp.used_inputs.contains(*a)) {
+        let _ = writeln!(o, "   (void){a}Blk;");
+    }
+    let _ = writeln!(o, "   for( {bar} = 0; {bar} < nbBar; {bar}++ )\n   {{");
+    o.push_str(&loop_decls);
+    if !loop_decls.is_empty() {
+        let _ = writeln!(o);
+    }
+    o.push_str(&loop_body);
+    let _ = writeln!(o, "   }}");
+    for f in kp.fields.iter().filter(|f| !f.array && kp.written.contains(&f.name)) {
+        let _ = writeln!(o, "   sp->{0} = {0};", f.name);
+    }
+    let _ = writeln!(o, "   sp->{} += nbBar;\n}}\n", RANGE_HEAD_FIELDS[1]);
+
+    let args: Vec<String> = inputs.iter().cloned().chain(func.outputs.iter().map(|x| x.name.clone())).collect();
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", update_block_signature(func));
+    let _ = writeln!(o, "   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", args.iter().map(|a| format!("!{a}")).collect::<Vec<_>>().join(" || "));
+    let call: Vec<String> = inputs.iter().cloned().chain(std::iter::once("nbBar".to_string())).chain(func.outputs.iter().map(|x| x.name.clone())).collect();
+    let _ = writeln!(o, "   TA_{n}_KernImpl( stream, {} );\n   return TA_SUCCESS;\n}}\n", call.join(", "));
 }
 
 /// `Peek` — the transition against the caller's own handle, inline.

@@ -761,6 +761,94 @@ TA_LIB_API TA_RetCode TA_ER_Close( TA_ER_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ER_KernImpl( struct TA_ER_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int nullRun = sp->nullRun;
+   double sumROC1 = sp->sumROC1;
+   double trailingValue = sp->trailingValue;
+   double lag1_inReal = sp->lag1_inReal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int live;
+      double periodROC;
+      double tempReal;
+      double tempReal2;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      tempReal = inReal;
+      tempReal2 = ring_trailingIdx_inReal[ringPos_trailingIdx];
+      periodROC = tempReal - tempReal2;
+      /* Subtract-then-add, TA_SUM's own order. */
+      sumROC1 -= fabs(trailingValue - tempReal2);
+      sumROC1 += fabs(tempReal - lag1_inReal);
+      /* Once a whole window of one-bar changes is exactly zero, the sum's
+       * only content is rounding residue from the subtract/add carry --
+       * purge it so the flat window is recognized exactly (kama.c #253).
+       */
+      live = (fabs(tempReal - lag1_inReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         sumROC1 = 0.0;
+         outReal[kernBar] = 1.0;
+      } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+      {
+         outReal[kernBar] = 1.0;
+      } else 
+      {
+         tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
+         outReal[kernBar] = tempReal;
+      }
+      /* Save the trailing value: outReal may alias inReal, and the next
+       * iteration's subtraction needs the ORIGINAL bar, not the slot the
+       * write above may have clobbered.
+       */
+      trailingValue = tempReal2;
+      cur_outReal = outReal[kernBar];
+      lag1_inReal = inReal;
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->nullRun = nullRun;
+   sp->sumROC1 = sumROC1;
+   sp->trailingValue = trailingValue;
+   sp->lag1_inReal = lag1_inReal;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ER_UpdateBlock( struct TA_ER_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_ER_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ER_Value( const TA_ER_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

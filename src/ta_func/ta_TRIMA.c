@@ -1410,6 +1410,136 @@ int TA_TRIMA_TapeDetach( struct TA_TRIMA_Stream *sp )
    return reach;
 }
 
+/* Private function, not in public API. */
+static void TA_TRIMA_KernImpl( struct TA_TRIMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double numerator = sp->numerator;
+   double numeratorSub = sp->numeratorSub;
+   double numeratorAdd = sp->numeratorAdd;
+   double factor = sp->factor;
+   double tempReal = sp->tempReal;
+   int ringPos_middleIdx = sp->ringPos_middleIdx;
+   int ringCap_middleIdx = sp->ringCap_middleIdx;
+   double *ring_middleIdx_inReal = sp->ring_middleIdx_inReal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+
+      if( optInTimePeriod % 2 == 1 )
+      {
+         int ringPosL_middleIdx;
+         int ringPosL_trailingIdx;
+
+         if( ringCap_middleIdx == 0 )
+         {
+            ring_middleIdx_inReal[0] = inReal;
+         }
+         if( ringCap_trailingIdx == 0 )
+         {
+            ring_trailingIdx_inReal[0] = inReal;
+         }
+         /* Step (1) */
+         numerator -= numeratorSub;
+         numeratorSub -= tempReal;
+         tempReal = ring_middleIdx_inReal[ringPos_middleIdx];
+         numeratorSub += tempReal;
+         /* Step (2) */
+         numerator += numeratorAdd;
+         numeratorAdd -= tempReal;
+         tempReal = inReal;
+         numeratorAdd += tempReal;
+         /* Step (3) */
+         numerator += tempReal;
+         /* Step (4) */
+         tempReal = ring_trailingIdx_inReal[ringPos_trailingIdx];
+         outReal[kernBar] = numerator * factor;
+         cur_outReal = outReal[kernBar];
+         ringPosL_middleIdx = ringPos_middleIdx;
+         ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+         ringPosL_middleIdx = ringPosL_middleIdx + 1;
+         if( ringPosL_middleIdx >= ringCap_middleIdx )
+         {
+            ringPosL_middleIdx = 0;
+         }
+         ringPos_middleIdx = ringPosL_middleIdx;
+         ringPosL_trailingIdx = ringPos_trailingIdx;
+         ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+         if( ringPosL_trailingIdx >= ringCap_trailingIdx )
+         {
+            ringPosL_trailingIdx = 0;
+         }
+         ringPos_trailingIdx = ringPosL_trailingIdx;
+      }
+      else
+      {
+         int ringPosL_middleIdx;
+         int ringPosL_trailingIdx;
+         int ringCapL_middleIdx;
+         int ringCapL_trailingIdx;
+
+         /* Step (1) */
+         numerator -= numeratorSub;
+         numeratorSub -= tempReal;
+         tempReal = ring_middleIdx_inReal[ringPos_middleIdx];
+         numeratorSub += tempReal;
+         /* Step (2) */
+         numeratorAdd -= tempReal;
+         numerator += numeratorAdd;
+         tempReal = inReal;
+         numeratorAdd += tempReal;
+         /* Step (3) */
+         numerator += tempReal;
+         /* Step (4) */
+         tempReal = ring_trailingIdx_inReal[ringPos_trailingIdx];
+         outReal[kernBar] = numerator * factor;
+         cur_outReal = outReal[kernBar];
+         ringCapL_middleIdx = ringCap_middleIdx;
+         ringPosL_middleIdx = ringPos_middleIdx;
+         ring_middleIdx_inReal[ringPosL_middleIdx] = inReal;
+         ringPosL_middleIdx = ringPosL_middleIdx + 1;
+         if( ringPosL_middleIdx >= ringCapL_middleIdx )
+         {
+            ringPosL_middleIdx = 0;
+         }
+         ringPos_middleIdx = ringPosL_middleIdx;
+         ringCapL_trailingIdx = ringCap_trailingIdx;
+         ringPosL_trailingIdx = ringPos_trailingIdx;
+         ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+         ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+         if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+         {
+            ringPosL_trailingIdx = 0;
+         }
+         ringPos_trailingIdx = ringPosL_trailingIdx;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->numerator = numerator;
+   sp->numeratorSub = numeratorSub;
+   sp->numeratorAdd = numeratorAdd;
+   sp->tempReal = tempReal;
+   sp->ringPos_middleIdx = ringPos_middleIdx;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_TRIMA_UpdateBlock( struct TA_TRIMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_TRIMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_TRIMA_Value( const TA_TRIMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

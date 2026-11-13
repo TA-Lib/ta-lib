@@ -1198,6 +1198,159 @@ TA_LIB_API TA_RetCode TA_FISHER_Close( TA_FISHER_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_FISHER_KernImpl( struct TA_FISHER_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outFisher[], double outTrigger[] )
+{
+   double cur_outFisher = sp->cur_outFisher;
+   double cur_outTrigger = sp->cur_outTrigger;
+   double highest = sp->highest;
+   double lowest = sp->lowest;
+   double smoothed = sp->smoothed;
+   double prevFish = sp->prevFish;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double price;
+      double ratio;
+      double fish;
+      double tempReal;
+      double tempHigh;
+      double tempLow;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      /* The channel, over the midpoints rather than over the highs and the
+       * lows separately: this indicator reads one series, which happens to be
+       * (H+L)/2, so both extremes come from that same series. STOCH's shape,
+       * with the midpoint recomputed on the rare rescan rather than held in a
+       * buffer the caller would have to own.
+       */
+      price = (x_inHigh[today & xMask] + x_inLow[today & xMask]) / 2.0;
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         tempHigh = x_inHigh[highestIdx & xMask];
+         tempLow = x_inLow[highestIdx & xMask];
+         highest = (tempHigh + tempLow) / 2.0;
+         i = highestIdx;
+         while( ++i <= today )
+         {
+            tempHigh = x_inHigh[i & xMask];
+            tempLow = x_inLow[i & xMask];
+            tempReal = (tempHigh + tempLow) / 2.0;
+            if( tempReal > highest )
+            {
+               highestIdx = i;
+               highest = tempReal;
+            }
+         }
+      } else if( price >= highest )
+      {
+         highestIdx = today;
+         highest = price;
+      }
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         tempHigh = x_inHigh[lowestIdx & xMask];
+         tempLow = x_inLow[lowestIdx & xMask];
+         lowest = (tempHigh + tempLow) / 2.0;
+         i = lowestIdx;
+         while( ++i <= today )
+         {
+            tempHigh = x_inHigh[i & xMask];
+            tempLow = x_inLow[i & xMask];
+            tempReal = (tempHigh + tempLow) / 2.0;
+            if( tempReal < lowest )
+            {
+               lowestIdx = i;
+               lowest = tempReal;
+            }
+         }
+      } else if( price <= lowest )
+      {
+         lowestIdx = today;
+         lowest = price;
+      }
+      /* A flat window answers the neutral position rather than dividing by
+       * its own zero range. The band is the range against its own two
+       * extremes, STOCH's test: a fixed constant answers "flat" for every
+       * window of an instrument quoted below it (#253), and an exact test
+       * divides a machine-flat window into noise (#107). At 0.5 the bar
+       * contributes nothing and both recursions decay on their own
+       * coefficients.
+       */
+      tempReal = highest - lowest;
+      if( !TA_IS_ZERO_SCALED(tempReal, fabs(highest) + fabs(lowest)) )
+      {
+         ratio = (price - lowest) / tempReal;
+      } else 
+      {
+         ratio = 0.5;
+      }
+      /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
+      smoothed = fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+      /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
+       * the next bar's smoothing reads -- the listing assigns it back to
+       * Value1 rather than holding it for the transform alone.
+       */
+      if( smoothed > 0.99 )
+      {
+         smoothed = 0.999;
+      }
+      if( smoothed < -0.99 )
+      {
+         smoothed = -0.999;
+      }
+      fish = fma(0.5, log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+      outFisher[kernBar] = fish;
+      /* The author's second plot is Fish[1]: the previous bar's smoothed,
+       * which at the first output bar is the zero seed when no unstable
+       * period was discarded, and the computed smoothed of the bar before it
+       * when one was.
+       */
+      outTrigger[kernBar] = prevFish;
+      prevFish = fish;
+      trailingIdx += 1;
+      today += 1;
+      cur_outFisher = outFisher[kernBar];
+      cur_outTrigger = outTrigger[kernBar];
+   }
+   sp->cur_outFisher = cur_outFisher;
+   sp->cur_outTrigger = cur_outTrigger;
+   sp->highest = highest;
+   sp->lowest = lowest;
+   sp->smoothed = smoothed;
+   sp->prevFish = prevFish;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_FISHER_UpdateBlock( struct TA_FISHER_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outFisher[], double outTrigger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outFisher || !outTrigger ) return TA_BAD_PARAM;
+   TA_FISHER_KernImpl( stream, inHigh, inLow, nbBar, outFisher, outTrigger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_FISHER_Value( const TA_FISHER_Stream *stream, double *outFisher, double *outTrigger )
 {
    if( !stream || !outFisher || !outTrigger ) return TA_BAD_PARAM;

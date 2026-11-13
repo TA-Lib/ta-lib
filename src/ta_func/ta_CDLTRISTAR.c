@@ -1120,6 +1120,100 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Close( TA_CDLTRISTAR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLTRISTAR_KernImpl( struct TA_CDLTRISTAR_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyPeriodTotal = sp->BodyPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx;
+   int ringCap_BodyTrailingIdx = sp->ringCap_BodyTrailingIdx;
+   double *ring_BodyTrailingIdx_derived = sp->ring_BodyTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyTrailingIdx;
+
+      if( ringCap_BodyTrailingIdx == 0 )
+      {
+         ring_BodyTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      }
+      if( fabs(lag2_inClose - lag2_inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 1st: doji */
+          fabs(lag1_inClose - lag1_inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 2nd: doji */
+          fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) ) /* 3rd: doji */
+      {
+         outInteger[kernBar] = 0;
+         if( ((min(lag1_inOpen,lag1_inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0) && /* 2nd gaps up */
+             max(inOpen,inClose) < max(lag1_inOpen,lag1_inClose) ) /* 3rd is not higher than 2nd */
+         {
+            outInteger[kernBar] = -100;
+         }
+         if( ((max(lag1_inOpen,lag1_inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0) && /* 2nd gaps down */
+             min(inOpen,inClose) > min(lag1_inOpen,lag1_inClose) ) /* 3rd is not lower than 2nd */
+         {
+            outInteger[kernBar] = 100;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_BodyTrailingIdx = ringPos_BodyTrailingIdx;
+      ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+      if( ringPosL_BodyTrailingIdx >= ringCap_BodyTrailingIdx )
+      {
+         ringPosL_BodyTrailingIdx = 0;
+      }
+      ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyPeriodTotal = BodyPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLTRISTAR_UpdateBlock( struct TA_CDLTRISTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLTRISTAR_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Value( const TA_CDLTRISTAR_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

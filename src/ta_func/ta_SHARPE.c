@@ -1229,6 +1229,191 @@ TA_LIB_API TA_RetCode TA_SHARPE_Close( TA_SHARPE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_SHARPE_KernImpl( struct TA_SHARPE_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double optInRiskFreeRate = sp->optInRiskFreeRate;
+   double shift = sp->shift;
+   double periodTotal1 = sp->periodTotal1;
+   double periodTotal2 = sp->periodTotal2;
+   double peakTotal2 = sp->peakTotal2;
+   double prevPrice = sp->prevPrice;
+   double dPeriod = sp->dPeriod;
+   double invPeriod = sp->invPeriod;
+   double sqrtAnnual = sp->sqrtAnnual;
+   int trailingIdx = sp->trailingIdx;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int j = sp->j;
+   int windowStart = sp->windowStart;
+   int i = sp->i;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double price;
+      double trailingPrevPrice;
+      double windowPrevPrice;
+      double ret;
+      double dev;
+      double meanDev;
+      double moment2;
+      double excess;
+      double ratio;
+
+      x_inReal[i & xMask] = inReal;
+      price = x_inReal[i & xMask];
+      ret = 0.0;
+      if( prevPrice != 0.0 )
+      {
+         ret = (price - prevPrice) / prevPrice;
+      }
+      prevPrice = price;
+      dev = ret - shift;
+      periodTotal1 += dev;
+      periodTotal2 += dev * dev;
+      peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+      meanDev = periodTotal1 * invPeriod;
+      moment2 = periodTotal2 - meanDev * periodTotal1;
+      /* inReal and outReal may be the same buffer, and the trailing prices
+       * sit in slots the output reaches: every read of the window happens
+       * before this bar's write. The oldest price read is the trailing
+       * return's base, so the index stays on it.
+       */
+      trailingPrevPrice = x_inReal[trailingIdx & xMask];
+      trailingIdx += 1;
+      price = x_inReal[trailingIdx & xMask];
+      ret = 0.0;
+      if( trailingPrevPrice != 0.0 )
+      {
+         ret = (price - trailingPrevPrice) / trailingPrevPrice;
+      }
+      dev = ret - shift;
+      periodTotal1 -= dev;
+      periodTotal2 -= dev * dev;
+      /* Rebuild against the window mean when the spread has shrunk below 1% of
+       * the largest sum of squares held since the last rebuild, or at least
+       * every 32 windows. The rounding the running sums carry scales with that
+       * peak, so once a large return leaves, the current sum can be all
+       * rounding; a flat run after a move must still come out exactly flat.
+       * The spread is a divisor, so its relative error reaches the ratio.
+       */
+      barsSinceReseed -= 1;
+      if( moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - optInTimePeriod + 1;
+         windowPrevPrice = x_inReal[(windowStart - 1) & xMask];
+         dev = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            price = x_inReal[j & xMask];
+            ret = 0.0;
+            if( windowPrevPrice != 0.0 )
+            {
+               ret = (price - windowPrevPrice) / windowPrevPrice;
+            }
+            windowPrevPrice = price;
+            dev += ret;
+         }
+         shift = dev * invPeriod;
+         windowPrevPrice = x_inReal[(windowStart - 1) & xMask];
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            price = x_inReal[j & xMask];
+            ret = 0.0;
+            if( windowPrevPrice != 0.0 )
+            {
+               ret = (price - windowPrevPrice) / windowPrevPrice;
+            }
+            windowPrevPrice = price;
+            dev = ret - shift;
+            periodTotal1 += dev;
+            periodTotal2 += dev * dev;
+         }
+         meanDev = periodTotal1 * invPeriod;
+         moment2 = periodTotal2 - meanDev * periodTotal1;
+         /* A window of equal returns can sit off this mean by rounding, which
+          * leaves a spread of rounding where the ratio must be the plain
+          * quotient, and fires the trigger again on every bar. Anchored on
+          * one of its own returns, its deviations are exactly zero.
+          */
+         if( moment2 < 0.000001 * periodTotal2 )
+         {
+            shift = ret;
+            windowPrevPrice = x_inReal[(windowStart - 1) & xMask];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               price = x_inReal[j & xMask];
+               ret = 0.0;
+               if( windowPrevPrice != 0.0 )
+               {
+                  ret = (price - windowPrevPrice) / windowPrevPrice;
+               }
+               windowPrevPrice = price;
+               dev = ret - shift;
+               periodTotal1 += dev;
+               periodTotal2 += dev * dev;
+            }
+            meanDev = periodTotal1 * invPeriod;
+            moment2 = periodTotal2 - meanDev * periodTotal1;
+         }
+         peakTotal2 = periodTotal2;
+         /* Re-remove the trailing return under the new shift so the carried
+          * state matches the path without a rebuild.
+          */
+         price = x_inReal[windowStart & xMask];
+         ret = 0.0;
+         if( x_inReal[(windowStart - 1) & xMask] != 0.0 )
+         {
+            ret = (price - x_inReal[(windowStart - 1) & xMask]) / x_inReal[(windowStart - 1) & xMask];
+         }
+         dev = ret - shift;
+         periodTotal1 -= dev;
+         periodTotal2 -= dev * dev;
+      }
+      /* No spread is the plain quotient: +/-Inf by the sign of the excess
+       * mean, NaN when it is exactly zero (ruled on #571). Annualize the
+       * per-bar ratio last, so an annualization of 1 is that ratio bit for
+       * bit.
+       */
+      excess = shift + meanDev - optInRiskFreeRate;
+      ratio = excess / sqrt(moment2 / (dPeriod - 1.0));
+      outReal[kernBar] = sqrtAnnual * ratio;
+      i += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->shift = shift;
+   sp->periodTotal1 = periodTotal1;
+   sp->periodTotal2 = periodTotal2;
+   sp->peakTotal2 = peakTotal2;
+   sp->prevPrice = prevPrice;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->windowStart = windowStart;
+   sp->i = i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SHARPE_UpdateBlock( struct TA_SHARPE_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_SHARPE_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SHARPE_Value( const TA_SHARPE_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

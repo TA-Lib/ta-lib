@@ -1033,6 +1033,162 @@ TA_LIB_API TA_RetCode TA_SKEW_Close( TA_SKEW_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SKEW_KernImpl( struct TA_SKEW_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double shift = sp->shift;
+   double total1 = sp->total1;
+   double total2 = sp->total2;
+   double total3 = sp->total3;
+   double dPeriod = sp->dPeriod;
+   double coef = sp->coef;
+   double invPeriod = sp->invPeriod;
+   double peak2 = sp->peak2;
+   int trailingIdx = sp->trailingIdx;
+   int nbInitialElementNeeded = sp->nbInitialElementNeeded;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int reseedPeriod = sp->reseedPeriod;
+   int j = sp->j;
+   int i = sp->i;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double dev;
+      double dev2;
+      double residue;
+      double residueSq;
+      double moment2;
+      double moment3;
+      double skewness;
+      double denominator;
+      int windowStart;
+
+      x_inReal[i & xMask] = inReal;
+      dev = x_inReal[i & xMask] - shift;
+      dev2 = dev * dev;
+      total1 += dev;
+      total2 += dev2;
+      total3 += dev2 * dev;
+      if( total2 > peak2 )
+      {
+         peak2 = total2;
+      }
+      residue = total1 * invPeriod;
+      residueSq = residue * residue;
+      moment2 = total2 - dPeriod * residueSq;
+      moment3 = fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+      /* Each bar rounds the cubic sum by at most eps times the peak second
+       * sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
+       * 1000x before the rebuild at 1% of the peak.
+       */
+      barsSinceReseed -= 1;
+      if( moment2 < 0.01 * peak2 || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = reseedPeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += x_inReal[j & xMask];
+         }
+         shift = tempReal * invPeriod;
+         total1 = 0.0;
+         total2 = 0.0;
+         total3 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            dev = x_inReal[j & xMask] - shift;
+            dev2 = dev * dev;
+            total1 += dev;
+            total2 += dev2;
+            total3 += dev2 * dev;
+         }
+         residue = total1 * invPeriod;
+         residueSq = residue * residue;
+         moment2 = total2 - dPeriod * residueSq;
+         moment3 = fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+         /* The left-to-right sum can miss the mean by more than the window's
+          * spread, and the trigger would then fire again on every bar. Adding
+          * the measured miss back lands within about an ulp of the mean, where
+          * a flat window's deviations are exactly 0. Keep this threshold the
+          * trigger's.
+          */
+         if( moment2 < 0.01 * total2 )
+         {
+            shift += residue;
+            total1 = 0.0;
+            total2 = 0.0;
+            total3 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               dev = x_inReal[j & xMask] - shift;
+               dev2 = dev * dev;
+               total1 += dev;
+               total2 += dev2;
+               total3 += dev2 * dev;
+            }
+            residue = total1 * invPeriod;
+            residueSq = residue * residue;
+            moment2 = total2 - dPeriod * residueSq;
+            moment3 = fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+         }
+         peak2 = total2;
+      }
+      /* A window of equal values is symmetric, and reaches here with every
+       * deviation exactly 0. The bound is the smallest normal double, not a
+       * scale: a denominator under it comes with cubed deviations that have
+       * lost their precision in the subnormals.
+       */
+      denominator = moment2 * sqrt(moment2);
+      if( denominator < 2.2250738585072014e-308 )
+      {
+         skewness = 0.0;
+      } else 
+      {
+         skewness = coef * moment3 / denominator;
+      }
+      /* inReal and outReal may be the same buffer: read the trailing value
+       * before the output write.
+       */
+      dev = x_inReal[trailingIdx & xMask] - shift;
+      dev2 = dev * dev;
+      total1 -= dev;
+      total2 -= dev2;
+      total3 -= dev2 * dev;
+      trailingIdx += 1;
+      outReal[kernBar] = skewness;
+      i += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->shift = shift;
+   sp->total1 = total1;
+   sp->total2 = total2;
+   sp->total3 = total3;
+   sp->peak2 = peak2;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->i = i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SKEW_UpdateBlock( struct TA_SKEW_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_SKEW_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SKEW_Value( const TA_SKEW_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

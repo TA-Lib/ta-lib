@@ -941,6 +941,93 @@ TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MFI_KernImpl( struct TA_MFI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double posSumMF = sp->posSumMF;
+   double negSumMF = sp->negSumMF;
+   double prevValue = sp->prevValue;
+   int nullRun = sp->nullRun;
+   int mflow_Idx = sp->mflow_Idx;
+   int maxIdx_mflow = sp->maxIdx_mflow;
+   double *cb_mflow_positive = sp->cb_mflow_positive;
+   double *cb_mflow_negative = sp->cb_mflow_negative;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double tempValue1;
+      double tempValue2;
+      double tempValue3;
+      double moneyFlow;
+      double posFlow;
+      double negFlow;
+      double posClamped;
+
+      posSumMF -= cb_mflow_positive[mflow_Idx];
+      negSumMF -= cb_mflow_negative[mflow_Idx];
+      tempValue1 = (inHigh + inLow + inClose) / 3.0;
+      tempValue2 = tempValue1 - prevValue;
+      /* Dead-zone scaled to the two typical prices being compared (issue #107).
+       * Captured before prevValue/tempValue1 are repurposed below.
+       */
+      tempValue3 = fabs(tempValue1) + fabs(prevValue);
+      prevValue = tempValue1;
+      tempValue1 *= inVolume;
+      moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
+      posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+      negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
+      cb_mflow_positive[mflow_Idx] = posFlow;
+      cb_mflow_negative[mflow_Idx] = negFlow;
+      posSumMF += posFlow;
+      negSumMF += negFlow;
+      nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         posSumMF = 0.0;
+         negSumMF = 0.0;
+      }
+      tempValue1 = posSumMF + negSumMF;
+      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      if( tempValue1 <= 0.0 )
+      {
+         outReal[kernBar] = 0.0;
+      } else 
+      {
+         outReal[kernBar] = 100.0 * (posClamped / tempValue1);
+      }
+      mflow_Idx = mflow_Idx + 1;
+      if( mflow_Idx > maxIdx_mflow )
+      {
+         mflow_Idx = 0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->posSumMF = posSumMF;
+   sp->negSumMF = negSumMF;
+   sp->prevValue = prevValue;
+   sp->nullRun = nullRun;
+   sp->mflow_Idx = mflow_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MFI_UpdateBlock( struct TA_MFI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_MFI_KernImpl( stream, inHigh, inLow, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MFI_Value( const TA_MFI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

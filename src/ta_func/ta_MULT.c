@@ -296,6 +296,33 @@ TA_LIB_API TA_RetCode TA_MULT_Close( TA_MULT_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MULT_KernImpl( struct TA_MULT_Stream *sp, const double inReal0Blk[], const double inReal1Blk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal0 = inReal0Blk[kernBar];
+      double inReal1 = inReal1Blk[kernBar];
+
+      outReal[kernBar] = inReal0 * inReal1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MULT_UpdateBlock( struct TA_MULT_Stream *stream, const double inReal0[], const double inReal1[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   TA_MULT_KernImpl( stream, inReal0, inReal1, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MULT_Value( const TA_MULT_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -709,6 +709,110 @@ TA_LIB_API TA_RetCode TA_CHOPTR_Close( TA_CHOPTR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CHOPTR_KernImpl( struct TA_CHOPTR_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double logPeriod = sp->logPeriod;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inHigh = sp->win_i_inHigh;
+   double *win_i_inLow = sp->win_i_inLow;
+   double *win_i_inClose = sp->win_i_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int i;
+      double highest;
+      double lowest;
+      double sumTR;
+      double tempHT;
+      double tempLT;
+      double prevClose;
+      double trueHigh;
+      double trueLow;
+
+      win_i_inHigh[winPos_i] = inHigh;
+      win_i_inLow[winPos_i] = inLow;
+      win_i_inClose[winPos_i] = inClose;
+      /* Re-summed oldest to newest every bar, never a running total: a
+       * running total leaves a residue on a window of zero true ranges, which
+       * the exact guard below would then read as a trend.
+       */
+      highest = inHigh;
+      lowest = inLow;
+      sumTR = 0.0;
+      prevClose = 0.0;
+      for( i = optInTimePeriod; i >= 0; i -= 1 )
+      {
+         if( i < optInTimePeriod )
+         {
+            tempHT = win_i_inHigh[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+            tempLT = win_i_inLow[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+            trueHigh = tempHT;
+            if( prevClose > trueHigh )
+            {
+               trueHigh = prevClose;
+            }
+            trueLow = tempLT;
+            if( prevClose < trueLow )
+            {
+               trueLow = prevClose;
+            }
+            sumTR += trueHigh - trueLow;
+            if( trueHigh > highest )
+            {
+               highest = trueHigh;
+            }
+            if( trueLow < lowest )
+            {
+               lowest = trueLow;
+            }
+         }
+         prevClose = win_i_inClose[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+      }
+      /* The seeds are the raw extrema of today's bar, which its own true
+       * high and low always enclose, so they never outrun the true box.
+       *
+       * Exact test, never an epsilon band (issue #253). Every true range lies
+       * inside the box, so a positive sum implies a positive box. Keep the
+       * "<=" form: a NaN sum must fall through to the log, not read as 100.
+       * Keep the parenthesised quotient: it returns exactly 100 whenever the
+       * computed ratio is exactly the period.
+       */
+      if( sumTR <= 0.0 )
+      {
+         outReal[kernBar] = 100.0;
+      } else 
+      {
+         outReal[kernBar] = 100.0 * (log10(sumTR / (highest - lowest)) / logPeriod);
+      }
+      cur_outReal = outReal[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CHOPTR_UpdateBlock( struct TA_CHOPTR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_CHOPTR_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CHOPTR_Value( const TA_CHOPTR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

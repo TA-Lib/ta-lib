@@ -1739,6 +1739,235 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Close( TA_ULTOSC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ULTOSC_KernImpl( struct TA_ULTOSC_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod1 = sp->optInTimePeriod1;
+   int optInTimePeriod2 = sp->optInTimePeriod2;
+   int optInTimePeriod3 = sp->optInTimePeriod3;
+   double a1Total = sp->a1Total;
+   double b1Total = sp->b1Total;
+   double a2Total = sp->a2Total;
+   double b2Total = sp->b2Total;
+   double a3Total = sp->a3Total;
+   double b3Total = sp->b3Total;
+   int negSlot = sp->negSlot;
+   int trailingPos1 = sp->trailingPos1;
+   int trailingPos2 = sp->trailingPos2;
+   int trailingPos3 = sp->trailingPos3;
+   int nullRun = sp->nullRun;
+   int term_Idx = sp->term_Idx;
+   double lag1_inClose = sp->lag1_inClose;
+   double *cb_term_closeMinusTrueLow = sp->cb_term_closeMinusTrueLow;
+   double *cb_term_trueRange = sp->cb_term_trueRange;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double trueLow;
+      double trueRange;
+      double closeMinusTrueLow;
+      double tempDouble;
+      double output;
+      double tempHT;
+      double tempLT;
+      double tempCY;
+      double lowest;
+      int i;
+      int j;
+      int live;
+
+      /* Add on today's terms */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      trueLow = min(tempLT,tempCY);
+      closeMinusTrueLow = inClose - trueLow;
+      trueRange = tempHT - tempLT;
+      tempDouble = fabs(tempCY - tempHT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      tempDouble = fabs(tempCY - tempLT);
+      if( tempDouble > trueRange )
+      {
+         trueRange = tempDouble;
+      }
+      cb_term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+      cb_term_trueRange[term_Idx] = trueRange;
+      live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      /* Once a whole window of no-contribution bars has gone by, every slot it
+       * spans is 0.0, so its totals are known to be exactly zero and the
+       * residue can be dropped. The periods are sorted shortest-first, so a
+       * run long enough for a longer window is long enough for every shorter
+       * one. A run as long as the longest window skips the adds, the output
+       * and the retire, which would only add and remove zeros: held prices
+       * take this path on most bars.
+       */
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod3) )
+      {
+         nullRun = optInTimePeriod3;
+         a1Total = 0.0;
+         b1Total = 0.0;
+         a2Total = 0.0;
+         b2Total = 0.0;
+         a3Total = 0.0;
+         b3Total = 0.0;
+         output = 0.0;
+      } else 
+      {
+         a1Total += closeMinusTrueLow;
+         a2Total += closeMinusTrueLow;
+         a3Total += closeMinusTrueLow;
+         b1Total += trueRange;
+         b2Total += trueRange;
+         b3Total += trueRange;
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
+         {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= optInTimePeriod2 )
+            {
+               a2Total = 0.0;
+               b2Total = 0.0;
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
+         output = 0.0;
+         if( b1Total > 0.0 )
+         {
+            output += 4.0 * (a1Total / b1Total);
+         }
+         if( b2Total > 0.0 )
+         {
+            output += 2.0 * (a2Total / b2Total);
+         }
+         if( b3Total > 0.0 )
+         {
+            output += a3Total / b3Total;
+         }
+         a1Total -= cb_term_closeMinusTrueLow[trailingPos1];
+         b1Total -= cb_term_trueRange[trailingPos1];
+         a2Total -= cb_term_closeMinusTrueLow[trailingPos2];
+         b2Total -= cb_term_trueRange[trailingPos2];
+         a3Total -= cb_term_closeMinusTrueLow[trailingPos3];
+         b3Total -= cb_term_trueRange[trailingPos3];
+      }
+      trailingPos1 += 1;
+      if( trailingPos1 >= optInTimePeriod3 )
+      {
+         trailingPos1 = 0;
+      }
+      trailingPos2 += 1;
+      if( trailingPos2 >= optInTimePeriod3 )
+      {
+         trailingPos2 = 0;
+      }
+      term_Idx = trailingPos3;
+      trailingPos3 += 1;
+      if( trailingPos3 >= optInTimePeriod3 )
+      {
+         trailingPos3 = 0;
+      }
+      /* Store only after this bar's last input read: the output array may be
+       * one of the input arrays.
+       */
+      outReal[kernBar] = 100.0 * (output / 7.0);
+      /* On well-formed bars every term is non-negative, so a total below zero
+       * is the residue a term far larger than the rest of its window left
+       * when it retired. Tested here, on the totals the next bar adds to, and
+       * not before the output: a non-negative total plus a non-negative term
+       * stays non-negative, and after the output nothing a peek returns
+       * depends on it. The rebuild sums each window's retained terms oldest
+       * first, the state a call starting at the next bar primes.
+       * Only the a-totals are tested: a negative b-total fails its division
+       * gate. A close below its low makes an a-term, and so a total,
+       * genuinely negative, and rebuilding it would run on every bar: negSlot
+       * remembers the newest negative term the last rebuild saw, and the
+       * rebuild is skipped while that retained slot still holds a negative
+       * term, which puts a close below its low in the next output's window.
+       * One compare of the smallest a-total, not three: a chain of three
+       * compiles to straight-line selects in Rust. The windows are nested,
+       * so a1 <= a2 <= a3 and either select stays predictable should a
+       * compiler emit it as a branch.
+       */
+      lowest = (a1Total < a2Total) ? a1Total : a2Total;
+      lowest = (a3Total < lowest) ? a3Total : lowest;
+      if( TA_UNLIKELY(lowest < 0.0) )
+      {
+         if( negSlot == term_Idx || cb_term_closeMinusTrueLow[negSlot] >= 0.0 )
+         {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            a2Total = 0.0;
+            b2Total = 0.0;
+            a3Total = 0.0;
+            b3Total = 0.0;
+            for( i = 1; i < optInTimePeriod3; i += 1 )
+            {
+               j = term_Idx + i;
+               if( j >= optInTimePeriod3 )
+               {
+                  j -= optInTimePeriod3;
+               }
+               if( i > optInTimePeriod3 - optInTimePeriod1 )
+               {
+                  a1Total += cb_term_closeMinusTrueLow[j];
+                  b1Total += cb_term_trueRange[j];
+               }
+               if( i > optInTimePeriod3 - optInTimePeriod2 )
+               {
+                  a2Total += cb_term_closeMinusTrueLow[j];
+                  b2Total += cb_term_trueRange[j];
+               }
+               a3Total += cb_term_closeMinusTrueLow[j];
+               b3Total += cb_term_trueRange[j];
+               if( cb_term_closeMinusTrueLow[j] < 0.0 )
+               {
+                  negSlot = j;
+               }
+            }
+         }
+      }
+      /* Increment indexes */
+      cur_outReal = outReal[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->a1Total = a1Total;
+   sp->b1Total = b1Total;
+   sp->a2Total = a2Total;
+   sp->b2Total = b2Total;
+   sp->a3Total = a3Total;
+   sp->b3Total = b3Total;
+   sp->negSlot = negSlot;
+   sp->trailingPos1 = trailingPos1;
+   sp->trailingPos2 = trailingPos2;
+   sp->trailingPos3 = trailingPos3;
+   sp->nullRun = nullRun;
+   sp->term_Idx = term_Idx;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ULTOSC_UpdateBlock( struct TA_ULTOSC_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_ULTOSC_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ULTOSC_Value( const TA_ULTOSC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

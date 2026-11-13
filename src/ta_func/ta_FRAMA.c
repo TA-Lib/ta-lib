@@ -1293,6 +1293,139 @@ TA_LIB_API TA_RetCode TA_FRAMA_Close( TA_FRAMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_FRAMA_KernImpl( struct TA_FRAMA_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double expScale = sp->expScale;
+   double preHigh = sp->preHigh;
+   double preLow = sp->preLow;
+   double prevFRAMA = sp->prevFRAMA;
+   int lastSlot = sp->lastSlot;
+   int slot_Idx = sp->slot_Idx;
+   int maxIdx_slot = sp->maxIdx_slot;
+   double *cb_slot_sufHigh = sp->cb_slot_sufHigh;
+   double *cb_slot_sufLow = sp->cb_slot_sufLow;
+   double *cb_slot_oldHigh = sp->cb_slot_oldHigh;
+   double *cb_slot_oldLow = sp->cb_slot_oldLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double tmpHigh;
+      double tmpLow;
+      double hi1;
+      double lo1;
+      double hi2;
+      double lo2;
+      double r1;
+      double r2;
+      double r;
+      double price;
+      double alpha;
+      int i;
+
+      tmpHigh = inHigh;
+      tmpLow = inLow;
+      price = (tmpHigh + tmpLow) / 2.0;
+      if( slot_Idx == 0 )
+      {
+         preHigh = tmpHigh;
+         preLow = tmpLow;
+      } else 
+      {
+         if( tmpHigh > preHigh )
+         {
+            preHigh = tmpHigh;
+         }
+         if( tmpLow < preLow )
+         {
+            preLow = tmpLow;
+         }
+      }
+      if( slot_Idx == lastSlot )
+      {
+         hi1 = preHigh;
+         lo1 = preLow;
+      } else 
+      {
+         hi1 = cb_slot_sufHigh[slot_Idx + 1];
+         if( preHigh > hi1 )
+         {
+            hi1 = preHigh;
+         }
+         lo1 = cb_slot_sufLow[slot_Idx + 1];
+         if( preLow < lo1 )
+         {
+            lo1 = preLow;
+         }
+      }
+      hi2 = cb_slot_oldHigh[slot_Idx];
+      lo2 = cb_slot_oldLow[slot_Idx];
+      r1 = hi1 - lo1;
+      r2 = hi2 - lo2;
+      r = ((hi1 > hi2) ? hi1 : hi2) - ((lo1 < lo2) ? lo1 : lo2);
+      /* R >= max(R1,R2) makes R1+R2 <= R exactly the alpha >= 1 clamp, so a
+       * clamped or flat bar returns the price with no transcendental. Keep the
+       * recursion as alpha*P + (1-alpha)*prev: a computed alpha of 1.0 then
+       * returns the price exactly too.
+       */
+      if( r1 > 0.0 && r2 > 0.0 && r1 + r2 > r )
+      {
+         alpha = exp(expScale * log((r1 + r2) / r));
+         prevFRAMA = fma(1.0 - alpha, prevFRAMA, alpha * price);
+      } else 
+      {
+         prevFRAMA = price;
+      }
+      outReal[kernBar] = prevFRAMA;
+      cb_slot_oldHigh[slot_Idx] = hi1;
+      cb_slot_oldLow[slot_Idx] = lo1;
+      cb_slot_sufHigh[slot_Idx] = tmpHigh;
+      cb_slot_sufLow[slot_Idx] = tmpLow;
+      if( slot_Idx == lastSlot )
+      {
+         i = lastSlot;
+         while( i > 0 )
+         {
+            i -= 1;
+            if( cb_slot_sufHigh[i + 1] > cb_slot_sufHigh[i] )
+            {
+               cb_slot_sufHigh[i] = cb_slot_sufHigh[i + 1];
+            }
+            if( cb_slot_sufLow[i + 1] < cb_slot_sufLow[i] )
+            {
+               cb_slot_sufLow[i] = cb_slot_sufLow[i + 1];
+            }
+         }
+      }
+      slot_Idx = slot_Idx + 1;
+      if( slot_Idx > maxIdx_slot )
+      {
+         slot_Idx = 0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->preHigh = preHigh;
+   sp->preLow = preLow;
+   sp->prevFRAMA = prevFRAMA;
+   sp->slot_Idx = slot_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_FRAMA_UpdateBlock( struct TA_FRAMA_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_FRAMA_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_FRAMA_Value( const TA_FRAMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

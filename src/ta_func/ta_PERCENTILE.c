@@ -3296,6 +3296,573 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Close( TA_PERCENTILE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_PERCENTILE_KernImpl( struct TA_PERCENTILE_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double loV = sp->loV;
+   double hiV = sp->hiV;
+   double last = sp->last;
+   double pendNew = sp->pendNew;
+   double pendOld = sp->pendOld;
+   int lookbackTotal = sp->lookbackTotal;
+   int rank = sp->rank;
+   int hiRank = sp->hiRank;
+   int loRank = sp->loRank;
+   int tail = sp->tail;
+   int lim = sp->lim;
+   int run = sp->run;
+   int dPrev = sp->dPrev;
+   int trend = sp->trend;
+   int layout = sp->layout;
+   int head = sp->head;
+   int pendPos = sp->pendPos;
+   int pendDel = sp->pendDel;
+   int runLen = sp->runLen;
+   int saving = sp->saving;
+   int ring_Idx = sp->ring_Idx;
+   int maxIdx_ring = sp->maxIdx_ring;
+   double *cb_ring = sp->cb_ring;
+   double *cb_sorted = sp->cb_sorted;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double newValue;
+      double oldValue;
+      double result;
+      double held;
+      double cur;
+      double nxt;
+      double nx2;
+      double ins;
+      double in2;
+      double res;
+      double prv;
+      int j;
+      int k;
+      int e;
+      int dnStep;
+      int same;
+      int jh;
+      int jl;
+      int gain;
+      int pp;
+      int hiSlot;
+      int loSlot;
+      int pos;
+      int del;
+      int dp;
+      int dq;
+      int len;
+      int half;
+      int o2;
+      int o3;
+      int t1;
+      int t2;
+      int t3;
+      int u1;
+      int u2;
+      int u3;
+      int freeSlot;
+      int maxSlot;
+      int nextSlot;
+      int bp;
+      int bq;
+      int q1;
+      int q2;
+      int q3;
+      int p1;
+      int p2;
+      int p3;
+      int sP;
+      int sQ;
+      int slot;
+      int cnt;
+      int dn;
+      int seg;
+      int room;
+
+      newValue = inReal;
+      /* The full window is the retained values with newValue inserted after
+       * its equals, so its rank-th value is newValue clamped to the retained
+       * values of rank rank-1 (loV) and rank (hiV).
+       */
+      result = newValue;
+      if( rank <= lookbackTotal )
+      {
+         result = (result < hiV) ? result : hiV;
+      }
+      if( rank > 1 )
+      {
+         result = (result < loV) ? loV : result;
+      }
+      outReal[kernBar] = result;
+      cb_ring[ring_Idx] = newValue;
+      ring_Idx = ring_Idx + 1;
+      if( ring_Idx > maxIdx_ring )
+      {
+         ring_Idx = 0;
+      }
+      oldValue = cb_ring[ring_Idx];
+      if( lookbackTotal < 32 )
+      {
+         if( lookbackTotal == 1 )
+         {
+            cb_sorted[0] = newValue;
+            hiV = newValue;
+            loV = newValue;
+         } else 
+         {
+            /* 0/1 arithmetic, not conditional assignments: gcc threads those
+             * into a branch on newValue < last, a coin flip on random data.
+             * run starts at -1 so the first step cannot count twice.
+             */
+            dnStep = (newValue < last) ? 1 : 0;
+            same = (dnStep == dPrev) ? 1 : 0;
+            run = (run + 1) * same;
+            dPrev = dnStep;
+            last = newValue;
+            if( run >= lim )
+            {
+               /* The ring is then the sorted order, from its oldest slot on
+                * a rising run and from its newest on a falling one, which
+                * must be strict: read newest first, equal values would come
+                * out in reverse age order. sorted is left stale until the
+                * run breaks.
+                */
+               run = lim;
+               if( dnStep == 0 )
+               {
+                  trend = 1;
+                  jh = ring_Idx + rank;
+                  if( jh >= optInTimePeriod )
+                  {
+                     jh -= optInTimePeriod;
+                  }
+                  jl = (jh == 0) ? lookbackTotal : jh - 1;
+               } else 
+               {
+                  trend = 2;
+                  jh = ring_Idx + (optInTimePeriod - rank);
+                  if( jh >= optInTimePeriod )
+                  {
+                     jh -= optInTimePeriod;
+                  }
+                  jl = (jh == lookbackTotal) ? 0 : jh + 1;
+               }
+               if( rank <= lookbackTotal )
+               {
+                  hiV = cb_ring[jh];
+               }
+               if( rank > 1 )
+               {
+                  loV = cb_ring[jl];
+               }
+            } else 
+            {
+               if( trend != 0 )
+               {
+                  if( trend == 1 )
+                  {
+                     j = ring_Idx;
+                     k = 0;
+                     while( k < lookbackTotal )
+                     {
+                        cb_sorted[k] = cb_ring[j];
+                        j = (j == lookbackTotal) ? 0 : j + 1;
+                        k += 1;
+                     }
+                  } else 
+                  {
+                     j = ring_Idx + lookbackTotal - 1;
+                     if( j >= optInTimePeriod )
+                     {
+                        j -= optInTimePeriod;
+                     }
+                     k = 0;
+                     while( k < lookbackTotal )
+                     {
+                        cb_sorted[k] = cb_ring[j];
+                        j = (j == 0) ? lookbackTotal : j - 1;
+                        k += 1;
+                     }
+                  }
+                  trend = 0;
+               }
+               /* With D the retained values less oldValue, slot k becomes
+                * max(D[k-1], min(newValue, D[k])). The spare slot stands in
+                * for D past the end.
+                */
+               cb_sorted[lookbackTotal] = newValue;
+               cur = cb_sorted[0];
+               prv = (newValue < cur) ? newValue : cur;
+               k = 0;
+               do
+               {
+                  nxt = cb_sorted[k + 1];
+                  nx2 = cb_sorted[k + 2];
+                  ins = (cur < oldValue) ? cur : nxt;
+                  in2 = (nxt < oldValue) ? nxt : nx2;
+                  res = (newValue < ins) ? newValue : ins;
+                  cb_sorted[k] = (prv > res) ? prv : res;
+                  res = (newValue < in2) ? newValue : in2;
+                  cb_sorted[k + 1] = (ins > res) ? ins : res;
+                  prv = in2;
+                  cur = nx2;
+                  k += 2;
+               } while( k < tail );
+               cb_sorted[tail] = (prv > newValue) ? prv : newValue;
+               if( rank <= lookbackTotal )
+               {
+                  hiV = cb_sorted[hiRank];
+               }
+               if( rank > 1 )
+               {
+                  loV = cb_sorted[loRank];
+               }
+            }
+         }
+      } else 
+      {
+         if( layout != 0 )
+         {
+            if( layout == 2 )
+            {
+               if( pendDel < pendPos )
+               {
+                  for( k = pendDel; k < pendPos - 1; k += 1 )
+                  {
+                     cb_sorted[k] = cb_sorted[k + 1];
+                  }
+                  cb_sorted[pendPos - 1] = pendNew;
+               } else 
+               {
+                  for( k = pendDel; k > pendPos; k -= 1 )
+                  {
+                     cb_sorted[k] = cb_sorted[k - 1];
+                  }
+                  cb_sorted[pendPos] = pendNew;
+               }
+               layout = 1;
+            }
+            freeSlot = (head == 0) ? lookbackTotal : head - 1;
+            maxSlot = (freeSlot == 0) ? lookbackTotal : freeSlot - 1;
+            nextSlot = (maxSlot == 0) ? lookbackTotal : maxSlot - 1;
+            /* A new value tied with the minimum belongs after it, so only a
+             * strictly smaller one may take the front.
+             */
+            if( newValue >= cb_sorted[maxSlot] && oldValue <= cb_sorted[head] )
+            {
+               cb_sorted[freeSlot] = newValue;
+               head = (head == lookbackTotal) ? 0 : head + 1;
+            } else if( newValue < cb_sorted[head] && oldValue > cb_sorted[nextSlot] )
+            {
+               cb_sorted[freeSlot] = newValue;
+               head = freeSlot;
+            } else if( saving > 0 || lookbackTotal >= 2048 )
+            {
+               /* pos = retained values <= newValue, del = retained values <
+                * oldValue, both searched from the free slot as rank -1.
+                */
+               bp = freeSlot;
+               bq = bp;
+               len = optInTimePeriod;
+               while( len > 2 )
+               {
+                  half = (len + 3) / 4;
+                  o3 = len - half;
+                  o2 = half + half;
+                  q1 = (bp < optInTimePeriod - half) ? bp + half : bp + half - optInTimePeriod;
+                  q2 = (bp < optInTimePeriod - o2) ? bp + o2 : bp + o2 - optInTimePeriod;
+                  q3 = (bp < optInTimePeriod - o3) ? bp + o3 : bp + o3 - optInTimePeriod;
+                  p1 = (bq < optInTimePeriod - half) ? bq + half : bq + half - optInTimePeriod;
+                  p2 = (bq < optInTimePeriod - o2) ? bq + o2 : bq + o2 - optInTimePeriod;
+                  p3 = (bq < optInTimePeriod - o3) ? bq + o3 : bq + o3 - optInTimePeriod;
+                  bp = (cb_sorted[q1] <= newValue) ? q1 : bp;
+                  bp = (cb_sorted[q2] <= newValue) ? q2 : bp;
+                  bp = (cb_sorted[q3] <= newValue) ? q3 : bp;
+                  bq = (cb_sorted[p1] < oldValue) ? p1 : bq;
+                  bq = (cb_sorted[p2] < oldValue) ? p2 : bq;
+                  bq = (cb_sorted[p3] < oldValue) ? p3 : bq;
+                  len = half;
+               }
+               if( len > 1 )
+               {
+                  sP = (bp < lookbackTotal) ? bp + 1 : 0;
+                  sQ = (bq < lookbackTotal) ? bq + 1 : 0;
+                  bp = (cb_sorted[sP] <= newValue) ? sP : bp;
+                  bq = (cb_sorted[sQ] < oldValue) ? sQ : bq;
+               }
+               pos = (bp >= freeSlot) ? bp - freeSlot : bp + optInTimePeriod - freeSlot;
+               del = (bq >= freeSlot) ? bq - freeSlot : bq + optInTimePeriod - freeSlot;
+               gain = (del < pos) ? pos - 1 - del : del - pos;
+               seg = lookbackTotal + lookbackTotal / 4 * 3;
+               saving = (saving + gain + gain > seg) ? saving + gain + gain - seg : 0;
+               saving = (saving < lookbackTotal * 16) ? saving : lookbackTotal * 16;
+               /* The hole left by oldValue travels to newValue's place the
+                * shorter way round; going through the free slot moves head
+                * by one.
+                */
+               slot = head + del;
+               if( slot >= optInTimePeriod )
+               {
+                  slot -= optInTimePeriod;
+               }
+               if( del < pos )
+               {
+                  cnt = pos - 1 - del;
+                  dn = 1;
+               } else 
+               {
+                  cnt = del - pos;
+                  dn = 0;
+               }
+               if( cnt + cnt > lookbackTotal )
+               {
+                  cnt = lookbackTotal - cnt;
+                  dn = 1 - dn;
+                  if( dn == 1 )
+                  {
+                     head = freeSlot;
+                  } else 
+                  {
+                     head = (head == lookbackTotal) ? 0 : head + 1;
+                  }
+               }
+               if( dn == 1 )
+               {
+                  room = lookbackTotal - slot;
+                  if( cnt <= room )
+                  {
+                     e = slot + cnt;
+                     for( k = slot; k < e; k += 1 )
+                     {
+                        cb_sorted[k] = cb_sorted[k + 1];
+                     }
+                     slot = e;
+                  } else 
+                  {
+                     for( k = slot; k < lookbackTotal; k += 1 )
+                     {
+                        cb_sorted[k] = cb_sorted[k + 1];
+                     }
+                     cb_sorted[lookbackTotal] = cb_sorted[0];
+                     e = cnt - room - 1;
+                     for( k = 0; k < e; k += 1 )
+                     {
+                        cb_sorted[k] = cb_sorted[k + 1];
+                     }
+                     slot = e;
+                  }
+               } else if( cnt <= slot )
+               {
+                  e = slot - cnt;
+                  for( k = slot; k > e; k -= 1 )
+                  {
+                     cb_sorted[k] = cb_sorted[k - 1];
+                  }
+                  slot = e;
+               } else 
+               {
+                  for( k = slot; k > 0; k -= 1 )
+                  {
+                     cb_sorted[k] = cb_sorted[k - 1];
+                  }
+                  cb_sorted[0] = cb_sorted[lookbackTotal];
+                  e = lookbackTotal - (cnt - slot - 1);
+                  for( k = lookbackTotal; k > e; k -= 1 )
+                  {
+                     cb_sorted[k] = cb_sorted[k - 1];
+                  }
+                  slot = e;
+               }
+               cb_sorted[slot] = newValue;
+            } else 
+            {
+               /* Back to layout 0: rotate head to slot 0 by three
+                * reversals, then carry an empty pending update.
+                */
+               if( head != 0 )
+               {
+                  k = 0;
+                  e = head - 1;
+                  while( k < e )
+                  {
+                     held = cb_sorted[k];
+                     cb_sorted[k] = cb_sorted[e];
+                     cb_sorted[e] = held;
+                     k += 1;
+                     e -= 1;
+                  }
+                  k = head;
+                  e = lookbackTotal;
+                  while( k < e )
+                  {
+                     held = cb_sorted[k];
+                     cb_sorted[k] = cb_sorted[e];
+                     cb_sorted[e] = held;
+                     k += 1;
+                     e -= 1;
+                  }
+                  k = 0;
+                  e = lookbackTotal;
+                  while( k < e )
+                  {
+                     held = cb_sorted[k];
+                     cb_sorted[k] = cb_sorted[e];
+                     cb_sorted[e] = held;
+                     k += 1;
+                     e -= 1;
+                  }
+                  head = 0;
+               }
+               pendNew = cb_sorted[0];
+               pendOld = pendNew;
+               pendDel = 0;
+               pendPos = 1;
+               cb_sorted[lookbackTotal] = pendNew;
+               layout = 0;
+               runLen = 0;
+            }
+         }
+         if( layout == 0 )
+         {
+            /* Branchless four-way search of the lagging array, no wrap. */
+            pos = 0;
+            del = 0;
+            len = optInTimePeriod;
+            while( len > 2 )
+            {
+               half = (len + 3) / 4;
+               o3 = len - half;
+               o2 = half + half;
+               t1 = pos + half;
+               t2 = pos + o2;
+               t3 = pos + o3;
+               u1 = del + half;
+               u2 = del + o2;
+               u3 = del + o3;
+               pos = (cb_sorted[t1 - 1] <= newValue) ? t1 : pos;
+               pos = (cb_sorted[t2 - 1] <= newValue) ? t2 : pos;
+               pos = (cb_sorted[t3 - 1] <= newValue) ? t3 : pos;
+               del = (cb_sorted[u1 - 1] < oldValue) ? u1 : del;
+               del = (cb_sorted[u2 - 1] < oldValue) ? u2 : del;
+               del = (cb_sorted[u3 - 1] < oldValue) ? u3 : del;
+               len = half;
+            }
+            /* Increments, not selects: gcc turns the select into a jump. */
+            if( len > 1 )
+            {
+               pos += (cb_sorted[pos] <= newValue) ? 1 : 0;
+               del += (cb_sorted[del] < oldValue) ? 1 : 0;
+            }
+            pos += (pendNew <= newValue) ? 1 : 0;
+            del += (pendNew < oldValue) ? 1 : 0;
+            dp = (pendOld <= newValue) ? 1 : 0;
+            dq = (pendOld < oldValue) ? 1 : 0;
+            /* Clamped although exact for finite input: a NaN makes the counts
+             * disagree with the corrections, and they index the shift below.
+             */
+            pos = (pos > dp) ? pos - dp : 0;
+            del = (del > dq) ? del - dq : 0;
+            pos = (pos < lookbackTotal) ? pos : lookbackTotal;
+            del = (del < lookbackTotal) ? del : lookbackTotal;
+            if( pendDel < pendPos )
+            {
+               for( k = pendDel; k < pendPos - 1; k += 1 )
+               {
+                  cb_sorted[k] = cb_sorted[k + 1];
+               }
+               cb_sorted[pendPos - 1] = pendNew;
+            } else 
+            {
+               for( k = pendDel; k > pendPos; k -= 1 )
+               {
+                  cb_sorted[k] = cb_sorted[k - 1];
+               }
+               cb_sorted[pendPos] = pendNew;
+            }
+            cb_sorted[lookbackTotal] = newValue;
+            pendPos = pos;
+            pendDel = del;
+            pendNew = newValue;
+            pendOld = oldValue;
+            /* Leave for the ring after four bars that each add a new extreme
+             * as the opposite one departs, or, from 300 values, while the
+             * shift the ring would save keeps exceeding 3/4 of the window.
+             */
+            runLen = (pos == del + lookbackTotal || del == pos + lookbackTotal - 1) ? runLen + 1 : 0;
+            if( lookbackTotal >= 300 )
+            {
+               gain = (del < pos) ? pos - 1 - del : del - pos;
+               seg = lookbackTotal + lookbackTotal / 4 * 3;
+               saving = (saving + gain + gain > seg) ? saving + gain + gain - seg : 0;
+            }
+            if( runLen >= 4 || saving > lookbackTotal * 8 )
+            {
+               layout = 2;
+            }
+         }
+         if( layout != 1 )
+         {
+            pp = (pendDel < pendPos) ? pendPos - 1 : pendPos;
+            hiSlot = (hiRank > pp) ? hiRank - 1 : hiRank;
+            hiSlot += (hiSlot >= pendDel) ? 1 : 0;
+            hiSlot = (hiRank == pp) ? lookbackTotal : hiSlot;
+            loSlot = (loRank > pp) ? loRank - 1 : loRank;
+            loSlot += (loSlot >= pendDel) ? 1 : 0;
+            loSlot = (loRank == pp) ? lookbackTotal : loSlot;
+         } else 
+         {
+            hiSlot = head + hiRank;
+            if( hiSlot >= optInTimePeriod )
+            {
+               hiSlot -= optInTimePeriod;
+            }
+            loSlot = (hiSlot == 0) ? lookbackTotal : hiSlot - 1;
+         }
+         if( rank <= lookbackTotal )
+         {
+            hiV = cb_sorted[hiSlot];
+         }
+         if( rank > 1 )
+         {
+            loV = cb_sorted[loSlot];
+         }
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->loV = loV;
+   sp->hiV = hiV;
+   sp->last = last;
+   sp->pendNew = pendNew;
+   sp->pendOld = pendOld;
+   sp->run = run;
+   sp->dPrev = dPrev;
+   sp->trend = trend;
+   sp->layout = layout;
+   sp->head = head;
+   sp->pendPos = pendPos;
+   sp->pendDel = pendDel;
+   sp->runLen = runLen;
+   sp->saving = saving;
+   sp->ring_Idx = ring_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PERCENTILE_UpdateBlock( struct TA_PERCENTILE_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_PERCENTILE_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PERCENTILE_Value( const TA_PERCENTILE_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

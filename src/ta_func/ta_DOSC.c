@@ -1190,6 +1190,88 @@ TA_LIB_API TA_RetCode TA_DOSC_Close( TA_DOSC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_DOSC_KernImpl( struct TA_DOSC_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double k1 = sp->k1;
+   double beta1 = sp->beta1;
+   double k2 = sp->k2;
+   double beta2 = sp->beta2;
+   double invPeriod = sp->invPeriod;
+   double prevGain = sp->prevGain;
+   double prevLoss = sp->prevLoss;
+   double prevValue = sp->prevValue;
+   double ema1 = sp->ema1;
+   double ema2 = sp->ema2;
+   double sumSignal = sp->sumSignal;
+   int dsBuffer_Idx = sp->dsBuffer_Idx;
+   int maxIdx_dsBuffer = sp->maxIdx_dsBuffer;
+   double *cb_dsBuffer = sp->cb_dsBuffer;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double gainDelta;
+      double tempValue1;
+      double tempValue2;
+      double rsiValue;
+
+      tempValue1 = inReal;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (double)(optInTimePeriod - 1);
+      prevGain *= (double)(optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 )
+      {
+         rsiValue = 100.0 * (prevGain / tempValue1);
+      } else 
+      {
+         rsiValue = 50.0;
+      }
+      ema1 = fma(beta1, ema1, k1 * rsiValue);
+      ema2 = fma(beta2, ema2, k2 * ema1);
+      cb_dsBuffer[dsBuffer_Idx] = ema2;
+      sumSignal = sumSignal + ema2;
+      outReal[kernBar] = ema2 - sumSignal / (double)optInSignalPeriod;
+      dsBuffer_Idx = dsBuffer_Idx + 1;
+      if( dsBuffer_Idx > maxIdx_dsBuffer )
+      {
+         dsBuffer_Idx = 0;
+      }
+      sumSignal = sumSignal - cb_dsBuffer[dsBuffer_Idx];
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevGain = prevGain;
+   sp->prevLoss = prevLoss;
+   sp->prevValue = prevValue;
+   sp->ema1 = ema1;
+   sp->ema2 = ema2;
+   sp->sumSignal = sumSignal;
+   sp->dsBuffer_Idx = dsBuffer_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DOSC_UpdateBlock( struct TA_DOSC_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_DOSC_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_DOSC_Value( const TA_DOSC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

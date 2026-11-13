@@ -357,6 +357,47 @@ TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_OBV_KernImpl( struct TA_OBV_Stream *sp, const double inRealBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevReal = sp->prevReal;
+   double prevOBV = sp->prevOBV;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double tempReal;
+
+      tempReal = inReal;
+      if( tempReal > prevReal )
+      {
+         prevOBV += inVolume;
+      } else if( tempReal < prevReal )
+      {
+         prevOBV -= inVolume;
+      }
+      outReal[kernBar] = prevOBV;
+      prevReal = tempReal;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevReal = prevReal;
+   sp->prevOBV = prevOBV;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_OBV_UpdateBlock( struct TA_OBV_Stream *stream, const double inReal[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_OBV_KernImpl( stream, inReal, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_OBV_Value( const TA_OBV_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

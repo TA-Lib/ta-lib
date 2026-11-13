@@ -2289,6 +2289,323 @@ int TA_MAMA_TapeDetach( struct TA_MAMA_Stream *sp )
    return reach;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_MAMA_KernImpl( struct TA_MAMA_Stream *sp, const double inRealBlk[], int nbBar, double outMAMA[], double outFAMA[] )
+{
+   double cur_outMAMA = sp->cur_outMAMA;
+   double cur_outFAMA = sp->cur_outFAMA;
+   double optInFastLimit = sp->optInFastLimit;
+   double optInSlowLimit = sp->optInSlowLimit;
+   double period = sp->period;
+   double periodWMASum = sp->periodWMASum;
+   double periodWMASub = sp->periodWMASub;
+   double trailingWMAValue = sp->trailingWMAValue;
+   double a = sp->a;
+   double b = sp->b;
+   int hilbertIdx = sp->hilbertIdx;
+   double *detrender_Odd = sp->detrender_Odd;
+   double *detrender_Even = sp->detrender_Even;
+   double prev_detrender_Odd = sp->prev_detrender_Odd;
+   double prev_detrender_Even = sp->prev_detrender_Even;
+   double prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
+   double prev_detrender_input_Even = sp->prev_detrender_input_Even;
+   double *Q1_Odd = sp->Q1_Odd;
+   double *Q1_Even = sp->Q1_Even;
+   double prev_Q1_Odd = sp->prev_Q1_Odd;
+   double prev_Q1_Even = sp->prev_Q1_Even;
+   double prev_Q1_input_Odd = sp->prev_Q1_input_Odd;
+   double prev_Q1_input_Even = sp->prev_Q1_input_Even;
+   double *jI_Odd = sp->jI_Odd;
+   double *jI_Even = sp->jI_Even;
+   double prev_jI_Odd = sp->prev_jI_Odd;
+   double prev_jI_Even = sp->prev_jI_Even;
+   double prev_jI_input_Odd = sp->prev_jI_input_Odd;
+   double prev_jI_input_Even = sp->prev_jI_input_Even;
+   double *jQ_Odd = sp->jQ_Odd;
+   double *jQ_Even = sp->jQ_Even;
+   double prev_jQ_Odd = sp->prev_jQ_Odd;
+   double prev_jQ_Even = sp->prev_jQ_Even;
+   double prev_jQ_input_Odd = sp->prev_jQ_input_Odd;
+   double prev_jQ_input_Even = sp->prev_jQ_input_Even;
+   double prevQ2 = sp->prevQ2;
+   double prevI2 = sp->prevI2;
+   double Re = sp->Re;
+   double Im = sp->Im;
+   double I1ForOddPrev2 = sp->I1ForOddPrev2;
+   double I1ForOddPrev3 = sp->I1ForOddPrev3;
+   double I1ForEvenPrev2 = sp->I1ForEvenPrev2;
+   double I1ForEvenPrev3 = sp->I1ForEvenPrev3;
+   double rad2Deg = sp->rad2Deg;
+   double mama = sp->mama;
+   double fama = sp->fama;
+   double prevPhase = sp->prevPhase;
+   int streamParity = sp->streamParity;
+   int ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   int ringCap_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
+   double *ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double tempReal2;
+      double adjustedPrevPeriod;
+      double smoothedValue;
+      double hilbertTempReal;
+      double detrender;
+      double Q1;
+      double jI;
+      double jQ;
+      double Q2;
+      double I2;
+      double todayValue;
+      int ringPosL_trailingWMAIdx;
+      int ringCapL_trailingWMAIdx;
+
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
+      todayValue = inReal;
+      periodWMASub += todayValue;
+      periodWMASub -= trailingWMAValue;
+      periodWMASum += todayValue * 4.0;
+      trailingWMAValue = ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx];
+      smoothedValue = periodWMASum * 0.1;
+      periodWMASum -= periodWMASub;
+      if( streamParity == 0 )
+      {
+         /* Do the Hilbert Transforms for even price bar */
+         hilbertTempReal = a * smoothedValue;
+         detrender = -detrender_Even[hilbertIdx];
+         detrender_Even[hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= prev_detrender_Even;
+         prev_detrender_Even = b * prev_detrender_input_Even;
+         detrender += prev_detrender_Even;
+         prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = a * detrender;
+         Q1 = -Q1_Even[hilbertIdx];
+         Q1_Even[hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= prev_Q1_Even;
+         prev_Q1_Even = b * prev_Q1_input_Even;
+         Q1 += prev_Q1_Even;
+         prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = a * I1ForEvenPrev3;
+         jI = -jI_Even[hilbertIdx];
+         jI_Even[hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= prev_jI_Even;
+         prev_jI_Even = b * prev_jI_input_Even;
+         jI += prev_jI_Even;
+         prev_jI_input_Even = I1ForEvenPrev3;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = a * Q1;
+         jQ = -jQ_Even[hilbertIdx];
+         jQ_Even[hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= prev_jQ_Even;
+         prev_jQ_Even = b * prev_jQ_input_Even;
+         jQ += prev_jQ_Even;
+         prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
+         if( ++hilbertIdx == 3 )
+         {
+            hilbertIdx = 0;
+         }
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+         /* The variable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "odd" logic later.
+          */
+         I1ForOddPrev3 = I1ForOddPrev2;
+         I1ForOddPrev2 = detrender;
+         /* Put Alpha in tempReal2 */
+         if( I1ForEvenPrev3 != 0.0 )
+         {
+            tempReal2 = atan(Q1 / I1ForEvenPrev3) * rad2Deg;
+         } else 
+         {
+            tempReal2 = 0.0;
+         }
+      } else 
+      {
+         /* Do the Hilbert Transforms for odd price bar */
+         hilbertTempReal = a * smoothedValue;
+         detrender = -detrender_Odd[hilbertIdx];
+         detrender_Odd[hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= prev_detrender_Odd;
+         prev_detrender_Odd = b * prev_detrender_input_Odd;
+         detrender += prev_detrender_Odd;
+         prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = a * detrender;
+         Q1 = -Q1_Odd[hilbertIdx];
+         Q1_Odd[hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= prev_Q1_Odd;
+         prev_Q1_Odd = b * prev_Q1_input_Odd;
+         Q1 += prev_Q1_Odd;
+         prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = a * I1ForOddPrev3;
+         jI = -jI_Odd[hilbertIdx];
+         jI_Odd[hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= prev_jI_Odd;
+         prev_jI_Odd = b * prev_jI_input_Odd;
+         jI += prev_jI_Odd;
+         prev_jI_input_Odd = I1ForOddPrev3;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = a * Q1;
+         jQ = -jQ_Odd[hilbertIdx];
+         jQ_Odd[hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= prev_jQ_Odd;
+         prev_jQ_Odd = b * prev_jQ_input_Odd;
+         jQ += prev_jQ_Odd;
+         prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+         /* The varaiable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "odd" logic later.
+          */
+         I1ForEvenPrev3 = I1ForEvenPrev2;
+         I1ForEvenPrev2 = detrender;
+         /* Put Alpha in tempReal2 */
+         if( I1ForOddPrev3 != 0.0 )
+         {
+            tempReal2 = atan(Q1 / I1ForOddPrev3) * rad2Deg;
+         } else 
+         {
+            tempReal2 = 0.0;
+         }
+      }
+      /* Put Delta Phase into tempReal */
+      tempReal = prevPhase - tempReal2;
+      prevPhase = tempReal2;
+      if( tempReal < 1.0 )
+      {
+         tempReal = 1.0;
+      }
+      /* Put Alpha into tempReal */
+      if( tempReal > 1.0 )
+      {
+         tempReal = optInFastLimit / tempReal;
+         if( tempReal < optInSlowLimit )
+         {
+            tempReal = optInSlowLimit;
+         }
+      } else 
+      {
+         tempReal = optInFastLimit;
+      }
+      /* Calculate MAMA, FAMA */
+      mama = fma(1 - tempReal, mama, tempReal * todayValue);
+      tempReal *= 0.5;
+      fama = fma(1 - tempReal, fama, tempReal * mama);
+      outFAMA[kernBar] = fama;
+      outMAMA[kernBar] = mama;
+      /* Adjust the period for next price bar */
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+      prevQ2 = Q2;
+      prevI2 = I2;
+      tempReal = period;
+      if( Im != 0.0 && Re != 0.0 )
+      {
+         period = 360.0 / (atan(Im / Re) * rad2Deg);
+      }
+      tempReal2 = 1.5 * tempReal;
+      if( period > tempReal2 )
+      {
+         period = tempReal2;
+      }
+      tempReal2 = 0.67 * tempReal;
+      if( period < tempReal2 )
+      {
+         period = tempReal2;
+      }
+      if( period < 6 )
+      {
+         period = 6;
+      } else if( period > 50 )
+      {
+         period = 50;
+      }
+      period = fma(0.2, period, 0.8 * tempReal);
+      /* Ooof... let's do the next price bar now! */
+      cur_outMAMA = outMAMA[kernBar];
+      cur_outFAMA = outFAMA[kernBar];
+      ringCapL_trailingWMAIdx = ringCap_trailingWMAIdx;
+      ringPosL_trailingWMAIdx = ringPos_trailingWMAIdx;
+      ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+      if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+      {
+         ringPosL_trailingWMAIdx = 0;
+      }
+      ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
+      streamParity = 1 - streamParity;
+   }
+   sp->cur_outMAMA = cur_outMAMA;
+   sp->cur_outFAMA = cur_outFAMA;
+   sp->period = period;
+   sp->periodWMASum = periodWMASum;
+   sp->periodWMASub = periodWMASub;
+   sp->trailingWMAValue = trailingWMAValue;
+   sp->hilbertIdx = hilbertIdx;
+   sp->prev_detrender_Odd = prev_detrender_Odd;
+   sp->prev_detrender_Even = prev_detrender_Even;
+   sp->prev_detrender_input_Odd = prev_detrender_input_Odd;
+   sp->prev_detrender_input_Even = prev_detrender_input_Even;
+   sp->prev_Q1_Odd = prev_Q1_Odd;
+   sp->prev_Q1_Even = prev_Q1_Even;
+   sp->prev_Q1_input_Odd = prev_Q1_input_Odd;
+   sp->prev_Q1_input_Even = prev_Q1_input_Even;
+   sp->prev_jI_Odd = prev_jI_Odd;
+   sp->prev_jI_Even = prev_jI_Even;
+   sp->prev_jI_input_Odd = prev_jI_input_Odd;
+   sp->prev_jI_input_Even = prev_jI_input_Even;
+   sp->prev_jQ_Odd = prev_jQ_Odd;
+   sp->prev_jQ_Even = prev_jQ_Even;
+   sp->prev_jQ_input_Odd = prev_jQ_input_Odd;
+   sp->prev_jQ_input_Even = prev_jQ_input_Even;
+   sp->prevQ2 = prevQ2;
+   sp->prevI2 = prevI2;
+   sp->Re = Re;
+   sp->Im = Im;
+   sp->I1ForOddPrev2 = I1ForOddPrev2;
+   sp->I1ForOddPrev3 = I1ForOddPrev3;
+   sp->I1ForEvenPrev2 = I1ForEvenPrev2;
+   sp->I1ForEvenPrev3 = I1ForEvenPrev3;
+   sp->mama = mama;
+   sp->fama = fama;
+   sp->prevPhase = prevPhase;
+   sp->streamParity = streamParity;
+   sp->ringPos_trailingWMAIdx = ringPos_trailingWMAIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MAMA_UpdateBlock( struct TA_MAMA_Stream *stream, const double inReal[], int nbBar, double outMAMA[], double outFAMA[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outMAMA || !outFAMA ) return TA_BAD_PARAM;
+   TA_MAMA_KernImpl( stream, inReal, nbBar, outMAMA, outFAMA );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAMA_Value( const TA_MAMA_Stream *stream, double *outMAMA, double *outFAMA )
 {
    if( !stream || !outMAMA || !outFAMA ) return TA_BAD_PARAM;

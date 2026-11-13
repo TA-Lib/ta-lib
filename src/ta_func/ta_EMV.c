@@ -695,6 +695,70 @@ TA_LIB_API TA_RetCode TA_EMV_Close( TA_EMV_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_EMV_KernImpl( struct TA_EMV_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double optInVolumeDivisor = sp->optInVolumeDivisor;
+   double periodTotal = sp->periodTotal;
+   double prevMid = sp->prevMid;
+   int rawBuffer_Idx = sp->rawBuffer_Idx;
+   int maxIdx_rawBuffer = sp->maxIdx_rawBuffer;
+   double *cb_rawBuffer = sp->cb_rawBuffer;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double mid;
+      double range;
+      double boxRatio;
+      double raw;
+      double tempReal;
+
+      mid = (inHigh + inLow) / 2.0;
+      range = inHigh - inLow;
+      raw = 0.0;
+      if( range != 0.0 )
+      {
+         boxRatio = inVolume / optInVolumeDivisor / range;
+         if( boxRatio != 0.0 )
+         {
+            raw = (mid - prevMid) / boxRatio;
+         }
+      }
+      prevMid = mid;
+      cb_rawBuffer[rawBuffer_Idx] = raw;
+      periodTotal += raw;
+      tempReal = periodTotal;
+      rawBuffer_Idx = rawBuffer_Idx + 1;
+      if( rawBuffer_Idx > maxIdx_rawBuffer )
+      {
+         rawBuffer_Idx = 0;
+      }
+      periodTotal -= cb_rawBuffer[rawBuffer_Idx];
+      outReal[kernBar] = tempReal / (double)optInTimePeriod;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->prevMid = prevMid;
+   sp->rawBuffer_Idx = rawBuffer_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_EMV_UpdateBlock( struct TA_EMV_Stream *stream, const double inHigh[], const double inLow[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_EMV_KernImpl( stream, inHigh, inLow, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_EMV_Value( const TA_EMV_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

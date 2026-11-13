@@ -2434,6 +2434,445 @@ TA_LIB_API TA_RetCode TA_CG_Close( TA_CG_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CG_KernImpl( struct TA_CG_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int lookbackTotal = sp->lookbackTotal;
+   int limbs = sp->limbs;
+   int stickyBars = sp->stickyBars;
+   double num = sp->num;
+   double den = sp->den;
+   double periodDouble = sp->periodDouble;
+   double flatValue = sp->flatValue;
+   double width2 = sp->width2;
+   double width3 = sp->width3;
+   double ylim2 = sp->ylim2;
+   double ylim3 = sp->ylim3;
+   double head2 = sp->head2;
+   double head3 = sp->head3;
+   double scale = sp->scale;
+   double width = sp->width;
+   double invWidth = sp->invWidth;
+   double widthSq = sp->widthSq;
+   double invWidthSq = sp->invWidthSq;
+   double ylim = sp->ylim;
+   double half = sp->half;
+   double denA = sp->denA;
+   double denB = sp->denB;
+   double denC = sp->denC;
+   double numA = sp->numA;
+   double numB = sp->numB;
+   double numC = sp->numC;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int winPos_j = sp->winPos_j;
+   int winCap_j = sp->winCap_j;
+   double *win_j_inReal = sp->win_j_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int j;
+      int k;
+      int fits;
+      int maxAt;
+      int failAt;
+      int fit2Mid;
+      int fit2Lo;
+      int fit3Mid;
+      double value;
+      double maxAbs;
+      double scale2Mid;
+      double scale2Lo;
+      double scale3Mid;
+      double scale3Lo;
+      double x;
+      double y;
+      double a;
+      double b;
+      double c;
+      double q;
+      double t;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      win_j_inReal[winPos_j] = inReal;
+      /* Between bars the sums hold the window less its oldest value. */
+      fits = 0;
+      x = inReal;
+      y = x * scale;
+      if( limbs == 2 )
+      {
+         if( fabs(y) < ylim && (y != 0.0 || x == 0.0) )
+         {
+            t = y * invWidth;
+            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = a * width;
+            c = y - t;
+            if( c + 6.755399441055744e15 - 6.755399441055744e15 == c )
+            {
+               denA += a;
+               denC += c;
+               numA += denA;
+               numC += denC;
+               fits = 1;
+            }
+         }
+      } else if( limbs == 3 )
+      {
+         if( fabs(y) < ylim && (y != 0.0 || x == 0.0) )
+         {
+            t = y * invWidthSq;
+            a = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = a * widthSq;
+            q = y - t;
+            t = q * invWidth;
+            b = t + 6.755399441055744e15 - 6.755399441055744e15;
+            t = b * width;
+            c = q - t;
+            if( c + 6.755399441055744e15 - 6.755399441055744e15 == c )
+            {
+               denA += a;
+               denB += b;
+               denC += c;
+               numA += denA;
+               numB += denB;
+               numC += denC;
+               fits = 1;
+            }
+         }
+      }
+      if( fits == 0 && limbs == 0 && stickyBars > 0 )
+      {
+         /* Both witnesses of the last failed fit are still in the window, so
+          * it cannot fit either: its largest value can only be larger, which
+          * only coarsens the scale the failing value already missed.
+          */
+         stickyBars -= 1;
+         num = 0.0;
+         den = 0.0;
+         for( j = lookbackTotal; j >= 0; j -= 1 )
+         {
+            den += win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j];
+            num += den;
+         }
+      } else if( fits == 0 )
+      {
+         /* The incoming value does not fit the scale: pick one from the
+          * window alone.
+          */
+         maxAbs = 0.0;
+         maxAt = 0;
+         k = 0;
+         for( j = lookbackTotal; j >= 0; j -= 1 )
+         {
+            x = fabs(win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j]);
+            if( x >= maxAbs )
+            {
+               maxAbs = x;
+               maxAt = k;
+            }
+            k += 1;
+         }
+         /* The largest power of two not above the window's largest
+          * magnitude. The search may start from any finite power of two, so
+          * it starts from the last window's; keep it uncapped, or a start far
+          * from the answer stops short and the fit then depends on the
+          * previous window. A window with an infinite magnitude fails the fit
+          * at any scale, so it keeps the last one.
+          */
+         if( maxAbs > 0.0 && maxAbs <= 1.7976931348623157e308 )
+         {
+            while( half * 65536.0 <= maxAbs )
+            {
+               half *= 65536.0;
+            }
+            while( half * 2.0 <= maxAbs )
+            {
+               half *= 2.0;
+            }
+            while( half > maxAbs * 65536.0 )
+            {
+               half *= 0.0000152587890625;
+            }
+            while( half > maxAbs )
+            {
+               half *= 0.5;
+            }
+         }
+         /* The largest scale each limb count allows, and the same with
+          * headroom, at most 2^1022 so that the scale itself is finite. The
+          * largest 3-limb scale is the most permissive there is: the window
+          * fits some scale only if every value is an integer at that one. A
+          * scale below 1 can round a small value to 0, which is not a fit.
+          */
+         scale2Lo = ylim2 * 0.5 / half;
+         if( scale2Lo > 4.49423283715579e307 )
+         {
+            scale2Lo = 4.49423283715579e307;
+         }
+         scale2Mid = scale2Lo / head2;
+         scale3Lo = ylim3 * 0.5 / half;
+         if( scale3Lo > 4.49423283715579e307 )
+         {
+            scale3Lo = 4.49423283715579e307;
+         }
+         scale3Mid = scale3Lo / head3;
+         /* The same pass sums the window as it stands, oldest first, for when
+          * nothing fits: non-finite values, bits below 2^-1022, or too wide a
+          * span of magnitudes.
+          */
+         fit2Mid = 1;
+         fit2Lo = 1;
+         fit3Mid = 1;
+         failAt = -1;
+         num = 0.0;
+         den = 0.0;
+         k = 0;
+         for( j = lookbackTotal; j >= 0; j -= 1 )
+         {
+            x = win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j];
+            den += x;
+            num += den;
+            y = fabs(x * scale2Mid);
+            if( !(y < ylim2) || (y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y) || (y == 0.0 && x != 0.0) )
+            {
+               fit2Mid = 0;
+            }
+            y = fabs(x * scale2Lo);
+            if( !(y < ylim2) || (y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y) || (y == 0.0 && x != 0.0) )
+            {
+               fit2Lo = 0;
+            }
+            y = fabs(x * scale3Mid);
+            if( !(y < ylim3) || (y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y) || (y == 0.0 && x != 0.0) )
+            {
+               fit3Mid = 0;
+            }
+            y = fabs(x * scale3Lo);
+            if( !(y < ylim3) || (y < 4.503599627370496e15 && y + 4.503599627370496e15 - 4.503599627370496e15 != y) || (y == 0.0 && x != 0.0) )
+            {
+               failAt = k;
+            }
+            k += 1;
+         }
+         limbs = 0;
+         if( failAt >= 0 )
+         {
+            if( failAt < maxAt )
+            {
+               stickyBars = failAt;
+            } else 
+            {
+               stickyBars = maxAt;
+            }
+         } else 
+         {
+            if( fit2Mid == 1 || fit2Lo == 1 )
+            {
+               limbs = 2;
+               width = width2;
+               ylim = ylim2;
+               if( fit2Mid == 1 )
+               {
+                  scale = scale2Mid;
+               } else 
+               {
+                  scale = scale2Lo;
+               }
+            } else 
+            {
+               limbs = 3;
+               width = width3;
+               ylim = ylim3;
+               if( fit3Mid == 1 )
+               {
+                  scale = scale3Mid;
+               } else 
+               {
+                  scale = scale3Lo;
+               }
+            }
+            invWidth = 1.0 / width;
+            widthSq = width * width;
+            invWidthSq = invWidth * invWidth;
+            denA = 0.0;
+            denB = 0.0;
+            denC = 0.0;
+            numA = 0.0;
+            numB = 0.0;
+            numC = 0.0;
+            if( limbs == 2 )
+            {
+               for( j = lookbackTotal; j >= 0; j -= 1 )
+               {
+                  y = win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j] * scale;
+                  t = y * invWidth;
+                  a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                  t = a * width;
+                  c = y - t;
+                  denA += a;
+                  denC += c;
+                  numA += denA;
+                  numC += denC;
+               }
+            } else 
+            {
+               for( j = lookbackTotal; j >= 0; j -= 1 )
+               {
+                  y = win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j] * scale;
+                  t = y * invWidthSq;
+                  a = t + 6.755399441055744e15 - 6.755399441055744e15;
+                  t = a * widthSq;
+                  q = y - t;
+                  t = q * invWidth;
+                  b = t + 6.755399441055744e15 - 6.755399441055744e15;
+                  t = b * width;
+                  c = q - t;
+                  denA += a;
+                  denB += b;
+                  denC += c;
+                  numA += denA;
+                  numB += denB;
+                  numC += denC;
+               }
+            }
+         }
+      }
+      /* One rounding each: the limbs are carried into range first, so the
+       * last add sees two exact values.
+       */
+      if( limbs == 2 )
+      {
+         t = denA * width;
+         den = t + denC;
+         t = numA * width;
+         num = t + numC;
+      } else if( limbs == 3 )
+      {
+         t = denC * invWidth;
+         q = t + 6.755399441055744e15 - 6.755399441055744e15;
+         b = denB + q;
+         t = q * width;
+         c = denC - t;
+         t = b * invWidth;
+         q = t + 6.755399441055744e15 - 6.755399441055744e15;
+         t = q * width;
+         b = b - t;
+         t = b * width;
+         c = t + c;
+         t = denA + q;
+         t = t * widthSq;
+         den = t + c;
+         t = numC * invWidth;
+         q = t + 6.755399441055744e15 - 6.755399441055744e15;
+         b = numB + q;
+         t = q * width;
+         c = numC - t;
+         t = b * invWidth;
+         q = t + 6.755399441055744e15 - 6.755399441055744e15;
+         t = q * width;
+         b = b - t;
+         t = b * width;
+         c = t + c;
+         t = numA + q;
+         t = t * widthSq;
+         num = t + c;
+      }
+      /* The denominator is a signed sum, so only an exact zero is degenerate.
+       * It is answered with the flat-window value, which keeps every output a
+       * function of its own window; an epsilon band would carry the quote unit
+       * (#253).
+       */
+      if( den != 0.0 )
+      {
+         value = -num / den;
+      } else 
+      {
+         value = flatValue;
+      }
+      if( limbs == 2 )
+      {
+         y = ring_trailingIdx_inReal[ringPos_trailingIdx] * scale;
+         t = y * invWidth;
+         a = t + 6.755399441055744e15 - 6.755399441055744e15;
+         t = a * width;
+         c = y - t;
+         denA -= a;
+         denC -= c;
+         numA -= periodDouble * a;
+         numC -= periodDouble * c;
+      } else if( limbs == 3 )
+      {
+         y = ring_trailingIdx_inReal[ringPos_trailingIdx] * scale;
+         t = y * invWidthSq;
+         a = t + 6.755399441055744e15 - 6.755399441055744e15;
+         t = a * widthSq;
+         q = y - t;
+         t = q * invWidth;
+         b = t + 6.755399441055744e15 - 6.755399441055744e15;
+         t = b * width;
+         c = q - t;
+         denA -= a;
+         denB -= b;
+         denC -= c;
+         numA -= periodDouble * a;
+         numB -= periodDouble * b;
+         numC -= periodDouble * c;
+      }
+      /* After the trailing value is read: outReal may be inReal. */
+      outReal[kernBar] = value;
+      cur_outReal = outReal[kernBar];
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+      winPos_j = winPos_j + 1;
+      if( winPos_j >= winCap_j )
+      {
+         winPos_j = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->limbs = limbs;
+   sp->stickyBars = stickyBars;
+   sp->num = num;
+   sp->den = den;
+   sp->scale = scale;
+   sp->width = width;
+   sp->invWidth = invWidth;
+   sp->widthSq = widthSq;
+   sp->invWidthSq = invWidthSq;
+   sp->ylim = ylim;
+   sp->half = half;
+   sp->denA = denA;
+   sp->denB = denB;
+   sp->denC = denC;
+   sp->numA = numA;
+   sp->numB = numB;
+   sp->numC = numC;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->winPos_j = winPos_j;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CG_UpdateBlock( struct TA_CG_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_CG_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CG_Value( const TA_CG_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

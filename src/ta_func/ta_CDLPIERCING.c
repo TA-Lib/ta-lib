@@ -1077,6 +1077,88 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Close( TA_CDLPIERCING_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_CDLPIERCING_KernImpl( struct TA_CDLPIERCING_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double *BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   int ringLag_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int totIdx;
+      int ringPosL_BodyLongTrailingIdx;
+
+      ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      if( ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* 1st: black */
+          ((inClose >= inOpen) ? 1 : -1) == 1 &&            /* 2nd: white */
+          inOpen < lag1_inLow )                             /* open below prior low */
+      {
+         if( fabs(lag1_inClose - lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* long */
+             fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* long */
+             inClose < lag1_inOpen &&                                             /* close within prior body */
+             inClose > fma(fabs(lag1_inClose - lag1_inOpen), 0.5, lag1_inClose) ) /* above midpoint */
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
+      {
+         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - totIdx >= ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - totIdx - ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - totIdx] - ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - ringLag_BodyLongTrailingIdx - totIdx) % ringCap_BodyLongTrailingIdx]);
+      }
+      cur_outInteger = outInteger[kernBar];
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLPIERCING_UpdateBlock( struct TA_CDLPIERCING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLPIERCING_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Value( const TA_CDLPIERCING_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

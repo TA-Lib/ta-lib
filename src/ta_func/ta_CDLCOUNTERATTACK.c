@@ -845,6 +845,107 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Close( TA_CDLCOUNTERATTACK_Stream *str
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLCOUNTERATTACK_KernImpl( struct TA_CDLCOUNTERATTACK_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double EqualPeriodTotal = sp->EqualPeriodTotal;
+   double *BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double BodyLongPeriodTotalRange1 = sp->BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1 = sp->BodyLongPeriodTotalTrailRange1;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   int ringCap_EqualTrailingIdx = sp->ringCap_EqualTrailingIdx;
+   int ringLag_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx;
+   double *ring_EqualTrailingIdx_derived = sp->ring_EqualTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double BodyLongPeriodTotalRange0;
+      double BodyLongPeriodTotalTrailRange0;
+      int ringPosL_BodyLongTrailingIdx;
+      int ringPosL_EqualTrailingIdx;
+
+      if( ringCap_BodyLongTrailingIdx == 0 )
+      {
+         ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      }
+      ring_EqualTrailingIdx_derived[ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
+      if( ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* opposite candles */
+          fabs(lag1_inClose - lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* 1st long */
+          fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* 2nd long */
+          inClose <= lag1_inClose + TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* equal closes */
+          inClose >= lag1_inClose - TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) )
+      {
+         outInteger[kernBar] = ((inClose >= inOpen) ? 1 : -1) * 100;
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + ringCap_EqualTrailingIdx - ringLag_EqualTrailingIdx - 1) % ringCap_EqualTrailingIdx];
+      BodyLongPeriodTotalRange0 = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      BodyLongPeriodTotalTrailRange0 = ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx];
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      cur_outInteger = outInteger[kernBar];
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = BodyLongPeriodTotalRange0;
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+      if( ringPosL_EqualTrailingIdx >= ringCap_EqualTrailingIdx )
+      {
+         ringPosL_EqualTrailingIdx = 0;
+      }
+      ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->EqualPeriodTotal = EqualPeriodTotal;
+   sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+   sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLCOUNTERATTACK_UpdateBlock( struct TA_CDLCOUNTERATTACK_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLCOUNTERATTACK_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Value( const TA_CDLCOUNTERATTACK_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

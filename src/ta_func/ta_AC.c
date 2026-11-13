@@ -937,6 +937,110 @@ TA_LIB_API TA_RetCode TA_AC_Close( TA_AC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_AC_KernImpl( struct TA_AC_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInFastPeriod = sp->optInFastPeriod;
+   int optInSlowPeriod = sp->optInSlowPeriod;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double sumFast = sp->sumFast;
+   double sumSlow = sp->sumSlow;
+   double sumSignal = sp->sumSignal;
+   int oscBuffer_Idx = sp->oscBuffer_Idx;
+   int maxIdx_oscBuffer = sp->maxIdx_oscBuffer;
+   int ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx;
+   int ringCap_trailingFastIdx = sp->ringCap_trailingFastIdx;
+   double *ring_trailingFastIdx_derived = sp->ring_trailingFastIdx_derived;
+   int ringPos_trailingSlowIdx = sp->ringPos_trailingSlowIdx;
+   int ringCap_trailingSlowIdx = sp->ringCap_trailingSlowIdx;
+   double *ring_trailingSlowIdx_derived = sp->ring_trailingSlowIdx_derived;
+   double *cb_oscBuffer = sp->cb_oscBuffer;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double medianPrice;
+      double osc;
+      double tempReal;
+      int ringPosL_trailingFastIdx;
+      int ringPosL_trailingSlowIdx;
+      int ringCapL_trailingFastIdx;
+      int ringCapL_trailingSlowIdx;
+
+      medianPrice = (inHigh + inLow) / 2.0;
+      sumFast += medianPrice;
+      sumSlow += medianPrice;
+      /* Snapshot the oscillator before either total drops its trailing bar,
+       * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+       */
+      osc = sumFast / (double)optInFastPeriod - sumSlow / (double)optInSlowPeriod;
+      sumFast -= ring_trailingFastIdx_derived[ringPos_trailingFastIdx];
+      sumSlow -= ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx];
+      /* Today's oscillator enters the signal window at its own slot, and the
+       * bar leaving that window is read only after the ring has advanced onto
+       * it -- writing first is what makes the slot the loop is about to
+       * overwrite the newest value rather than the oldest one.
+       */
+      cb_oscBuffer[oscBuffer_Idx] = osc;
+      sumSignal += osc;
+      tempReal = osc - sumSignal / (double)optInSignalPeriod;
+      oscBuffer_Idx = oscBuffer_Idx + 1;
+      if( oscBuffer_Idx > maxIdx_oscBuffer )
+      {
+         oscBuffer_Idx = 0;
+      }
+      sumSignal -= cb_oscBuffer[oscBuffer_Idx];
+      /* Every input read for this bar is done above, so the store is safe
+       * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
+       * there is slack here -- the signal window puts both trailing indices
+       * at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
+       * parameter makes them collide -- but the order is kept anyway, so
+       * that admitting a signal period of 1 would not silently reintroduce
+       * the collision ao.c has to guard against.
+       */
+      outReal[kernBar] = tempReal;
+      cur_outReal = outReal[kernBar];
+      ringCapL_trailingFastIdx = ringCap_trailingFastIdx;
+      ringPosL_trailingFastIdx = ringPos_trailingFastIdx;
+      ring_trailingFastIdx_derived[ringPosL_trailingFastIdx] = medianPrice;
+      ringPosL_trailingFastIdx = ringPosL_trailingFastIdx + 1;
+      if( ringPosL_trailingFastIdx >= ringCapL_trailingFastIdx )
+      {
+         ringPosL_trailingFastIdx = 0;
+      }
+      ringPos_trailingFastIdx = ringPosL_trailingFastIdx;
+      ringCapL_trailingSlowIdx = ringCap_trailingSlowIdx;
+      ringPosL_trailingSlowIdx = ringPos_trailingSlowIdx;
+      ring_trailingSlowIdx_derived[ringPosL_trailingSlowIdx] = medianPrice;
+      ringPosL_trailingSlowIdx = ringPosL_trailingSlowIdx + 1;
+      if( ringPosL_trailingSlowIdx >= ringCapL_trailingSlowIdx )
+      {
+         ringPosL_trailingSlowIdx = 0;
+      }
+      ringPos_trailingSlowIdx = ringPosL_trailingSlowIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumFast = sumFast;
+   sp->sumSlow = sumSlow;
+   sp->sumSignal = sumSignal;
+   sp->oscBuffer_Idx = oscBuffer_Idx;
+   sp->ringPos_trailingFastIdx = ringPos_trailingFastIdx;
+   sp->ringPos_trailingSlowIdx = ringPos_trailingSlowIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_AC_UpdateBlock( struct TA_AC_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_AC_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AC_Value( const TA_AC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

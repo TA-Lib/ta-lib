@@ -530,6 +530,77 @@ TA_LIB_API TA_RetCode TA_DPO_Close( TA_DPO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_DPO_KernImpl( struct TA_DPO_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   int ringPos_dispIdx = sp->ringPos_dispIdx;
+   int ringCap_dispIdx = sp->ringCap_dispIdx;
+   double *ring_dispIdx_inReal = sp->ring_dispIdx_inReal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double dispVal;
+      int ringPosL_dispIdx;
+      int ringPosL_trailingIdx;
+      int ringCapL_dispIdx;
+      int ringCapL_trailingIdx;
+
+      periodTotal += inReal;
+      tempReal = periodTotal;
+      periodTotal -= ring_trailingIdx_inReal[ringPos_trailingIdx];
+      /* Both reads precede the store. Either cursor can EQUAL outIdx -- the
+       * displaced one whenever startIdx equals the displacement, the trailing
+       * one whenever startIdx sits at the lookback -- so a store hoisted above
+       * them would read back what it had just overwritten when the caller
+       * aliases outReal over inReal.
+       */
+      dispVal = ring_dispIdx_inReal[ringPos_dispIdx];
+      outReal[kernBar] = dispVal - tempReal / (double)optInTimePeriod;
+      cur_outReal = outReal[kernBar];
+      ringCapL_dispIdx = ringCap_dispIdx;
+      ringPosL_dispIdx = ringPos_dispIdx;
+      ring_dispIdx_inReal[ringPosL_dispIdx] = inReal;
+      ringPosL_dispIdx = ringPosL_dispIdx + 1;
+      if( ringPosL_dispIdx >= ringCapL_dispIdx )
+      {
+         ringPosL_dispIdx = 0;
+      }
+      ringPos_dispIdx = ringPosL_dispIdx;
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->ringPos_dispIdx = ringPos_dispIdx;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DPO_UpdateBlock( struct TA_DPO_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_DPO_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_DPO_Value( const TA_DPO_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

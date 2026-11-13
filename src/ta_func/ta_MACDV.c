@@ -1541,6 +1541,112 @@ TA_LIB_API TA_RetCode TA_MACDV_Close( TA_MACDV_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_MACDV_KernImpl( struct TA_MACDV_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] )
+{
+   double cur_outMACDV = sp->cur_outMACDV;
+   double cur_outMACDVSignal = sp->cur_outMACDVSignal;
+   double cur_outMACDVHist = sp->cur_outMACDVHist;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double prevFast = sp->prevFast;
+   double prevSlow = sp->prevSlow;
+   double prevATR = sp->prevATR;
+   double prevSignal = sp->prevSignal;
+   double slowK = sp->slowK;
+   double fastK = sp->fastK;
+   double signalK = sp->signalK;
+   double slowBeta = sp->slowBeta;
+   double fastBeta = sp->fastBeta;
+   double signalBeta = sp->signalBeta;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   double periodScale = sp->periodScale;
+   double lag1_inClose = sp->lag1_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double lineValue;
+      double tempReal;
+      double val2;
+      double val3;
+      double greatest;
+      double spread;
+      double bandScale;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      tempReal = inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      spread = prevFast - prevSlow;
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
+      lineValue = 0.0;
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 2.2250738585072014e-308 )
+      {
+         lineValue = spread / prevATR * 100.0;
+      }
+      if( optInSignalPeriod == 1 )
+      {
+         prevSignal = lineValue;
+      } else 
+      {
+         prevSignal = fma(signalBeta, prevSignal, signalK * lineValue);
+      }
+      outMACDV[kernBar] = lineValue;
+      outMACDVSignal[kernBar] = prevSignal;
+      outMACDVHist[kernBar] = lineValue - prevSignal;
+      cur_outMACDV = outMACDV[kernBar];
+      cur_outMACDVSignal = outMACDVSignal[kernBar];
+      cur_outMACDVHist = outMACDVHist[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outMACDV = cur_outMACDV;
+   sp->cur_outMACDVSignal = cur_outMACDVSignal;
+   sp->cur_outMACDVHist = cur_outMACDVHist;
+   sp->prevFast = prevFast;
+   sp->prevSlow = prevSlow;
+   sp->prevATR = prevATR;
+   sp->prevSignal = prevSignal;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACDV_UpdateBlock( struct TA_MACDV_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;
+   TA_MACDV_KernImpl( stream, inHigh, inLow, inClose, nbBar, outMACDV, outMACDVSignal, outMACDVHist );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACDV_Value( const TA_MACDV_Stream *stream, double *outMACDV, double *outMACDVSignal, double *outMACDVHist )
 {
    if( !stream || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;

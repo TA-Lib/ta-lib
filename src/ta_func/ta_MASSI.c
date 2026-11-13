@@ -888,6 +888,68 @@ TA_LIB_API TA_RetCode TA_MASSI_Close( TA_MASSI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_MASSI_KernImpl( struct TA_MASSI_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double optInK_1 = sp->optInK_1;
+   double emaBeta = sp->emaBeta;
+   double ema1 = sp->ema1;
+   double ema2 = sp->ema2;
+   double total = sp->total;
+   int ratioRing_Idx = sp->ratioRing_Idx;
+   int maxIdx_ratioRing = sp->maxIdx_ratioRing;
+   double *cb_ratioRing = sp->cb_ratioRing;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double hl;
+      double ratio;
+      double tempReal;
+
+      hl = inHigh - inLow;
+      ema1 = fma(emaBeta, ema1, optInK_1 * hl);
+      ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
+      if( ema2 == 0.0 )
+      {
+         ratio = 1.0;
+      } else 
+      {
+         ratio = ema1 / ema2;
+      }
+      cb_ratioRing[ratioRing_Idx] = ratio;
+      total = total + ratio;
+      ratioRing_Idx = ratioRing_Idx + 1;
+      if( ratioRing_Idx > maxIdx_ratioRing )
+      {
+         ratioRing_Idx = 0;
+      }
+      tempReal = total;
+      total = total - cb_ratioRing[ratioRing_Idx];
+      outReal[kernBar] = tempReal;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->ema1 = ema1;
+   sp->ema2 = ema2;
+   sp->total = total;
+   sp->ratioRing_Idx = ratioRing_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MASSI_UpdateBlock( struct TA_MASSI_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_MASSI_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MASSI_Value( const TA_MASSI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

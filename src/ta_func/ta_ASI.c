@@ -545,6 +545,79 @@ TA_LIB_API TA_RetCode TA_ASI_Close( TA_ASI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ASI_KernImpl( struct TA_ASI_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double optInLimitMove = sp->optInLimitMove;
+   double prevClose = sp->prevClose;
+   double prevBody = sp->prevBody;
+   double sum = sp->sum;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempOpen;
+      double tempHigh;
+      double tempLow;
+      double tempClose;
+      double body;
+      double n;
+      double up;
+      double dn;
+      double rg;
+      double k;
+      double r;
+      double swing;
+
+      tempOpen = inOpen;
+      tempHigh = inHigh;
+      tempLow = inLow;
+      tempClose = inClose;
+      body = tempClose - tempOpen;
+      n = tempClose - prevClose;
+      n += 0.5 * body;
+      n += 0.25 * prevBody;
+      up = fabs(tempHigh - prevClose);
+      dn = fabs(tempLow - prevClose);
+      rg = fabs(tempHigh - tempLow);
+      k = max(up,dn);
+      r = max(up - 0.5 * dn,dn - 0.5 * up);
+      r = max(r,rg);
+      r += 0.25 * fabs(prevBody);
+      if( r == 0.0 )
+      {
+         swing = 0.0;
+      } else 
+      {
+         swing = 50.0 * (n / r) * (k / optInLimitMove);
+      }
+      sum += swing;
+      outReal[kernBar] = sum;
+      prevClose = tempClose;
+      prevBody = body;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevClose = prevClose;
+   sp->prevBody = prevBody;
+   sp->sum = sum;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ASI_UpdateBlock( struct TA_ASI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_ASI_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ASI_Value( const TA_ASI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

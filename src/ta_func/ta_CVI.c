@@ -679,6 +679,59 @@ TA_LIB_API TA_RetCode TA_CVI_Close( TA_CVI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_CVI_KernImpl( struct TA_CVI_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevEMA = sp->prevEMA;
+   double optInK_1 = sp->optInK_1;
+   double emaBeta = sp->emaBeta;
+   int emaRing_Idx = sp->emaRing_Idx;
+   int maxIdx_emaRing = sp->maxIdx_emaRing;
+   double *cb_emaRing = sp->cb_emaRing;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double laggedEMA;
+      double tempReal;
+
+      tempReal = inHigh - inLow;
+      prevEMA = fma(emaBeta, prevEMA, optInK_1 * tempReal);
+      laggedEMA = cb_emaRing[emaRing_Idx];
+      cb_emaRing[emaRing_Idx] = prevEMA;
+      emaRing_Idx = emaRing_Idx + 1;
+      if( emaRing_Idx > maxIdx_emaRing )
+      {
+         emaRing_Idx = 0;
+      }
+      if( laggedEMA != 0.0 )
+      {
+         outReal[kernBar] = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevEMA = prevEMA;
+   sp->emaRing_Idx = emaRing_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CVI_UpdateBlock( struct TA_CVI_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_CVI_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CVI_Value( const TA_CVI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

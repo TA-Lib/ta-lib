@@ -972,6 +972,98 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MIDPRICE_KernImpl( struct TA_MIDPRICE_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double lowest = sp->lowest;
+   double highest = sp->highest;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double tmpLow;
+      double tmpHigh;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      tmpHigh = x_inHigh[today & xMask];
+      tmpLow = x_inLow[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpHigh = x_inHigh[i & xMask];
+            if( tmpHigh > highest )
+            {
+               highestIdx = i;
+               highest = tmpHigh;
+            }
+         }
+      } else if( tmpHigh >= highest )
+      {
+         highestIdx = today;
+         highest = tmpHigh;
+      }
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpLow = x_inLow[i & xMask];
+            if( tmpLow < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmpLow;
+            }
+         }
+      } else if( tmpLow <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmpLow;
+      }
+      outReal[kernBar] = (highest + lowest) / 2.0;
+      trailingIdx += 1;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->lowest = lowest;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MIDPRICE_UpdateBlock( struct TA_MIDPRICE_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_MIDPRICE_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MIDPRICE_Value( const TA_MIDPRICE_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

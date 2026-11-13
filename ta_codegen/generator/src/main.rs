@@ -712,6 +712,12 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // cutover option B). The generated C lib lives in `src/` too, so the
         // servers/unity build directly against `src/...` — no copy into output/c.
 
+        if let Some(path) = std::env::var_os("TA_CODEGEN_KERN_HARNESS") {
+            let (src, census) = ta_codegen_lib::kern_harness::generate(all_funcs);
+            std::fs::write(&path, src).unwrap();
+            print!("{census}");
+            println!("  kernel harness -> {}", std::path::Path::new(&path).display());
+        }
         // Generate the private stream header into src/ta_func/ (alongside the
         // generated indicators). NOT installed. Remove the two headers it
         // superseded so a stale copy cannot satisfy an include.

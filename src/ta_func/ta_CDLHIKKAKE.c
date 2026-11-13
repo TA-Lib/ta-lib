@@ -635,6 +635,82 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Close( TA_CDLHIKKAKE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLHIKKAKE_KernImpl( struct TA_CDLHIKKAKE_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   int patternResult = sp->patternResult;
+   int cd = sp->cd;
+   double savedHigh = sp->savedHigh;
+   double savedLow = sp->savedLow;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   int kernBar;
+
+   (void)inOpenBlk;
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+
+      if( lag1_inHigh < lag2_inHigh &&
+          lag1_inLow > lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+          ((inHigh < lag1_inHigh &&
+            inLow < lag1_inLow) ||     /* (bull) 3rd: lower high and lower low */
+           (inHigh > lag1_inHigh &&
+            inLow > lag1_inLow)) )     /* (bear) 3rd: higher high and higher low */
+      {
+         patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : -1);
+         savedHigh = lag1_inHigh;
+         savedLow = lag1_inLow;
+         cd = 4;
+         outInteger[kernBar] = patternResult;
+      } else if( cd > 0 &&
+          ((patternResult > 0 &&    /* search for confirmation if hikkake was no more than 3 bars ago */
+            inClose > savedHigh) || /* close higher than the high of 2nd */
+           (patternResult < 0 &&
+            inClose < savedLow)) )  /* close lower than the low of 2nd */
+      {
+         outInteger[kernBar] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         cd = 0;
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      if( cd > 0 )
+      {
+         cd -= 1;
+      }
+      cur_outInteger = outInteger[kernBar];
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->patternResult = patternResult;
+   sp->cd = cd;
+   sp->savedHigh = savedHigh;
+   sp->savedLow = savedLow;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLHIKKAKE_UpdateBlock( struct TA_CDLHIKKAKE_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLHIKKAKE_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Value( const TA_CDLHIKKAKE_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

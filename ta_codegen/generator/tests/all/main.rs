@@ -27,6 +27,7 @@ mod integration_test;
 mod internal_error_id_suite;
 mod java_render_statement_suite;
 mod java_stream_suite;
+mod kern_suite;
 mod managed_stream_suite;
 mod open_core_suite;
 mod open_validation_suite;

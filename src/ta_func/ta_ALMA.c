@@ -804,6 +804,61 @@ int TA_ALMA_TapeDetach( struct TA_ALMA_Stream *sp )
    return reach;
 }
 
+/* Private function, not in public API. */
+static void TA_ALMA_KernImpl( struct TA_ALMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int lookbackTotal = sp->lookbackTotal;
+   int winPos_j = sp->winPos_j;
+   int winCap_j = sp->winCap_j;
+   double *win_j_inReal = sp->win_j_inReal;
+   double *cb_weights = sp->cb_weights;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double sum;
+      int j;
+      int w;
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      win_j_inReal[winPos_j] = inReal;
+      sum = 0.0;
+      w = 0;
+      for( j = lookbackTotal; j >= 0; j -= 1 )
+      {
+         sum += cb_weights[w] * win_j_inReal[(winPos_j + winCap_j - j >= winCap_j) ? winPos_j + winCap_j - j - winCap_j : winPos_j + winCap_j - j];
+         w += 1;
+      }
+      outReal[kernBar] = sum;
+      cur_outReal = outReal[kernBar];
+      winPos_j = winPos_j + 1;
+      if( winPos_j >= winCap_j )
+      {
+         winPos_j = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_j = winPos_j;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ALMA_UpdateBlock( struct TA_ALMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_ALMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ALMA_Value( const TA_ALMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

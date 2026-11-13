@@ -792,6 +792,106 @@ TA_LIB_API TA_RetCode TA_DONCHIAN_Close( TA_DONCHIAN_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_DONCHIAN_KernImpl( struct TA_DONCHIAN_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double cur_outRealUpperBand = sp->cur_outRealUpperBand;
+   double cur_outRealMiddleBand = sp->cur_outRealMiddleBand;
+   double cur_outRealLowerBand = sp->cur_outRealLowerBand;
+   double lowest = sp->lowest;
+   double highest = sp->highest;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double tmpLow;
+      double tmpHigh;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      tmpHigh = x_inHigh[today & xMask];
+      tmpLow = x_inLow[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpHigh = x_inHigh[i & xMask];
+            if( tmpHigh > highest )
+            {
+               highestIdx = i;
+               highest = tmpHigh;
+            }
+         }
+      } else if( tmpHigh >= highest )
+      {
+         highestIdx = today;
+         highest = tmpHigh;
+      }
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpLow = x_inLow[i & xMask];
+            if( tmpLow < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmpLow;
+            }
+         }
+      } else if( tmpLow <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmpLow;
+      }
+      outRealUpperBand[kernBar] = highest;
+      outRealLowerBand[kernBar] = lowest;
+      outRealMiddleBand[kernBar] = (highest + lowest) / 2.0;
+      trailingIdx += 1;
+      today += 1;
+      cur_outRealUpperBand = outRealUpperBand[kernBar];
+      cur_outRealMiddleBand = outRealMiddleBand[kernBar];
+      cur_outRealLowerBand = outRealLowerBand[kernBar];
+   }
+   sp->cur_outRealUpperBand = cur_outRealUpperBand;
+   sp->cur_outRealMiddleBand = cur_outRealMiddleBand;
+   sp->cur_outRealLowerBand = cur_outRealLowerBand;
+   sp->lowest = lowest;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DONCHIAN_UpdateBlock( struct TA_DONCHIAN_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   TA_DONCHIAN_KernImpl( stream, inHigh, inLow, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_DONCHIAN_Value( const TA_DONCHIAN_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;

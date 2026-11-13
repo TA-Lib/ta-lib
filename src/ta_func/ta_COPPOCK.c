@@ -1085,6 +1085,147 @@ TA_LIB_API TA_RetCode TA_COPPOCK_Close( TA_COPPOCK_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_COPPOCK_KernImpl( struct TA_COPPOCK_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInWMAPeriod = sp->optInWMAPeriod;
+   int ringSize = sp->ringSize;
+   int barsSinceReseed = sp->barsSinceReseed;
+   double periodSum = sp->periodSum;
+   double periodSub = sp->periodSub;
+   double trailingValue = sp->trailingValue;
+   double divider = sp->divider;
+   int sRing_Idx = sp->sRing_Idx;
+   int maxIdx_sRing = sp->maxIdx_sRing;
+   int ringPos_roc1Idx = sp->ringPos_roc1Idx;
+   int ringCap_roc1Idx = sp->ringCap_roc1Idx;
+   double *ring_roc1Idx_inReal = sp->ring_roc1Idx_inReal;
+   int ringPos_roc2Idx = sp->ringPos_roc2Idx;
+   int ringCap_roc2Idx = sp->ringCap_roc2Idx;
+   double *ring_roc2Idx_inReal = sp->ring_roc2Idx_inReal;
+   double *cb_sRing = sp->cb_sRing;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int q;
+      int rw;
+      int ringWalk;
+      double tempReal;
+      double tempReal2;
+      double base1;
+      double base2;
+      double roc1;
+      double roc2;
+      int ringPosL_roc1Idx;
+      int ringPosL_roc2Idx;
+      int ringCapL_roc1Idx;
+      int ringCapL_roc2Idx;
+
+      base1 = ring_roc1Idx_inReal[ringPos_roc1Idx];
+      base2 = ring_roc2Idx_inReal[ringPos_roc2Idx];
+      roc1 = (base1 != 0.0) ? (inReal / base1 - 1.0) * 100.0 : 0.0;
+      roc2 = (base2 != 0.0) ? (inReal / base2 - 1.0) * 100.0 : 0.0;
+      tempReal = roc1 + roc2;
+      periodSub += tempReal;
+      periodSub -= trailingValue;
+      periodSum += tempReal * optInWMAPeriod;
+      /* Re-anchor every 8*w bars: rebuild both totals from the window
+       * itself -- TA_WMA's #254 fix, same single trigger, same interval.
+       * The window lives in the ring (w-1 prior S values, sRing_Idx the
+       * oldest) plus the current bar's tempReal at weight w.
+       */
+      barsSinceReseed -= 1;
+      if( barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 8 * optInWMAPeriod;
+         periodSub = (double)0.0;
+         periodSum = (double)0.0;
+         rw = 1;
+         ringWalk = sRing_Idx;
+         for( q = 0; q < ringSize; q += 1 )
+         {
+            tempReal2 = cb_sRing[ringWalk];
+            periodSub += tempReal2;
+            periodSum += tempReal2 * rw;
+            rw += 1;
+            ringWalk += 1;
+            if( ringWalk >= ringSize )
+            {
+               ringWalk = 0;
+            }
+         }
+         periodSub += tempReal;
+         periodSum += tempReal * optInWMAPeriod;
+      }
+      /* Read the expiring S value BEFORE overwriting its slot with the
+       * current one -- the ring is the aliasing-safe stand-in for TA_WMA's
+       * "save the trailing value before the store" rule.
+       */
+      trailingValue = cb_sRing[sRing_Idx];
+      cb_sRing[sRing_Idx] = tempReal;
+      sRing_Idx = sRing_Idx + 1;
+      if( sRing_Idx > maxIdx_sRing )
+      {
+         sRing_Idx = 0;
+      }
+      /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+       * and TA_WMA ships an exact copy fast path, but the recurrence here is
+       * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+       * read-before-write ring hands back the wrong trailing value. Deleting
+       * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+       * to -6.4591709868291103.
+       */
+      if( optInWMAPeriod == 1 )
+      {
+         outReal[kernBar] = tempReal;
+      } else 
+      {
+         outReal[kernBar] = periodSum / divider;
+      }
+      periodSum -= periodSub;
+      cur_outReal = outReal[kernBar];
+      ringCapL_roc1Idx = ringCap_roc1Idx;
+      ringPosL_roc1Idx = ringPos_roc1Idx;
+      ring_roc1Idx_inReal[ringPosL_roc1Idx] = inReal;
+      ringPosL_roc1Idx = ringPosL_roc1Idx + 1;
+      if( ringPosL_roc1Idx >= ringCapL_roc1Idx )
+      {
+         ringPosL_roc1Idx = 0;
+      }
+      ringPos_roc1Idx = ringPosL_roc1Idx;
+      ringCapL_roc2Idx = ringCap_roc2Idx;
+      ringPosL_roc2Idx = ringPos_roc2Idx;
+      ring_roc2Idx_inReal[ringPosL_roc2Idx] = inReal;
+      ringPosL_roc2Idx = ringPosL_roc2Idx + 1;
+      if( ringPosL_roc2Idx >= ringCapL_roc2Idx )
+      {
+         ringPosL_roc2Idx = 0;
+      }
+      ringPos_roc2Idx = ringPosL_roc2Idx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->periodSum = periodSum;
+   sp->periodSub = periodSub;
+   sp->trailingValue = trailingValue;
+   sp->sRing_Idx = sRing_Idx;
+   sp->ringPos_roc1Idx = ringPos_roc1Idx;
+   sp->ringPos_roc2Idx = ringPos_roc2Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_COPPOCK_UpdateBlock( struct TA_COPPOCK_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_COPPOCK_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_COPPOCK_Value( const TA_COPPOCK_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

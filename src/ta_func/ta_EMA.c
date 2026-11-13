@@ -577,6 +577,45 @@ int TA_EMA_TapeDetach( struct TA_EMA_Stream *sp )
    return 0;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_EMA_KernImpl( struct TA_EMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double emaBeta = sp->emaBeta;
+   double optInK_1 = sp->optInK_1;
+   double prevMA = sp->prevMA;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      prevMA = fma(emaBeta, prevMA, optInK_1 * inReal);
+      outReal[kernBar] = prevMA;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevMA = prevMA;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_EMA_UpdateBlock( struct TA_EMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_EMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_EMA_Value( const TA_EMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

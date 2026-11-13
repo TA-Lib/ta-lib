@@ -1017,6 +1017,95 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Close( TA_CDLSTICKSANDWICH_Stream *str
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLSTICKSANDWICH_KernImpl( struct TA_CDLSTICKSANDWICH_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double EqualPeriodTotal = sp->EqualPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx;
+   int ringCap_EqualTrailingIdx = sp->ringCap_EqualTrailingIdx;
+   int ringLag_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx;
+   double *ring_EqualTrailingIdx_derived = sp->ring_EqualTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_EqualTrailingIdx;
+
+      ring_EqualTrailingIdx_derived[ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
+      if( ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* first black */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == 1 &&  /* second white */
+          ((inClose >= inOpen) ? 1 : -1) == -1 )            /* third black */
+      {
+         if( lag1_inLow > lag2_inClose && /* 2nd low > prior close */
+             inClose <= lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 1st and 3rd same close */
+             inClose >= lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,EqualPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) )
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + ringCap_EqualTrailingIdx - ringLag_EqualTrailingIdx - 2) % ringCap_EqualTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+      ringPosL_EqualTrailingIdx = ringPosL_EqualTrailingIdx + 1;
+      if( ringPosL_EqualTrailingIdx >= ringCap_EqualTrailingIdx )
+      {
+         ringPosL_EqualTrailingIdx = 0;
+      }
+      ringPos_EqualTrailingIdx = ringPosL_EqualTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->EqualPeriodTotal = EqualPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLSTICKSANDWICH_UpdateBlock( struct TA_CDLSTICKSANDWICH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLSTICKSANDWICH_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Value( const TA_CDLSTICKSANDWICH_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

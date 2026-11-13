@@ -430,6 +430,64 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Close( TA_CDLENGULFING_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLENGULFING_KernImpl( struct TA_CDLENGULFING_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag1_inClose = sp->lag1_inClose;
+   int kernBar;
+
+   (void)inHighBlk;
+   (void)inLowBlk;
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+
+      if( (((inClose >= inOpen) ? 1 : -1) == 1 &&
+           ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* white engulfs black */
+           ((inClose >= lag1_inOpen &&
+             inOpen < lag1_inClose) ||
+            (inClose > lag1_inOpen &&
+             inOpen <= lag1_inClose))) ||
+          (((inClose >= inOpen) ? 1 : -1) == -1 &&
+           ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == 1 &&  /* black engulfs white */
+           ((inOpen >= lag1_inClose &&
+             inClose < lag1_inOpen) ||
+            (inOpen > lag1_inClose &&
+             inClose <= lag1_inOpen))) )
+      {
+         if( inOpen != lag1_inClose && inClose != lag1_inOpen )
+         {
+            outInteger[kernBar] = ((inClose >= inOpen) ? 1 : -1) * 100;
+         } else 
+         {
+            outInteger[kernBar] = ((inClose >= inOpen) ? 1 : -1) * 80;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      cur_outInteger = outInteger[kernBar];
+      lag1_inOpen = inOpen;
+      lag1_inClose = inClose;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLENGULFING_UpdateBlock( struct TA_CDLENGULFING_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLENGULFING_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Value( const TA_CDLENGULFING_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

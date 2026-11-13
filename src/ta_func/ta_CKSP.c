@@ -2190,6 +2190,224 @@ TA_LIB_API TA_RetCode TA_CKSP_Close( TA_CKSP_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_CKSP_KernImpl( struct TA_CKSP_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outHighStop[], double outLowStop[] )
+{
+   double cur_outHighStop = sp->cur_outHighStop;
+   double cur_outLowStop = sp->cur_outLowStop;
+   double optInMultiplier = sp->optInMultiplier;
+   int lastP = sp->lastP;
+   int lastQ = sp->lastQ;
+   double prevATR = sp->prevATR;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   double hhPre = sp->hhPre;
+   double llPre = sp->llPre;
+   double hsPre = sp->hsPre;
+   double lsPre = sp->lsPre;
+   int hhBuf_Idx = sp->hhBuf_Idx;
+   int hsBuf_Idx = sp->hsBuf_Idx;
+   int maxIdx_hhBuf = sp->maxIdx_hhBuf;
+   int maxIdx_hsBuf = sp->maxIdx_hsBuf;
+   double lag1_inClose = sp->lag1_inClose;
+   double *cb_hhBuf = sp->cb_hhBuf;
+   double *cb_llBuf = sp->cb_llBuf;
+   double *cb_hsBuf = sp->cb_hsBuf;
+   double *cb_lsBuf = sp->cb_lsBuf;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ip;
+      int iq;
+      double val2;
+      double val3;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      double tempReal;
+      double sufHi;
+      double sufLo;
+      double highest;
+      double lowest;
+      double band;
+      double highStop;
+      double lowStop;
+
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      highest = hhPre;
+      lowest = llPre;
+      if( tempHT > highest )
+      {
+         highest = tempHT;
+      }
+      if( tempLT < lowest )
+      {
+         lowest = tempLT;
+      }
+      if( hhBuf_Idx == 0 )
+      {
+         highest = tempHT;
+         lowest = tempLT;
+      }
+      hhPre = highest;
+      llPre = lowest;
+      if( hhBuf_Idx < lastP )
+      {
+         tempReal = cb_hhBuf[hhBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = cb_llBuf[hhBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      cb_hhBuf[hhBuf_Idx] = tempHT;
+      cb_llBuf[hhBuf_Idx] = tempLT;
+      hhBuf_Idx = hhBuf_Idx + 1;
+      if( hhBuf_Idx > maxIdx_hhBuf )
+      {
+         hhBuf_Idx = 0;
+      }
+      band = optInMultiplier * prevATR;
+      highStop = highest - band;
+      lowStop = lowest + band;
+      highest = hsPre;
+      lowest = lsPre;
+      if( highStop > highest )
+      {
+         highest = highStop;
+      }
+      if( lowStop < lowest )
+      {
+         lowest = lowStop;
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         highest = highStop;
+         lowest = lowStop;
+      }
+      hsPre = highest;
+      lsPre = lowest;
+      if( hsBuf_Idx < lastQ )
+      {
+         tempReal = cb_hsBuf[hsBuf_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = cb_lsBuf[hsBuf_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      cb_hsBuf[hsBuf_Idx] = highStop;
+      cb_lsBuf[hsBuf_Idx] = lowStop;
+      hsBuf_Idx = hsBuf_Idx + 1;
+      if( hsBuf_Idx > maxIdx_hsBuf )
+      {
+         hsBuf_Idx = 0;
+      }
+      outHighStop[kernBar] = highest;
+      outLowStop[kernBar] = lowest;
+      /* A completed block becomes its suffix extrema. Nothing this bar reads
+       * them, so both passes stay below the output stores, where the peek
+       * frame never runs them.
+       */
+      if( hhBuf_Idx == 0 )
+      {
+         sufHi = cb_hhBuf[lastP];
+         sufLo = cb_llBuf[lastP];
+         ip = lastP;
+         while( ip > 1 )
+         {
+            ip -= 1;
+            tempReal = cb_hhBuf[ip];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            cb_hhBuf[ip] = sufHi;
+            tempReal = cb_llBuf[ip];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            cb_llBuf[ip] = sufLo;
+         }
+      }
+      if( hsBuf_Idx == 0 )
+      {
+         sufHi = cb_hsBuf[lastQ];
+         sufLo = cb_lsBuf[lastQ];
+         iq = lastQ;
+         while( iq > 1 )
+         {
+            iq -= 1;
+            tempReal = cb_hsBuf[iq];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            cb_hsBuf[iq] = sufHi;
+            tempReal = cb_lsBuf[iq];
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            cb_lsBuf[iq] = sufLo;
+         }
+      }
+      cur_outHighStop = outHighStop[kernBar];
+      cur_outLowStop = outLowStop[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outHighStop = cur_outHighStop;
+   sp->cur_outLowStop = cur_outLowStop;
+   sp->prevATR = prevATR;
+   sp->hhPre = hhPre;
+   sp->llPre = llPre;
+   sp->hsPre = hsPre;
+   sp->lsPre = lsPre;
+   sp->hhBuf_Idx = hhBuf_Idx;
+   sp->hsBuf_Idx = hsBuf_Idx;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CKSP_UpdateBlock( struct TA_CKSP_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outHighStop[], double outLowStop[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
+   TA_CKSP_KernImpl( stream, inHigh, inLow, inClose, nbBar, outHighStop, outLowStop );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CKSP_Value( const TA_CKSP_Stream *stream, double *outHighStop, double *outLowStop )
 {
    if( !stream || !outHighStop || !outLowStop ) return TA_BAD_PARAM;

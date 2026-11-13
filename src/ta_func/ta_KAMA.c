@@ -1227,6 +1227,115 @@ int TA_KAMA_TapeDetach( struct TA_KAMA_Stream *sp )
    return reach;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_KAMA_KernImpl( struct TA_KAMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double constMax = sp->constMax;
+   double constDiff = sp->constDiff;
+   double sumROC1 = sp->sumROC1;
+   double prevKAMA = sp->prevKAMA;
+   int nullRun = sp->nullRun;
+   double trailingValue = sp->trailingValue;
+   double lag1_inReal = sp->lag1_inReal;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double tempReal2;
+      double periodROC;
+      int live;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      tempReal = inReal;
+      tempReal2 = ring_trailingIdx_inReal[ringPos_trailingIdx];
+      periodROC = tempReal - tempReal2;
+      /* Adjust sumROC1:
+       *  - Remove trailing ROC1
+       *  - Add new ROC1
+       */
+      sumROC1 -= fabs(trailingValue - tempReal2);
+      sumROC1 += fabs(tempReal - lag1_inReal);
+      /* Once a whole window of flat bars has gone by, every 1-day change it
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
+       */
+      live = (fabs(tempReal - lag1_inReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         sumROC1 = 0.0;
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 ||
+          sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+      {
+         tempReal = 1.0;
+      } else 
+      {
+         tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
+      }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
+      /* Calculate the smoothing constant */
+      tempReal = fma(tempReal, constDiff, constMax);
+      tempReal *= tempReal;
+      /* Calculate the KAMA like an EMA, using the
+       * smoothing constant as the adaptive factor.
+       */
+      prevKAMA = fma(inReal - prevKAMA, tempReal, prevKAMA);
+      outReal[kernBar] = prevKAMA;
+      cur_outReal = outReal[kernBar];
+      lag1_inReal = inReal;
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumROC1 = sumROC1;
+   sp->prevKAMA = prevKAMA;
+   sp->nullRun = nullRun;
+   sp->trailingValue = trailingValue;
+   sp->lag1_inReal = lag1_inReal;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KAMA_UpdateBlock( struct TA_KAMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_KAMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KAMA_Value( const TA_KAMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

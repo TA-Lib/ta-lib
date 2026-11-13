@@ -990,6 +990,127 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Close( TA_ROGERSSATCHELL_Stream *stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ROGERSSATCHELL_KernImpl( struct TA_ROGERSSATCHELL_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   double peakTotal = sp->peakTotal;
+   double sqrtA = sp->sqrtA;
+   int barsSinceRebuild = sp->barsSinceRebuild;
+   int termRing_Idx = sp->termRing_Idx;
+   int maxIdx_termRing = sp->maxIdx_termRing;
+   double *cb_termRing = sp->cb_termRing;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double o;
+      double h;
+      double l;
+      double c;
+      double p1;
+      double p2;
+      double term;
+      double windowTotal;
+      double windowMagnitude;
+      int j;
+
+      o = inOpen;
+      h = inHigh;
+      l = inLow;
+      c = inClose;
+      if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 )
+      {
+         p1 = log(h / c) * log(h / o);
+         p2 = log(l / c) * log(l / o);
+         term = p1 + p2;
+      } else 
+      {
+         term = 0.0;
+      }
+      /* Add, publish, subtract: the slot written here was taken out of the
+       * sum at the end of the previous bar, and the advance lands on the
+       * oldest term, the one that leaves next.
+       */
+      cb_termRing[termRing_Idx] = term;
+      periodTotal += term;
+      windowTotal = periodTotal;
+      windowMagnitude = fabs(windowTotal);
+      peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
+      termRing_Idx = termRing_Idx + 1;
+      if( termRing_Idx > maxIdx_termRing )
+      {
+         termRing_Idx = 0;
+      }
+      periodTotal -= cb_termRing[termRing_Idx];
+      /* A running sum carries rounding at the scale of the largest window it
+       * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+       * that peak, and at least every 32 windows. Compare against the peak,
+       * not the current sum: after a quiet stretch arrives the current sum
+       * can be nothing but that rounding, of either sign, where a fresh sum
+       * of an all-flat window is exactly 0.0.
+       *
+       * Compare magnitudes. A window holding a bar whose high or low sits
+       * inside its open and close can sum below zero, and a signed test
+       * would then rebuild on every bar for as long as it does.
+       *
+       * Sum oldest first, so the rebuilt value is the one a fresh pass over
+       * the bars gives.
+       */
+      barsSinceRebuild -= 1;
+      if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+      {
+         barsSinceRebuild = 32 * optInTimePeriod;
+         windowTotal = 0.0;
+         for( j = termRing_Idx; j < optInTimePeriod; j += 1 )
+         {
+            windowTotal += cb_termRing[j];
+         }
+         for( j = 0; j < termRing_Idx; j += 1 )
+         {
+            windowTotal += cb_termRing[j];
+         }
+         peakTotal = fabs(windowTotal);
+         periodTotal = windowTotal;
+         periodTotal -= cb_termRing[termRing_Idx];
+      }
+      /* Divide, then root, then scale. A sum at or below zero answers 0.0
+       * instead of reaching the root: only a bar whose high or low sits
+       * strictly inside its open and close can make a fresh sum negative,
+       * and the estimator is not defined on such a bar.
+       */
+      if( windowTotal > 0.0 )
+      {
+         outReal[kernBar] = sqrtA * sqrt(windowTotal / (double)optInTimePeriod);
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->peakTotal = peakTotal;
+   sp->barsSinceRebuild = barsSinceRebuild;
+   sp->termRing_Idx = termRing_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ROGERSSATCHELL_UpdateBlock( struct TA_ROGERSSATCHELL_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_ROGERSSATCHELL_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Value( const TA_ROGERSSATCHELL_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

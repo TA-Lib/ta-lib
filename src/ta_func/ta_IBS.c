@@ -369,6 +369,47 @@ TA_LIB_API TA_RetCode TA_IBS_Close( TA_IBS_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_IBS_KernImpl( struct TA_IBS_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double range;
+
+      /* An exact test: the range of one bar carries the quote unit, so any
+       * band would flip every bar of a small enough instrument to 0.5. Spelled
+       * <= so a NaN input keeps the quotient's NaN.
+       *
+       * Store, then overwrite: gcc keeps a guarded or selected quotient
+       * scalar under -ftrapping-math.
+       */
+      range = inHigh - inLow;
+      outReal[kernBar] = (inClose - inLow) / range;
+      if( range <= 0.0 )
+      {
+         outReal[kernBar] = 0.5;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_IBS_UpdateBlock( struct TA_IBS_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_IBS_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_IBS_Value( const TA_IBS_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

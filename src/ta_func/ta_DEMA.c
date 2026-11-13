@@ -720,6 +720,48 @@ int TA_DEMA_TapeDetach( struct TA_DEMA_Stream *sp )
    return 0;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_DEMA_KernImpl( struct TA_DEMA_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double prevEMA1 = sp->prevEMA1;
+   double prevEMA2 = sp->prevEMA2;
+   double optInK_1 = sp->optInK_1;
+   double emaBeta = sp->emaBeta;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      outReal[kernBar] = 2.0 * prevEMA1 - prevEMA2;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevEMA1 = prevEMA1;
+   sp->prevEMA2 = prevEMA2;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DEMA_UpdateBlock( struct TA_DEMA_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_DEMA_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_DEMA_Value( const TA_DEMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

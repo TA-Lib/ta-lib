@@ -871,6 +871,89 @@ TA_LIB_API TA_RetCode TA_CMF_Close( TA_CMF_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CMF_KernImpl( struct TA_CMF_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double sumMFV = sp->sumMFV;
+   double sumVol = sp->sumVol;
+   int nullRun = sp->nullRun;
+   int mfv_Idx = sp->mfv_Idx;
+   int maxIdx_mfv = sp->maxIdx_mfv;
+   double *cb_mfv_flow = sp->cb_mfv_flow;
+   double *cb_mfv_volume = sp->cb_mfv_volume;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double high;
+      double low;
+      double close;
+      double tmp;
+      double mfv;
+      int liveVol;
+
+      sumMFV -= cb_mfv_flow[mfv_Idx];
+      sumVol -= cb_mfv_volume[mfv_Idx];
+      high = inHigh;
+      low = inLow;
+      close = inClose;
+      tmp = high - low;
+      if( tmp > 0.0 )
+      {
+         mfv = (close - low - (high - close)) / tmp * inVolume;
+      } else 
+      {
+         mfv = 0.0;
+      }
+      cb_mfv_flow[mfv_Idx] = mfv;
+      cb_mfv_volume[mfv_Idx] = inVolume;
+      sumMFV += mfv;
+      sumVol += inVolume;
+      liveVol = (fabs(inVolume) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (liveVol - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         sumMFV = 0.0;
+         sumVol = 0.0;
+         outReal[kernBar] = 0.0;
+      } else if( sumVol > 0.0 )
+      {
+         outReal[kernBar] = sumMFV / sumVol;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      mfv_Idx = mfv_Idx + 1;
+      if( mfv_Idx > maxIdx_mfv )
+      {
+         mfv_Idx = 0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumMFV = sumMFV;
+   sp->sumVol = sumVol;
+   sp->nullRun = nullRun;
+   sp->mfv_Idx = mfv_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CMF_UpdateBlock( struct TA_CMF_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_CMF_KernImpl( stream, inHigh, inLow, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CMF_Value( const TA_CMF_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

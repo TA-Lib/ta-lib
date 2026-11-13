@@ -553,6 +553,50 @@ TA_LIB_API TA_RetCode TA_SWAK_HP_Close( TA_SWAK_HP_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SWAK_HP_KernImpl( struct TA_SWAK_HP_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double c0 = sp->c0;
+   double a1 = sp->a1;
+   double x1 = sp->x1;
+   double y1 = sp->y1;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double x0;
+      double y;
+
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is two, and every backend's last
+       * bit moves with it.
+       */
+      x0 = inReal;
+      y = fma(a1, y1, c0 * (x0 - x1));
+      x1 = x0;
+      y1 = y;
+      outReal[kernBar] = y;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->x1 = x1;
+   sp->y1 = y1;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SWAK_HP_UpdateBlock( struct TA_SWAK_HP_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_SWAK_HP_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SWAK_HP_Value( const TA_SWAK_HP_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

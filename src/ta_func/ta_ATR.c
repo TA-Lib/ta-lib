@@ -768,6 +768,65 @@ TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_ATR_KernImpl( struct TA_ATR_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevATR = sp->prevATR;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   double lag1_inClose = sp->lag1_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double val2;
+      double val3;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      outReal[kernBar] = prevATR;
+      cur_outReal = outReal[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevATR = prevATR;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ATR_UpdateBlock( struct TA_ATR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_ATR_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ATR_Value( const TA_ATR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -785,6 +785,102 @@ TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_VWMA_KernImpl( struct TA_VWMA_Stream *sp, const double inRealBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double sumPV = sp->sumPV;
+   double sumV = sp->sumV;
+   int zeroCount = sp->zeroCount;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   double *ring_trailingIdx_inVolume = sp->ring_trailingIdx_inVolume;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double tempPV;
+      double tempV;
+      double tempReal;
+      double trailingVolume;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      tempReal = inReal * inVolume;
+      sumPV += tempReal;
+      sumV += inVolume;
+      zeroCount += (fabs(inVolume) <= 0.0) ? 1 : 0;
+      /* Read the trailing values before writing the output, since the caller
+       * may pass the same buffer for an input and the output.
+       */
+      trailingVolume = ring_trailingIdx_inVolume[ringPos_trailingIdx];
+      tempReal = ring_trailingIdx_inReal[ringPos_trailingIdx] * trailingVolume;
+      /* Each branch writes its own output: a branch that only zeroes the sums
+       * is if-converted into a mask on their dependency chain, hint or not.
+       */
+      if( TA_UNLIKELY(zeroCount >= optInTimePeriod) )
+      {
+         /* Zero, then subtract the departing bar: a non-finite price times its
+          * zero volume is NaN, not zero.
+          */
+         tempPV = 0.0;
+         tempV = 0.0;
+         sumPV = 0.0 - tempReal;
+         sumV = 0.0 - trailingVolume;
+         outReal[kernBar] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+      } else 
+      {
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+          * dead window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sumPV;
+         tempV = sumV;
+         sumPV -= tempReal;
+         sumV -= trailingVolume;
+         outReal[kernBar] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+      }
+      zeroCount -= (fabs(trailingVolume) <= 0.0) ? 1 : 0;
+      cur_outReal = outReal[kernBar];
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumPV = sumPV;
+   sp->sumV = sumV;
+   sp->zeroCount = zeroCount;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VWMA_UpdateBlock( struct TA_VWMA_Stream *stream, const double inReal[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_VWMA_KernImpl( stream, inReal, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_VWMA_Value( const TA_VWMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

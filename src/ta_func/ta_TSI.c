@@ -842,6 +842,64 @@ TA_LIB_API TA_RetCode TA_TSI_Close( TA_TSI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_TSI_KernImpl( struct TA_TSI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double kFirst = sp->kFirst;
+   double kSecond = sp->kSecond;
+   double betaFirst = sp->betaFirst;
+   double betaSecond = sp->betaSecond;
+   double emaFirstNum = sp->emaFirstNum;
+   double emaFirstDen = sp->emaFirstDen;
+   double emaSecondNum = sp->emaSecondNum;
+   double emaSecondDen = sp->emaSecondDen;
+   double prevClose = sp->prevClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double mom;
+      double absMom;
+      double tsiValue;
+
+      mom = inReal - prevClose;
+      prevClose = inReal;
+      absMom = fabs(mom);
+      emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+      emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
+      emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+      emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
+      if( emaSecondDen > 0.0 )
+      {
+         tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+      } else 
+      {
+         tsiValue = 0.0;
+      }
+      outReal[kernBar] = tsiValue;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->emaFirstNum = emaFirstNum;
+   sp->emaFirstDen = emaFirstDen;
+   sp->emaSecondNum = emaSecondNum;
+   sp->emaSecondDen = emaSecondDen;
+   sp->prevClose = prevClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_TSI_UpdateBlock( struct TA_TSI_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_TSI_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_TSI_Value( const TA_TSI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

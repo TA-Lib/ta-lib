@@ -866,6 +866,64 @@ int TA_T3_TapeDetach( struct TA_T3_Stream *sp )
    return 0;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_T3_KernImpl( struct TA_T3_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double k = sp->k;
+   double one_minus_k = sp->one_minus_k;
+   double e1 = sp->e1;
+   double e2 = sp->e2;
+   double e3 = sp->e3;
+   double e4 = sp->e4;
+   double e5 = sp->e5;
+   double e6 = sp->e6;
+   double c1 = sp->c1;
+   double c2 = sp->c2;
+   double c3 = sp->c3;
+   double c4 = sp->c4;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+
+      if( optInTimePeriod == 1 )
+      {
+         outReal[kernBar] = inReal;
+         cur_outReal = outReal[kernBar];
+         continue;
+      }
+      e1 = fma(one_minus_k, e1, k * inReal);
+      e2 = fma(one_minus_k, e2, k * e1);
+      e3 = fma(one_minus_k, e3, k * e2);
+      e4 = fma(one_minus_k, e4, k * e3);
+      e5 = fma(one_minus_k, e5, k * e4);
+      e6 = fma(one_minus_k, e6, k * e5);
+      outReal[kernBar] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->e1 = e1;
+   sp->e2 = e2;
+   sp->e3 = e3;
+   sp->e4 = e4;
+   sp->e5 = e5;
+   sp->e6 = e6;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_T3_UpdateBlock( struct TA_T3_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_T3_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_T3_Value( const TA_T3_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

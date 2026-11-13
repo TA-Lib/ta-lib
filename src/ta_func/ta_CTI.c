@@ -1105,6 +1105,181 @@ TA_LIB_API TA_RetCode TA_CTI_Close( TA_CTI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CTI_KernImpl( struct TA_CTI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double sumX = sp->sumX;
+   double sumX2 = sp->sumX2;
+   double sumXY = sp->sumXY;
+   double peakX2 = sp->peakX2;
+   double shift = sp->shift;
+   double invPeriod = sp->invPeriod;
+   double dPeriod = sp->dPeriod;
+   double sumY = sp->sumY;
+   double ssY = sp->ssY;
+   int lookbackTotal = sp->lookbackTotal;
+   int trailingIdx = sp->trailingIdx;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int j = sp->j;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double x;
+      double trailingX;
+      double ssX;
+      double spXY;
+      double tempReal;
+      int windowStart;
+
+      x_inReal[today & xMask] = inReal;
+      /* The incoming bar is zero bars ago, so it moves sumX and sumX2 and
+       * leaves sumXY alone.
+       */
+      x = x_inReal[today & xMask] - shift;
+      sumX += x;
+      sumX2 += x * x;
+      peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+      ssX = sumX2 - sumX * sumX * invPeriod;
+      spXY = sumXY - sumX * sumY * invPeriod;
+      /* Re-anchor and rebuild when the shift has gone stale: the price sum of
+       * squares has shrunk below 1e-6 of the LARGEST sumX2 held since the last
+       * rebuild, OR at least every 32 windows. Measure against that peak, not
+       * the current sumX2: the rounding the running sums carry scales with the
+       * peak, and a series that decays back onto the shift leaves a current
+       * sumX2 made of nothing but that rounding. Only the price side is
+       * watched -- the ramp side is exact constants and cannot drift.
+       *
+       * A vanishing spXY is NOT a trigger. It is a legitimate answer, a window
+       * with no linear trend, and reseeding on it would rebuild on every bar of
+       * ordinary sideways data.
+       */
+      barsSinceReseed -= 1;
+      if( ssX < 0.000001 * peakX2 || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = today - lookbackTotal;
+         tempReal = 0.0;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempReal += x_inReal[j & xMask];
+         }
+         shift = tempReal * invPeriod;
+         sumXY = 0.0;
+         sumX2 = sumXY;
+         sumX = sumX2;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            x = x_inReal[j & xMask] - shift;
+            sumX += x;
+            sumX2 += x * x;
+            sumXY += x * (double)(today - j);
+         }
+         /* A window flat to within the rounding of its own mean leaves ssX at
+          * that rounding, which would fire the trigger again on every bar.
+          * Anchored on one of its own values instead, ssX is at least half the
+          * squared range and sumX2 at most n times it, so it cannot, short of
+          * squares that underflow.
+          */
+         if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 )
+         {
+            shift = x_inReal[today & xMask];
+            sumXY = 0.0;
+            sumX2 = sumXY;
+            sumX = sumX2;
+            for( j = windowStart; j <= today; j += 1 )
+            {
+               x = x_inReal[j & xMask] - shift;
+               sumX += x;
+               sumX2 += x * x;
+               sumXY += x * (double)(today - j);
+            }
+         }
+         peakX2 = sumX2;
+         ssX = sumX2 - sumX * sumX * invPeriod;
+         spXY = sumXY - sumX * sumY * invPeriod;
+      }
+      /* Save the trailing value before writing the output, since the input and
+       * output might be the same array.
+       */
+      trailingX = x_inReal[trailingIdx & xMask] - shift;
+      trailingIdx += 1;
+      /* THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
+       * series correlates NEGATIVELY with it. Ehlers' listing counts the same
+       * way and takes Y = -count, the positively-sloped line the indicator is
+       * defined against; negating the coefficient once is the same thing, and
+       * keeps the slide below in its bars-ago form. Without it every value is
+       * reversed and every magnitude kept.
+       *
+       * ssY is a positive constant, so only ssX can make the window degenerate.
+       * It is tested against its own scale because an absolute band would
+       * reject a well-defined correlation on small-valued data. The product is
+       * tested too, since at n = 2 the smallest subnormal ssX rounds it to
+       * zero.
+       *
+       * An all-flat window therefore emits exactly 0.0 rather than NaN, which
+       * is correl.c's precedent and what #112 requires of a successful call.
+       */
+      if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 )
+      {
+         tempReal = -spXY / sqrt(ssX * ssY);
+         /* A correlation coefficient cannot leave [-1,1]; rounding in the
+          * three sums can still put it slightly outside.
+          */
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         } else if( tempReal < -1.0 )
+         {
+            tempReal = -1.0;
+         }
+         outReal[kernBar] = tempReal;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      /* Slide the window one bar in O(1). Advancing it ages every retained
+       * value by one bar, which raises each of their weights by 1 and so adds
+       * the whole deviation sum; the departing value leaves at the full weight
+       * optInTimePeriod-1 and also loses its place in that sum, which is the
+       * remaining -1. The two together are exactly -optInTimePeriod*trailingX,
+       * and sumX must still be the COMPLETE window's sum when it is read here
+       * -- it is decremented on the line below, not above.
+       */
+      sumXY = sumXY + sumX - dPeriod * trailingX;
+      sumX -= trailingX;
+      sumX2 -= trailingX * trailingX;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->sumX = sumX;
+   sp->sumX2 = sumX2;
+   sp->sumXY = sumXY;
+   sp->peakX2 = peakX2;
+   sp->shift = shift;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CTI_UpdateBlock( struct TA_CTI_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_CTI_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CTI_Value( const TA_CTI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

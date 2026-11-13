@@ -1199,6 +1199,172 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Close( TA_CDL3STARSINSOUTH_Stream *str
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDL3STARSINSOUTH_KernImpl( struct TA_CDL3STARSINSOUTH_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double BodyShortPeriodTotal = sp->BodyShortPeriodTotal;
+   double ShadowLongPeriodTotal = sp->ShadowLongPeriodTotal;
+   double *ShadowVeryShortPeriodTotal = sp->ShadowVeryShortPeriodTotal;
+   double ShadowVeryShortPeriodTotalRange1 = sp->ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1 = sp->ShadowVeryShortPeriodTotalTrailRange1;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   int ringLag_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int ringPos_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx;
+   int ringCap_BodyShortTrailingIdx = sp->ringCap_BodyShortTrailingIdx;
+   double *ring_BodyShortTrailingIdx_derived = sp->ring_BodyShortTrailingIdx_derived;
+   int ringPos_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx;
+   int ringCap_ShadowLongTrailingIdx = sp->ringCap_ShadowLongTrailingIdx;
+   int ringLag_ShadowLongTrailingIdx = sp->ringLag_ShadowLongTrailingIdx;
+   double *ring_ShadowLongTrailingIdx_derived = sp->ring_ShadowLongTrailingIdx_derived;
+   int ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   int ringCap_ShadowVeryShortTrailingIdx = sp->ringCap_ShadowVeryShortTrailingIdx;
+   double *ring_ShadowVeryShortTrailingIdx_derived = sp->ring_ShadowVeryShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double ShadowVeryShortPeriodTotalRange0;
+      double ShadowVeryShortPeriodTotalTrailRange0;
+      int ringPosL_BodyLongTrailingIdx;
+      int ringPosL_BodyShortTrailingIdx;
+      int ringPosL_ShadowLongTrailingIdx;
+      int ringPosL_ShadowVeryShortTrailingIdx;
+
+      ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      if( ringCap_BodyShortTrailingIdx == 0 )
+      {
+         ring_BodyShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+      }
+      ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
+      if( ringCap_ShadowVeryShortTrailingIdx == 0 )
+      {
+         ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      }
+      if( ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* 2nd black */
+          ((inClose >= inOpen) ? 1 : -1) == -1 )            /* 3rd black */
+      {
+         if( fabs(lag2_inClose - lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 1st: long */
+             (TA_COLOR_MIN(lag2_inClose, lag2_inOpen) - lag2_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* with long lower shadow */
+             fabs(lag1_inClose - lag1_inOpen) < fabs(lag2_inClose - lag2_inOpen) && /* 2nd: smaller candle */
+             lag1_inOpen > lag2_inClose &&
+             lag1_inOpen <= lag2_inHigh &&                                          /* that opens higher but within 1st range */
+             lag1_inLow < lag2_inClose &&                                           /* and trades lower than 1st close */
+             lag1_inLow >= lag2_inLow &&                                            /* but not lower than 1st low */
+             (TA_COLOR_MIN(lag1_inClose, lag1_inOpen) - lag1_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* and has a lower shadow */
+             fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) && /* 3rd: small marubozu */
+             (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+             (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+             inLow > lag1_inLow &&
+             inHigh < lag1_inHigh )                                                 /* engulfed by prior candle's range */
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - ringLag_BodyLongTrailingIdx - 2) % ringCap_BodyLongTrailingIdx];
+      ShadowLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowLong,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + ringCap_ShadowLongTrailingIdx - ringLag_ShadowLongTrailingIdx - 2) % ringCap_ShadowLongTrailingIdx];
+      ShadowVeryShortPeriodTotalRange0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      ShadowVeryShortPeriodTotalTrailRange0 = ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx];
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
+      BodyShortPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+      ringPosL_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx;
+      ring_BodyShortTrailingIdx_derived[ringPosL_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+      if( ringPosL_BodyShortTrailingIdx >= ringCap_BodyShortTrailingIdx )
+      {
+         ringPosL_BodyShortTrailingIdx = 0;
+      }
+      ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
+      ringPosL_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx;
+      ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
+      if( ringPosL_ShadowLongTrailingIdx >= ringCap_ShadowLongTrailingIdx )
+      {
+         ringPosL_ShadowLongTrailingIdx = 0;
+      }
+      ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+      ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = ShadowVeryShortPeriodTotalRange0;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+      if( ringPosL_ShadowVeryShortTrailingIdx >= ringCap_ShadowVeryShortTrailingIdx )
+      {
+         ringPosL_ShadowVeryShortTrailingIdx = 0;
+      }
+      ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+   sp->BodyShortPeriodTotal = BodyShortPeriodTotal;
+   sp->ShadowLongPeriodTotal = ShadowLongPeriodTotal;
+   sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange1;
+   sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange1;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx;
+   sp->ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx;
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDL3STARSINSOUTH_UpdateBlock( struct TA_CDL3STARSINSOUTH_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDL3STARSINSOUTH_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Value( const TA_CDL3STARSINSOUTH_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

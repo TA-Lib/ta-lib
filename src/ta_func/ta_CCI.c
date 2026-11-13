@@ -1051,6 +1051,145 @@ TA_LIB_API TA_RetCode TA_CCI_Close( TA_CCI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CCI_KernImpl( struct TA_CCI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   double periodPeak = sp->periodPeak;
+   double prevValue = sp->prevValue;
+   int sumDirty = sp->sumDirty;
+   int flatRun = sp->flatRun;
+   int circBuffer_Idx = sp->circBuffer_Idx;
+   int maxIdx_circBuffer = sp->maxIdx_circBuffer;
+   double *cb_circBuffer = sp->cb_circBuffer;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempReal;
+      double tempReal2;
+      double tempReal3;
+      double theAverage;
+      double lastValue;
+      int j;
+
+      lastValue = (inHigh + inLow + inClose) / 3;
+      if( lastValue == prevValue )
+      {
+         if( flatRun < optInTimePeriod )
+         {
+            flatRun += 1;
+         }
+      } else 
+      {
+         flatRun = 0;
+      }
+      prevValue = lastValue;
+      /* A running sum carries the rounding of every bar it took and gave
+       * back, at the scale of the sum when it did. The full pass on the bar
+       * that stores into the last slot, and whenever the sum falls below 2/3
+       * of the largest it held since the last pass, keeps that rounding at the
+       * scale of the current window. An identical-price window must still
+       * average to its own value, so it takes the full pass too unless the
+       * sum took no change since its last one.
+       */
+      if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != cb_circBuffer[circBuffer_Idx] )
+      {
+         periodTotal += lastValue - cb_circBuffer[circBuffer_Idx];
+         sumDirty = 1;
+      }
+      cb_circBuffer[circBuffer_Idx] = lastValue;
+      tempReal = fabs(periodTotal);
+      periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+      if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || (sumDirty != 0 && flatRun >= optInTimePeriod - 1) )
+      {
+         tempReal = 0;
+         for( j = 0; j < circBuffer_Idx; j += 1 )
+         {
+            tempReal += cb_circBuffer[j];
+         }
+         tempReal += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+         {
+            tempReal += cb_circBuffer[j];
+         }
+         periodTotal = tempReal;
+         periodPeak = fabs(tempReal);
+         sumDirty = 0;
+      }
+      theAverage = periodTotal / optInTimePeriod;
+      /* Do the summation of the ABS(TypePrice-average)
+       * for the whole period, then its mean.
+       */
+      tempReal2 = 0;
+      for( j = 0; j < circBuffer_Idx; j += 1 )
+      {
+         tempReal2 += fabs(cb_circBuffer[j] - theAverage);
+      }
+      tempReal2 += fabs(lastValue - theAverage);
+      for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+      {
+         tempReal2 += fabs(cb_circBuffer[j] - theAverage);
+      }
+      tempReal2 /= optInTimePeriod;
+      /* And finally, the CCI... */
+      tempReal = lastValue - theAverage;
+      /* The third test is the divisor itself, and it is not implied by the
+       * second: the deviation's band is RELATIVE and the product's underflow is
+       * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+       * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+       * flatness question is already answered above, and this one is only
+       * asking whether the value the division uses exists.
+       *
+       * The first two tests are relative to the window's own price level (#253).
+       * They ask "is this window flat?", and flatness is a property of the
+       * prices relative to each other -- but a deviation carries the quote
+       * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+       * every window of an instrument quoted below it and zeroed the whole
+       * output. The band is still wide enough (~90 ulp of the average) to
+       * absorb the sub-epsilon residue an identical-price window leaves in the
+       * average, which is what it was widened for in the first place (#7).
+       */
+      tempReal3 = fabs(theAverage);
+      if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) && 0.015 * tempReal2 != 0.0 )
+      {
+         outReal[kernBar] = tempReal / (0.015 * tempReal2);
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      /* Move forward the circular buffer indexes. */
+      circBuffer_Idx = circBuffer_Idx + 1;
+      if( circBuffer_Idx > maxIdx_circBuffer )
+      {
+         circBuffer_Idx = 0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->periodPeak = periodPeak;
+   sp->prevValue = prevValue;
+   sp->sumDirty = sumDirty;
+   sp->flatRun = flatRun;
+   sp->circBuffer_Idx = circBuffer_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CCI_UpdateBlock( struct TA_CCI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_CCI_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CCI_Value( const TA_CCI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

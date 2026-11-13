@@ -1127,6 +1127,177 @@ TA_LIB_API TA_RetCode TA_KURTOSIS_Close( TA_KURTOSIS_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_KURTOSIS_KernImpl( struct TA_KURTOSIS_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double shift = sp->shift;
+   double total1 = sp->total1;
+   double total2 = sp->total2;
+   double total3 = sp->total3;
+   double total4 = sp->total4;
+   double dPeriod = sp->dPeriod;
+   double coefA = sp->coefA;
+   double coefB = sp->coefB;
+   double invPeriod = sp->invPeriod;
+   double peak2 = sp->peak2;
+   double peak4 = sp->peak4;
+   int trailingIdx = sp->trailingIdx;
+   int nbInitialElementNeeded = sp->nbInitialElementNeeded;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int reseedPeriod = sp->reseedPeriod;
+   int j = sp->j;
+   int i = sp->i;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double dev;
+      double dev2;
+      double residue;
+      double residueSq;
+      double moment2;
+      double moment4;
+      double sampleVar;
+      double varSquared;
+      double kurt;
+      int windowStart;
+
+      x_inReal[i & xMask] = inReal;
+      dev = x_inReal[i & xMask] - shift;
+      dev2 = dev * dev;
+      total1 += dev;
+      total2 += dev2;
+      total3 += dev2 * dev;
+      total4 += dev2 * dev2;
+      if( total2 > peak2 )
+      {
+         peak2 = total2;
+      }
+      if( total4 > peak4 )
+      {
+         peak4 = total4;
+      }
+      residue = total1 * invPeriod;
+      residueSq = residue * residue;
+      moment2 = total2 - dPeriod * residueSq;
+      moment4 = fma(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+      /* Rebuild once either central moment falls below 1% of the largest
+       * shifted sum of its power held since the last rebuild. That catches a
+       * shift several sigma stale, where the expansion above cancels as
+       * (u/sigma)^4, and a series decaying back onto the shift or an outlier
+       * leaving the window, which leave current sums made mostly of rounding
+       * that scales with the peaks.
+       */
+      barsSinceReseed -= 1;
+      if( moment2 < 0.01 * peak2 || moment4 < 0.01 * peak4 || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = reseedPeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += x_inReal[j & xMask];
+         }
+         shift = tempReal * invPeriod;
+         total1 = 0.0;
+         total2 = 0.0;
+         total3 = 0.0;
+         total4 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            dev = x_inReal[j & xMask] - shift;
+            dev2 = dev * dev;
+            total1 += dev;
+            total2 += dev2;
+            total3 += dev2 * dev;
+            total4 += dev2 * dev2;
+         }
+         residue = total1 * invPeriod;
+         residueSq = residue * residue;
+         moment2 = total2 - dPeriod * residueSq;
+         moment4 = fma(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+         /* The left-to-right sum misses the mean by many ulps at a long
+          * period, and a window whose spread is under that miss would fire a
+          * trigger again on every bar. The residue just measured is the
+          * miss: adding it back lands within about an ulp of the mean, where
+          * a flat window's deviations are exactly 0.
+          */
+         if( moment2 < 0.01 * total2 || moment4 < 0.01 * total4 )
+         {
+            shift += residue;
+            total1 = 0.0;
+            total2 = 0.0;
+            total3 = 0.0;
+            total4 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               dev = x_inReal[j & xMask] - shift;
+               dev2 = dev * dev;
+               total1 += dev;
+               total2 += dev2;
+               total3 += dev2 * dev;
+               total4 += dev2 * dev2;
+            }
+            residue = total1 * invPeriod;
+            residueSq = residue * residue;
+            moment2 = total2 - dPeriod * residueSq;
+            moment4 = fma(6.0 * residueSq, total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+         }
+         peak2 = total2;
+         peak4 = total4;
+      }
+      /* No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
+       * A flat window reaches here with every deviation exactly 0, so this is
+       * 0/0 and IEEE answers NaN without a branch. A guard with an absolute
+       * epsilon would be a cliff at a price level, not a noise floor (#243).
+       */
+      sampleVar = moment2 / (dPeriod - 1.0);
+      varSquared = sampleVar * sampleVar;
+      kurt = coefA * (moment4 / varSquared) - coefB;
+      /* inReal and outReal may be the same buffer: read the trailing value
+       * before the output write.
+       */
+      dev = x_inReal[trailingIdx & xMask] - shift;
+      dev2 = dev * dev;
+      total1 -= dev;
+      total2 -= dev2;
+      total3 -= dev2 * dev;
+      total4 -= dev2 * dev2;
+      trailingIdx += 1;
+      outReal[kernBar] = kurt;
+      i += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->shift = shift;
+   sp->total1 = total1;
+   sp->total2 = total2;
+   sp->total3 = total3;
+   sp->total4 = total4;
+   sp->peak2 = peak2;
+   sp->peak4 = peak4;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->i = i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KURTOSIS_UpdateBlock( struct TA_KURTOSIS_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_KURTOSIS_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KURTOSIS_Value( const TA_KURTOSIS_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

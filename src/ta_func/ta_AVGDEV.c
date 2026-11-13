@@ -444,6 +444,56 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Close( TA_AVGDEV_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_AVGDEV_KernImpl( struct TA_AVGDEV_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inReal = sp->win_i_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double todaySum;
+      double todayDev;
+      int i;
+
+      win_i_inReal[winPos_i] = inReal;
+      todaySum = 0.0;
+      for( i = 0; i < optInTimePeriod; i += 1 )
+      {
+         todaySum += win_i_inReal[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+      }
+      todayDev = 0.0;
+      for( i = 0; i < optInTimePeriod; i += 1 )
+      {
+         todayDev += fabs(win_i_inReal[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i] - todaySum / optInTimePeriod);
+      }
+      outReal[kernBar] = todayDev / optInTimePeriod;
+      cur_outReal = outReal[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_AVGDEV_UpdateBlock( struct TA_AVGDEV_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_AVGDEV_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AVGDEV_Value( const TA_AVGDEV_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

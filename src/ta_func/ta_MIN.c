@@ -729,6 +729,69 @@ TA_LIB_API TA_RetCode TA_MIN_Close( TA_MIN_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MIN_KernImpl( struct TA_MIN_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double lowest = sp->lowest;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tmp;
+
+      x_inReal[today & xMask] = inReal;
+      tmp = x_inReal[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inReal[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inReal[i & xMask];
+            if( tmp < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      outReal[kernBar] = lowest;
+      trailingIdx += 1;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->lowest = lowest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MIN_UpdateBlock( struct TA_MIN_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_MIN_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MIN_Value( const TA_MIN_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

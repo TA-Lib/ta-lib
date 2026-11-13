@@ -1215,6 +1215,165 @@ TA_LIB_API TA_RetCode TA_MEDIAN_Close( TA_MEDIAN_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MEDIAN_KernImpl( struct TA_MEDIAN_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int lookbackTotal = sp->lookbackTotal;
+   int lowerIdx = sp->lowerIdx;
+   int upperIdx = sp->upperIdx;
+   int ring_Idx = sp->ring_Idx;
+   int maxIdx_ring = sp->maxIdx_ring;
+   double *cb_ring = sp->cb_ring;
+   double *cb_sorted = sp->cb_sorted;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double newValue;
+      double oldValue;
+      double result;
+      double lower;
+      double upper;
+      int j;
+      int pos;
+      int lo;
+      int hi;
+      int mid;
+
+      newValue = inReal;
+      /* pos counts the retained values <= newValue, so the full window is
+       * sorted[0..pos-1], newValue, sorted[pos..].
+       */
+      if( lookbackTotal < 128 )
+      {
+         pos = 0;
+         while( pos < lookbackTotal && cb_sorted[pos] <= newValue )
+         {
+            pos += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( cb_sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         pos = lo;
+      }
+      if( lowerIdx < pos )
+      {
+         lower = cb_sorted[lowerIdx];
+      } else if( lowerIdx == pos )
+      {
+         lower = newValue;
+      } else 
+      {
+         lower = cb_sorted[lowerIdx - 1];
+      }
+      if( upperIdx < pos )
+      {
+         upper = cb_sorted[upperIdx];
+      } else if( upperIdx == pos )
+      {
+         upper = newValue;
+      } else 
+      {
+         upper = cb_sorted[upperIdx - 1];
+      }
+      /* At odd n both reads are one value; averaging it would overflow above
+       * DBL_MAX/2.
+       */
+      if( lowerIdx == upperIdx )
+      {
+         result = lower;
+      } else 
+      {
+         result = (lower + upper) / 2.0;
+      }
+      outReal[kernBar] = result;
+      cb_ring[ring_Idx] = newValue;
+      ring_Idx = ring_Idx + 1;
+      if( ring_Idx > maxIdx_ring )
+      {
+         ring_Idx = 0;
+      }
+      oldValue = cb_ring[ring_Idx];
+      /* j is the first retained value >= oldValue. Keep every run of equal
+       * values in age order (newValue goes after its equals, as above): the
+       * oldest of a run is then the departing value bit for bit, which is what
+       * keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+       * no value but flips the sign of some zero outputs.
+       */
+      if( lookbackTotal < 128 )
+      {
+         j = 0;
+         while( j < lookbackTotal && cb_sorted[j] < oldValue )
+         {
+            j += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( cb_sorted[mid] < oldValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = lo;
+      }
+      /* Evict oldValue and place newValue with one shift of the slots between
+       * them.
+       */
+      if( j < pos )
+      {
+         while( j < pos - 1 )
+         {
+            cb_sorted[j] = cb_sorted[j + 1];
+            j += 1;
+         }
+         cb_sorted[pos - 1] = newValue;
+      } else 
+      {
+         while( j > pos )
+         {
+            cb_sorted[j] = cb_sorted[j - 1];
+            j -= 1;
+         }
+         cb_sorted[pos] = newValue;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->ring_Idx = ring_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MEDIAN_UpdateBlock( struct TA_MEDIAN_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_MEDIAN_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MEDIAN_Value( const TA_MEDIAN_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

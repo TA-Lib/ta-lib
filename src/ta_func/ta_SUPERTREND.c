@@ -1023,6 +1023,128 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Close( TA_SUPERTREND_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SUPERTREND_KernImpl( struct TA_SUPERTREND_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outSupertrend[], int outTrend[] )
+{
+   double cur_outSupertrend = sp->cur_outSupertrend;
+   int cur_outTrend = sp->cur_outTrend;
+   double optInMultiplier = sp->optInMultiplier;
+   int isUptrend = sp->isUptrend;
+   double prevATR = sp->prevATR;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   double finalUpper = sp->finalUpper;
+   double finalLower = sp->finalLower;
+   double prevClose = sp->prevClose;
+   double lag1_inClose = sp->lag1_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double val2;
+      double val3;
+      double greatest;
+      double tempCY;
+      double tempLT;
+      double tempHT;
+      double medianPrice;
+      double band;
+      double basicUpper;
+      double basicLower;
+      double closeToday;
+
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = lag1_inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = fabs(tempCY - tempHT);
+      if( val2 > greatest )
+      {
+         greatest = val2;
+      }
+      val3 = fabs(tempCY - tempLT);
+      if( val3 > greatest )
+      {
+         greatest = val3;
+      }
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
+      medianPrice = (tempHT + tempLT) / 2.0;
+      band = optInMultiplier * prevATR;
+      basicUpper = medianPrice + band;
+      basicLower = medianPrice - band;
+      /* Each band ratchets toward price and is released only by a close on its
+       * far side. Nothing keeps the two ordered -- each is released by its own
+       * condition, so the lower one can end up above the upper one -- and where
+       * that happens a flip puts the emitted band on the far side of the close.
+       * The line is therefore NOT monotone within a trend, and the flag does not
+       * always say which side of the line price is on; both read as invariants
+       * and neither is one.
+       */
+      if( basicUpper < finalUpper || prevClose > finalUpper )
+      {
+         finalUpper = basicUpper;
+      }
+      if( basicLower > finalLower || prevClose < finalLower )
+      {
+         finalLower = basicLower;
+      }
+      closeToday = inClose;
+      /* The trend is carried in its own variable rather than recovered by
+       * comparing the previous output against the previous bands. The two
+       * carried bands do coincide on some bars -- always on a bar with no true
+       * range, and on some of them at a multiplier of zero -- and there that
+       * comparison cannot tell them apart, so it would silently lose the
+       * hysteresis on exactly the flat input a corpus of real prices lacks.
+       */
+      if( isUptrend )
+      {
+         if( closeToday < finalLower )
+         {
+            isUptrend = 0;
+         }
+      } else if( closeToday > finalUpper )
+      {
+         isUptrend = 1;
+      }
+      if( isUptrend )
+      {
+         outSupertrend[kernBar] = finalLower;
+         outTrend[kernBar] = 1;
+      } else 
+      {
+         outSupertrend[kernBar] = finalUpper;
+         outTrend[kernBar] = -1;
+      }
+      prevClose = closeToday;
+      cur_outSupertrend = outSupertrend[kernBar];
+      cur_outTrend = outTrend[kernBar];
+      lag1_inClose = inClose;
+   }
+   sp->cur_outSupertrend = cur_outSupertrend;
+   sp->cur_outTrend = cur_outTrend;
+   sp->isUptrend = isUptrend;
+   sp->prevATR = prevATR;
+   sp->finalUpper = finalUpper;
+   sp->finalLower = finalLower;
+   sp->prevClose = prevClose;
+   sp->lag1_inClose = lag1_inClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SUPERTREND_UpdateBlock( struct TA_SUPERTREND_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outSupertrend[], int outTrend[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
+   TA_SUPERTREND_KernImpl( stream, inHigh, inLow, inClose, nbBar, outSupertrend, outTrend );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, double *outSupertrend, int *outTrend )
 {
    if( !stream || !outSupertrend || !outTrend ) return TA_BAD_PARAM;

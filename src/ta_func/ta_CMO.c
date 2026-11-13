@@ -656,6 +656,55 @@ TA_LIB_API TA_RetCode TA_CMO_Close( TA_CMO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CMO_KernImpl( struct TA_CMO_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevGain = sp->prevGain;
+   double prevLoss = sp->prevLoss;
+   double invPeriod = sp->invPeriod;
+   double prevValue = sp->prevValue;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double gainDelta;
+      double tempValue1;
+      double tempValue2;
+
+      tempValue1 = inReal;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+      prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 )
+      {
+         outReal[kernBar] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevGain = prevGain;
+   sp->prevLoss = prevLoss;
+   sp->prevValue = prevValue;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CMO_UpdateBlock( struct TA_CMO_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_CMO_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CMO_Value( const TA_CMO_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -552,6 +552,69 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Close( TA_MAXINDEX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MAXINDEX_KernImpl( struct TA_MAXINDEX_Stream *sp, const double inRealBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double highest = sp->highest;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tmp;
+
+      x_inReal[today & xMask] = inReal;
+      tmp = x_inReal[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inReal[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inReal[i & xMask];
+            if( tmp >= highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      outInteger[kernBar] = highestIdx;
+      trailingIdx += 1;
+      today += 1;
+      cur_outInteger = outInteger[kernBar];
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MAXINDEX_UpdateBlock( struct TA_MAXINDEX_Stream *stream, const double inReal[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outInteger ) return TA_BAD_PARAM;
+   TA_MAXINDEX_KernImpl( stream, inReal, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MAXINDEX_Value( const TA_MAXINDEX_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

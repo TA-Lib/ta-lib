@@ -458,6 +458,70 @@ TA_LIB_API TA_RetCode TA_NVI_Close( TA_NVI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_NVI_KernImpl( struct TA_NVI_Stream *sp, const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevNVI = sp->prevNVI;
+   double prevClose = sp->prevClose;
+   double prevVolume = sp->prevVolume;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double tempClose;
+      double tempVolume;
+      double tempNVI;
+
+      tempClose = inClose;
+      tempVolume = inVolume;
+      /* prevClose != 0 guards the percentage-change division: a zero previous
+       * close is a degenerate input that would otherwise emit NaN/Inf; carry
+       * the index forward unchanged instead. Never triggers on real prices.
+       */
+      if( tempVolume < prevVolume && prevClose != 0.0 )
+      {
+         /* The index is a running product, so it has no upper bound: enough
+          * compounding gains push it past the largest double. Keep the last
+          * representable value instead of writing +/-Inf, which no caller can
+          * chart and which poisons every arithmetic downstream of it. Real
+          * price series never come close.
+          *
+          * Written as a compound assignment on the copy, exactly as the update
+          * was before the guard: spelling it `a + r*a` would match the FMA
+          * fusion detector and silently re-round every bar, not just the
+          * overflowing one.
+          */
+         tempNVI = prevNVI;
+         tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+         if( TA_IS_FINITE(tempNVI) )
+         {
+            prevNVI = tempNVI;
+         }
+      }
+      outReal[kernBar] = prevNVI;
+      prevClose = tempClose;
+      prevVolume = tempVolume;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevNVI = prevNVI;
+   sp->prevClose = prevClose;
+   sp->prevVolume = prevVolume;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_NVI_UpdateBlock( struct TA_NVI_Stream *stream, const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_NVI_KernImpl( stream, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_NVI_Value( const TA_NVI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

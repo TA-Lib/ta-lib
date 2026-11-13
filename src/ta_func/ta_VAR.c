@@ -957,6 +957,145 @@ TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_VAR_KernImpl( struct TA_VAR_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double shift = sp->shift;
+   double periodTotal1 = sp->periodTotal1;
+   double periodTotal2 = sp->periodTotal2;
+   double invPeriod = sp->invPeriod;
+   double peakTotal2 = sp->peakTotal2;
+   int trailingIdx = sp->trailingIdx;
+   int nbInitialElementNeeded = sp->nbInitialElementNeeded;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int j = sp->j;
+   int windowStart = sp->windowStart;
+   int i = sp->i;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double meanValue1;
+      double variance;
+
+      x_inReal[i & xMask] = inReal;
+      /* Add the incoming value, measured against the shift. */
+      tempReal = x_inReal[i & xMask] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      /* Remove the trailing value (prepares the next window). */
+      tempReal = x_inReal[trailingIdx & xMask] - shift;
+      periodTotal1 -= tempReal;
+      tempReal *= tempReal;
+      periodTotal2 -= tempReal;
+      trailingIdx += 1;
+      /* Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+       * of the LARGEST mean squared deviation held since the last rebuild, or at
+       * least every 32 windows. Measure against that peak, not the current sum:
+       * the rounding the running sums carry scales with the peak, so once a
+       * series settles back near the shift, or an outlier leaves the window,
+       * the current sum holds nothing but that rounding. The collapse is seen
+       * on the first bar whose sums carry it, and the rebuild recomputes that
+       * bar.
+       */
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal += x_inReal[j & xMask];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            tempReal = x_inReal[j & xMask] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* A window flat to within the rounding of its own mean leaves the
+          * variance at that rounding, which would fire the trigger again on
+          * every bar. Anchored on one of its own values it cannot: the variance
+          * is then at least 1/(2n) of the mean square it is extracted from.
+          */
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) )
+         {
+            shift = x_inReal[i & xMask];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 )
+            {
+               tempReal = x_inReal[j & xMask] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         /* Before the re-remove below: the peak must hold the whole window. */
+         peakTotal2 = periodTotal2;
+         /* After the re-anchor a window with any spread sits orders above this
+          * floor, so it catches only a variance that rounding left at or below
+          * 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+          * square-root it unconditionally (#243). A negative variance always
+          * gets here: the peak is never negative, so the trigger fires on it.
+          */
+         if( variance < 0.000000000001 * (periodTotal2 * invPeriod) )
+         {
+            variance = 0.0;
+         }
+         /* Re-remove the trailing value under the new shift so the carried state
+          * matches the non-reseed path.
+          */
+         tempReal = x_inReal[windowStart & xMask] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      outReal[kernBar] = variance;
+      i += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->shift = shift;
+   sp->periodTotal1 = periodTotal1;
+   sp->periodTotal2 = periodTotal2;
+   sp->peakTotal2 = peakTotal2;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->windowStart = windowStart;
+   sp->i = i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VAR_UpdateBlock( struct TA_VAR_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_VAR_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_VAR_Value( const TA_VAR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

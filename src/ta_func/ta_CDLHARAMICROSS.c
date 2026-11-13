@@ -831,6 +831,113 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Close( TA_CDLHARAMICROSS_Stream *stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLHARAMICROSS_KernImpl( struct TA_CDLHARAMICROSS_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyDojiPeriodTotal = sp->BodyDojiPeriodTotal;
+   double BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   int ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx;
+   int ringCap_BodyDojiTrailingIdx = sp->ringCap_BodyDojiTrailingIdx;
+   double *ring_BodyDojiTrailingIdx_derived = sp->ring_BodyDojiTrailingIdx_derived;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyDojiTrailingIdx;
+      int ringPosL_BodyLongTrailingIdx;
+
+      if( ringCap_BodyDojiTrailingIdx == 0 )
+      {
+         ring_BodyDojiTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      }
+      if( ringCap_BodyLongTrailingIdx == 0 )
+      {
+         ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      }
+      if( fabs(lag1_inClose - lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) ) /* 1st: long */
+      {
+         if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* 2nd: doji */
+         {
+            if( max(inClose,inOpen) < max(lag1_inClose,lag1_inOpen) && /* 2nd is engulfed by 1st */
+                min(inClose,inOpen) > min(lag1_inClose,lag1_inOpen) )
+            {
+               outInteger[kernBar] = -((lag1_inClose >= lag1_inOpen) ? 1 : -1) * 100;
+            } else if( max(inClose,inOpen) <= max(lag1_inClose,lag1_inOpen) && /* 2nd is engulfed by 1st */
+                min(inClose,inOpen) >= min(lag1_inClose,lag1_inOpen) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
+            {
+               outInteger[kernBar] = -((lag1_inClose >= lag1_inOpen) ? 1 : -1) * 80;
+            } else 
+            {
+               outInteger[kernBar] = 0;
+            }
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx];
+      BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag1_inClose = inClose;
+      ringPosL_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx;
+      ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+      if( ringPosL_BodyDojiTrailingIdx >= ringCap_BodyDojiTrailingIdx )
+      {
+         ringPosL_BodyDojiTrailingIdx = 0;
+      }
+      ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+   sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLHARAMICROSS_UpdateBlock( struct TA_CDLHARAMICROSS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLHARAMICROSS_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Value( const TA_CDLHARAMICROSS_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

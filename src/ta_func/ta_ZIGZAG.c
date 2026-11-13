@@ -711,6 +711,94 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Close( TA_ZIGZAG_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ZIGZAG_KernImpl( struct TA_ZIGZAG_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   double cur_outZigZag = sp->cur_outZigZag;
+   int cur_outTrend = sp->cur_outTrend;
+   int cur_outPivotIdx = sp->cur_outPivotIdx;
+   int optInMinTrendLength = sp->optInMinTrendLength;
+   int trend = sp->trend;
+   int barsSincePivot = sp->barsSincePivot;
+   int barIdx = sp->barIdx;
+   double up = sp->up;
+   double dn = sp->dn;
+   double pivot = sp->pivot;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      int isExt;
+
+      /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+       * has no cursor to read a bar number from.
+       */
+      barsSincePivot = barsSincePivot + 1;
+      barIdx = barIdx + 1;
+      /* Reversal is tested BEFORE extension. On an outside bar that both makes
+       * a new extreme and clears the threshold, the leg reverses and the old
+       * pivot stays where it was; testing extension first would move the pivot
+       * and lose the reversal, which is a whole leg of difference rather than a
+       * rounding.
+       */
+      if( trend == -1 )
+      {
+         if( inHigh >= pivot * up && barsSincePivot >= optInMinTrendLength )
+         {
+            trend = 1;
+            pivot = inHigh;
+            barsSincePivot = 0;
+         } else 
+         {
+            /* Ties extend: at an equal price the pivot moves to the later bar,
+             * which only outPivotIdx shows.
+             *
+             * A select, not a branch: on moving prices the extension is taken
+             * on a share of the bars no predictor follows.
+             */
+            isExt = (inLow <= pivot) ? 1 : 0;
+            pivot = TA_MIN_LT(pivot, inLow);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
+         }
+      } else if( inLow <= pivot * dn && barsSincePivot >= optInMinTrendLength )
+      {
+         trend = -1;
+         pivot = inLow;
+         barsSincePivot = 0;
+      } else 
+      {
+         isExt = (inHigh >= pivot) ? 1 : 0;
+         pivot = TA_MAX_GT(pivot, inHigh);
+         barsSincePivot = barsSincePivot - isExt * barsSincePivot;
+      }
+      outZigZag[kernBar] = pivot;
+      outTrend[kernBar] = trend;
+      outPivotIdx[kernBar] = barIdx - barsSincePivot;
+      cur_outZigZag = outZigZag[kernBar];
+      cur_outTrend = outTrend[kernBar];
+      cur_outPivotIdx = outPivotIdx[kernBar];
+   }
+   sp->cur_outZigZag = cur_outZigZag;
+   sp->cur_outTrend = cur_outTrend;
+   sp->cur_outPivotIdx = cur_outPivotIdx;
+   sp->trend = trend;
+   sp->barsSincePivot = barsSincePivot;
+   sp->barIdx = barIdx;
+   sp->pivot = pivot;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ZIGZAG_UpdateBlock( struct TA_ZIGZAG_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
+   TA_ZIGZAG_KernImpl( stream, inHigh, inLow, nbBar, outZigZag, outTrend, outPivotIdx );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ZIGZAG_Value( const TA_ZIGZAG_Stream *stream, double *outZigZag, int *outTrend, int *outPivotIdx )
 {
    if( !stream || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;

@@ -416,6 +416,49 @@ TA_LIB_API TA_RetCode TA_AD_Close( TA_AD_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_AD_KernImpl( struct TA_AD_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double ad = sp->ad;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double high;
+      double low;
+      double close;
+      double tmp;
+
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if( tmp > 0.0 )
+      {
+         ad += (close - low - (high - close)) / tmp * (double)inVolume;
+      }
+      outReal[kernBar] = ad;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->ad = ad;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_AD_UpdateBlock( struct TA_AD_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_AD_KernImpl( stream, inHigh, inLow, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_AD_Value( const TA_AD_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

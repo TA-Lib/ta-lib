@@ -908,6 +908,121 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Close( TA_CDLMORNINGSTAR_Stream *stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_CDLMORNINGSTAR_KernImpl( struct TA_CDLMORNINGSTAR_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double optInPenetration = sp->optInPenetration;
+   double BodyShortPeriodTotal = sp->BodyShortPeriodTotal;
+   double BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double BodyShortPeriodTotal2 = sp->BodyShortPeriodTotal2;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int ringPos_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx;
+   int ringCap_BodyShortTrailingIdx = sp->ringCap_BodyShortTrailingIdx;
+   int ringLag_BodyShortTrailingIdx = sp->ringLag_BodyShortTrailingIdx;
+   double *ring_BodyShortTrailingIdx_derived = sp->ring_BodyShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyLongTrailingIdx;
+      int ringPosL_BodyShortTrailingIdx;
+
+      if( ringCap_BodyLongTrailingIdx == 0 )
+      {
+         ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      }
+      ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+      if( ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* black */
+          ((inClose >= inOpen) ? 1 : -1) == 1 &&            /* white real body */
+          ((max(lag1_inOpen,lag1_inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0) ) /* gapping down */
+      {
+         if( inClose > fma(fabs(lag2_inClose - lag2_inOpen), optInPenetration, lag2_inClose) && /* closing well within 1st rb */
+             fabs(lag2_inClose - lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* 1st: long */
+             fabs(lag1_inClose - lag1_inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* 2nd: short */
+             fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal2,inOpen,inHigh,inLow,inClose) ) /* 3rd: longer than short */
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx];
+      BodyShortPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + ringCap_BodyShortTrailingIdx - ringLag_BodyShortTrailingIdx) % ringCap_BodyShortTrailingIdx];
+      BodyShortPeriodTotal2 += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + ringCap_BodyShortTrailingIdx - ringLag_BodyShortTrailingIdx + 1) % ringCap_BodyShortTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ring_BodyLongTrailingIdx_derived[ringPosL_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+      ringPosL_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx;
+      ringPosL_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx + 1;
+      if( ringPosL_BodyShortTrailingIdx >= ringCap_BodyShortTrailingIdx )
+      {
+         ringPosL_BodyShortTrailingIdx = 0;
+      }
+      ringPos_BodyShortTrailingIdx = ringPosL_BodyShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyShortPeriodTotal = BodyShortPeriodTotal;
+   sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+   sp->BodyShortPeriodTotal2 = BodyShortPeriodTotal2;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLMORNINGSTAR_UpdateBlock( struct TA_CDLMORNINGSTAR_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLMORNINGSTAR_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Value( const TA_CDLMORNINGSTAR_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

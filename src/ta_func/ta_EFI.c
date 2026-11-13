@@ -739,6 +739,58 @@ TA_LIB_API TA_RetCode TA_EFI_Close( TA_EFI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_EFI_KernImpl( struct TA_EFI_Stream *sp, const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double prevClose = sp->prevClose;
+   double emaBeta = sp->emaBeta;
+   double optInK_1 = sp->optInK_1;
+   double prevMA = sp->prevMA;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+
+      if( optInTimePeriod == 1 )
+      {
+         double force;
+
+         force = (inClose - prevClose) * inVolume;
+         prevClose = inClose;
+         outReal[kernBar] = force;
+         cur_outReal = outReal[kernBar];
+      }
+      else
+      {
+         double force;
+
+         force = (inClose - prevClose) * inVolume;
+         prevClose = inClose;
+         prevMA = fma(emaBeta, prevMA, optInK_1 * force);
+         outReal[kernBar] = prevMA;
+         cur_outReal = outReal[kernBar];
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevClose = prevClose;
+   sp->prevMA = prevMA;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_EFI_UpdateBlock( struct TA_EFI_Stream *stream, const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_EFI_KernImpl( stream, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_EFI_Value( const TA_EFI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

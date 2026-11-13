@@ -544,6 +544,75 @@ TA_LIB_API TA_RetCode TA_RVOL_Close( TA_RVOL_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_RVOL_KernImpl( struct TA_RVOL_Stream *sp, const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotal = sp->periodTotal;
+   int nullRun = sp->nullRun;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inVolume = sp->ring_trailingIdx_inVolume;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inVolume = inVolumeBlk[kernBar];
+      double baseline;
+      double todayVolume;
+      double trailingVolume;
+      int liveIn;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+       * window, that order makes each baseline bit-identical to the moving
+       * average of the same period at the previous bar; the reverse order
+       * differs only in the last ulp, so no tolerance can tell the two apart.
+       */
+      baseline = periodTotal / (double)optInTimePeriod;
+      trailingVolume = (double)ring_trailingIdx_inVolume[ringPos_trailingIdx];
+      todayVolume = (double)inVolume;
+      /* After both reads (input and output may be one buffer) and before the
+       * total moves, or the divide keeps the old total live across the reset.
+       */
+      outReal[kernBar] = todayVolume / baseline;
+      periodTotal -= trailingVolume;
+      periodTotal += todayVolume;
+      liveIn = (fabs(todayVolume) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (liveIn - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         periodTotal = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inVolume[ringPosL_trailingIdx] = inVolume;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->nullRun = nullRun;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RVOL_UpdateBlock( struct TA_RVOL_Stream *stream, const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_RVOL_KernImpl( stream, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_RVOL_Value( const TA_RVOL_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

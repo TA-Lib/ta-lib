@@ -994,6 +994,82 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Close( TA_PLUS_DM_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_PLUS_DM_KernImpl( struct TA_PLUS_DM_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double prevHigh = sp->prevHigh;
+   double prevLow = sp->prevLow;
+   double invPeriod = sp->invPeriod;
+   double prevPlusDM = sp->prevPlusDM;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+
+      if( optInTimePeriod <= 1 )
+      {
+         double tempReal;
+         double diffP;
+         double diffM;
+         double plusDM1;
+
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
+         outReal[kernBar] = plusDM1;
+         cur_outReal = outReal[kernBar];
+      }
+      else
+      {
+         double tempReal;
+         double diffP;
+         double diffM;
+         double plusDM1;
+
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         tempReal = diffP - diffM;
+         plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
+         outReal[kernBar] = prevPlusDM;
+         cur_outReal = outReal[kernBar];
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevHigh = prevHigh;
+   sp->prevLow = prevLow;
+   sp->prevPlusDM = prevPlusDM;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PLUS_DM_UpdateBlock( struct TA_PLUS_DM_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_PLUS_DM_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PLUS_DM_Value( const TA_PLUS_DM_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

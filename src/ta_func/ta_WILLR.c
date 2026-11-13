@@ -1107,6 +1107,118 @@ TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_WILLR_KernImpl( struct TA_WILLR_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double lowest = sp->lowest;
+   double highest = sp->highest;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int highestIdx = sp->highestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   double *x_inClose = sp->x_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tmp;
+      double tempReal;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      x_inClose[today & xMask] = inClose;
+      /* Set the lowest low */
+      tmp = x_inLow[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inLow[i & xMask];
+            if( tmp < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = x_inHigh[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inHigh[i & xMask];
+            if( tmp > highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      /* Same rule, band and clamp as the block scan above. */
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
+      {
+         tempReal = (highest - x_inClose[today & xMask]) / (highest - lowest) * -100.0;
+         if( tempReal > 0.0 )
+         {
+            tempReal = 0.0;
+         } else if( tempReal < -100.0 )
+         {
+            tempReal = -100.0;
+         }
+         outReal[kernBar] = tempReal;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      trailingIdx += 1;
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->lowest = lowest;
+   sp->highest = highest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->highestIdx = highestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_WILLR_UpdateBlock( struct TA_WILLR_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_WILLR_KernImpl( stream, inHigh, inLow, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_WILLR_Value( const TA_WILLR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

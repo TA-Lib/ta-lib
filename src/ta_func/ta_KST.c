@@ -1785,6 +1785,202 @@ TA_LIB_API TA_RetCode TA_KST_Close( TA_KST_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_KST_KernImpl( struct TA_KST_Stream *sp, const double inRealBlk[], int nbBar, double outKST[], double outKSTSignal[] )
+{
+   double cur_outKST = sp->cur_outKST;
+   double cur_outKSTSignal = sp->cur_outKSTSignal;
+   int optInSMA1Period = sp->optInSMA1Period;
+   int optInSMA2Period = sp->optInSMA2Period;
+   int optInSMA3Period = sp->optInSMA3Period;
+   int optInSMA4Period = sp->optInSMA4Period;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double total1 = sp->total1;
+   double total2 = sp->total2;
+   double total3 = sp->total3;
+   double total4 = sp->total4;
+   double sigTotal = sp->sigTotal;
+   int ring1_Idx = sp->ring1_Idx;
+   int ring2_Idx = sp->ring2_Idx;
+   int ring3_Idx = sp->ring3_Idx;
+   int ring4_Idx = sp->ring4_Idx;
+   int sigRing_Idx = sp->sigRing_Idx;
+   int maxIdx_ring1 = sp->maxIdx_ring1;
+   int maxIdx_ring2 = sp->maxIdx_ring2;
+   int maxIdx_ring3 = sp->maxIdx_ring3;
+   int maxIdx_ring4 = sp->maxIdx_ring4;
+   int maxIdx_sigRing = sp->maxIdx_sigRing;
+   int ringPos_den1 = sp->ringPos_den1;
+   int ringCap_den1 = sp->ringCap_den1;
+   double *ring_den1_inReal = sp->ring_den1_inReal;
+   int ringPos_den2 = sp->ringPos_den2;
+   int ringCap_den2 = sp->ringCap_den2;
+   double *ring_den2_inReal = sp->ring_den2_inReal;
+   int ringPos_den3 = sp->ringPos_den3;
+   int ringCap_den3 = sp->ringCap_den3;
+   double *ring_den3_inReal = sp->ring_den3_inReal;
+   int ringPos_den4 = sp->ringPos_den4;
+   int ringCap_den4 = sp->ringCap_den4;
+   double *ring_den4_inReal = sp->ring_den4_inReal;
+   double *cb_ring1 = sp->cb_ring1;
+   double *cb_ring2 = sp->cb_ring2;
+   double *cb_ring3 = sp->cb_ring3;
+   double *cb_ring4 = sp->cb_ring4;
+   double *cb_sigRing = sp->cb_sigRing;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double prior;
+      double roc;
+      double kst;
+      double sig;
+      double rcma1;
+      double rcma2;
+      double rcma3;
+      double rcma4;
+      int ringPosL_den1;
+      int ringPosL_den2;
+      int ringPosL_den3;
+      int ringPosL_den4;
+
+      if( ringCap_den1 == 0 )
+      {
+         ring_den1_inReal[0] = inReal;
+      }
+      if( ringCap_den2 == 0 )
+      {
+         ring_den2_inReal[0] = inReal;
+      }
+      if( ringCap_den3 == 0 )
+      {
+         ring_den3_inReal[0] = inReal;
+      }
+      if( ringCap_den4 == 0 )
+      {
+         ring_den4_inReal[0] = inReal;
+      }
+      prior = ring_den1_inReal[ringPos_den1];
+      roc = (prior != 0.0) ? (inReal / prior - 1.0) * 100.0 : 0.0;
+      total1 += roc;
+      rcma1 = total1 / (double)optInSMA1Period;
+      cb_ring1[ring1_Idx] = roc;
+      ring1_Idx = ring1_Idx + 1;
+      if( ring1_Idx > maxIdx_ring1 )
+      {
+         ring1_Idx = 0;
+      }
+      total1 -= cb_ring1[ring1_Idx];
+      prior = ring_den2_inReal[ringPos_den2];
+      roc = (prior != 0.0) ? (inReal / prior - 1.0) * 100.0 : 0.0;
+      total2 += roc;
+      rcma2 = total2 / (double)optInSMA2Period;
+      cb_ring2[ring2_Idx] = roc;
+      ring2_Idx = ring2_Idx + 1;
+      if( ring2_Idx > maxIdx_ring2 )
+      {
+         ring2_Idx = 0;
+      }
+      total2 -= cb_ring2[ring2_Idx];
+      prior = ring_den3_inReal[ringPos_den3];
+      roc = (prior != 0.0) ? (inReal / prior - 1.0) * 100.0 : 0.0;
+      total3 += roc;
+      rcma3 = total3 / (double)optInSMA3Period;
+      cb_ring3[ring3_Idx] = roc;
+      ring3_Idx = ring3_Idx + 1;
+      if( ring3_Idx > maxIdx_ring3 )
+      {
+         ring3_Idx = 0;
+      }
+      total3 -= cb_ring3[ring3_Idx];
+      prior = ring_den4_inReal[ringPos_den4];
+      roc = (prior != 0.0) ? (inReal / prior - 1.0) * 100.0 : 0.0;
+      total4 += roc;
+      rcma4 = total4 / (double)optInSMA4Period;
+      cb_ring4[ring4_Idx] = roc;
+      ring4_Idx = ring4_Idx + 1;
+      if( ring4_Idx > maxIdx_ring4 )
+      {
+         ring4_Idx = 0;
+      }
+      total4 -= cb_ring4[ring4_Idx];
+      kst = fma(4.0, rcma4, fma(3.0, rcma3, fma(2.0, rcma2, rcma1)));
+      sigTotal += kst;
+      sig = sigTotal / (double)optInSignalPeriod;
+      cb_sigRing[sigRing_Idx] = kst;
+      sigRing_Idx = sigRing_Idx + 1;
+      if( sigRing_Idx > maxIdx_sigRing )
+      {
+         sigRing_Idx = 0;
+      }
+      sigTotal -= cb_sigRing[sigRing_Idx];
+      outKST[kernBar] = kst;
+      outKSTSignal[kernBar] = sig;
+      cur_outKST = outKST[kernBar];
+      cur_outKSTSignal = outKSTSignal[kernBar];
+      ringPosL_den1 = ringPos_den1;
+      ring_den1_inReal[ringPosL_den1] = inReal;
+      ringPosL_den1 = ringPosL_den1 + 1;
+      if( ringPosL_den1 >= ringCap_den1 )
+      {
+         ringPosL_den1 = 0;
+      }
+      ringPos_den1 = ringPosL_den1;
+      ringPosL_den2 = ringPos_den2;
+      ring_den2_inReal[ringPosL_den2] = inReal;
+      ringPosL_den2 = ringPosL_den2 + 1;
+      if( ringPosL_den2 >= ringCap_den2 )
+      {
+         ringPosL_den2 = 0;
+      }
+      ringPos_den2 = ringPosL_den2;
+      ringPosL_den3 = ringPos_den3;
+      ring_den3_inReal[ringPosL_den3] = inReal;
+      ringPosL_den3 = ringPosL_den3 + 1;
+      if( ringPosL_den3 >= ringCap_den3 )
+      {
+         ringPosL_den3 = 0;
+      }
+      ringPos_den3 = ringPosL_den3;
+      ringPosL_den4 = ringPos_den4;
+      ring_den4_inReal[ringPosL_den4] = inReal;
+      ringPosL_den4 = ringPosL_den4 + 1;
+      if( ringPosL_den4 >= ringCap_den4 )
+      {
+         ringPosL_den4 = 0;
+      }
+      ringPos_den4 = ringPosL_den4;
+   }
+   sp->cur_outKST = cur_outKST;
+   sp->cur_outKSTSignal = cur_outKSTSignal;
+   sp->total1 = total1;
+   sp->total2 = total2;
+   sp->total3 = total3;
+   sp->total4 = total4;
+   sp->sigTotal = sigTotal;
+   sp->ring1_Idx = ring1_Idx;
+   sp->ring2_Idx = ring2_Idx;
+   sp->ring3_Idx = ring3_Idx;
+   sp->ring4_Idx = ring4_Idx;
+   sp->sigRing_Idx = sigRing_Idx;
+   sp->ringPos_den1 = ringPos_den1;
+   sp->ringPos_den2 = ringPos_den2;
+   sp->ringPos_den3 = ringPos_den3;
+   sp->ringPos_den4 = ringPos_den4;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KST_UpdateBlock( struct TA_KST_Stream *stream, const double inReal[], int nbBar, double outKST[], double outKSTSignal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
+   TA_KST_KernImpl( stream, inReal, nbBar, outKST, outKSTSignal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KST_Value( const TA_KST_Stream *stream, double *outKST, double *outKSTSignal )
 {
    if( !stream || !outKST || !outKSTSignal ) return TA_BAD_PARAM;

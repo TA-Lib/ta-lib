@@ -816,6 +816,98 @@ TA_LIB_API TA_RetCode TA_CMOU_Close( TA_CMOU_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CMOU_KernImpl( struct TA_CMOU_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int nullRun = sp->nullRun;
+   double upSum = sp->upSum;
+   double downSum = sp->downSum;
+   double prevValue = sp->prevValue;
+   double trailingValue = sp->trailingValue;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int live;
+      double sum;
+      double diff;
+      double up;
+      double tempReal;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      /* Add the newest change: inReal[today] - inReal[today-1]. */
+      tempReal = inReal;
+      diff = tempReal - prevValue;
+      prevValue = tempReal;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      /* Once a whole period of flat bars has gone by, every change in the
+       * window is exactly zero, so both sums are known to be exactly zero and
+       * the residue can be dropped.
+       */
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
+      {
+         nullRun = optInTimePeriod;
+         upSum = 0.0;
+         downSum = 0.0;
+         outReal[kernBar] = 0.0;
+      } else 
+      {
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            outReal[kernBar] = 100.0 * (upSum - downSum) / sum;
+         } else 
+         {
+            outReal[kernBar] = 0.0;
+         }
+      }
+      tempReal = ring_trailingIdx_inReal[ringPos_trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
+      cur_outReal = outReal[kernBar];
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inReal[ringPosL_trailingIdx] = inReal;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->nullRun = nullRun;
+   sp->upSum = upSum;
+   sp->downSum = downSum;
+   sp->prevValue = prevValue;
+   sp->trailingValue = trailingValue;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CMOU_UpdateBlock( struct TA_CMOU_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_CMOU_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CMOU_Value( const TA_CMOU_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

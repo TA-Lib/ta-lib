@@ -713,6 +713,60 @@ TA_LIB_API TA_RetCode TA_RSI_Close( TA_RSI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_RSI_KernImpl( struct TA_RSI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double invPeriod = sp->invPeriod;
+   double prevGain = sp->prevGain;
+   double prevLoss = sp->prevLoss;
+   double prevValue = sp->prevValue;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double gainDelta;
+      double tempValue1;
+      double tempValue2;
+
+      tempValue1 = (double)inReal;
+      tempValue2 = tempValue1 - prevValue;
+      prevValue = tempValue1;
+      prevLoss *= (double)(optInTimePeriod - 1);
+      prevGain *= (double)(optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 )
+      {
+         outReal[kernBar] = 100.0 * (prevGain / tempValue1);
+      } else 
+      {
+         outReal[kernBar] = 50.0;
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevGain = prevGain;
+   sp->prevLoss = prevLoss;
+   sp->prevValue = prevValue;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RSI_UpdateBlock( struct TA_RSI_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_RSI_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_RSI_Value( const TA_RSI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

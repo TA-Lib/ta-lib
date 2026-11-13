@@ -583,6 +583,86 @@ TA_LIB_API TA_RetCode TA_VHF_Close( TA_VHF_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_VHF_KernImpl( struct TA_VHF_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inReal = sp->win_i_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int i;
+      double highest;
+      double lowest;
+      double sumChange;
+      double prev;
+      double tempReal;
+
+      win_i_inReal[winPos_i] = inReal;
+      /* The two windows are NOT co-terminal: the extrema span the
+       * optInTimePeriod newest closes, while the optInTimePeriod changes reach
+       * one bar further back. That is what makes the lookback optInTimePeriod
+       * rather than optInTimePeriod-1.
+       */
+      highest = inReal;
+      lowest = highest;
+      prev = highest;
+      sumChange = 0.0;
+      for( i = optInTimePeriod; i >= 0; i -= 1 )
+      {
+         tempReal = win_i_inReal[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+         if( i < optInTimePeriod )
+         {
+            sumChange += fabs(tempReal - prev);
+            if( tempReal > highest )
+            {
+               highest = tempReal;
+            }
+            if( tempReal < lowest )
+            {
+               lowest = tempReal;
+            }
+         }
+         prev = tempReal;
+      }
+      /* A fresh sum of non-negative magnitudes is exactly zero only on an
+       * exactly flat window, which forces highest-lowest to zero too. Guard on
+       * exact zero, never an epsilon band: a band carries the quote unit and
+       * zeroes the filter for anything priced under it (issue #253).
+       */
+      if( sumChange > 0.0 )
+      {
+         outReal[kernBar] = (highest - lowest) / sumChange;
+      } else 
+      {
+         outReal[kernBar] = 0.0;
+      }
+      cur_outReal = outReal[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VHF_UpdateBlock( struct TA_VHF_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_VHF_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_VHF_Value( const TA_VHF_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

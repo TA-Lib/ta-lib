@@ -1356,6 +1356,133 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Close( TA_CDL3BLACKCROWS_Stream *stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDL3BLACKCROWS_KernImpl( struct TA_CDL3BLACKCROWS_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double *ShadowVeryShortPeriodTotal = sp->ShadowVeryShortPeriodTotal;
+   double range1 = sp->range1;
+   double range2 = sp->range2;
+   double trailRange1 = sp->trailRange1;
+   double trailRange2 = sp->trailRange2;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag3_inOpen = sp->lag3_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag3_inHigh = sp->lag3_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   double lag3_inClose = sp->lag3_inClose;
+   int ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx;
+   int ringCap_ShadowVeryShortTrailingIdx = sp->ringCap_ShadowVeryShortTrailingIdx;
+   double *ring_ShadowVeryShortTrailingIdx_derived = sp->ring_ShadowVeryShortTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double range0;
+      double trailRange0;
+      int ringPosL_ShadowVeryShortTrailingIdx;
+
+      if( ringCap_ShadowVeryShortTrailingIdx == 0 )
+      {
+         ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      }
+      if( ((lag3_inClose >= lag3_inOpen) ? 1 : -1) == 1 &&  /* white */
+          ((lag2_inClose >= lag2_inOpen) ? 1 : -1) == -1 && /* 1st black */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 )  /* 2nd black */
+      {
+         if( ((inClose >= inOpen) ? 1 : -1) == -1 && /* 3rd black */
+             lag1_inOpen < lag2_inOpen &&
+             lag1_inOpen > lag2_inClose &&           /* 2nd black opens within 1st black's rb */
+             inOpen < lag1_inOpen &&
+             inOpen > lag1_inClose &&                /* 3rd black opens within 2nd black's rb */
+             lag3_inHigh > lag2_inClose &&           /* 1st black closes under prior candle's high */
+             lag2_inClose > lag1_inClose &&          /* three declining */
+             lag1_inClose > inClose &&               /* three declining */
+             (TA_COLOR_MIN(lag2_inClose, lag2_inOpen) - lag2_inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[2],lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) && /* very short lower shadow */
+             (TA_COLOR_MIN(lag1_inClose, lag1_inOpen) - lag1_inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[1],lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) && /* very short lower shadow */
+             (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) ) /* very short lower shadow */
+         {
+            outInteger[kernBar] = -100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      /* A bar's ranges for i-1 and i-2 are the ones computed one and two bars ago. */
+      range0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+      trailRange0 = ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx];
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (range2 - trailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (range1 - trailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (range0 - trailRange0);
+      range2 = range1;
+      range1 = range0;
+      trailRange2 = trailRange1;
+      trailRange1 = trailRange0;
+      cur_outInteger = outInteger[kernBar];
+      lag3_inOpen = lag2_inOpen;
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag3_inHigh = lag2_inHigh;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag3_inClose = lag2_inClose;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+      ring_ShadowVeryShortTrailingIdx_derived[ringPosL_ShadowVeryShortTrailingIdx] = range0;
+      ringPosL_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx + 1;
+      if( ringPosL_ShadowVeryShortTrailingIdx >= ringCap_ShadowVeryShortTrailingIdx )
+      {
+         ringPosL_ShadowVeryShortTrailingIdx = 0;
+      }
+      ringPos_ShadowVeryShortTrailingIdx = ringPosL_ShadowVeryShortTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->range1 = range1;
+   sp->range2 = range2;
+   sp->trailRange1 = trailRange1;
+   sp->trailRange2 = trailRange2;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag3_inOpen = lag3_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag3_inHigh = lag3_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->lag3_inClose = lag3_inClose;
+   sp->ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDL3BLACKCROWS_UpdateBlock( struct TA_CDL3BLACKCROWS_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDL3BLACKCROWS_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Value( const TA_CDL3BLACKCROWS_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

@@ -24,6 +24,7 @@ pub mod formatter;
 pub mod helper_registry;
 pub mod internal_error_ids;
 pub mod ir;
+pub mod kern_harness;
 pub mod naming;
 pub mod parser;
 pub mod registry;

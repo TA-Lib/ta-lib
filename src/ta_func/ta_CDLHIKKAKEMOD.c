@@ -1723,6 +1723,121 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Close( TA_CDLHIKKAKEMOD_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLHIKKAKEMOD_KernImpl( struct TA_CDLHIKKAKEMOD_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double NearPeriodTotal = sp->NearPeriodTotal;
+   int patternResult = sp->patternResult;
+   int patternCount = sp->patternCount;
+   double patternHigh = sp->patternHigh;
+   double patternLow = sp->patternLow;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag3_inHigh = sp->lag3_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag3_inLow = sp->lag3_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   int ringCap_NearTrailingIdx = sp->ringCap_NearTrailingIdx;
+   int ringLag_NearTrailingIdx = sp->ringLag_NearTrailingIdx;
+   double *ring_NearTrailingIdx_derived = sp->ring_NearTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_NearTrailingIdx;
+
+      ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
+      if( lag2_inHigh < lag3_inHigh &&
+          lag2_inLow > lag3_inLow &&   /* 2nd: lower high and higher low than 1st */
+          lag1_inHigh < lag2_inHigh &&
+          lag1_inLow > lag2_inLow &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh < lag1_inHigh &&
+            inLow < lag1_inLow &&      /* (bull) 4th: lower high and lower low */
+            lag2_inClose <= lag2_inLow + TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose)) || /* (bull) 2nd: close near the low */
+           (inHigh > lag1_inHigh &&
+            inLow > lag1_inLow &&      /* (bear) 4th: higher high and higher low */
+            lag2_inClose >= lag2_inHigh - TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : -1);
+         patternHigh = lag1_inHigh;
+         patternLow = lag1_inLow;
+         patternCount = 4;
+         outInteger[kernBar] = patternResult;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&      /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         outInteger[kernBar] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,lag2_inOpen,lag2_inHigh,lag2_inLow,lag2_inClose) - ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + ringCap_NearTrailingIdx - ringLag_NearTrailingIdx - 2) % ringCap_NearTrailingIdx];
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag3_inHigh = lag2_inHigh;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag3_inLow = lag2_inLow;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_NearTrailingIdx = ringPos_NearTrailingIdx;
+      ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+      if( ringPosL_NearTrailingIdx >= ringCap_NearTrailingIdx )
+      {
+         ringPosL_NearTrailingIdx = 0;
+      }
+      ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->NearPeriodTotal = NearPeriodTotal;
+   sp->patternResult = patternResult;
+   sp->patternCount = patternCount;
+   sp->patternHigh = patternHigh;
+   sp->patternLow = patternLow;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag3_inHigh = lag3_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag3_inLow = lag3_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_NearTrailingIdx = ringPos_NearTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLHIKKAKEMOD_UpdateBlock( struct TA_CDLHIKKAKEMOD_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLHIKKAKEMOD_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Value( const TA_CDLHIKKAKEMOD_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

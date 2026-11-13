@@ -823,6 +823,64 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Close( TA_CDLSPINNINGTOP_Stream *stream 
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLSPINNINGTOP_KernImpl( struct TA_CDLSPINNINGTOP_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyPeriodTotal = sp->BodyPeriodTotal;
+   int ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx;
+   int ringCap_BodyTrailingIdx = sp->ringCap_BodyTrailingIdx;
+   double *ring_BodyTrailingIdx_derived = sp->ring_BodyTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyTrailingIdx;
+
+      if( ringCap_BodyTrailingIdx == 0 )
+      {
+         ring_BodyTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+      }
+      if( (inHigh - TA_COLOR_MAX(inClose, inOpen)) > fabs(inClose - inOpen) && (TA_COLOR_MIN(inClose, inOpen) - inLow) > fabs(inClose - inOpen) && fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      {
+         outInteger[kernBar] = ((inClose >= inOpen) ? 1 : -1) * 100;
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      ringPosL_BodyTrailingIdx = ringPos_BodyTrailingIdx;
+      ring_BodyTrailingIdx_derived[ringPosL_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyTrailingIdx = ringPosL_BodyTrailingIdx + 1;
+      if( ringPosL_BodyTrailingIdx >= ringCap_BodyTrailingIdx )
+      {
+         ringPosL_BodyTrailingIdx = 0;
+      }
+      ringPos_BodyTrailingIdx = ringPosL_BodyTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyPeriodTotal = BodyPeriodTotal;
+   sp->ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLSPINNINGTOP_UpdateBlock( struct TA_CDLSPINNINGTOP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLSPINNINGTOP_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Value( const TA_CDLSPINNINGTOP_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

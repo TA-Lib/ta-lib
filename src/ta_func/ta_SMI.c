@@ -1515,6 +1515,151 @@ TA_LIB_API TA_RetCode TA_SMI_Close( TA_SMI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SMI_KernImpl( struct TA_SMI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outSMI[], double outSMISignal[] )
+{
+   double cur_outSMI = sp->cur_outSMI;
+   double cur_outSMISignal = sp->cur_outSMISignal;
+   double kSlow = sp->kSlow;
+   double kFast = sp->kFast;
+   double kSignal = sp->kSignal;
+   double betaSlow = sp->betaSlow;
+   double betaFast = sp->betaFast;
+   double betaSignal = sp->betaSignal;
+   double highest = sp->highest;
+   double lowest = sp->lowest;
+   double emaSlowNum = sp->emaSlowNum;
+   double emaFastNum = sp->emaFastNum;
+   double emaSlowDen = sp->emaSlowDen;
+   double emaFastDen = sp->emaFastDen;
+   double prevSignal = sp->prevSignal;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   double *x_inClose = sp->x_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tmp;
+      double num;
+      double den;
+      double halfDen;
+      double smiValue;
+
+      x_inHigh[today & xMask] = inHigh;
+      x_inLow[today & xMask] = inLow;
+      x_inClose[today & xMask] = inClose;
+      /* Set the lowest low */
+      tmp = x_inLow[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inLow[lowestIdx & xMask];
+         i = lowestIdx;
+         while( ++i <= today )
+         {
+            tmp = x_inLow[i & xMask];
+            if( tmp < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      /* Set the highest high */
+      tmp = x_inHigh[today & xMask];
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inHigh[highestIdx & xMask];
+         i = highestIdx;
+         while( ++i <= today )
+         {
+            tmp = x_inHigh[i & xMask];
+            if( tmp > highest )
+            {
+               highestIdx = i;
+               highest = tmp;
+            }
+         }
+      } else if( tmp >= highest )
+      {
+         highestIdx = today;
+         highest = tmp;
+      }
+      den = highest - lowest;
+      num = x_inClose[today & xMask] - (highest + lowest) * 0.5;
+      emaSlowNum = fma(betaSlow, emaSlowNum, kSlow * num);
+      emaSlowDen = fma(betaSlow, emaSlowDen, kSlow * den);
+      emaFastNum = fma(betaFast, emaFastNum, kFast * emaSlowNum);
+      emaFastDen = fma(betaFast, emaFastDen, kFast * emaSlowDen);
+      /* The denominator is an EMA of an EMA of the high-low range: every term
+       * is non-negative and every weight is positive, so it carries no
+       * cancellation residue and is zero only when every range that reached it
+       * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+       * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+       * convention. Test it exactly: the range carries the quote unit, so the
+       * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+       * instrument quoted below it (issue #253). Issue #107's machine-flat
+       * window is caught by the exact test as well, since the residue an
+       * EMA leaves there is zero, not sub-epsilon.
+       */
+      halfDen = 0.5 * emaFastDen;
+      if( halfDen > 0.0 )
+      {
+         smiValue = 100.0 * emaFastNum / halfDen;
+      } else 
+      {
+         smiValue = 0.0;
+      }
+      prevSignal = fma(betaSignal, prevSignal, kSignal * smiValue);
+      outSMI[kernBar] = smiValue;
+      outSMISignal[kernBar] = prevSignal;
+      trailingIdx = trailingIdx + 1;
+      today = today + 1;
+      cur_outSMI = outSMI[kernBar];
+      cur_outSMISignal = outSMISignal[kernBar];
+   }
+   sp->cur_outSMI = cur_outSMI;
+   sp->cur_outSMISignal = cur_outSMISignal;
+   sp->highest = highest;
+   sp->lowest = lowest;
+   sp->emaSlowNum = emaSlowNum;
+   sp->emaFastNum = emaFastNum;
+   sp->emaSlowDen = emaSlowDen;
+   sp->emaFastDen = emaFastDen;
+   sp->prevSignal = prevSignal;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SMI_UpdateBlock( struct TA_SMI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outSMI[], double outSMISignal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
+   TA_SMI_KernImpl( stream, inHigh, inLow, inClose, nbBar, outSMI, outSMISignal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SMI_Value( const TA_SMI_Stream *stream, double *outSMI, double *outSMISignal )
 {
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;

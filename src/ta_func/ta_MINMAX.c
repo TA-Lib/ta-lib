@@ -962,6 +962,99 @@ TA_LIB_API TA_RetCode TA_MINMAX_Close( TA_MINMAX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MINMAX_KernImpl( struct TA_MINMAX_Stream *sp, const double inRealBlk[], int nbBar, double outMin[], double outMax[] )
+{
+   double cur_outMin = sp->cur_outMin;
+   double cur_outMax = sp->cur_outMax;
+   double highest = sp->highest;
+   double lowest = sp->lowest;
+   int trailingIdx = sp->trailingIdx;
+   int highestIdx = sp->highestIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tmpHigh;
+      double tmpLow;
+
+      x_inReal[today & xMask] = inReal;
+      tmpHigh = x_inReal[today & xMask];
+      tmpLow = tmpHigh;
+      if( highestIdx < trailingIdx )
+      {
+         highestIdx = trailingIdx;
+         highest = x_inReal[highestIdx & xMask];
+         i = highestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpHigh = x_inReal[i & xMask];
+            if( tmpHigh > highest )
+            {
+               highestIdx = i;
+               highest = tmpHigh;
+            }
+         }
+      } else if( tmpHigh >= highest )
+      {
+         highestIdx = today;
+         highest = tmpHigh;
+      }
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inReal[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmpLow = x_inReal[i & xMask];
+            if( tmpLow < lowest )
+            {
+               lowestIdx = i;
+               lowest = tmpLow;
+            }
+         }
+      } else if( tmpLow <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmpLow;
+      }
+      outMax[kernBar] = highest;
+      outMin[kernBar] = lowest;
+      trailingIdx += 1;
+      today += 1;
+      cur_outMin = outMin[kernBar];
+      cur_outMax = outMax[kernBar];
+   }
+   sp->cur_outMin = cur_outMin;
+   sp->cur_outMax = cur_outMax;
+   sp->highest = highest;
+   sp->lowest = lowest;
+   sp->trailingIdx = trailingIdx;
+   sp->highestIdx = highestIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MINMAX_UpdateBlock( struct TA_MINMAX_Stream *stream, const double inReal[], int nbBar, double outMin[], double outMax[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outMin || !outMax ) return TA_BAD_PARAM;
+   TA_MINMAX_KernImpl( stream, inReal, nbBar, outMin, outMax );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MINMAX_Value( const TA_MINMAX_Stream *stream, double *outMin, double *outMax )
 {
    if( !stream || !outMin || !outMax ) return TA_BAD_PARAM;

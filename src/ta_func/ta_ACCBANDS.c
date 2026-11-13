@@ -787,6 +787,103 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Close( TA_ACCBANDS_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_ACCBANDS_KernImpl( struct TA_ACCBANDS_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double cur_outRealUpperBand = sp->cur_outRealUpperBand;
+   double cur_outRealMiddleBand = sp->cur_outRealMiddleBand;
+   double cur_outRealLowerBand = sp->cur_outRealLowerBand;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double periodTotalUpper = sp->periodTotalUpper;
+   double periodTotalMiddle = sp->periodTotalMiddle;
+   double periodTotalLower = sp->periodTotalLower;
+   int ringPos_trailingIdx = sp->ringPos_trailingIdx;
+   int ringCap_trailingIdx = sp->ringCap_trailingIdx;
+   double *ring_trailingIdx_inHigh = sp->ring_trailingIdx_inHigh;
+   double *ring_trailingIdx_inLow = sp->ring_trailingIdx_inLow;
+   double *ring_trailingIdx_inClose = sp->ring_trailingIdx_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double tempUpper;
+      double tempMiddle;
+      double tempLower;
+      double tempReal;
+      int ringPosL_trailingIdx;
+      int ringCapL_trailingIdx;
+
+      /* Add the incoming bar to each running sum. */
+      tempReal = inHigh + inLow;
+      if( !TA_IS_ZERO_SCALED(tempReal, fabs(inHigh) + fabs(inLow)) )
+      {
+         tempReal = 4 * (inHigh - inLow) / tempReal;
+         periodTotalUpper += inHigh * (1 + tempReal);
+         periodTotalLower += inLow * (1 - tempReal);
+      } else 
+      {
+         periodTotalUpper += inHigh;
+         periodTotalLower += inLow;
+      }
+      periodTotalMiddle += inClose;
+      /* Record the current window sums. */
+      tempUpper = periodTotalUpper;
+      tempMiddle = periodTotalMiddle;
+      tempLower = periodTotalLower;
+      /* Remove the trailing bar from each running sum. */
+      tempReal = ring_trailingIdx_inHigh[ringPos_trailingIdx] + ring_trailingIdx_inLow[ringPos_trailingIdx];
+      if( !TA_IS_ZERO_SCALED(tempReal, fabs(ring_trailingIdx_inHigh[ringPos_trailingIdx]) + fabs(ring_trailingIdx_inLow[ringPos_trailingIdx])) )
+      {
+         tempReal = 4 * (ring_trailingIdx_inHigh[ringPos_trailingIdx] - ring_trailingIdx_inLow[ringPos_trailingIdx]) / tempReal;
+         periodTotalUpper -= ring_trailingIdx_inHigh[ringPos_trailingIdx] * (1 + tempReal);
+         periodTotalLower -= ring_trailingIdx_inLow[ringPos_trailingIdx] * (1 - tempReal);
+      } else 
+      {
+         periodTotalUpper -= ring_trailingIdx_inHigh[ringPos_trailingIdx];
+         periodTotalLower -= ring_trailingIdx_inLow[ringPos_trailingIdx];
+      }
+      periodTotalMiddle -= ring_trailingIdx_inClose[ringPos_trailingIdx];
+      /* Write the three bands. */
+      outRealUpperBand[kernBar] = tempUpper / (double)optInTimePeriod;
+      outRealMiddleBand[kernBar] = tempMiddle / (double)optInTimePeriod;
+      outRealLowerBand[kernBar] = tempLower / (double)optInTimePeriod;
+      cur_outRealUpperBand = outRealUpperBand[kernBar];
+      cur_outRealMiddleBand = outRealMiddleBand[kernBar];
+      cur_outRealLowerBand = outRealLowerBand[kernBar];
+      ringCapL_trailingIdx = ringCap_trailingIdx;
+      ringPosL_trailingIdx = ringPos_trailingIdx;
+      ring_trailingIdx_inHigh[ringPosL_trailingIdx] = inHigh;
+      ring_trailingIdx_inLow[ringPosL_trailingIdx] = inLow;
+      ring_trailingIdx_inClose[ringPosL_trailingIdx] = inClose;
+      ringPosL_trailingIdx = ringPosL_trailingIdx + 1;
+      if( ringPosL_trailingIdx >= ringCapL_trailingIdx )
+      {
+         ringPosL_trailingIdx = 0;
+      }
+      ringPos_trailingIdx = ringPosL_trailingIdx;
+   }
+   sp->cur_outRealUpperBand = cur_outRealUpperBand;
+   sp->cur_outRealMiddleBand = cur_outRealMiddleBand;
+   sp->cur_outRealLowerBand = cur_outRealLowerBand;
+   sp->periodTotalUpper = periodTotalUpper;
+   sp->periodTotalMiddle = periodTotalMiddle;
+   sp->periodTotalLower = periodTotalLower;
+   sp->ringPos_trailingIdx = ringPos_trailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ACCBANDS_UpdateBlock( struct TA_ACCBANDS_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   TA_ACCBANDS_KernImpl( stream, inHigh, inLow, inClose, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ACCBANDS_Value( const TA_ACCBANDS_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;

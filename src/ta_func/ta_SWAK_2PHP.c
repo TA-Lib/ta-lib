@@ -589,6 +589,57 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP_Close( TA_SWAK_2PHP_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SWAK_2PHP_KernImpl( struct TA_SWAK_2PHP_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double c0 = sp->c0;
+   double a1 = sp->a1;
+   double a2 = sp->a2;
+   double x1 = sp->x1;
+   double x2 = sp->x2;
+   double y1 = sp->y1;
+   double y2 = sp->y2;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double x0;
+      double y;
+
+      /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
+       * rate is the latency of whatever y1 crosses to become y: outermost, that
+       * is one fused step. Nested inside, it is three, and every backend's last
+       * bit moves with it.
+       */
+      x0 = inReal;
+      y = fma(a1, y1, fma(a2, y2, c0 * (x0 - 2.0 * x1 + x2)));
+      x2 = x1;
+      x1 = x0;
+      y2 = y1;
+      y1 = y;
+      outReal[kernBar] = y;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->x1 = x1;
+   sp->x2 = x2;
+   sp->y1 = y1;
+   sp->y2 = y2;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SWAK_2PHP_UpdateBlock( struct TA_SWAK_2PHP_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_SWAK_2PHP_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SWAK_2PHP_Value( const TA_SWAK_2PHP_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

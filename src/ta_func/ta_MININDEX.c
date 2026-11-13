@@ -552,6 +552,69 @@ TA_LIB_API TA_RetCode TA_MININDEX_Close( TA_MININDEX_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MININDEX_KernImpl( struct TA_MININDEX_Stream *sp, const double inRealBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double lowest = sp->lowest;
+   int trailingIdx = sp->trailingIdx;
+   int lowestIdx = sp->lowestIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tmp;
+
+      x_inReal[today & xMask] = inReal;
+      tmp = x_inReal[today & xMask];
+      if( lowestIdx < trailingIdx )
+      {
+         lowestIdx = trailingIdx;
+         lowest = x_inReal[lowestIdx & xMask];
+         i = lowestIdx;
+         TA_UNROLL(4)
+         while( ++i <= today )
+         {
+            tmp = x_inReal[i & xMask];
+            if( tmp <= lowest )
+            {
+               lowestIdx = i;
+               lowest = tmp;
+            }
+         }
+      } else if( tmp <= lowest )
+      {
+         lowestIdx = today;
+         lowest = tmp;
+      }
+      outInteger[kernBar] = lowestIdx;
+      trailingIdx += 1;
+      today += 1;
+      cur_outInteger = outInteger[kernBar];
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->lowest = lowest;
+   sp->trailingIdx = trailingIdx;
+   sp->lowestIdx = lowestIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MININDEX_UpdateBlock( struct TA_MININDEX_Stream *stream, const double inReal[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outInteger ) return TA_BAD_PARAM;
+   TA_MININDEX_KernImpl( stream, inReal, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MININDEX_Value( const TA_MININDEX_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

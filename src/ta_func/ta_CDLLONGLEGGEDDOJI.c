@@ -773,6 +773,90 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Close( TA_CDLLONGLEGGEDDOJI_Stream *s
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLLONGLEGGEDDOJI_KernImpl( struct TA_CDLLONGLEGGEDDOJI_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyDojiPeriodTotal = sp->BodyDojiPeriodTotal;
+   double ShadowLongPeriodTotal = sp->ShadowLongPeriodTotal;
+   int ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx;
+   int ringCap_BodyDojiTrailingIdx = sp->ringCap_BodyDojiTrailingIdx;
+   double *ring_BodyDojiTrailingIdx_derived = sp->ring_BodyDojiTrailingIdx_derived;
+   int ringPos_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx;
+   int ringCap_ShadowLongTrailingIdx = sp->ringCap_ShadowLongTrailingIdx;
+   double *ring_ShadowLongTrailingIdx_derived = sp->ring_ShadowLongTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyDojiTrailingIdx;
+      int ringPosL_ShadowLongTrailingIdx;
+
+      if( ringCap_BodyDojiTrailingIdx == 0 )
+      {
+         ring_BodyDojiTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      }
+      if( ringCap_ShadowLongTrailingIdx == 0 )
+      {
+         ring_ShadowLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
+      }
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      {
+         if( (TA_COLOR_MIN(inClose, inOpen) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) || (inHigh - TA_COLOR_MAX(inClose, inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) )
+         {
+            outInteger[kernBar] = 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx];
+      ShadowLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose) - ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      ringPosL_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx;
+      ring_BodyDojiTrailingIdx_derived[ringPosL_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
+      ringPosL_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx + 1;
+      if( ringPosL_BodyDojiTrailingIdx >= ringCap_BodyDojiTrailingIdx )
+      {
+         ringPosL_BodyDojiTrailingIdx = 0;
+      }
+      ringPos_BodyDojiTrailingIdx = ringPosL_BodyDojiTrailingIdx;
+      ringPosL_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx;
+      ring_ShadowLongTrailingIdx_derived[ringPosL_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
+      ringPosL_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx + 1;
+      if( ringPosL_ShadowLongTrailingIdx >= ringCap_ShadowLongTrailingIdx )
+      {
+         ringPosL_ShadowLongTrailingIdx = 0;
+      }
+      ringPos_ShadowLongTrailingIdx = ringPosL_ShadowLongTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyDojiPeriodTotal = BodyDojiPeriodTotal;
+   sp->ShadowLongPeriodTotal = ShadowLongPeriodTotal;
+   sp->ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx;
+   sp->ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLLONGLEGGEDDOJI_UpdateBlock( struct TA_CDLLONGLEGGEDDOJI_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLLONGLEGGEDDOJI_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Value( const TA_CDLLONGLEGGEDDOJI_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

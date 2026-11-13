@@ -1484,6 +1484,148 @@ TA_LIB_API TA_RetCode TA_RVI_Close( TA_RVI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_RVI_KernImpl( struct TA_RVI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInStdDevPeriod = sp->optInStdDevPeriod;
+   double shift = sp->shift;
+   double periodTotal1 = sp->periodTotal1;
+   double periodTotal2 = sp->periodTotal2;
+   double peakTotal2 = sp->peakTotal2;
+   double invPeriod = sp->invPeriod;
+   double prevUp = sp->prevUp;
+   double prevDn = sp->prevDn;
+   double wAlpha = sp->wAlpha;
+   double wBeta = sp->wBeta;
+   int trailingIdx = sp->trailingIdx;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int nbInitialElementNeeded = sp->nbInitialElementNeeded;
+   int j = sp->j;
+   int windowStart = sp->windowStart;
+   int today = sp->today;
+   double lag1_inReal = sp->lag1_inReal;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double meanValue1;
+      double variance;
+      double sigma;
+      double delta;
+      double upValue;
+      double dnValue;
+      double total;
+
+      x_inReal[today & xMask] = inReal;
+      tempReal = x_inReal[today & xMask] - shift;
+      periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      periodTotal2 += tempReal;
+      peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+      meanValue1 = periodTotal1 * invPeriod;
+      variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+      tempReal = x_inReal[trailingIdx & xMask] - shift;
+      periodTotal1 -= tempReal;
+      tempReal *= tempReal;
+      periodTotal2 -= tempReal;
+      trailingIdx += 1;
+      barsSinceReseed -= 1;
+      if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInStdDevPeriod;
+         windowStart = today - nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempReal += x_inReal[j & xMask];
+         }
+         shift = tempReal * invPeriod;
+         periodTotal1 = 0.0;
+         periodTotal2 = 0.0;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempReal = x_inReal[j & xMask] - shift;
+            periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            periodTotal2 += tempReal;
+         }
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) )
+         {
+            shift = x_inReal[today & xMask];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= today; j += 1 )
+            {
+               tempReal = x_inReal[j & xMask] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         peakTotal2 = periodTotal2;
+         if( variance < 0.000000000001 * (periodTotal2 * invPeriod) )
+         {
+            variance = 0.0;
+         }
+         tempReal = x_inReal[windowStart & xMask] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+      }
+      sigma = sqrt(variance);
+      delta = x_inReal[today & xMask] - x_inReal[(today - 1) & xMask];
+      upValue = 0.0;
+      dnValue = 0.0;
+      if( delta > 0.0 )
+      {
+         upValue = sigma;
+      } else if( delta < 0.0 )
+      {
+         dnValue = sigma;
+      }
+      prevUp = fma(wBeta, prevUp, wAlpha * upValue);
+      prevDn = fma(wBeta, prevDn, wAlpha * dnValue);
+      total = prevUp + prevDn;
+      outReal[kernBar] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+      today += 1;
+      cur_outReal = outReal[kernBar];
+      lag1_inReal = inReal;
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->shift = shift;
+   sp->periodTotal1 = periodTotal1;
+   sp->periodTotal2 = periodTotal2;
+   sp->peakTotal2 = peakTotal2;
+   sp->prevUp = prevUp;
+   sp->prevDn = prevDn;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->j = j;
+   sp->windowStart = windowStart;
+   sp->today = today;
+   sp->lag1_inReal = lag1_inReal;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_RVI_UpdateBlock( struct TA_RVI_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_RVI_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_RVI_Value( const TA_RVI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

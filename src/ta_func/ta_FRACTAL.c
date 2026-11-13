@@ -697,6 +697,101 @@ TA_LIB_API TA_RetCode TA_FRACTAL_Close( TA_FRACTAL_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_FRACTAL_KernImpl( struct TA_FRACTAL_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, int outSwingHigh[], int outSwingLow[] )
+{
+   int cur_outSwingHigh = sp->cur_outSwingHigh;
+   int cur_outSwingLow = sp->cur_outSwingLow;
+   int optInLeftBars = sp->optInLeftBars;
+   int optInRightBars = sp->optInRightBars;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inHigh = sp->win_i_inHigh;
+   double *win_i_inLow = sp->win_i_inLow;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      int i;
+      double pivotHigh;
+      double pivotLow;
+      double otherHigh;
+      double otherLow;
+      double tempHigh;
+      double tempLow;
+
+      win_i_inHigh[winPos_i] = inHigh;
+      win_i_inLow[winPos_i] = inLow;
+      pivotHigh = 0.0;
+      pivotLow = 0.0;
+      otherHigh = 0.0;
+      otherLow = 0.0;
+      for( i = optInLeftBars + optInRightBars; i >= 0; i -= 1 )
+      {
+         tempHigh = win_i_inHigh[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+         tempLow = win_i_inLow[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+         if( i == optInRightBars )
+         {
+            pivotHigh = tempHigh;
+            pivotLow = tempLow;
+         } else if( i == optInLeftBars + optInRightBars )
+         {
+            /* optInLeftBars is at least 1, so the oldest bar of the window is
+             * never the pivot and always seeds the rest-of-window extrema.
+             */
+            otherHigh = tempHigh;
+            otherLow = tempLow;
+         } else 
+         {
+            if( tempHigh > otherHigh )
+            {
+               otherHigh = tempHigh;
+            }
+            if( tempLow < otherLow )
+            {
+               otherLow = tempLow;
+            }
+         }
+      }
+      if( pivotHigh > otherHigh )
+      {
+         outSwingHigh[kernBar] = 100;
+      } else 
+      {
+         outSwingHigh[kernBar] = 0;
+      }
+      if( pivotLow < otherLow )
+      {
+         outSwingLow[kernBar] = 100;
+      } else 
+      {
+         outSwingLow[kernBar] = 0;
+      }
+      cur_outSwingHigh = outSwingHigh[kernBar];
+      cur_outSwingLow = outSwingLow[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outSwingHigh = cur_outSwingHigh;
+   sp->cur_outSwingLow = cur_outSwingLow;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_FRACTAL_UpdateBlock( struct TA_FRACTAL_Stream *stream, const double inHigh[], const double inLow[], int nbBar, int outSwingHigh[], int outSwingLow[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outSwingHigh || !outSwingLow ) return TA_BAD_PARAM;
+   TA_FRACTAL_KernImpl( stream, inHigh, inLow, nbBar, outSwingHigh, outSwingLow );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_FRACTAL_Value( const TA_FRACTAL_Stream *stream, int *outSwingHigh, int *outSwingLow )
 {
    if( !stream || !outSwingHigh || !outSwingLow ) return TA_BAD_PARAM;

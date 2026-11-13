@@ -1295,6 +1295,183 @@ TA_LIB_API TA_RetCode TA_SAR_Close( TA_SAR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_SAR_KernImpl( struct TA_SAR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double optInAcceleration = sp->optInAcceleration;
+   double optInMaximum = sp->optInMaximum;
+   int isLong = sp->isLong;
+   double newHigh = sp->newHigh;
+   double newLow = sp->newLow;
+   double af = sp->af;
+   double ep = sp->ep;
+   double sar = sp->sar;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double prevHigh;
+      double prevLow;
+
+      prevLow = newLow;
+      prevHigh = newHigh;
+      newLow = inLow;
+      newHigh = inHigh;
+      if( isLong == 1 )
+      {
+         /* Switch to short if the low penetrates the SAR value. */
+         if( newLow <= sar )
+         {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 0;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh )
+            {
+               sar = prevHigh;
+            }
+            if( sar < newHigh )
+            {
+               sar = newHigh;
+            }
+            /* Output the overide SAR */
+            outReal[kernBar] = sar;
+            /* Adjust af and ep */
+            af = optInAcceleration;
+            ep = newLow;
+            /* Calculate the new SAR */
+            sar = fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh )
+            {
+               sar = prevHigh;
+            }
+            if( sar < newHigh )
+            {
+               sar = newHigh;
+            }
+         } else 
+         {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            outReal[kernBar] = sar;
+            /* Adjust af and ep. */
+            if( newHigh > ep )
+            {
+               ep = newHigh;
+               af += optInAcceleration;
+               if( af > optInMaximum )
+               {
+                  af = optInMaximum;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow )
+            {
+               sar = prevLow;
+            }
+            if( sar > newLow )
+            {
+               sar = newLow;
+            }
+         }
+      /* Switch to long if the high penetrates the SAR value. */
+      } else if( newHigh >= sar )
+      {
+         /* Switch and Overide the SAR with the ep */
+         isLong = 1;
+         sar = ep;
+         /* Make sure the overide SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar > prevLow )
+         {
+            sar = prevLow;
+         }
+         if( sar > newLow )
+         {
+            sar = newLow;
+         }
+         /* Output the overide SAR */
+         outReal[kernBar] = sar;
+         /* Adjust af and ep */
+         af = optInAcceleration;
+         ep = newHigh;
+         /* Calculate the new SAR */
+         sar = fma(af, ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar > prevLow )
+         {
+            sar = prevLow;
+         }
+         if( sar > newLow )
+         {
+            sar = newLow;
+         }
+      } else 
+      {
+         /* No switch */
+         /* Output the SAR (was calculated in the previous iteration) */
+         outReal[kernBar] = sar;
+         /* Adjust af and ep. */
+         if( newLow < ep )
+         {
+            ep = newLow;
+            af += optInAcceleration;
+            if( af > optInMaximum )
+            {
+               af = optInMaximum;
+            }
+         }
+         /* Calculate the new SAR */
+         sar = fma(af, ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar < prevHigh )
+         {
+            sar = prevHigh;
+         }
+         if( sar < newHigh )
+         {
+            sar = newHigh;
+         }
+      }
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->isLong = isLong;
+   sp->newHigh = newHigh;
+   sp->newLow = newLow;
+   sp->af = af;
+   sp->ep = ep;
+   sp->sar = sar;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SAR_UpdateBlock( struct TA_SAR_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   TA_SAR_KernImpl( stream, inHigh, inLow, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SAR_Value( const TA_SAR_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

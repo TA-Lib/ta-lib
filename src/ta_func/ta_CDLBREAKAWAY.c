@@ -1165,6 +1165,133 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Close( TA_CDLBREAKAWAY_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLBREAKAWAY_KernImpl( struct TA_CDLBREAKAWAY_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double BodyLongPeriodTotal = sp->BodyLongPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag3_inOpen = sp->lag3_inOpen;
+   double lag4_inOpen = sp->lag4_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag2_inHigh = sp->lag2_inHigh;
+   double lag3_inHigh = sp->lag3_inHigh;
+   double lag4_inHigh = sp->lag4_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag2_inLow = sp->lag2_inLow;
+   double lag3_inLow = sp->lag3_inLow;
+   double lag4_inLow = sp->lag4_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   double lag3_inClose = sp->lag3_inClose;
+   double lag4_inClose = sp->lag4_inClose;
+   int ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx;
+   int ringCap_BodyLongTrailingIdx = sp->ringCap_BodyLongTrailingIdx;
+   int ringLag_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx;
+   double *ring_BodyLongTrailingIdx_derived = sp->ring_BodyLongTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_BodyLongTrailingIdx;
+
+      ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+      if( ((lag4_inClose >= lag4_inOpen) ? 1 : -1) == ((lag3_inClose >= lag3_inOpen) ? 1 : -1) && /* 1st, 2nd, 4th same color, 5th opposite */
+          ((lag3_inClose >= lag3_inOpen) ? 1 : -1) == ((lag1_inClose >= lag1_inOpen) ? 1 : -1) &&
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) )
+      {
+         if( fabs(lag4_inClose - lag4_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,lag4_inOpen,lag4_inHigh,lag4_inLow,lag4_inClose) && /* 1st long */
+             ((((lag4_inClose >= lag4_inOpen) ? 1 : -1) == -1 && /* when 1st is black: */
+               ((max(lag3_inOpen,lag3_inClose) < min(lag4_inOpen,lag4_inClose)) ? 1 : 0) && /* 2nd gaps down */
+               lag2_inHigh < lag3_inHigh &&
+               lag2_inLow < lag3_inLow &&                        /* 3rd has lower high and low than 2nd */
+               lag1_inHigh < lag2_inHigh &&
+               lag1_inLow < lag2_inLow &&                        /* 4th has lower high and low than 3rd */
+               inClose > lag3_inOpen &&
+               inClose < lag4_inClose) ||                        /* 5th closes inside the gap */
+              (((lag4_inClose >= lag4_inOpen) ? 1 : -1) == 1 &&  /* when 1st is white: */
+               ((min(lag3_inOpen,lag3_inClose) > max(lag4_inOpen,lag4_inClose)) ? 1 : 0) && /* 2nd gaps up */
+               lag2_inHigh > lag3_inHigh &&
+               lag2_inLow > lag3_inLow &&                        /* 3rd has higher high and low than 2nd */
+               lag1_inHigh > lag2_inHigh &&
+               lag1_inLow > lag2_inLow &&                        /* 4th has higher high and low than 3rd */
+               inClose < lag3_inOpen &&
+               inClose > lag4_inClose)) )                        /* 5th closes inside the gap */
+         {
+            outInteger[kernBar] = ((inClose >= inOpen) ? 1 : -1) * 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,lag4_inOpen,lag4_inHigh,lag4_inLow,lag4_inClose) - ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + ringCap_BodyLongTrailingIdx - ringLag_BodyLongTrailingIdx - 4) % ringCap_BodyLongTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag4_inOpen = lag3_inOpen;
+      lag3_inOpen = lag2_inOpen;
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag4_inHigh = lag3_inHigh;
+      lag3_inHigh = lag2_inHigh;
+      lag2_inHigh = lag1_inHigh;
+      lag1_inHigh = inHigh;
+      lag4_inLow = lag3_inLow;
+      lag3_inLow = lag2_inLow;
+      lag2_inLow = lag1_inLow;
+      lag1_inLow = inLow;
+      lag4_inClose = lag3_inClose;
+      lag3_inClose = lag2_inClose;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+      ringPosL_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx + 1;
+      if( ringPosL_BodyLongTrailingIdx >= ringCap_BodyLongTrailingIdx )
+      {
+         ringPosL_BodyLongTrailingIdx = 0;
+      }
+      ringPos_BodyLongTrailingIdx = ringPosL_BodyLongTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag3_inOpen = lag3_inOpen;
+   sp->lag4_inOpen = lag4_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag2_inHigh = lag2_inHigh;
+   sp->lag3_inHigh = lag3_inHigh;
+   sp->lag4_inHigh = lag4_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag2_inLow = lag2_inLow;
+   sp->lag3_inLow = lag3_inLow;
+   sp->lag4_inLow = lag4_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->lag3_inClose = lag3_inClose;
+   sp->lag4_inClose = lag4_inClose;
+   sp->ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLBREAKAWAY_UpdateBlock( struct TA_CDLBREAKAWAY_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLBREAKAWAY_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Value( const TA_CDLBREAKAWAY_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

@@ -982,6 +982,147 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Close( TA_LINEARREG_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_LINEARREG_KernImpl( struct TA_LINEARREG_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int lookbackTotal = sp->lookbackTotal;
+   int trailingIdx = sp->trailingIdx;
+   double SumX = sp->SumX;
+   double SumXY = sp->SumXY;
+   double SumY = sp->SumY;
+   double Divisor = sp->Divisor;
+   int barsSinceReseed = sp->barsSinceReseed;
+   double trailingValue = sp->trailingValue;
+   double sumAbs = sp->sumAbs;
+   int j = sp->j;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double m;
+      double b;
+      int windowStart;
+      double tempValue1;
+      double tempValue2;
+      double weightedTrailing;
+
+      x_inReal[today & xMask] = inReal;
+      weightedTrailing = (double)optInTimePeriod * trailingValue;
+      SumXY = SumXY + SumY - weightedTrailing;
+      SumY = SumY - trailingValue + x_inReal[today & xMask];
+      sumAbs = sumAbs - fabs(trailingValue) + fabs(x_inReal[today & xMask]);
+      /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+       * running totals that are never rebuilt, so each bar's rounding joins a
+       * residue no later bar can subtract -- unbounded in the length of the
+       * call, and scaled by the largest value the sums have EVER held rather
+       * than by what the window holds now. Two triggers, and they cover
+       * different failures (issue #254):
+       *
+       *   - every 32*period bars, so a slow drift stays bounded however long
+       *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+       *
+       *   - when the value the window just dropped carries more weight than
+       *     everything left in it. That is the one the interval cannot cover:
+       *     one large print inflates the residue for up to 32*period bars
+       *     after it is gone (measured 31x at period 5), and this rebuilds on
+       *     the bar it leaves instead.
+       *
+       * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+       * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
+       * never fires; it is a compare, not work. The constant is 100 rather than
+       * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+       * measured accuracy gain.
+       *
+       * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+       * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+       * while the departing value does not, so |weightedTrailing|/|SumY| is
+       * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+       * series measured 10.9x slower at period 30, which is precisely the
+       * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+       * guard on a quartic quantity: a ratio test is ill-posed when its
+       * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+       * when every value in the window is 0 -- and then the numerator is 0 too
+       * and the test is false. There is no window it can misjudge.
+       *
+       * It is also the RIGHT quantity on the merits, not just the safe one: a
+       * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+       * term against sum|y| asks exactly "would rebuilding beat what we are
+       * carrying?".
+       *
+       * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+       * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+       * ns/bar at period 14) because the update is INDEPENDENT of the serial
+       * SumXY -> SumY dependency chain and fills slots that were idle. The
+       * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+       * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+       * it, and silently dropped any print departing within `period` bars of a
+       * rebuild (~3% of them).
+       *
+       * The scan walks the window oldest-first with the weight counting DOWN,
+       * which is the priming scan's order and weighting -- so a reseeded bar is
+       * bit-identical to the same bar computed by a call that started there.
+       * That identity is the whole point: it is what the range-stability
+       * contract measures.
+       *
+       * Reading the window is safe when outReal aliases inReal (#130): the
+       * outputs written so far occupy [0, outIdx-1], and windowStart is
+       * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+       * to at least lookbackTotal.
+       */
+      barsSinceReseed -= 1;
+      if( barsSinceReseed <= 0 || fabs(weightedTrailing) > 100.0 * sumAbs )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = today - lookbackTotal;
+         SumY = 0;
+         SumXY = 0;
+         sumAbs = 0;
+         tempValue2 = (double)lookbackTotal;
+         for( j = windowStart; j <= today; j += 1 )
+         {
+            tempValue1 = x_inReal[j & xMask];
+            SumY += tempValue1;
+            SumXY += tempValue2 * tempValue1;
+            sumAbs += fabs(tempValue1);
+            tempValue2 -= 1.0;
+         }
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = x_inReal[trailingIdx & xMask];
+      trailingIdx += 1;
+      outReal[kernBar] = fma(m, (double)(optInTimePeriod - 1), b);
+      today += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->trailingIdx = trailingIdx;
+   sp->SumXY = SumXY;
+   sp->SumY = SumY;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->trailingValue = trailingValue;
+   sp->sumAbs = sumAbs;
+   sp->j = j;
+   sp->today = today;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_LINEARREG_UpdateBlock( struct TA_LINEARREG_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_LINEARREG_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_LINEARREG_Value( const TA_LINEARREG_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

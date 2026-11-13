@@ -489,6 +489,68 @@ TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_IMI_KernImpl( struct TA_IMI_Stream *sp, const double inOpenBlk[], const double inCloseBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   int winPos_i = sp->winPos_i;
+   int winCap_i = sp->winCap_i;
+   double *win_i_inOpen = sp->win_i_inOpen;
+   double *win_i_inClose = sp->win_i_inClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double upsum;
+      double downsum;
+      int i;
+      double diff;
+      double up;
+
+      win_i_inOpen[winPos_i] = inOpen;
+      win_i_inClose[winPos_i] = inClose;
+      upsum = 0.0;
+      downsum = 0.0;
+      for( i = optInTimePeriod - 1; i >= 0; i -= 1 )
+      {
+         diff = win_i_inClose[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i] - win_i_inOpen[(winPos_i + winCap_i - i >= winCap_i) ? winPos_i + winCap_i - i - winCap_i : winPos_i + winCap_i - i];
+         /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+          * compiles a ternary to a branch and gcc an if/else; either mispredicts
+          * on random data, though the if/else retires fewer instructions.
+          */
+         up = (diff + fabs(diff)) * 0.5;
+         upsum += up;
+         downsum += up - diff;
+      }
+      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+       * oscillator, so no up/down bias returns its neutral center, 50.0.
+       */
+      outReal[kernBar] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+      cur_outReal = outReal[kernBar];
+      winPos_i = winPos_i + 1;
+      if( winPos_i >= winCap_i )
+      {
+         winPos_i = 0;
+      }
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->winPos_i = winPos_i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_IMI_UpdateBlock( struct TA_IMI_Stream *stream, const double inOpen[], const double inClose[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   TA_IMI_KernImpl( stream, inOpen, inClose, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_IMI_Value( const TA_IMI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

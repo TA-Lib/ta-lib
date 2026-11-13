@@ -481,6 +481,45 @@ TA_LIB_API TA_RetCode TA_MCGD_Close( TA_MCGD_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_MCGD_KernImpl( struct TA_MCGD_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevMD = sp->prevMD;
+   double period = sp->period;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempMD;
+      double tempReal;
+      double ratio;
+
+      tempReal = inReal;
+      ratio = tempReal / prevMD;
+      tempMD = prevMD + (tempReal - prevMD) / (period * (ratio * ratio * (ratio * ratio)));
+      if( TA_IS_FINITE(tempMD) )
+      {
+         prevMD = tempMD;
+      }
+      outReal[kernBar] = prevMD;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevMD = prevMD;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MCGD_UpdateBlock( struct TA_MCGD_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_MCGD_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MCGD_Value( const TA_MCGD_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

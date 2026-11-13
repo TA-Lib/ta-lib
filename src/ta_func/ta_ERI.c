@@ -712,6 +712,67 @@ TA_LIB_API TA_RetCode TA_ERI_Close( TA_ERI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_ERI_KernImpl( struct TA_ERI_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outBullPower[], double outBearPower[] )
+{
+   double cur_outBullPower = sp->cur_outBullPower;
+   double cur_outBearPower = sp->cur_outBearPower;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double prevMA = sp->prevMA;
+   double k = sp->k;
+   double beta = sp->beta;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+
+      if( optInTimePeriod == 1 )
+      {
+         double tempReal;
+         double tempHT;
+         double tempLT;
+
+         tempHT = inHigh;
+         tempLT = inLow;
+         tempReal = inClose;
+         outBullPower[kernBar] = tempHT - tempReal;
+         outBearPower[kernBar] = tempLT - tempReal;
+         cur_outBullPower = outBullPower[kernBar];
+         cur_outBearPower = outBearPower[kernBar];
+      }
+      else
+      {
+         double tempHT;
+         double tempLT;
+
+         prevMA = fma(beta, prevMA, k * inClose);
+         tempHT = inHigh;
+         tempLT = inLow;
+         outBullPower[kernBar] = tempHT - prevMA;
+         outBearPower[kernBar] = tempLT - prevMA;
+         cur_outBullPower = outBullPower[kernBar];
+         cur_outBearPower = outBearPower[kernBar];
+      }
+   }
+   sp->cur_outBullPower = cur_outBullPower;
+   sp->cur_outBearPower = cur_outBearPower;
+   sp->prevMA = prevMA;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ERI_UpdateBlock( struct TA_ERI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outBullPower[], double outBearPower[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outBullPower || !outBearPower ) return TA_BAD_PARAM;
+   TA_ERI_KernImpl( stream, inHigh, inLow, inClose, nbBar, outBullPower, outBearPower );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ERI_Value( const TA_ERI_Stream *stream, double *outBullPower, double *outBearPower )
 {
    if( !stream || !outBullPower || !outBearPower ) return TA_BAD_PARAM;

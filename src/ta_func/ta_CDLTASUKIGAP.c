@@ -1139,6 +1139,106 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Close( TA_CDLTASUKIGAP_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_CDLTASUKIGAP_KernImpl( struct TA_CDLTASUKIGAP_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, int outInteger[] )
+{
+   int cur_outInteger = sp->cur_outInteger;
+   double NearPeriodTotal = sp->NearPeriodTotal;
+   double lag1_inOpen = sp->lag1_inOpen;
+   double lag2_inOpen = sp->lag2_inOpen;
+   double lag1_inHigh = sp->lag1_inHigh;
+   double lag1_inLow = sp->lag1_inLow;
+   double lag1_inClose = sp->lag1_inClose;
+   double lag2_inClose = sp->lag2_inClose;
+   int ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx;
+   int ringCap_NearTrailingIdx = sp->ringCap_NearTrailingIdx;
+   int ringLag_NearTrailingIdx = sp->ringLag_NearTrailingIdx;
+   double *ring_NearTrailingIdx_derived = sp->ring_NearTrailingIdx_derived;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      int ringPosL_NearTrailingIdx;
+
+      ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
+      if( ((min(lag1_inOpen,lag1_inClose) > max(lag2_inOpen,lag2_inClose)) ? 1 : 0) && /* upside gap */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == 1 && /* 1st: white */
+          ((inClose >= inOpen) ? 1 : -1) == -1 )           /* 2nd: black */
+      {
+         if( inOpen < lag1_inClose &&
+             inOpen > lag1_inOpen &&                    /* that opens within the white rb */
+             inClose < lag1_inOpen &&                   /* and closes under the white rb */
+             inClose > max(lag2_inClose,lag2_inOpen) && /* inside the gap */
+             fabs(fabs(lag1_inClose - lag1_inOpen) - fabs(inClose - inOpen)) < TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) ) /* size of 2 rb near the same */
+         {
+            outInteger[kernBar] = ((lag1_inClose >= lag1_inOpen) ? 1 : -1) * 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else if( ((max(lag1_inOpen,lag1_inClose) < min(lag2_inOpen,lag2_inClose)) ? 1 : 0) && /* downside gap */
+          ((lag1_inClose >= lag1_inOpen) ? 1 : -1) == -1 && /* 1st: black */
+          ((inClose >= inOpen) ? 1 : -1) == 1 )             /* 2nd: white */
+      {
+         if( inOpen < lag1_inOpen &&
+             inOpen > lag1_inClose &&                   /* that opens within the black rb */
+             inClose > lag1_inOpen &&                   /* and closes above the black rb */
+             inClose < min(lag2_inClose,lag2_inOpen) && /* inside the gap */
+             fabs(fabs(lag1_inClose - lag1_inOpen) - fabs(inClose - inOpen)) < TA_STREAM_CANDLEAVERAGE(Near,NearPeriodTotal,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) ) /* size of 2 rb near the same */
+         {
+            outInteger[kernBar] = ((lag1_inClose >= lag1_inOpen) ? 1 : -1) * 100;
+         } else 
+         {
+            outInteger[kernBar] = 0;
+         }
+      } else 
+      {
+         outInteger[kernBar] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,lag1_inOpen,lag1_inHigh,lag1_inLow,lag1_inClose) - ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + ringCap_NearTrailingIdx - ringLag_NearTrailingIdx - 1) % ringCap_NearTrailingIdx];
+      cur_outInteger = outInteger[kernBar];
+      lag2_inOpen = lag1_inOpen;
+      lag1_inOpen = inOpen;
+      lag1_inHigh = inHigh;
+      lag1_inLow = inLow;
+      lag2_inClose = lag1_inClose;
+      lag1_inClose = inClose;
+      ringPosL_NearTrailingIdx = ringPos_NearTrailingIdx;
+      ringPosL_NearTrailingIdx = ringPosL_NearTrailingIdx + 1;
+      if( ringPosL_NearTrailingIdx >= ringCap_NearTrailingIdx )
+      {
+         ringPosL_NearTrailingIdx = 0;
+      }
+      ringPos_NearTrailingIdx = ringPosL_NearTrailingIdx;
+   }
+   sp->cur_outInteger = cur_outInteger;
+   sp->NearPeriodTotal = NearPeriodTotal;
+   sp->lag1_inOpen = lag1_inOpen;
+   sp->lag2_inOpen = lag2_inOpen;
+   sp->lag1_inHigh = lag1_inHigh;
+   sp->lag1_inLow = lag1_inLow;
+   sp->lag1_inClose = lag1_inClose;
+   sp->lag2_inClose = lag2_inClose;
+   sp->ringPos_NearTrailingIdx = ringPos_NearTrailingIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLTASUKIGAP_UpdateBlock( struct TA_CDLTASUKIGAP_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, int outInteger[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   TA_CDLTASUKIGAP_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outInteger );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Value( const TA_CDLTASUKIGAP_Stream *stream, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

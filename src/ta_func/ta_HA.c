@@ -730,6 +730,85 @@ TA_LIB_API TA_RetCode TA_HA_Close( TA_HA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_HA_KernImpl( struct TA_HA_Stream *sp, const double inOpenBlk[], const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+{
+   double cur_outHAOpen = sp->cur_outHAOpen;
+   double cur_outHAHigh = sp->cur_outHAHigh;
+   double cur_outHALow = sp->cur_outHALow;
+   double cur_outHAClose = sp->cur_outHAClose;
+   double haOpen = sp->haOpen;
+   double haClose = sp->haClose;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inOpen = inOpenBlk[kernBar];
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double haHigh;
+      double haLow;
+      double tempOpen;
+      double tempHigh;
+      double tempLow;
+      double tempClose;
+
+      /* Every price of the bar is read into a local before any output is
+       * written, which is what lets an output alias any input: at startIdx 0
+       * the store lands on the very slot the high and low were just read from.
+       */
+      tempOpen = inOpen;
+      tempHigh = inHigh;
+      tempLow = inLow;
+      tempClose = inClose;
+      haOpen = (haOpen + haClose) / 2.0;
+      haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+      haHigh = tempHigh;
+      if( haOpen > haHigh )
+      {
+         haHigh = haOpen;
+      }
+      if( haClose > haHigh )
+      {
+         haHigh = haClose;
+      }
+      haLow = tempLow;
+      if( haOpen < haLow )
+      {
+         haLow = haOpen;
+      }
+      if( haClose < haLow )
+      {
+         haLow = haClose;
+      }
+      outHAOpen[kernBar] = haOpen;
+      outHAHigh[kernBar] = haHigh;
+      outHALow[kernBar] = haLow;
+      outHAClose[kernBar] = haClose;
+      cur_outHAOpen = outHAOpen[kernBar];
+      cur_outHAHigh = outHAHigh[kernBar];
+      cur_outHALow = outHALow[kernBar];
+      cur_outHAClose = outHAClose[kernBar];
+   }
+   sp->cur_outHAOpen = cur_outHAOpen;
+   sp->cur_outHAHigh = cur_outHAHigh;
+   sp->cur_outHALow = cur_outHALow;
+   sp->cur_outHAClose = cur_outHAClose;
+   sp->haOpen = haOpen;
+   sp->haClose = haClose;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_HA_UpdateBlock( struct TA_HA_Stream *stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
+   TA_HA_KernImpl( stream, inOpen, inHigh, inLow, inClose, nbBar, outHAOpen, outHAHigh, outHALow, outHAClose );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_HA_Value( const TA_HA_Stream *stream, double *outHAOpen, double *outHAHigh, double *outHALow, double *outHAClose )
 {
    if( !stream || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;

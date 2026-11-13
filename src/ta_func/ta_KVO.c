@@ -1045,6 +1045,98 @@ TA_LIB_API TA_RetCode TA_KVO_Close( TA_KVO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_KVO_KernImpl( struct TA_KVO_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outKVO[], double outKVOSignal[] )
+{
+   double cur_outKVO = sp->cur_outKVO;
+   double cur_outKVOSignal = sp->cur_outKVOSignal;
+   double kFast = sp->kFast;
+   double kSlow = sp->kSlow;
+   double kSignal = sp->kSignal;
+   double betaFast = sp->betaFast;
+   double betaSlow = sp->betaSlow;
+   double betaSignal = sp->betaSignal;
+   double prevHlc = sp->prevHlc;
+   double prevDm = sp->prevDm;
+   double emaFast = sp->emaFast;
+   double emaSlow = sp->emaSlow;
+   double cm = sp->cm;
+   double prevTrend = sp->prevTrend;
+   double signalValue = sp->signalValue;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double hlc;
+      double dmToday;
+      double vf;
+      double trend;
+      double kvoValue;
+
+      hlc = inHigh + inLow + inClose;
+      dmToday = inHigh - inLow;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
+      if( trend != prevTrend )
+      {
+         cm = prevDm + dmToday;
+      } else 
+      {
+         cm = cm + dmToday;
+      }
+      if( cm == 0.0 )
+      {
+         vf = 0.0;
+      } else 
+      {
+         vf = inVolume * fabs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
+      }
+      emaFast = fma(betaFast, emaFast, kFast * vf);
+      emaSlow = fma(betaSlow, emaSlow, kSlow * vf);
+      kvoValue = emaFast - emaSlow;
+      signalValue = fma(betaSignal, signalValue, kSignal * kvoValue);
+      outKVO[kernBar] = kvoValue;
+      outKVOSignal[kernBar] = signalValue;
+      prevHlc = hlc;
+      prevDm = dmToday;
+      prevTrend = trend;
+      cur_outKVO = outKVO[kernBar];
+      cur_outKVOSignal = outKVOSignal[kernBar];
+   }
+   sp->cur_outKVO = cur_outKVO;
+   sp->cur_outKVOSignal = cur_outKVOSignal;
+   sp->prevHlc = prevHlc;
+   sp->prevDm = prevDm;
+   sp->emaFast = emaFast;
+   sp->emaSlow = emaSlow;
+   sp->cm = cm;
+   sp->prevTrend = prevTrend;
+   sp->signalValue = signalValue;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KVO_UpdateBlock( struct TA_KVO_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int nbBar, double outKVO[], double outKVOSignal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;
+   TA_KVO_KernImpl( stream, inHigh, inLow, inClose, inVolume, nbBar, outKVO, outKVOSignal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KVO_Value( const TA_KVO_Stream *stream, double *outKVO, double *outKVOSignal )
 {
    if( !stream || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;

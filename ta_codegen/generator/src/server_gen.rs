@@ -306,6 +306,16 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     }
     s.push('\n');
 
+    s.push_str("/* Block update entries */\n");
+    for func in funcs
+        .iter()
+        .filter(|f| f.streaming && crate::backends::c_stream::kernel_decision(f, &lookup).is_ok())
+    {
+        s.push_str(&crate::backends::c_stream::update_block_signature(func));
+        s.push_str(";\n");
+    }
+    s.push('\n');
+
     // A period bank's slots step through the dispatcher's and the arms' tape
     // entries (#445), each defined in its own translation unit.
     s.push_str("/* Period-bank tape entries */\n");

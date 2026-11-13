@@ -2363,6 +2363,212 @@ TA_LIB_API TA_RetCode TA_STC_Close( TA_STC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_STC_KernImpl( struct TA_STC_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double prevFast = sp->prevFast;
+   double prevSlow = sp->prevSlow;
+   double fastK = sp->fastK;
+   double slowK = sp->slowK;
+   double fastBeta = sp->fastBeta;
+   double slowBeta = sp->slowBeta;
+   double frac1 = sp->frac1;
+   double frac2 = sp->frac2;
+   double pf = sp->pf;
+   double pff = sp->pff;
+   double lineHi = sp->lineHi;
+   double lineLo = sp->lineLo;
+   double pfHi = sp->pfHi;
+   double pfLo = sp->pfLo;
+   int lastIdx = sp->lastIdx;
+   int lineRing_Idx = sp->lineRing_Idx;
+   int pfRing_Idx = sp->pfRing_Idx;
+   int maxIdx_lineRing = sp->maxIdx_lineRing;
+   int maxIdx_pfRing = sp->maxIdx_pfRing;
+   double *cb_lineRing = sp->cb_lineRing;
+   double *cb_lineSufHi = sp->cb_lineSufHi;
+   double *cb_lineSufLo = sp->cb_lineSufLo;
+   double *cb_pfRing = sp->cb_pfRing;
+   double *cb_pfSufHi = sp->cb_pfSufHi;
+   double *cb_pfSufLo = sp->cb_pfSufLo;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double tempReal;
+      double lineValue;
+      double lowest;
+      double highest;
+      double range;
+      double sufHi;
+      double sufLo;
+      int i;
+
+      tempReal = inReal;
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      lineValue = prevFast - prevSlow;
+      cb_lineRing[lineRing_Idx] = lineValue;
+      if( lineRing_Idx == 0 )
+      {
+         lineHi = lineValue;
+         lineLo = lineValue;
+      } else 
+      {
+         if( lineValue > lineHi )
+         {
+            lineHi = lineValue;
+         }
+         if( lineValue < lineLo )
+         {
+            lineLo = lineValue;
+         }
+      }
+      highest = lineHi;
+      lowest = lineLo;
+      if( lineRing_Idx < lastIdx )
+      {
+         tempReal = cb_lineSufHi[lineRing_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = cb_lineSufLo[lineRing_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      lineRing_Idx = lineRing_Idx + 1;
+      if( lineRing_Idx > maxIdx_lineRing )
+      {
+         lineRing_Idx = 0;
+      }
+      if( lineRing_Idx == 0 )
+      {
+         sufHi = cb_lineRing[lastIdx];
+         sufLo = sufHi;
+         cb_lineSufHi[lastIdx] = sufHi;
+         cb_lineSufLo[lastIdx] = sufLo;
+         i = lastIdx;
+         while( i > 0 )
+         {
+            i -= 1;
+            tempReal = cb_lineRing[i];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            cb_lineSufHi[i] = sufHi;
+            cb_lineSufLo[i] = sufLo;
+         }
+      }
+      range = highest - lowest;
+      if( range > 0.0 )
+      {
+         frac1 = (lineValue - lowest) / range * 100.0;
+      }
+      pf = fma(0.5, frac1 - pf, pf);
+      cb_pfRing[pfRing_Idx] = pf;
+      if( pfRing_Idx == 0 )
+      {
+         pfHi = pf;
+         pfLo = pf;
+      } else 
+      {
+         if( pf > pfHi )
+         {
+            pfHi = pf;
+         }
+         if( pf < pfLo )
+         {
+            pfLo = pf;
+         }
+      }
+      highest = pfHi;
+      lowest = pfLo;
+      if( pfRing_Idx < lastIdx )
+      {
+         tempReal = cb_pfSufHi[pfRing_Idx + 1];
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         tempReal = cb_pfSufLo[pfRing_Idx + 1];
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+      }
+      pfRing_Idx = pfRing_Idx + 1;
+      if( pfRing_Idx > maxIdx_pfRing )
+      {
+         pfRing_Idx = 0;
+      }
+      if( pfRing_Idx == 0 )
+      {
+         sufHi = cb_pfRing[lastIdx];
+         sufLo = sufHi;
+         cb_pfSufHi[lastIdx] = sufHi;
+         cb_pfSufLo[lastIdx] = sufLo;
+         i = lastIdx;
+         while( i > 0 )
+         {
+            i -= 1;
+            tempReal = cb_pfRing[i];
+            if( tempReal > sufHi )
+            {
+               sufHi = tempReal;
+            }
+            if( tempReal < sufLo )
+            {
+               sufLo = tempReal;
+            }
+            cb_pfSufHi[i] = sufHi;
+            cb_pfSufLo[i] = sufLo;
+         }
+      }
+      range = highest - lowest;
+      if( range > 0.0 )
+      {
+         frac2 = (pf - lowest) / range * 100.0;
+      }
+      pff = fma(0.5, frac2 - pff, pff);
+      outReal[kernBar] = pff;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->prevFast = prevFast;
+   sp->prevSlow = prevSlow;
+   sp->frac1 = frac1;
+   sp->frac2 = frac2;
+   sp->pf = pf;
+   sp->pff = pff;
+   sp->lineHi = lineHi;
+   sp->lineLo = lineLo;
+   sp->pfHi = pfHi;
+   sp->pfLo = pfLo;
+   sp->lineRing_Idx = lineRing_Idx;
+   sp->pfRing_Idx = pfRing_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STC_UpdateBlock( struct TA_STC_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_STC_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_STC_Value( const TA_STC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

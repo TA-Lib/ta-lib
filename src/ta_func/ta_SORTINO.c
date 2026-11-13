@@ -1232,6 +1232,192 @@ TA_LIB_API TA_RetCode TA_SORTINO_Close( TA_SORTINO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static void TA_SORTINO_KernImpl( struct TA_SORTINO_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   int optInTimePeriod = sp->optInTimePeriod;
+   double optInMAR = sp->optInMAR;
+   double periodTotal = sp->periodTotal;
+   double downTotal = sp->downTotal;
+   double absTotal = sp->absTotal;
+   double peakDown = sp->peakDown;
+   double peakAbs = sp->peakAbs;
+   double prevPrice = sp->prevPrice;
+   double invPeriod = sp->invPeriod;
+   double sqrtAnnual = sp->sqrtAnnual;
+   int trailingIdx = sp->trailingIdx;
+   int barsSinceReseed = sp->barsSinceReseed;
+   int nbBelow = sp->nbBelow;
+   int nbAbove = sp->nbAbove;
+   int j = sp->j;
+   int windowStart = sp->windowStart;
+   int i = sp->i;
+   int xMask = sp->xMask;
+   double *x_inReal = sp->x_inReal;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      double windowTotal;
+      double windowDown;
+      double windowAbs;
+      double price;
+      double trailingPrevPrice;
+      double windowPrevPrice;
+      double ret;
+      double dev;
+      double excess;
+      double ratio;
+      int windowBelow;
+      int windowAbove;
+
+      x_inReal[i & xMask] = inReal;
+      price = x_inReal[i & xMask];
+      ret = 0.0;
+      if( prevPrice != 0.0 )
+      {
+         ret = (price - prevPrice) / prevPrice;
+      }
+      prevPrice = price;
+      periodTotal += ret;
+      absTotal += fabs(ret);
+      dev = ret - optInMAR;
+      if( dev < 0.0 )
+      {
+         downTotal += dev * dev;
+         nbBelow += 1;
+      } else if( dev > 0.0 )
+      {
+         nbAbove += 1;
+      }
+      peakDown = (downTotal > peakDown) ? downTotal : peakDown;
+      peakAbs = (absTotal > peakAbs) ? absTotal : peakAbs;
+      windowTotal = periodTotal;
+      windowDown = downTotal;
+      windowAbs = absTotal;
+      windowBelow = nbBelow;
+      windowAbove = nbAbove;
+      /* inReal and outReal may be the same buffer, and the trailing prices
+       * sit in slots the output reaches: every read of the window happens
+       * before this bar's write.
+       */
+      trailingPrevPrice = x_inReal[trailingIdx & xMask];
+      trailingIdx += 1;
+      price = x_inReal[trailingIdx & xMask];
+      ret = 0.0;
+      if( trailingPrevPrice != 0.0 )
+      {
+         ret = (price - trailingPrevPrice) / trailingPrevPrice;
+      }
+      periodTotal -= ret;
+      absTotal -= fabs(ret);
+      dev = ret - optInMAR;
+      if( dev < 0.0 )
+      {
+         downTotal -= dev * dev;
+         nbBelow -= 1;
+      } else if( dev > 0.0 )
+      {
+         nbAbove -= 1;
+      }
+      /* Rebuild when the downside sum, or the sum of absolute returns, has
+       * shrunk below 1% of the largest one held since the last rebuild, or at
+       * least every 32 windows. The rounding a running sum carries scales
+       * with that peak, so once a large return leaves, the mean or the
+       * divisor can be all rounding.
+       */
+      barsSinceReseed -= 1;
+      if( windowDown < 0.01 * peakDown || windowAbs < 0.01 * peakAbs || barsSinceReseed <= 0 )
+      {
+         barsSinceReseed = 32 * optInTimePeriod;
+         windowStart = i - optInTimePeriod + 1;
+         windowPrevPrice = x_inReal[(windowStart - 1) & xMask];
+         windowTotal = 0.0;
+         windowDown = 0.0;
+         windowAbs = 0.0;
+         for( j = windowStart; j <= i; j += 1 )
+         {
+            price = x_inReal[j & xMask];
+            ret = 0.0;
+            if( windowPrevPrice != 0.0 )
+            {
+               ret = (price - windowPrevPrice) / windowPrevPrice;
+            }
+            windowPrevPrice = price;
+            windowTotal += ret;
+            windowAbs += fabs(ret);
+            dev = ret - optInMAR;
+            if( dev < 0.0 )
+            {
+               windowDown += dev * dev;
+            }
+         }
+         peakDown = windowDown;
+         peakAbs = windowAbs;
+         /* Re-remove the trailing return so the carried state matches the
+          * path without a rebuild; the counts never drift.
+          */
+         price = x_inReal[windowStart & xMask];
+         ret = 0.0;
+         if( x_inReal[(windowStart - 1) & xMask] != 0.0 )
+         {
+            ret = (price - x_inReal[(windowStart - 1) & xMask]) / x_inReal[(windowStart - 1) & xMask];
+         }
+         periodTotal = windowTotal - ret;
+         absTotal = windowAbs - fabs(ret);
+         downTotal = windowDown;
+         dev = ret - optInMAR;
+         if( dev < 0.0 )
+         {
+            downTotal -= dev * dev;
+         }
+      }
+      /* No downside is the plain quotient (ruled on #572): the mean excess
+       * is then positive exactly when some return beats the MAR, giving
+       * +Inf, and zero when every return equals it, giving NaN. The count
+       * stands in for the mean so rounding cannot flip either case.
+       * Annualize the per-bar ratio last, so an annualization of 1 is that
+       * ratio bit for bit.
+       */
+      excess = windowTotal * invPeriod - optInMAR;
+      if( windowBelow == 0 )
+      {
+         windowDown = 0.0;
+         excess = (double)windowAbove;
+      }
+      ratio = excess / sqrt(windowDown * invPeriod);
+      outReal[kernBar] = sqrtAnnual * ratio;
+      i += 1;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->periodTotal = periodTotal;
+   sp->downTotal = downTotal;
+   sp->absTotal = absTotal;
+   sp->peakDown = peakDown;
+   sp->peakAbs = peakAbs;
+   sp->prevPrice = prevPrice;
+   sp->trailingIdx = trailingIdx;
+   sp->barsSinceReseed = barsSinceReseed;
+   sp->nbBelow = nbBelow;
+   sp->nbAbove = nbAbove;
+   sp->j = j;
+   sp->windowStart = windowStart;
+   sp->i = i;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SORTINO_UpdateBlock( struct TA_SORTINO_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   TA_SORTINO_KernImpl( stream, inReal, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_SORTINO_Value( const TA_SORTINO_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

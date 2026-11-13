@@ -2147,6 +2147,357 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Close( TA_HT_SINE_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_HT_SINE_KernImpl( struct TA_HT_SINE_Stream *sp, const double inRealBlk[], int nbBar, double outSine[], double outLeadSine[] )
+{
+   double cur_outSine = sp->cur_outSine;
+   double cur_outLeadSine = sp->cur_outLeadSine;
+   double period = sp->period;
+   double periodWMASum = sp->periodWMASum;
+   double periodWMASub = sp->periodWMASub;
+   double trailingWMAValue = sp->trailingWMAValue;
+   double a = sp->a;
+   double b = sp->b;
+   int hilbertIdx = sp->hilbertIdx;
+   double *detrender_Odd = sp->detrender_Odd;
+   double *detrender_Even = sp->detrender_Even;
+   double prev_detrender_Odd = sp->prev_detrender_Odd;
+   double prev_detrender_Even = sp->prev_detrender_Even;
+   double prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
+   double prev_detrender_input_Even = sp->prev_detrender_input_Even;
+   double *Q1_Odd = sp->Q1_Odd;
+   double *Q1_Even = sp->Q1_Even;
+   double prev_Q1_Odd = sp->prev_Q1_Odd;
+   double prev_Q1_Even = sp->prev_Q1_Even;
+   double prev_Q1_input_Odd = sp->prev_Q1_input_Odd;
+   double prev_Q1_input_Even = sp->prev_Q1_input_Even;
+   double *jI_Odd = sp->jI_Odd;
+   double *jI_Even = sp->jI_Even;
+   double prev_jI_Odd = sp->prev_jI_Odd;
+   double prev_jI_Even = sp->prev_jI_Even;
+   double prev_jI_input_Odd = sp->prev_jI_input_Odd;
+   double prev_jI_input_Even = sp->prev_jI_input_Even;
+   double *jQ_Odd = sp->jQ_Odd;
+   double *jQ_Even = sp->jQ_Even;
+   double prev_jQ_Odd = sp->prev_jQ_Odd;
+   double prev_jQ_Even = sp->prev_jQ_Even;
+   double prev_jQ_input_Odd = sp->prev_jQ_input_Odd;
+   double prev_jQ_input_Even = sp->prev_jQ_input_Even;
+   double prevQ2 = sp->prevQ2;
+   double prevI2 = sp->prevI2;
+   double Re = sp->Re;
+   double Im = sp->Im;
+   double I1ForOddPrev2 = sp->I1ForOddPrev2;
+   double I1ForOddPrev3 = sp->I1ForOddPrev3;
+   double I1ForEvenPrev2 = sp->I1ForEvenPrev2;
+   double I1ForEvenPrev3 = sp->I1ForEvenPrev3;
+   double rad2Deg = sp->rad2Deg;
+   double deg2Rad = sp->deg2Rad;
+   double constDeg2RadBy360 = sp->constDeg2RadBy360;
+   double smoothPeriod = sp->smoothPeriod;
+   double DCPhase = sp->DCPhase;
+   int smoothPrice_Idx = sp->smoothPrice_Idx;
+   int maxIdx_smoothPrice = sp->maxIdx_smoothPrice;
+   int streamParity = sp->streamParity;
+   int ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx;
+   int ringCap_trailingWMAIdx = sp->ringCap_trailingWMAIdx;
+   double *ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
+   double *cb_smoothPrice = sp->cb_smoothPrice;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inReal = inRealBlk[kernBar];
+      int i;
+      double tempReal;
+      double tempReal2;
+      double adjustedPrevPeriod;
+      double smoothedValue;
+      double hilbertTempReal;
+      double detrender;
+      double Q1;
+      double jI;
+      double jQ;
+      double Q2;
+      double I2;
+      double todayValue;
+      int idx;
+      int DCPeriodInt;
+      double DCPeriod;
+      double imagPart;
+      double realPart;
+      int ringPosL_trailingWMAIdx;
+      int ringCapL_trailingWMAIdx;
+
+      adjustedPrevPeriod = fma(0.075, period, 0.54);
+      todayValue = inReal;
+      periodWMASub += todayValue;
+      periodWMASub -= trailingWMAValue;
+      periodWMASum += todayValue * 4.0;
+      trailingWMAValue = ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx];
+      smoothedValue = periodWMASum * 0.1;
+      periodWMASum -= periodWMASub;
+      /* Remember the smoothedValue into the smoothPrice
+       * circular buffer.
+       */
+      cb_smoothPrice[smoothPrice_Idx] = smoothedValue;
+      if( streamParity == 0 )
+      {
+         /* Do the Hilbert Transforms for even price bar */
+         hilbertTempReal = a * smoothedValue;
+         detrender = -detrender_Even[hilbertIdx];
+         detrender_Even[hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= prev_detrender_Even;
+         prev_detrender_Even = b * prev_detrender_input_Even;
+         detrender += prev_detrender_Even;
+         prev_detrender_input_Even = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = a * detrender;
+         Q1 = -Q1_Even[hilbertIdx];
+         Q1_Even[hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= prev_Q1_Even;
+         prev_Q1_Even = b * prev_Q1_input_Even;
+         Q1 += prev_Q1_Even;
+         prev_Q1_input_Even = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = a * I1ForEvenPrev3;
+         jI = -jI_Even[hilbertIdx];
+         jI_Even[hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= prev_jI_Even;
+         prev_jI_Even = b * prev_jI_input_Even;
+         jI += prev_jI_Even;
+         prev_jI_input_Even = I1ForEvenPrev3;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = a * Q1;
+         jQ = -jQ_Even[hilbertIdx];
+         jQ_Even[hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= prev_jQ_Even;
+         prev_jQ_Even = b * prev_jQ_input_Even;
+         jQ += prev_jQ_Even;
+         prev_jQ_input_Even = Q1;
+         jQ *= adjustedPrevPeriod;
+         if( ++hilbertIdx == 3 )
+         {
+            hilbertIdx = 0;
+         }
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+         /* The variable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "odd" logic later.
+          */
+         I1ForOddPrev3 = I1ForOddPrev2;
+         I1ForOddPrev2 = detrender;
+      } else 
+      {
+         /* Do the Hilbert Transforms for odd price bar */
+         hilbertTempReal = a * smoothedValue;
+         detrender = -detrender_Odd[hilbertIdx];
+         detrender_Odd[hilbertIdx] = hilbertTempReal;
+         detrender += hilbertTempReal;
+         detrender -= prev_detrender_Odd;
+         prev_detrender_Odd = b * prev_detrender_input_Odd;
+         detrender += prev_detrender_Odd;
+         prev_detrender_input_Odd = smoothedValue;
+         detrender *= adjustedPrevPeriod;
+         hilbertTempReal = a * detrender;
+         Q1 = -Q1_Odd[hilbertIdx];
+         Q1_Odd[hilbertIdx] = hilbertTempReal;
+         Q1 += hilbertTempReal;
+         Q1 -= prev_Q1_Odd;
+         prev_Q1_Odd = b * prev_Q1_input_Odd;
+         Q1 += prev_Q1_Odd;
+         prev_Q1_input_Odd = detrender;
+         Q1 *= adjustedPrevPeriod;
+         hilbertTempReal = a * I1ForOddPrev3;
+         jI = -jI_Odd[hilbertIdx];
+         jI_Odd[hilbertIdx] = hilbertTempReal;
+         jI += hilbertTempReal;
+         jI -= prev_jI_Odd;
+         prev_jI_Odd = b * prev_jI_input_Odd;
+         jI += prev_jI_Odd;
+         prev_jI_input_Odd = I1ForOddPrev3;
+         jI *= adjustedPrevPeriod;
+         hilbertTempReal = a * Q1;
+         jQ = -jQ_Odd[hilbertIdx];
+         jQ_Odd[hilbertIdx] = hilbertTempReal;
+         jQ += hilbertTempReal;
+         jQ -= prev_jQ_Odd;
+         prev_jQ_Odd = b * prev_jQ_input_Odd;
+         jQ += prev_jQ_Odd;
+         prev_jQ_input_Odd = Q1;
+         jQ *= adjustedPrevPeriod;
+         Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+         I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+         /* The varaiable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "even" logic later.
+          */
+         I1ForEvenPrev3 = I1ForEvenPrev2;
+         I1ForEvenPrev2 = detrender;
+      }
+      /* Adjust the period for next price bar */
+      Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+      Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+      prevQ2 = Q2;
+      prevI2 = I2;
+      tempReal = period;
+      if( Im != 0.0 && Re != 0.0 )
+      {
+         period = 360.0 / (atan(Im / Re) * rad2Deg);
+      }
+      tempReal2 = 1.5 * tempReal;
+      if( period > tempReal2 )
+      {
+         period = tempReal2;
+      }
+      tempReal2 = 0.67 * tempReal;
+      if( period < tempReal2 )
+      {
+         period = tempReal2;
+      }
+      if( period < 6 )
+      {
+         period = 6;
+      } else if( period > 50 )
+      {
+         period = 50;
+      }
+      period = fma(0.2, period, 0.8 * tempReal);
+      smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
+      /* Compute Dominant Cycle Phase */
+      DCPeriod = smoothPeriod + 0.5;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
+      realPart = 0.0;
+      imagPart = 0.0;
+      /* idx is used to iterate for up to 50 of the last
+       * value of smoothPrice.
+       */
+      idx = smoothPrice_Idx;
+      for( i = 0; i < DCPeriodInt; i += 1 )
+      {
+         tempReal = (double)i * constDeg2RadBy360 / (double)DCPeriodInt;
+         tempReal2 = cb_smoothPrice[idx];
+         realPart += sin(tempReal) * tempReal2;
+         imagPart += cos(tempReal) * tempReal2;
+         if( idx == 0 )
+         {
+            idx = 50 - 1;
+         } else 
+         {
+            idx -= 1;
+         }
+      }
+      tempReal = fabs(imagPart);
+      if( tempReal > 0.0 )
+      {
+         DCPhase = atan(realPart / imagPart) * rad2Deg;
+      } else if( tempReal <= 0.01 )
+      {
+         if( realPart < 0.0 )
+         {
+            DCPhase -= 90.0;
+         } else if( realPart > 0.0 )
+         {
+            DCPhase += 90.0;
+         }
+      }
+      DCPhase += 90.0;
+      /* Compensate for one bar lag of the weighted moving average */
+      DCPhase += 360.0 / smoothPeriod;
+      if( imagPart < 0.0 )
+      {
+         DCPhase += 180.0;
+      }
+      if( DCPhase > 315.0 )
+      {
+         DCPhase -= 360.0;
+      }
+      outSine[kernBar] = sin(DCPhase * deg2Rad);
+      outLeadSine[kernBar] = sin((DCPhase + 45) * deg2Rad);
+      /* Ooof... let's do the next price bar now! */
+      smoothPrice_Idx = smoothPrice_Idx + 1;
+      if( smoothPrice_Idx > maxIdx_smoothPrice )
+      {
+         smoothPrice_Idx = 0;
+      }
+      cur_outSine = outSine[kernBar];
+      cur_outLeadSine = outLeadSine[kernBar];
+      ringCapL_trailingWMAIdx = ringCap_trailingWMAIdx;
+      ringPosL_trailingWMAIdx = ringPos_trailingWMAIdx;
+      ring_trailingWMAIdx_inReal[ringPosL_trailingWMAIdx] = inReal;
+      ringPosL_trailingWMAIdx = ringPosL_trailingWMAIdx + 1;
+      if( ringPosL_trailingWMAIdx >= ringCapL_trailingWMAIdx )
+      {
+         ringPosL_trailingWMAIdx = 0;
+      }
+      ringPos_trailingWMAIdx = ringPosL_trailingWMAIdx;
+      streamParity = 1 - streamParity;
+   }
+   sp->cur_outSine = cur_outSine;
+   sp->cur_outLeadSine = cur_outLeadSine;
+   sp->period = period;
+   sp->periodWMASum = periodWMASum;
+   sp->periodWMASub = periodWMASub;
+   sp->trailingWMAValue = trailingWMAValue;
+   sp->hilbertIdx = hilbertIdx;
+   sp->prev_detrender_Odd = prev_detrender_Odd;
+   sp->prev_detrender_Even = prev_detrender_Even;
+   sp->prev_detrender_input_Odd = prev_detrender_input_Odd;
+   sp->prev_detrender_input_Even = prev_detrender_input_Even;
+   sp->prev_Q1_Odd = prev_Q1_Odd;
+   sp->prev_Q1_Even = prev_Q1_Even;
+   sp->prev_Q1_input_Odd = prev_Q1_input_Odd;
+   sp->prev_Q1_input_Even = prev_Q1_input_Even;
+   sp->prev_jI_Odd = prev_jI_Odd;
+   sp->prev_jI_Even = prev_jI_Even;
+   sp->prev_jI_input_Odd = prev_jI_input_Odd;
+   sp->prev_jI_input_Even = prev_jI_input_Even;
+   sp->prev_jQ_Odd = prev_jQ_Odd;
+   sp->prev_jQ_Even = prev_jQ_Even;
+   sp->prev_jQ_input_Odd = prev_jQ_input_Odd;
+   sp->prev_jQ_input_Even = prev_jQ_input_Even;
+   sp->prevQ2 = prevQ2;
+   sp->prevI2 = prevI2;
+   sp->Re = Re;
+   sp->Im = Im;
+   sp->I1ForOddPrev2 = I1ForOddPrev2;
+   sp->I1ForOddPrev3 = I1ForOddPrev3;
+   sp->I1ForEvenPrev2 = I1ForEvenPrev2;
+   sp->I1ForEvenPrev3 = I1ForEvenPrev3;
+   sp->smoothPeriod = smoothPeriod;
+   sp->DCPhase = DCPhase;
+   sp->smoothPrice_Idx = smoothPrice_Idx;
+   sp->streamParity = streamParity;
+   sp->ringPos_trailingWMAIdx = ringPos_trailingWMAIdx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_HT_SINE_UpdateBlock( struct TA_HT_SINE_Stream *stream, const double inReal[], int nbBar, double outSine[], double outLeadSine[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outSine || !outLeadSine ) return TA_BAD_PARAM;
+   TA_HT_SINE_KernImpl( stream, inReal, nbBar, outSine, outLeadSine );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_HT_SINE_Value( const TA_HT_SINE_Stream *stream, double *outSine, double *outLeadSine )
 {
    if( !stream || !outSine || !outLeadSine ) return TA_BAD_PARAM;

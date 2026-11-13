@@ -716,6 +716,60 @@ TA_LIB_API TA_RetCode TA_ADOSC_Close( TA_ADOSC_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_ADOSC_KernImpl( struct TA_ADOSC_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], const double inVolumeBlk[], int nbBar, double outReal[] )
+{
+   double cur_outReal = sp->cur_outReal;
+   double slowEMA = sp->slowEMA;
+   double slowk = sp->slowk;
+   double one_minus_slowk = sp->one_minus_slowk;
+   double fastEMA = sp->fastEMA;
+   double fastk = sp->fastk;
+   double one_minus_fastk = sp->one_minus_fastk;
+   double ad = sp->ad;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double inVolume = inVolumeBlk[kernBar];
+      double high;
+      double low;
+      double close;
+      double tmp;
+
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if( tmp > 0.0 )
+      {
+         ad += (close - low - (high - close)) / tmp * (double)inVolume;
+      }
+      fastEMA = fma(one_minus_fastk, fastEMA, fastk * ad);
+      slowEMA = fma(one_minus_slowk, slowEMA, slowk * ad);
+      outReal[kernBar] = fastEMA - slowEMA;
+      cur_outReal = outReal[kernBar];
+   }
+   sp->cur_outReal = cur_outReal;
+   sp->slowEMA = slowEMA;
+   sp->fastEMA = fastEMA;
+   sp->ad = ad;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ADOSC_UpdateBlock( struct TA_ADOSC_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   TA_ADOSC_KernImpl( stream, inHigh, inLow, inClose, inVolume, nbBar, outReal );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ADOSC_Value( const TA_ADOSC_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

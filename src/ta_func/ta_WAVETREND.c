@@ -1189,6 +1189,93 @@ TA_LIB_API TA_RetCode TA_WAVETREND_Close( TA_WAVETREND_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static void TA_WAVETREND_KernImpl( struct TA_WAVETREND_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outWT1[], double outWT2[] )
+{
+   double cur_outWT1 = sp->cur_outWT1;
+   double cur_outWT2 = sp->cur_outWT2;
+   int optInSignalPeriod = sp->optInSignalPeriod;
+   double k1 = sp->k1;
+   double beta1 = sp->beta1;
+   double k2 = sp->k2;
+   double beta2 = sp->beta2;
+   double esa = sp->esa;
+   double d = sp->d;
+   double wt1 = sp->wt1;
+   double prevAp = sp->prevAp;
+   double prevEsa = sp->prevEsa;
+   double sumSignal = sp->sumSignal;
+   int wtBuffer_Idx = sp->wtBuffer_Idx;
+   int maxIdx_wtBuffer = sp->maxIdx_wtBuffer;
+   double *cb_wtBuffer = sp->cb_wtBuffer;
+   int kernBar;
+
+   for( kernBar = 0; kernBar < nbBar; kernBar++ )
+   {
+      double inHigh = inHighBlk[kernBar];
+      double inLow = inLowBlk[kernBar];
+      double inClose = inCloseBlk[kernBar];
+      double ap;
+      double dev;
+      double ci;
+      double num;
+      double scaledDev;
+
+      ap = (inHigh + inLow + inClose) / 3.0;
+      esa = fma(beta1, esa, k1 * ap);
+      num = ap - esa;
+      if( ap == prevAp && esa == prevEsa )
+      {
+         num = 0.0;
+      }
+      dev = fabs(num);
+      d = fma(beta1, d, k1 * dev);
+      scaledDev = 0.015 * d;
+      if( scaledDev > 0.0 )
+      {
+         ci = num / scaledDev;
+      } else 
+      {
+         ci = 0.0;
+      }
+      wt1 = fma(beta2, wt1, k2 * ci);
+      cb_wtBuffer[wtBuffer_Idx] = wt1;
+      sumSignal = sumSignal + wt1;
+      outWT1[kernBar] = wt1;
+      outWT2[kernBar] = sumSignal / (double)optInSignalPeriod;
+      wtBuffer_Idx = wtBuffer_Idx + 1;
+      if( wtBuffer_Idx > maxIdx_wtBuffer )
+      {
+         wtBuffer_Idx = 0;
+      }
+      sumSignal = sumSignal - cb_wtBuffer[wtBuffer_Idx];
+      prevAp = ap;
+      prevEsa = esa;
+      cur_outWT1 = outWT1[kernBar];
+      cur_outWT2 = outWT2[kernBar];
+   }
+   sp->cur_outWT1 = cur_outWT1;
+   sp->cur_outWT2 = cur_outWT2;
+   sp->esa = esa;
+   sp->d = d;
+   sp->wt1 = wt1;
+   sp->prevAp = prevAp;
+   sp->prevEsa = prevEsa;
+   sp->sumSignal = sumSignal;
+   sp->wtBuffer_Idx = wtBuffer_Idx;
+   sp->outRangeCount += nbBar;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_WAVETREND_UpdateBlock( struct TA_WAVETREND_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outWT1[], double outWT2[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outWT1 || !outWT2 ) return TA_BAD_PARAM;
+   TA_WAVETREND_KernImpl( stream, inHigh, inLow, inClose, nbBar, outWT1, outWT2 );
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_WAVETREND_Value( const TA_WAVETREND_Stream *stream, double *outWT1, double *outWT2 )
 {
    if( !stream || !outWT1 || !outWT2 ) return TA_BAD_PARAM;
