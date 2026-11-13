@@ -583,6 +583,106 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
+   private RetCode cdlspinningtopOpenSinkFrame( CdlspinningtopStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      double BodyPeriodTotal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int BodyTrailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.length;
+      int endIdx = historyLen - 1;
+      if( historyLen > INDEX_MAX + 1 ) {
+         return RetCode.OUT_OF_RANGE_END_INDEX;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( startIdx >= historyLen ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      int BodyShort_rangeType = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].rangeType.ordinal();
+      int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].avgPeriod;
+      double BodyShort_factor = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].factor;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = cdlspinningtopLookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyPeriodTotal = 0;
+      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+      i = BodyTrailingIdx;
+      while( i < startIdx ) {
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+         i += 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - small real body
+       * - shadows longer than the real body
+       * The meaning of "short" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      while( i < endIdx ) {
+         outIdx += 1;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+         i += 1;
+         BodyTrailingIdx += 1;
+      }
+      if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > Math.abs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > Math.abs(inClose[i] - inOpen[i]) && Math.abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         outInteger[0] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
+         outIdx += 1;
+      } else {
+         outInteger[0] = 0;
+         outIdx += 1;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+      i += 1;
+      BodyTrailingIdx += 1;
+      /* All done. Indicate the output limits and return. */
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+      if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+      double[] capRing_BodyTrailingIdx_derived = new double[allocN_BodyTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx)] = ((BodyShort_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
+      sp.BodyPeriodTotal = BodyPeriodTotal;
+      sp.ringPos_BodyTrailingIdx = 0;
+      sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+      sp.ring_BodyTrailingIdx_derived = capRing_BodyTrailingIdx_derived;
+      sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+      sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+      sp.cs_BodyShort_factor = BodyShort_factor;
+      sp.cur_outInteger = outInteger[0];
+      return RetCode.SUCCESS;
+   }
    /* cdlspinningtopOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CdlspinningtopStream cdlspinningtopOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
@@ -605,7 +705,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = cdlspinningtopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlspinningtopOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.SUCCESS ) {

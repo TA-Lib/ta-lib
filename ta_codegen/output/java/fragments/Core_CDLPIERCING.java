@@ -660,6 +660,128 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
+   private RetCode cdlpiercingOpenSinkFrame( CdlpiercingStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      double[] BodyLongPeriodTotal = new double[2];
+      int i = 0;
+      int outIdx = 0;
+      int totIdx = 0;
+      int BodyLongTrailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.length;
+      int endIdx = historyLen - 1;
+      if( historyLen > INDEX_MAX + 1 ) {
+         return RetCode.OUT_OF_RANGE_END_INDEX;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( startIdx >= historyLen ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+      double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = cdlpiercingLookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyLongPeriodTotal[1] = 0;
+      BodyLongPeriodTotal[0] = 0;
+      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+      i = BodyLongTrailingIdx;
+      while( i < startIdx ) {
+         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle: long black candle
+       * - second candle: long white candle with open below previous day low and close at least at 50% of previous day
+       * real body
+       * The meaning of "long" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      while( i < endIdx ) {
+         outIdx += 1;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - totIdx] - (((inClose[BodyLongTrailingIdx - totIdx]) >= (inOpen[BodyLongTrailingIdx - totIdx])) ? (inClose[BodyLongTrailingIdx - totIdx]) : (inOpen[BodyLongTrailingIdx - totIdx]))) + ((((inClose[BodyLongTrailingIdx - totIdx]) >= (inOpen[BodyLongTrailingIdx - totIdx])) ? (inOpen[BodyLongTrailingIdx - totIdx]) : (inClose[BodyLongTrailingIdx - totIdx])) - inLow[BodyLongTrailingIdx - totIdx])) : 0.0))));
+         }
+         i += 1;
+         BodyLongTrailingIdx += 1;
+      }
+      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+          ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
+          inOpen[i] < inLow[i - 1] &&                           /* open below prior low */
+          Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+          Math.abs(inClose[i] - inOpen[i]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+          inClose[i] < inOpen[i - 1] &&                         /* close within prior body */
+          inClose[i] > Math.fma(Math.abs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
+      {
+         outInteger[0] = 100;
+         outIdx += 1;
+      } else {
+         outInteger[0] = 0;
+         outIdx += 1;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - totIdx] - (((inClose[BodyLongTrailingIdx - totIdx]) >= (inOpen[BodyLongTrailingIdx - totIdx])) ? (inClose[BodyLongTrailingIdx - totIdx]) : (inOpen[BodyLongTrailingIdx - totIdx]))) + ((((inClose[BodyLongTrailingIdx - totIdx]) >= (inOpen[BodyLongTrailingIdx - totIdx])) ? (inOpen[BodyLongTrailingIdx - totIdx]) : (inClose[BodyLongTrailingIdx - totIdx])) - inLow[BodyLongTrailingIdx - totIdx])) : 0.0))));
+      }
+      i += 1;
+      BodyLongTrailingIdx += 1;
+      /* All done. Indicate the output limits and return. */
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      int capLag_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
+      int cap_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx + 2;
+      if( capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
+      double[] capRing_BodyLongTrailingIdx_derived = new double[allocN_BodyLongTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
+      sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
+      sp.lag1_inOpen = inOpen[historyLen - 1];
+      sp.lag1_inHigh = inHigh[historyLen - 1];
+      sp.lag1_inLow = inLow[historyLen - 1];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.ringPos_BodyLongTrailingIdx = historyLen % cap_BodyLongTrailingIdx;
+      sp.ringCap_BodyLongTrailingIdx = cap_BodyLongTrailingIdx;
+      sp.ringLag_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx;
+      sp.ring_BodyLongTrailingIdx_derived = capRing_BodyLongTrailingIdx_derived;
+      sp.cs_BodyLong_rangeType = BodyLong_rangeType;
+      sp.cs_BodyLong_avgPeriod = BodyLong_avgPeriod;
+      sp.cs_BodyLong_factor = BodyLong_factor;
+      sp.cur_outInteger = outInteger[0];
+      return RetCode.SUCCESS;
+   }
    /* cdlpiercingOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CdlpiercingStream cdlpiercingOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
@@ -682,7 +804,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = cdlpiercingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdlpiercingOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.SUCCESS ) {

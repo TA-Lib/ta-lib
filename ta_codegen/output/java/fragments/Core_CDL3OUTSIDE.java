@@ -554,6 +554,83 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
+   private RetCode cdl3outsideOpenSinkFrame( Cdl3outsideStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      int i = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.length;
+      int endIdx = historyLen - 1;
+      if( historyLen > INDEX_MAX + 1 ) {
+         return RetCode.OUT_OF_RANGE_END_INDEX;
+      }
+      if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( startIdx >= historyLen ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = cdl3outsideLookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first: black (white) real body
+       * - second: white (black) real body that engulfs the prior real body
+       * - third: candle that closes higher (lower) than the second candle
+       */
+      outIdx = 0;
+      while( i < endIdx ) {
+         outIdx += 1;
+         i += 1;
+      }
+      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
+           inClose[i - 1] > inOpen[i - 2] &&
+           inOpen[i - 1] < inClose[i - 2] &&
+           inClose[i] > inClose[i - 1] ||                        /* third candle higher */
+          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
+           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
+           inOpen[i - 1] > inClose[i - 2] &&
+           inClose[i - 1] < inOpen[i - 2] &&
+           inClose[i] < inClose[i - 1] )                         /* third candle lower */
+      {
+         outInteger[0] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+         outIdx += 1;
+      } else {
+         outInteger[0] = 0;
+         outIdx += 1;
+      }
+      i += 1;
+      /* All done. Indicate the output limits and return. */
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      sp.lag1_inOpen = inOpen[historyLen - 1];
+      sp.lag2_inOpen = inOpen[historyLen - 2];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.lag2_inClose = inClose[historyLen - 2];
+      sp.cur_outInteger = outInteger[0];
+      return RetCode.SUCCESS;
+   }
    /* cdl3outsideOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    Cdl3outsideStream cdl3outsideOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
@@ -576,7 +653,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      RetCode retCode = cdl3outsideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
+      RetCode retCode = cdl3outsideOpenSinkFrame(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.SUCCESS ) {

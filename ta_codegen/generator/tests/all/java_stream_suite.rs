@@ -627,7 +627,9 @@ fn stream_flagged_yaml_count() -> usize {
 // filling entries pass stride 1 and the caller's arrays; `_OpenInternal` passes
 // stride 0 and a one-element sink, so every write collapses onto slot 0 and that
 // slot ends holding the last history value — which is also what makes the
-// `sp.cur_*` capture resolve with no special case. The public `_OpenAndFill` is
+// `sp.cur_*` capture resolve with no special case. A candlestick's
+// `_OpenInternal` hands that sink to its sink frame instead. The public
+// `_OpenAndFill` is
 // `_OpenAndFillInternal` at anchor 0 with the aliasing guard in front, mirroring
 // `_Open` over `_OpenInternal`; that symmetry is what leaves no entry point
 // emitted unreachable. `Dispatch` (MA) and `PeriodBank` (MAVP) are exempt and
@@ -646,7 +648,7 @@ fn java_open_family_is_one_core_with_three_entries() {
     // The public fill goes through the anchored seam rather than straight down,
     // which is what keeps the seam reachable for every function.
     for (w, callee) in [
-        ("CdlhammerStream cdlhammerOpenInternal(", "cdlhammerOpenImpl("),
+        ("CdlhammerStream cdlhammerOpenInternal(", "cdlhammerOpenSinkFrame("),
         ("CdlhammerStream cdlhammerOpenAndFillInternal(", "cdlhammerOpenImpl("),
         ("public CdlhammerStream cdlhammerOpenAndFill(", "cdlhammerOpenAndFillInternal("),
         ("public CdlhammerStream cdlhammerOpen(", "cdlhammerOpenInternal("),
@@ -671,9 +673,10 @@ fn java_open_family_is_one_core_with_three_entries() {
 
 #[test]
 fn java_plain_open_uses_a_one_element_sink_at_stride_zero() {
-    let s = java_stream_section("cdlhammer");
+    let s = java_stream_section("cdlhikkake");
+    assert!(!s.contains("cdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
     let at = s
-        .find("CdlhammerStream cdlhammerOpenInternal(")
+        .find("CdlhikkakeStream cdlhikkakeOpenInternal(")
         .expect("the anchored plain open");
     let body = &s[at..at + 800.min(s.len() - at)];
     assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
@@ -682,11 +685,132 @@ fn java_plain_open_uses_a_one_element_sink_at_stride_zero() {
 
 #[test]
 fn java_output_writes_are_stride_scaled() {
-    let s = java_stream_section("cdlhammer");
+    let s = java_stream_section("cdlhikkake");
+    assert!(!s.contains("cdlhikkakeOpenSinkFrame("), "the pin needs an opener that keeps one body");
     assert!(
-        s.contains("outInteger[outIdx++ * outStride] = 100;"),
+        s.contains("outInteger[outIdx++ * outStride] = 0;"),
         "per-bar output writes scale by the stride"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Split candlestick openers
+// ---------------------------------------------------------------------------
+
+/// The braced body of the definition `needle` starts.
+fn body_of(src: &str, needle: &str) -> String {
+    let i = src.find(needle).unwrap_or_else(|| panic!("no definition matching {needle:?}"));
+    let j = src[i..].find("{\n").expect("definition has a body") + i;
+    let bytes = src.as_bytes();
+    let (mut depth, mut k) = (0usize, j);
+    loop {
+        match bytes[k] {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        k += 1;
+    }
+    src[j..=k].to_string()
+}
+
+/// Every streaming candlestick: `(camelCase base, stream section)`.
+fn candlestick_sections() -> Vec<(String, String)> {
+    streaming_indicators()
+        .into_iter()
+        .filter(|name| load_indicator(name).0.is_candlestick())
+        .map(|name| (backends::common::camel_words(&name.to_uppercase()), java_stream_section(&name)))
+        .collect()
+}
+
+fn is_loop_head(line: &str) -> bool {
+    let t = line.trim_start();
+    t.starts_with("while(") || t.starts_with("for(") || t.starts_with("do {")
+}
+
+#[test]
+fn a_java_candlestick_open_internal_calls_its_sink_frame() {
+    let (mut framed, mut single) = (0usize, 0usize);
+    for (base, s) in candlestick_sections() {
+        let open = body_of(&s, &format!("private RetCode {base}OpenImpl("));
+        let sink = format!("private RetCode {base}OpenSinkFrame(");
+        assert!(!s.contains(&format!("{base}OpenFillFrame(")), "{base}: stride 1 runs the strided body, not a frame");
+        assert!(open.contains("* outStride] = "), "{base}: the opener keeps its strided body");
+        if !s.contains(&sink) {
+            single += 1;
+            continue;
+        }
+        framed += 1;
+        let internal = body_of(&s, &format!("Stream {base}OpenInternal("));
+        assert!(
+            internal.contains(&format!("{base}OpenSinkFrame(")) && !internal.contains(&format!("{base}OpenImpl(")),
+            "{base}OpenInternal opens through the sink frame:\n{internal}"
+        );
+        assert!(!common::calls_an_opener(&open, &base), "{base}OpenImpl calls another opener:\n{open}");
+        assert!(common::stride_only_scales(&open), "{base}OpenImpl branches on its stride:\n{open}");
+        let frame = body_of(&s, &sink);
+        let guard = frame.find("if( startIdx >= historyLen ) {").unwrap_or_else(|| panic!("{base}: no anchor guard:\n{frame}"));
+        assert!(!frame[..guard].lines().any(is_loop_head), "{base}: the sink frame loops before its anchor guard:\n{frame}");
+        let from = open.find("int historyLen").expect("history length");
+        let at = open.find("if( startIdx >= historyLen ) {").expect("anchor guard");
+        let checks = &open[from..at + open[at..].find("}\n").expect("guard closes") + 2];
+        assert!(frame.contains(checks), "{base}: the sink frame runs other checks than OpenImpl:\n{checks}");
+        let sig = &s[s.find(&sink).expect("defined")..];
+        assert!(!sig[..sig.find(')').expect("signature closes")].contains("outStride"), "{sink} takes a stride");
+        assert!(!frame.contains("outStride"), "{sink} has its stride built in");
+    }
+    // The misfits by construction: their decisions assign pattern state.
+    assert_eq!(single, 2, "only CDLHIKKAKE and CDLHIKKAKEMOD keep one body");
+    assert!(framed >= 50, "only {framed} candlestick openers split");
+}
+
+/// The sink frame's history loop is the strided opener's pass with only its
+/// carried statements kept, in order; its last pass decides the last bar once,
+/// into slot 0, and runs the same carried statements.
+#[test]
+fn a_java_sink_frame_decides_only_the_last_bar() {
+    let (mut framed, mut loops, mut carried) = (0usize, 0usize, 0usize);
+    for (base, s) in candlestick_sections() {
+        let sink = format!("private RetCode {base}OpenSinkFrame(");
+        if !s.contains(&sink) {
+            continue;
+        }
+        framed += 1;
+        let sink = body_of(&s, &sink);
+        let fill = body_of(&s, &format!("private RetCode {base}OpenImpl("));
+        let found = common::history_loops(&common::squeezed_lines(&sink));
+        let passes = common::fill_carried(&common::squeezed_lines(&fill), "outInteger");
+        assert_eq!(
+            found.len(),
+            sink.matches("outNBElement.value = outIdx;").count(),
+            "{base}: one loop over the history per region:\n{sink}"
+        );
+        assert_eq!(found.len(), passes.len(), "{base}: a history loop per storing loop of the opener");
+        for ((history, after), pass) in found.iter().zip(&passes) {
+            loops += 1;
+            carried += pass.len();
+            assert!(history.iter().any(|l| l == "outIdx+=1;"), "{base}: the history loop drops the output count:\n{history:#?}");
+            assert_eq!(&common::without_cursor_steps(history), pass, "{base}: the history loop is not the opener's carried pass");
+            common::assert_last_pass(&base, after, pass, "outInteger");
+        }
+        assert_eq!(
+            sink.matches("sp.cur_outInteger = outInteger[0];").count(),
+            found.len(),
+            "{base}: every region's capture reads the sink"
+        );
+        assert_eq!(
+            fill.matches("sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];").count(),
+            found.len(),
+            "{base}: every region's capture reads the caller's last element"
+        );
+        assert!(fill.contains("outInteger[outIdx++ * outStride] = "), "{base}: the opener stores at the strided index");
+    }
+    assert!(framed >= 50 && loops >= framed && carried >= 2 * loops, "{framed} sink frames, {loops} history loops, {carried} carried lines");
 }
 
 #[test]
