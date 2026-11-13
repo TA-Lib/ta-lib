@@ -1168,6 +1168,7 @@ mod tests {
             streaming: false,
             alternates: vec![],
             resolved_stream_body: None,
+            c_block_batch_min_bars: None,
         };
         assert_eq!(super::output_var_names(&f), ["real", "integer"]);
         f.outputs = vec![out("outMACD", ParamType::Real)];

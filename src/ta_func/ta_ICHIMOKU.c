@@ -171,6 +171,27 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
    if( outTenkanSen == outKijunSen || outTenkanSen == outSenkouSpanA || outTenkanSen == outSenkouSpanB || outKijunSen == outSenkouSpanA || outKijunSen == outSenkouSpanB || outSenkouSpanA == outSenkouSpanB )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inHigh, inBytes, outTenkanSen, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outTenkanSen, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outKijunSen, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outKijunSen, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outSenkouSpanA, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outSenkouSpanA, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outSenkouSpanB, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outSenkouSpanB, outRealBytes )
+             || TA_SpansOverlap( outTenkanSen, outRealBytes, outKijunSen, outRealBytes )
+             || TA_SpansOverlap( outTenkanSen, outRealBytes, outSenkouSpanA, outRealBytes )
+             || TA_SpansOverlap( outTenkanSen, outRealBytes, outSenkouSpanB, outRealBytes )
+             || TA_SpansOverlap( outKijunSen, outRealBytes, outSenkouSpanA, outRealBytes )
+             || TA_SpansOverlap( outKijunSen, outRealBytes, outSenkouSpanB, outRealBytes )
+             || TA_SpansOverlap( outSenkouSpanA, outRealBytes, outSenkouSpanB, outRealBytes ) ) )
+         return TA_ICHIMOKU_BlockBatch( startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+   }
+
    *outBegIdx= 0;
    *outNBElement= 0;
    lookbackTotal = TA_ICHIMOKU_Lookback(optInTenkanPeriod,optInKijunPeriod,optInSenkouBPeriod);

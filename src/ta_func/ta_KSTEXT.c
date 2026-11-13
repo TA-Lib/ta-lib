@@ -232,6 +232,16 @@ TA_LIB_API TA_RetCode TA_KSTEXT( int    startIdx,
    if( outKST == outKSTSignal )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inReal, inBytes, outKST, outRealBytes )
+             || TA_SpansOverlap( inReal, inBytes, outKSTSignal, outRealBytes )
+             || TA_SpansOverlap( outKST, outRealBytes, outKSTSignal, outRealBytes ) ) )
+         return TA_KSTEXT_BlockBatch( startIdx, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal );
+   }
+
    /* With every type SMA this is bit-exact with kst(): each leg's average
     * starts on the first bar the signal consumes, and the line accumulates
     * its legs left to right. Changing either breaks the equality.

@@ -242,6 +242,18 @@ TA_LIB_API TA_RetCode TA_GATOR( int    startIdx,
    if( outUpper == outLower )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inHigh, inBytes, outUpper, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outUpper, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outLower, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outLower, outRealBytes )
+             || TA_SpansOverlap( outUpper, outRealBytes, outLower, outRealBytes ) ) )
+         return TA_GATOR_BlockBatch( startIdx, endIdx, inHigh, inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outBegIdx, outNBElement, outUpper, outLower );
+   }
+
    lookbackTotal = TA_GATOR_Lookback(optInJawPeriod,optInJawShift,optInTeethPeriod,optInTeethShift,optInLipsPeriod,optInLipsShift);
    /* Return before touching anything, so that an input which stops short of
     * endIdx is never read past its end.

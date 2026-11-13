@@ -179,6 +179,19 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
    if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inReal, inBytes, outMACD, outRealBytes )
+             || TA_SpansOverlap( inReal, inBytes, outMACDSignal, outRealBytes )
+             || TA_SpansOverlap( inReal, inBytes, outMACDHist, outRealBytes )
+             || TA_SpansOverlap( outMACD, outRealBytes, outMACDSignal, outRealBytes )
+             || TA_SpansOverlap( outMACD, outRealBytes, outMACDHist, outRealBytes )
+             || TA_SpansOverlap( outMACDSignal, outRealBytes, outMACDHist, outRealBytes ) ) )
+         return TA_MACDEXT_BlockBatch( startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist );
+   }
+
    if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
    {
       /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate

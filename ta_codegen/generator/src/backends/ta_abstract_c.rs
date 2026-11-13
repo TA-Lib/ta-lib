@@ -3695,6 +3695,7 @@ mod predef_tests {
             streaming: false,
             alternates: vec![],
             resolved_stream_body: None,
+            c_block_batch_min_bars: None,
         }
     }
 

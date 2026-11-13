@@ -39,3 +39,4 @@ outputs:
   - name: outRealLowerBand
     type: real
     flags: [lower_limit]
+c_block_batch_min_bars: 20000

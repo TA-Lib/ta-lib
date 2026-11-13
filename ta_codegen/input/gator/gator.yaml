@@ -56,3 +56,4 @@ outputs:
   - name: outLower
     type: real
     flags: [histogram, display_shift, zero, negative]
+c_block_batch_min_bars: 20000

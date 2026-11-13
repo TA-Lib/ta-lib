@@ -60,3 +60,4 @@ outputs:
   - name: outSqueeze
     type: integer
     flags: [line]
+c_block_batch_min_bars: 20000

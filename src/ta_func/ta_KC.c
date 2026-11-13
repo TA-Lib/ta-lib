@@ -153,6 +153,25 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
    if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      if( !( TA_SpansOverlap( inHigh, inBytes, outRealUpperBand, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outRealUpperBand, outRealBytes )
+             || TA_SpansOverlap( inClose, inBytes, outRealUpperBand, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outRealMiddleBand, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outRealMiddleBand, outRealBytes )
+             || TA_SpansOverlap( inClose, inBytes, outRealMiddleBand, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outRealLowerBand, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outRealLowerBand, outRealBytes )
+             || TA_SpansOverlap( inClose, inBytes, outRealLowerBand, outRealBytes )
+             || TA_SpansOverlap( outRealUpperBand, outRealBytes, outRealMiddleBand, outRealBytes )
+             || TA_SpansOverlap( outRealUpperBand, outRealBytes, outRealLowerBand, outRealBytes )
+             || TA_SpansOverlap( outRealMiddleBand, outRealBytes, outRealLowerBand, outRealBytes ) ) )
+         return TA_KC_BlockBatch( startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   }
+
    emaLookback = TA_EMA_Lookback(optInTimePeriod);
    lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
    /* Nothing to produce: the range ends before the lookback. Return before

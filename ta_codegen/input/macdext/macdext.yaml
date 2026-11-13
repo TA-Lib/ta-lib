@@ -52,3 +52,4 @@ outputs:
   - name: outMACDHist
     type: real
     flags: [histogram, zero, positive, negative]
+c_block_batch_min_bars: 20000

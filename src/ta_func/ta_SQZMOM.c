@@ -219,6 +219,21 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
    if( (const void *)outMomentum == (const void *)outSqueeze )
       return TA_BAD_PARAM;
 
+   if( endIdx - startIdx + 1 >= 20000 )
+   {
+      const size_t inBytes = (size_t)(endIdx + 1) * sizeof(double);
+      const size_t outRealBytes = (size_t)(endIdx - startIdx + 1) * sizeof(double);
+      const size_t outIntBytes = (size_t)(endIdx - startIdx + 1) * sizeof(int);
+      if( !( TA_SpansOverlap( inHigh, inBytes, outMomentum, outRealBytes )
+             || TA_SpansOverlap( inLow, inBytes, outMomentum, outRealBytes )
+             || TA_SpansOverlap( inClose, inBytes, outMomentum, outRealBytes )
+             || TA_SpansOverlap( inHigh, inBytes, outSqueeze, outIntBytes )
+             || TA_SpansOverlap( inLow, inBytes, outSqueeze, outIntBytes )
+             || TA_SpansOverlap( inClose, inBytes, outSqueeze, outIntBytes )
+             || TA_SpansOverlap( outMomentum, outRealBytes, outSqueeze, outIntBytes ) ) )
+         return TA_SQZMOM_BlockBatch( startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze );
+   }
+
    /* Each rolling statistic is a call to the shipped function, so it carries
     * that function's own arithmetic bit for bit:
     *

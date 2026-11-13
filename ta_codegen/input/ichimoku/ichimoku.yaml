@@ -41,3 +41,4 @@ outputs:
   - name: outSenkouSpanB
     type: real
     flags: [line, display_shift]
+c_block_batch_min_bars: 20000

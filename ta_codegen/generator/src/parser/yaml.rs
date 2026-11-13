@@ -16,6 +16,8 @@ struct YamlFunc {
     inputs: Vec<YamlInput>,
     optional_inputs: Option<Vec<YamlOptParam>>,
     outputs: Vec<YamlOutput>,
+    /// See `ir::FuncDef::c_block_batch_min_bars`.
+    c_block_batch_min_bars: Option<u32>,
 }
 
 /// Flags can be a single string or a list of strings.
@@ -387,6 +389,7 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
         streaming,
         alternates: vec![],
         resolved_stream_body: None,
+        c_block_batch_min_bars: yaml.c_block_batch_min_bars,
     }, path)
 }
 
