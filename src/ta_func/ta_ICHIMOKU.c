@@ -846,6 +846,126 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Close( TA_ICHIMOKU_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_ICHIMOKU_KernImpl( struct TA_ICHIMOKU_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   double pad_tempT[TA_KERN_BLOCK];
+   double pad_tempK[TA_KERN_BLOCK];
+   double cur_tempT;
+   double cur_tempK;
+   double cur_outTenkanSen;
+   double cur_outKijunSen;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_MIDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempT );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_MIDPRICE_UpdateBlock( sp->sub1, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempK );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_MIDPRICE_UpdateBlock( sp->sub2, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, outSenkouSpanB + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_MEDPRICE_UpdateBlock( sp->sub3, pad_tempT, pad_tempK, kernLen, outSenkouSpanA + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempT = pad_tempT[kernBar];
+         cur_tempK = pad_tempK[kernBar];
+         cur_outTenkanSen = 0.0;
+         cur_outKijunSen = 0.0;
+         cur_outTenkanSen = cur_tempT;
+         cur_outKijunSen = cur_tempK;
+         outTenkanSen[kernBase + kernBar] = cur_outTenkanSen;
+         outKijunSen[kernBase + kernBar] = cur_outKijunSen;
+      }
+   }
+   sp->cur_outTenkanSen = outTenkanSen[nbBar - 1];
+   sp->cur_outKijunSen = outKijunSen[nbBar - 1];
+   sp->cur_outSenkouSpanA = outSenkouSpanA[nbBar - 1];
+   sp->cur_outSenkouSpanB = outSenkouSpanB[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ICHIMOKU_UpdateBlock( struct TA_ICHIMOKU_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
+   return TA_ICHIMOKU_KernImpl( stream, inHigh, inLow, nbBar, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ICHIMOKU_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   struct TA_ICHIMOKU_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_ICHIMOKU_Lookback( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outTenkanSen )
+      return TA_BAD_PARAM;
+   if( !outKijunSen )
+      return TA_BAD_PARAM;
+   if( !outSenkouSpanA )
+      return TA_BAD_PARAM;
+   if( !outSenkouSpanB )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_ICHIMOKU_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_ICHIMOKU_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outTenkanSen + 1, outKijunSen + 1, outSenkouSpanA + 1, outSenkouSpanB + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_ICHIMOKU_Close( stream );
+         return retCode;
+      }
+   }
+   TA_ICHIMOKU_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ICHIMOKU_Value( const TA_ICHIMOKU_Stream *stream, double *outTenkanSen, double *outKijunSen, double *outSenkouSpanA, double *outSenkouSpanB )
 {
    if( !stream || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;

@@ -1298,6 +1298,210 @@ TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_STOCH_KernImpl( struct TA_STOCH_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outSlowK[], double outSlowD[] )
+{
+   double lowest = sp->lowest;
+   double highest = sp->highest;
+   int lowestIdx = sp->lowestIdx;
+   int highestIdx = sp->highestIdx;
+   int trailingIdx = sp->trailingIdx;
+   int i = sp->i;
+   int today = sp->today;
+   int xMask = sp->xMask;
+   double *x_inHigh = sp->x_inHigh;
+   double *x_inLow = sp->x_inLow;
+   double *x_inClose = sp->x_inClose;
+   double pad_tempBuffer[TA_KERN_BLOCK];
+   double tmp;
+   double cur_tempBuffer;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         double inHigh = inHighBlk[kernBase + kernBar];
+         double inLow = inLowBlk[kernBase + kernBar];
+         double inClose = inCloseBlk[kernBase + kernBar];
+         cur_tempBuffer = 0.0;
+         x_inHigh[today & xMask] = inHigh;
+         x_inLow[today & xMask] = inLow;
+         x_inClose[today & xMask] = inClose;
+         /* Set the lowest low */
+         tmp = x_inLow[today & xMask];
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = x_inLow[lowestIdx & xMask];
+            i = lowestIdx;
+            while( ++i <= today )
+            {
+               tmp = x_inLow[i & xMask];
+               if( tmp < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Set the highest high */
+         tmp = x_inHigh[today & xMask];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = x_inHigh[highestIdx & xMask];
+            i = highestIdx;
+            while( ++i <= today )
+            {
+               tmp = x_inHigh[i & xMask];
+               if( tmp > highest )
+               {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest )
+         {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [0,100] noise (issue #107 / STOCHRSI).
+          */
+         if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
+         {
+            cur_tempBuffer = (x_inClose[today & xMask] - lowest) / (highest - lowest) * 100.0;
+         } else 
+         {
+            cur_tempBuffer = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         pad_tempBuffer[kernBar] = cur_tempBuffer;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub0, pad_tempBuffer[kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->lowest = lowest;
+            sp->highest = highest;
+            sp->lowestIdx = lowestIdx;
+            sp->highestIdx = highestIdx;
+            sp->trailingIdx = trailingIdx;
+            sp->i = i;
+            sp->today = today;
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub1, pad_tempBuffer[kernBar], &outSlowD[kernBase + kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->lowest = lowest;
+            sp->highest = highest;
+            sp->lowestIdx = lowestIdx;
+            sp->highestIdx = highestIdx;
+            sp->trailingIdx = trailingIdx;
+            sp->i = i;
+            sp->today = today;
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+         outSlowK[kernBase + kernBar] = pad_tempBuffer[kernBar];
+   }
+   sp->lowest = lowest;
+   sp->highest = highest;
+   sp->lowestIdx = lowestIdx;
+   sp->highestIdx = highestIdx;
+   sp->trailingIdx = trailingIdx;
+   sp->i = i;
+   sp->today = today;
+   sp->cur_outSlowK = outSlowK[nbBar - 1];
+   sp->cur_outSlowD = outSlowD[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCH_UpdateBlock( struct TA_STOCH_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outSlowK[], double outSlowD[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   return TA_STOCH_KernImpl( stream, inHigh, inLow, inClose, nbBar, outSlowK, outSlowD );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCH_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[] )
+{
+   struct TA_STOCH_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_STOCH_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outSlowK )
+      return TA_BAD_PARAM;
+   if( !outSlowD )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_STOCH_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outSlowK, outSlowD );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_STOCH_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outSlowK + 1, outSlowD + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_STOCH_Close( stream );
+         return retCode;
+      }
+   }
+   TA_STOCH_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_STOCH_Value( const TA_STOCH_Stream *stream, double *outSlowK, double *outSlowD )
 {
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;

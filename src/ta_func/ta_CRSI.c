@@ -850,6 +850,145 @@ TA_LIB_API TA_RetCode TA_CRSI_Close( TA_CRSI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_CRSI_KernImpl( struct TA_CRSI_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   double prevClose = sp->prevClose;
+   double streak = sp->streak;
+   double pad_tempStreak[TA_KERN_BLOCK];
+   double pad_tempStreakRSI[TA_KERN_BLOCK];
+   double pad_tempRSI[TA_KERN_BLOCK];
+   double close;
+   double cur_tempStreak;
+   double cur_tempStreakRSI;
+   double cur_tempRSI;
+   double cur_outReal;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         double inReal = inRealBlk[kernBase + kernBar];
+         cur_tempStreak = 0.0;
+         close = inReal;
+         if( close > prevClose )
+         {
+            streak = (streak > 0.0) ? streak + 1.0 : 1.0;
+         } else if( close < prevClose )
+         {
+            streak = (streak < 0.0) ? streak - 1.0 : -1.0;
+         } else 
+         {
+            streak = 0.0;
+         }
+         cur_tempStreak = streak;
+         prevClose = close;
+         pad_tempStreak[kernBar] = cur_tempStreak;
+      }
+      subRc = TA_RSI_UpdateBlock( sp->sub0, pad_tempStreak, kernLen, pad_tempStreakRSI );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->prevClose = prevClose;
+         sp->streak = streak;
+         return subRc;
+      }
+      subRc = TA_RSI_UpdateBlock( sp->sub1, inRealBlk + kernBase, kernLen, pad_tempRSI );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->prevClose = prevClose;
+         sp->streak = streak;
+         return subRc;
+      }
+      subRc = TA_ROCP_UpdateBlock( sp->sub2, inRealBlk + kernBase, kernLen, pad_tempStreak );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->prevClose = prevClose;
+         sp->streak = streak;
+         return subRc;
+      }
+      subRc = TA_PERCENTRANK_UpdateBlock( sp->sub3, pad_tempStreak, kernLen, outReal + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->prevClose = prevClose;
+         sp->streak = streak;
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempStreakRSI = pad_tempStreakRSI[kernBar];
+         cur_tempRSI = pad_tempRSI[kernBar];
+         cur_outReal = outReal[kernBase + kernBar];
+         cur_outReal = (cur_tempRSI + cur_tempStreakRSI + cur_outReal) / 3.0;
+         outReal[kernBase + kernBar] = cur_outReal;
+      }
+   }
+   sp->prevClose = prevClose;
+   sp->streak = streak;
+   sp->cur_outReal = outReal[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CRSI_UpdateBlock( struct TA_CRSI_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   return TA_CRSI_KernImpl( stream, inReal, nbBar, outReal );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CRSI_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_CRSI_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_CRSI_Lookback( optInTimePeriod, optInStreakPeriod, optInRankPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_CRSI_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_CRSI_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_CRSI_Close( stream );
+         return retCode;
+      }
+   }
+   TA_CRSI_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CRSI_Value( const TA_CRSI_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

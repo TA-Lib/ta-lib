@@ -805,6 +805,50 @@ TA_RetCode TA_MINMAXINDEX_UpdateBlock( struct TA_MINMAXINDEX_Stream *stream, con
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_MINMAXINDEX_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[] )
+{
+   struct TA_MINMAXINDEX_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MINMAXINDEX_Lookback( optInTimePeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outMinIdx )
+      return TA_BAD_PARAM;
+   if( !outMaxIdx )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MINMAXINDEX_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, outMinIdx, outMaxIdx );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_MINMAXINDEX_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outMinIdx + 1, outMaxIdx + 1 );
+   }
+   TA_MINMAXINDEX_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Value( const TA_MINMAXINDEX_Stream *stream, int *outMinIdx, int *outMaxIdx )
 {
    if( !stream || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;

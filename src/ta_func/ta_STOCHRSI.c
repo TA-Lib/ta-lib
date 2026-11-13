@@ -646,6 +646,91 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Close( TA_STOCHRSI_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_STOCHRSI_KernImpl( struct TA_STOCHRSI_Stream *sp, const double inRealBlk[], int nbBar, double outFastK[], double outFastD[] )
+{
+   double pad_tempRSIBuffer[TA_KERN_BLOCK];
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_RSI_UpdateBlock( sp->sub0, inRealBlk + kernBase, kernLen, pad_tempRSIBuffer );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_STOCHF_UpdateBlock( sp->sub1, pad_tempRSIBuffer, pad_tempRSIBuffer, pad_tempRSIBuffer, kernLen, outFastK + kernBase, outFastD + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+   }
+   sp->cur_outFastK = outFastK[nbBar - 1];
+   sp->cur_outFastD = outFastD[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCHRSI_UpdateBlock( struct TA_STOCHRSI_Stream *stream, const double inReal[], int nbBar, double outFastK[], double outFastD[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   return TA_STOCHRSI_KernImpl( stream, inReal, nbBar, outFastK, outFastD );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCHRSI_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] )
+{
+   struct TA_STOCHRSI_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_STOCHRSI_Lookback( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outFastK )
+      return TA_BAD_PARAM;
+   if( !outFastD )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_STOCHRSI_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_STOCHRSI_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outFastK + 1, outFastD + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_STOCHRSI_Close( stream );
+         return retCode;
+      }
+   }
+   TA_STOCHRSI_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_STOCHRSI_Value( const TA_STOCHRSI_Stream *stream, double *outFastK, double *outFastD )
 {
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;

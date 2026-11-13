@@ -1137,6 +1137,56 @@ TA_RetCode TA_KVO_UpdateBlock( struct TA_KVO_Stream *stream, const double inHigh
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_KVO_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outKVO[], double outKVOSignal[] )
+{
+   struct TA_KVO_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_KVO_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !inVolume )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outKVO )
+      return TA_BAD_PARAM;
+   if( !outKVOSignal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_KVO_OpenInternal( &stream, inHigh, inLow, inClose, inVolume, startIdx, firstIdx + 1, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outKVO, outKVOSignal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_KVO_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, inVolume + firstIdx + 1, endIdx - firstIdx, outKVO + 1, outKVOSignal + 1 );
+   }
+   TA_KVO_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KVO_Value( const TA_KVO_Stream *stream, double *outKVO, double *outKVOSignal )
 {
    if( !stream || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;

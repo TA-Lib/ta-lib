@@ -1376,6 +1376,231 @@ TA_LIB_API TA_RetCode TA_GATOR_Close( TA_GATOR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_GATOR_KernImpl( struct TA_GATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outUpper[], double outLower[] )
+{
+   int lagPos0 = sp->lagPos0;
+   int lagCap0 = sp->lagCap0;
+   double *lagBuf0 = sp->lagBuf0;
+   int lagPos1 = sp->lagPos1;
+   int lagCap1 = sp->lagCap1;
+   double *lagBuf1 = sp->lagBuf1;
+   int lagPos2 = sp->lagPos2;
+   int lagCap2 = sp->lagCap2;
+   double *lagBuf2 = sp->lagBuf2;
+   int lagPos3 = sp->lagPos3;
+   int lagCap3 = sp->lagCap3;
+   double *lagBuf3 = sp->lagBuf3;
+   double pad_tempMP[TA_KERN_BLOCK];
+   double pad_tempA[TA_KERN_BLOCK];
+   double pad_tempB[TA_KERN_BLOCK];
+   double lagIn0;
+   double lagTap0_0;
+   double lagIn1;
+   double lagTap1_0;
+   double lagIn2;
+   double lagTap2_0;
+   double lagIn3;
+   double lagTap3_0;
+   int lagCapL0;
+   int lagPosL0;
+   int lagCapL1;
+   int lagPosL1;
+   int lagCapL2;
+   int lagPosL2;
+   int lagCapL3;
+   int lagPosL3;
+   double cur_tempA;
+   double cur_tempB;
+   double cur_outUpper;
+   double cur_outLower;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->lagPos0 = lagPos0;
+         sp->lagPos1 = lagPos1;
+         sp->lagPos2 = lagPos2;
+         sp->lagPos3 = lagPos3;
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub1, pad_tempMP, kernLen, pad_tempA );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->lagPos0 = lagPos0;
+         sp->lagPos1 = lagPos1;
+         sp->lagPos2 = lagPos2;
+         sp->lagPos3 = lagPos3;
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub2, pad_tempMP, kernLen, pad_tempB );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->lagPos0 = lagPos0;
+         sp->lagPos1 = lagPos1;
+         sp->lagPos2 = lagPos2;
+         sp->lagPos3 = lagPos3;
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempA = pad_tempA[kernBar];
+         cur_tempB = pad_tempB[kernBar];
+         cur_outUpper = 0.0;
+         lagIn0 = cur_tempA;
+         lagIn1 = cur_tempB;
+         lagTap0_0 = lagBuf0[lagPos0];
+         lagTap0_0 = (lagCap0 == 0) ? lagIn0 : lagTap0_0;
+         lagTap1_0 = lagBuf1[lagPos1];
+         lagTap1_0 = (lagCap1 == 0) ? lagIn1 : lagTap1_0;
+         cur_outUpper = fabs(lagTap0_0 - lagTap1_0);
+         lagCapL0 = lagCap0;
+         lagPosL0 = lagPos0;
+         lagBuf0[lagPosL0] = lagIn0;
+         lagPosL0 = lagPosL0 + 1;
+         if( lagPosL0 >= lagCapL0 )
+         {
+            lagPosL0 = 0;
+         }
+         lagPos0 = lagPosL0;
+         lagCapL1 = lagCap1;
+         lagPosL1 = lagPos1;
+         lagBuf1[lagPosL1] = lagIn1;
+         lagPosL1 = lagPosL1 + 1;
+         if( lagPosL1 >= lagCapL1 )
+         {
+            lagPosL1 = 0;
+         }
+         lagPos1 = lagPosL1;
+         outUpper[kernBase + kernBar] = cur_outUpper;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub3, pad_tempMP, kernLen, pad_tempA );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->lagPos0 = lagPos0;
+         sp->lagPos1 = lagPos1;
+         sp->lagPos2 = lagPos2;
+         sp->lagPos3 = lagPos3;
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub4, pad_tempMP, kernLen, pad_tempB );
+      if( subRc != TA_SUCCESS )
+      {
+         sp->lagPos0 = lagPos0;
+         sp->lagPos1 = lagPos1;
+         sp->lagPos2 = lagPos2;
+         sp->lagPos3 = lagPos3;
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempA = pad_tempA[kernBar];
+         cur_tempB = pad_tempB[kernBar];
+         cur_outLower = 0.0;
+         lagIn2 = cur_tempA;
+         lagIn3 = cur_tempB;
+         lagTap2_0 = lagBuf2[lagPos2];
+         lagTap2_0 = (lagCap2 == 0) ? lagIn2 : lagTap2_0;
+         lagTap3_0 = lagBuf3[lagPos3];
+         lagTap3_0 = (lagCap3 == 0) ? lagIn3 : lagTap3_0;
+         cur_outLower = (lagTap2_0 < lagTap3_0) ? lagTap2_0 - lagTap3_0 : lagTap3_0 - lagTap2_0;
+         lagCapL2 = lagCap2;
+         lagPosL2 = lagPos2;
+         lagBuf2[lagPosL2] = lagIn2;
+         lagPosL2 = lagPosL2 + 1;
+         if( lagPosL2 >= lagCapL2 )
+         {
+            lagPosL2 = 0;
+         }
+         lagPos2 = lagPosL2;
+         lagCapL3 = lagCap3;
+         lagPosL3 = lagPos3;
+         lagBuf3[lagPosL3] = lagIn3;
+         lagPosL3 = lagPosL3 + 1;
+         if( lagPosL3 >= lagCapL3 )
+         {
+            lagPosL3 = 0;
+         }
+         lagPos3 = lagPosL3;
+         outLower[kernBase + kernBar] = cur_outLower;
+      }
+   }
+   sp->lagPos0 = lagPos0;
+   sp->lagPos1 = lagPos1;
+   sp->lagPos2 = lagPos2;
+   sp->lagPos3 = lagPos3;
+   sp->cur_outUpper = outUpper[nbBar - 1];
+   sp->cur_outLower = outLower[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_GATOR_UpdateBlock( struct TA_GATOR_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outUpper[], double outLower[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outUpper || !outLower ) return TA_BAD_PARAM;
+   return TA_GATOR_KernImpl( stream, inHigh, inLow, nbBar, outUpper, outLower );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_GATOR_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int *outBegIdx, int *outNBElement, double outUpper[], double outLower[] )
+{
+   struct TA_GATOR_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_GATOR_Lookback( optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outUpper )
+      return TA_BAD_PARAM;
+   if( !outLower )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_GATOR_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outUpper, outLower );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_GATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outUpper + 1, outLower + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_GATOR_Close( stream );
+         return retCode;
+      }
+   }
+   TA_GATOR_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_GATOR_Value( const TA_GATOR_Stream *stream, double *outUpper, double *outLower )
 {
    if( !stream || !outUpper || !outLower ) return TA_BAD_PARAM;

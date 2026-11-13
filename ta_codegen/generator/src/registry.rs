@@ -37,6 +37,8 @@ pub struct Registry {
     base_dir: std::path::PathBuf,
     /// Lookbacks parsed on first request, by dir-name.
     lookbacks: std::sync::Mutex<HashMap<String, Option<crate::streaming::CalleeLookback>>>,
+    /// Definitions with their bodies, loaded on first request, by dir-name.
+    full_defs: std::sync::Mutex<HashMap<String, Option<std::sync::Arc<crate::ir::FuncDef>>>>,
 }
 
 impl Registry {
@@ -91,6 +93,7 @@ impl Registry {
             tape_set: crate::streaming::TapeSet::default(),
             base_dir: base_dir.to_path_buf(),
             lookbacks: std::sync::Mutex::new(HashMap::new()),
+            full_defs: std::sync::Mutex::new(HashMap::new()),
         };
         registry.tape_set =
             crate::streaming::tape_set(base_dir, &registry.indicators, &registry);
@@ -111,6 +114,22 @@ impl Registry {
     /// The YAML-level definition of an indicator dir-name, if known.
     pub(crate) fn def(&self, key: &str) -> Option<&crate::ir::FuncDef> {
         self.defs.get(key)
+    }
+
+    /// An indicator's definition with its body wired, as the generator loads it.
+    pub(crate) fn full_def(&self, name: &str) -> Option<std::sync::Arc<crate::ir::FuncDef>> {
+        let key = name.to_ascii_lowercase();
+        if let Some(hit) = self.full_defs.lock().expect("full_defs").get(&key) {
+            return hit.clone();
+        }
+        let src = self.base_dir.join(&key).join(format!("{key}.c"));
+        let found = self.defs.get(&key).filter(|_| src.is_file()).map(|def| {
+            let mut full = def.clone();
+            crate::parser::c_source::wire_parsed_source(&mut full, &crate::parser::c_source::parse_c_source(&src));
+            std::sync::Arc::new(full)
+        });
+        self.full_defs.lock().expect("full_defs").insert(key, found.clone());
+        found
     }
 
     /// The output names of an indicator in signature order (empty if unknown).

@@ -1220,6 +1220,131 @@ TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_FMA_MULTIVERSION
+static TA_RetCode TA_BBANDS_KernImpl( struct TA_BBANDS_Stream *sp, const double inRealBlk[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double optInNbDevUp = sp->optInNbDevUp;
+   double optInNbDevDn = sp->optInNbDevDn;
+   double pad_tempBuffer1[TA_KERN_BLOCK];
+   double pad_tempBuffer2[TA_KERN_BLOCK];
+   double tempReal;
+   double tempReal2;
+   double cur_tempBuffer1;
+   double cur_tempBuffer2;
+   double cur_outRealUpperBand;
+   double cur_outRealLowerBand;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_tempBuffer1[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      subRc = TA_STDDEV_UpdateBlock( sp->sub1, inRealBlk + kernBase, kernLen, pad_tempBuffer2 );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_tempBuffer1 = pad_tempBuffer1[kernBar];
+         cur_tempBuffer2 = pad_tempBuffer2[kernBar];
+         cur_outRealUpperBand = 0.0;
+         cur_outRealLowerBand = 0.0;
+         if( optInNbDevUp == optInNbDevDn )
+         {
+            tempReal = cur_tempBuffer2 * optInNbDevUp;
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = tempReal2 + tempReal;
+            cur_outRealLowerBand = tempReal2 - tempReal;
+         } else 
+         {
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = fma(cur_tempBuffer2, optInNbDevUp, tempReal2);
+            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * optInNbDevDn;
+         }
+         outRealUpperBand[kernBase + kernBar] = cur_outRealUpperBand;
+         outRealLowerBand[kernBase + kernBar] = cur_outRealLowerBand;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+         outRealMiddleBand[kernBase + kernBar] = pad_tempBuffer1[kernBar];
+   }
+   sp->cur_outRealUpperBand = outRealUpperBand[nbBar - 1];
+   sp->cur_outRealMiddleBand = outRealMiddleBand[nbBar - 1];
+   sp->cur_outRealLowerBand = outRealLowerBand[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BBANDS_UpdateBlock( struct TA_BBANDS_Stream *stream, const double inReal[], int nbBar, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   return TA_BBANDS_KernImpl( stream, inReal, nbBar, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BBANDS_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   struct TA_BBANDS_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_BBANDS_Lookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outRealUpperBand )
+      return TA_BAD_PARAM;
+   if( !outRealMiddleBand )
+      return TA_BAD_PARAM;
+   if( !outRealLowerBand )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_BBANDS_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_BBANDS_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outRealUpperBand + 1, outRealMiddleBand + 1, outRealLowerBand + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_BBANDS_Close( stream );
+         return retCode;
+      }
+   }
+   TA_BBANDS_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_BBANDS_Value( const TA_BBANDS_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;

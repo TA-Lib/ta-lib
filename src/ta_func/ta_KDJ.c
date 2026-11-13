@@ -559,6 +559,104 @@ TA_LIB_API TA_RetCode TA_KDJ_Close( TA_KDJ_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_KDJ_KernImpl( struct TA_KDJ_Stream *sp, const double inHighBlk[], const double inLowBlk[], const double inCloseBlk[], int nbBar, double outK[], double outD[], double outJ[] )
+{
+   double cur_outK;
+   double cur_outD;
+   double cur_outJ;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_STOCH_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, inCloseBlk + kernBase, kernLen, outK + kernBase, outD + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_outK = outK[kernBase + kernBar];
+         cur_outD = outD[kernBase + kernBar];
+         cur_outJ = 0.0;
+         cur_outJ = 3.0 * cur_outK - 2.0 * cur_outD;
+         outJ[kernBase + kernBar] = cur_outJ;
+      }
+   }
+   sp->cur_outK = outK[nbBar - 1];
+   sp->cur_outD = outD[nbBar - 1];
+   sp->cur_outJ = outJ[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KDJ_UpdateBlock( struct TA_KDJ_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int nbBar, double outK[], double outD[], double outJ[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
+   return TA_KDJ_KernImpl( stream, inHigh, inLow, inClose, nbBar, outK, outD, outJ );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_KDJ_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[] )
+{
+   struct TA_KDJ_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_KDJ_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outK )
+      return TA_BAD_PARAM;
+   if( !outD )
+      return TA_BAD_PARAM;
+   if( !outJ )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_KDJ_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD, outJ );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_KDJ_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outK + 1, outD + 1, outJ + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_KDJ_Close( stream );
+         return retCode;
+      }
+   }
+   TA_KDJ_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_KDJ_Value( const TA_KDJ_Stream *stream, double *outK, double *outD, double *outJ )
 {
    if( !stream || !outK || !outD || !outJ ) return TA_BAD_PARAM;

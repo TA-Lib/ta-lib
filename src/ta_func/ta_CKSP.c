@@ -2408,6 +2408,54 @@ TA_RetCode TA_CKSP_UpdateBlock( struct TA_CKSP_Stream *stream, const double inHi
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_CKSP_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int *outBegIdx, int *outNBElement, double outHighStop[], double outLowStop[] )
+{
+   struct TA_CKSP_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_CKSP_Lookback( optInTimePeriod, optInMultiplier, optInStopPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outHighStop )
+      return TA_BAD_PARAM;
+   if( !outLowStop )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_CKSP_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_CKSP_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outHighStop + 1, outLowStop + 1 );
+   }
+   TA_CKSP_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_CKSP_Value( const TA_CKSP_Stream *stream, double *outHighStop, double *outLowStop )
 {
    if( !stream || !outHighStop || !outLowStop ) return TA_BAD_PARAM;

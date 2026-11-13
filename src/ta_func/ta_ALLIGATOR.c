@@ -831,6 +831,106 @@ TA_LIB_API TA_RetCode TA_ALLIGATOR_Close( TA_ALLIGATOR_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_ALLIGATOR_KernImpl( struct TA_ALLIGATOR_Stream *sp, const double inHighBlk[], const double inLowBlk[], int nbBar, double outJaw[], double outTeeth[], double outLips[] )
+{
+   double pad_tempMP[TA_KERN_BLOCK];
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      subRc = TA_MEDPRICE_UpdateBlock( sp->sub0, inHighBlk + kernBase, inLowBlk + kernBase, kernLen, pad_tempMP );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub1, pad_tempMP, kernLen, outJaw + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub2, pad_tempMP, kernLen, outTeeth + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+      subRc = TA_RMA_UpdateBlock( sp->sub3, pad_tempMP, kernLen, outLips + kernBase );
+      if( subRc != TA_SUCCESS )
+      {
+         return subRc;
+      }
+   }
+   sp->cur_outJaw = outJaw[nbBar - 1];
+   sp->cur_outTeeth = outTeeth[nbBar - 1];
+   sp->cur_outLips = outLips[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ALLIGATOR_UpdateBlock( struct TA_ALLIGATOR_Stream *stream, const double inHigh[], const double inLow[], int nbBar, double outJaw[], double outTeeth[], double outLips[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outJaw || !outTeeth || !outLips ) return TA_BAD_PARAM;
+   return TA_ALLIGATOR_KernImpl( stream, inHigh, inLow, nbBar, outJaw, outTeeth, outLips );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ALLIGATOR_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int *outBegIdx, int *outNBElement, double outJaw[], double outTeeth[], double outLips[] )
+{
+   struct TA_ALLIGATOR_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_ALLIGATOR_Lookback( optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outJaw )
+      return TA_BAD_PARAM;
+   if( !outTeeth )
+      return TA_BAD_PARAM;
+   if( !outLips )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_ALLIGATOR_OpenInternal( &stream, inHigh, inLow, startIdx, firstIdx + 1, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outJaw, outTeeth, outLips );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_ALLIGATOR_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, endIdx - firstIdx, outJaw + 1, outTeeth + 1, outLips + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_ALLIGATOR_Close( stream );
+         return retCode;
+      }
+   }
+   TA_ALLIGATOR_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_ALLIGATOR_Value( const TA_ALLIGATOR_Stream *stream, double *outJaw, double *outTeeth, double *outLips )
 {
    if( !stream || !outJaw || !outTeeth || !outLips ) return TA_BAD_PARAM;

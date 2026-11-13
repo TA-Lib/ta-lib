@@ -995,6 +995,131 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_MACDEXT_KernImpl( struct TA_MACDEXT_Stream *sp, const double inRealBlk[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   double pad_slowMABuffer[TA_KERN_BLOCK];
+   double pad_fastMABuffer[TA_KERN_BLOCK];
+   double cur_slowMABuffer;
+   double cur_fastMABuffer;
+   double cur_outMACDSignal;
+   double cur_outMACDHist;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_slowMABuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub1, inRealBlk[kernBase + kernBar], &pad_fastMABuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_slowMABuffer = pad_slowMABuffer[kernBar];
+         cur_fastMABuffer = pad_fastMABuffer[kernBar];
+         cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
+         pad_fastMABuffer[kernBar] = cur_fastMABuffer;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub2, pad_fastMABuffer[kernBar], &outMACDSignal[kernBase + kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         cur_fastMABuffer = pad_fastMABuffer[kernBar];
+         cur_outMACDSignal = outMACDSignal[kernBase + kernBar];
+         cur_outMACDHist = 0.0;
+         cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
+         outMACDHist[kernBase + kernBar] = cur_outMACDHist;
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+         outMACD[kernBase + kernBar] = pad_fastMABuffer[kernBar];
+   }
+   sp->cur_outMACD = outMACD[nbBar - 1];
+   sp->cur_outMACDSignal = outMACDSignal[nbBar - 1];
+   sp->cur_outMACDHist = outMACDHist[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACDEXT_UpdateBlock( struct TA_MACDEXT_Stream *stream, const double inReal[], int nbBar, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   return TA_MACDEXT_KernImpl( stream, inReal, nbBar, outMACD, outMACDSignal, outMACDHist );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACDEXT_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   struct TA_MACDEXT_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_MACDEXT_Lookback( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outMACD )
+      return TA_BAD_PARAM;
+   if( !outMACDSignal )
+      return TA_BAD_PARAM;
+   if( !outMACDHist )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_MACDEXT_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outMACD, outMACDSignal, outMACDHist );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_MACDEXT_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outMACD + 1, outMACDSignal + 1, outMACDHist + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_MACDEXT_Close( stream );
+         return retCode;
+      }
+   }
+   TA_MACDEXT_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MACDEXT_Value( const TA_MACDEXT_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;

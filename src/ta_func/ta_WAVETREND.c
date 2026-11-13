@@ -1276,6 +1276,54 @@ TA_RetCode TA_WAVETREND_UpdateBlock( struct TA_WAVETREND_Stream *stream, const d
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_WAVETREND_BlockBatch( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outWT1[], double outWT2[] )
+{
+   struct TA_WAVETREND_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_WAVETREND_Lookback( optInChannelPeriod, optInAveragePeriod, optInSignalPeriod );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inHigh )
+      return TA_BAD_PARAM;
+   if( !inLow )
+      return TA_BAD_PARAM;
+   if( !inClose )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outWT1 )
+      return TA_BAD_PARAM;
+   if( !outWT2 )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_WAVETREND_OpenInternal( &stream, inHigh, inLow, inClose, startIdx, firstIdx + 1, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outWT1, outWT2 );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      TA_WAVETREND_KernImpl( stream, inHigh + firstIdx + 1, inLow + firstIdx + 1, inClose + firstIdx + 1, endIdx - firstIdx, outWT1 + 1, outWT2 + 1 );
+   }
+   TA_WAVETREND_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_WAVETREND_Value( const TA_WAVETREND_Stream *stream, double *outWT1, double *outWT2 )
 {
    if( !stream || !outWT1 || !outWT2 ) return TA_BAD_PARAM;

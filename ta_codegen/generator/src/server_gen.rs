@@ -306,12 +306,18 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     }
     s.push('\n');
 
-    s.push_str("/* Block update entries */\n");
-    for func in funcs
+    s.push_str("/* Block update entries and their blocked batch */\n");
+    s.push_str("#ifndef TA_KERN_BLOCK\n#define TA_KERN_BLOCK 128\n#endif\n");
+    let kerneled: Vec<&FuncDef> = funcs
         .iter()
         .filter(|f| f.streaming && crate::backends::c_stream::kernel_decision(f, &lookup).is_ok())
-    {
+        .collect();
+    for func in &kerneled {
         s.push_str(&crate::backends::c_stream::update_block_signature(func));
+        s.push_str(";\n");
+    }
+    for func in &kerneled {
+        s.push_str(&crate::backends::c_stream::block_batch_signature(func));
         s.push_str(";\n");
     }
     s.push('\n');

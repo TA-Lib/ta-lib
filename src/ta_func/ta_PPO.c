@@ -1194,6 +1194,138 @@ TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+static TA_RetCode TA_PPO_KernImpl( struct TA_PPO_Stream *sp, const double inRealBlk[], int nbBar, double outReal[] )
+{
+   int slowLookback = sp->slowLookback;
+   int windowed = sp->windowed;
+   int zeroRun = sp->zeroRun;
+   double pad_tempBuffer[TA_KERN_BLOCK];
+   double tempReal;
+   double cur_tempBuffer;
+   double cur_outReal;
+   TA_RetCode subRc;
+   int kernBase;
+   int kernLen;
+   int kernBar;
+
+   for( kernBase = 0; kernBase < nbBar; kernBase += kernLen )
+   {
+      kernLen = nbBar - kernBase < TA_KERN_BLOCK ? nbBar - kernBase : TA_KERN_BLOCK;
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub0, inRealBlk[kernBase + kernBar], &pad_tempBuffer[kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->zeroRun = zeroRun;
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         subRc = TA_MA_Update( sp->sub1, inRealBlk[kernBase + kernBar], &outReal[kernBase + kernBar] );
+         if( subRc != TA_SUCCESS )
+         {
+            sp->zeroRun = zeroRun;
+            return subRc;
+         }
+      }
+      for( kernBar = 0; kernBar < kernLen; kernBar++ )
+      {
+         double inReal = inRealBlk[kernBase + kernBar];
+         cur_tempBuffer = pad_tempBuffer[kernBar];
+         cur_outReal = outReal[kernBase + kernBar];
+         if( windowed != 0 )
+         {
+            zeroRun = (fabs(inReal) <= 0.0) ? zeroRun + 1 : 0;
+            tempReal = cur_outReal;
+            if( zeroRun > slowLookback )
+            {
+               zeroRun = slowLookback;
+               cur_outReal = 0.0;
+            } else if( !TA_IS_ZERO(tempReal) )
+            {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else 
+            {
+               cur_outReal = 0.0;
+            }
+         } else 
+         {
+            /* Calculate ((fast MA)-(slow MA))/(slow MA) in the output. */
+            tempReal = cur_outReal;
+            if( !TA_IS_ZERO(tempReal) )
+            {
+               cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+            } else 
+            {
+               cur_outReal = 0.0;
+            }
+         }
+         outReal[kernBase + kernBar] = cur_outReal;
+      }
+   }
+   sp->zeroRun = zeroRun;
+   sp->cur_outReal = outReal[nbBar - 1];
+   sp->outRangeCount += nbBar;
+   return TA_SUCCESS;
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PPO_UpdateBlock( struct TA_PPO_Stream *stream, const double inReal[], int nbBar, double outReal[] )
+{
+   if( !stream || nbBar <= 0 ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   return TA_PPO_KernImpl( stream, inReal, nbBar, outReal );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PPO_BlockBatch( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_PPO_Stream *stream;
+   TA_RetCode retCode;
+   int lookbackTotal;
+   int firstIdx;
+
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   lookbackTotal = TA_PPO_Lookback( optInFastPeriod, optInSlowPeriod, optInMAType );
+   if( lookbackTotal < 0 )
+      return TA_BAD_PARAM;
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( !outBegIdx || !outNBElement )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   firstIdx = startIdx < lookbackTotal ? lookbackTotal : startIdx;
+   if( firstIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   retCode = TA_PPO_OpenInternal( &stream, inReal, startIdx, firstIdx + 1, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
+   if( retCode != TA_SUCCESS ) return retCode;
+   if( endIdx > firstIdx )
+   {
+      retCode = TA_PPO_KernImpl( stream, inReal + firstIdx + 1, endIdx - firstIdx, outReal + 1 );
+      if( retCode != TA_SUCCESS )
+      {
+         TA_PPO_Close( stream );
+         return retCode;
+      }
+   }
+   TA_PPO_Close( stream );
+   *outBegIdx = firstIdx;
+   *outNBElement = endIdx - firstIdx + 1;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_PPO_Value( const TA_PPO_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
