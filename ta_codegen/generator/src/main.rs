@@ -88,6 +88,7 @@ fn main() {
             let backend_filter = find_arg(&args, &["--backend"]);
             build_libraries(backend_filter.as_deref());
         }
+        "bless-go-examples" => std::process::exit(bless_go_examples()),
         "format" => {
             let func_filter = find_arg(&args, &["--func", "--function"]);
             let check_only = args.iter().any(|a| a == "--check");
@@ -107,9 +108,11 @@ fn main() {
             eprintln!("  generate-bench   Only the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
             eprintln!("                   --servers-only skips the C benchmark binaries");
-            eprintln!("  build-libraries  Build the publishable Java/C#/TypeScript libraries and");
-            eprintln!("                   run their suites (--backend=java,csharp,ts; JDK + unzip,");
-            eprintln!("                   the .NET SDK and/or Node with npm)");
+            eprintln!("  build-libraries  Build the publishable Java/C#/TypeScript/Go libraries and");
+            eprintln!("                   run their suites (--backend=java,csharp,ts,go; JDK + unzip,");
+            eprintln!("                   the .NET SDK, Node with npm and/or Go)");
+            eprintln!("  bless-go-examples  Record what each Go example prints from the package");
+            eprintln!("                   (Go on PATH), then regenerate");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
             eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
@@ -434,6 +437,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
     // Load indicator registry for cross-call resolution
     let registry = Registry::from_dir(&base);
+    backends::go_examples::seed(&root);
 
     // Load helper registry for expression inlining
     let helper_registry = HelperRegistry::from_dir(&base);
@@ -829,6 +833,15 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::ts_engine::generate(all_funcs, &enums, &registry, &root, &ts_lib);
         backends::ts_engine::generate_parity_test(all_funcs, &enums, &ts_lib.join("test"));
         backends::ts_engine::generate_routing_test(all_funcs, &root, &ts_lib.join("test"));
+    }
+
+    // The Go module's whole-corpus files: the manifest, the enums and the examples.
+    if backends_to_run.contains(&"go") {
+        let go_dir = out_base.join("go");
+        std::fs::create_dir_all(&go_dir).unwrap();
+        write_if_changed(go_dir.join("go.mod"), backends::go::GO_MOD).unwrap();
+        backends::go_enums::generate(all_funcs, &enums, &go_dir.join("enums.go"));
+        backends::go_examples::write(all_funcs, &enums, &go_dir.join("example_test.go"));
     }
 
     // Whole-corpus, like the Rust probe above: a `--func=X` run must not shrink it.
@@ -1525,6 +1538,27 @@ fn build_rust(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
     vec![step]
 }
 
+/// Built beside its destination and renamed over it, so a server still running
+/// from the previous build keeps its own file.
+fn build_go(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
+    let dst = bin_dir.join("ta_codegen_serve_go");
+    let tmp = bin_dir.join("ta_codegen_serve_go.tmp");
+    let mut step = run_build_step(
+        "Go server",
+        "go",
+        std::process::Command::new("go")
+            .args(["build", "-o", tmp.to_str().unwrap(), "."])
+            .current_dir(out_base.join("go/tools")),
+    );
+    if step.ok {
+        if let Err(e) = std::fs::rename(&tmp, &dst) {
+            step.ok = false;
+            step.status = format!("OK (build), FAILED (rename: {e})");
+        }
+    }
+    vec![step]
+}
+
 fn panicked_step(label: &str) -> BuildStep {
     BuildStep {
         label: label.to_string(),
@@ -1566,6 +1600,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                     "csharp" => Some(build_csharp(out_base, bin_dir)),
                     "rust" => Some(build_rust(out_base, bin_dir)),
                     "ts" => Some(build_ts(out_base, bin_dir)),
+                    "go" => Some(build_go(out_base, bin_dir)),
                     _ => None,
                 });
                 (backend, handle)
@@ -1632,7 +1667,7 @@ fn build_libraries(backend_filter: Option<&str>) {
     let bin_dir = root.join("bin");
     let backends_to_build: Vec<&str> = match backend_filter {
         Some(b) => b.split(',').map(|s| s.trim()).collect(),
-        None => vec!["java", "csharp", "ts"],
+        None => vec!["java", "csharp", "ts", "go"],
     };
 
     let mut failures: u32 = 0;
@@ -1657,6 +1692,12 @@ fn build_libraries(backend_filter: Option<&str>) {
                     failures += 1;
                 }
             }
+            "go" => {
+                built += 1;
+                if !build_go_library(&root) {
+                    failures += 1;
+                }
+            }
             "c" | "rust" => println!("  {backend}: no managed library, SKIPPED"),
             _ => {
                 failures += 1;
@@ -1668,7 +1709,7 @@ fn build_libraries(backend_filter: Option<&str>) {
     if built == 0 {
         eprintln!(
             "\nError: --backend={} names no backend with a publishable library (java, \
-             csharp, ts), so this command built and tested nothing.",
+             csharp, ts, go), so this command built and tested nothing.",
             backends_to_build.join(",")
         );
         std::process::exit(1);
@@ -1849,6 +1890,270 @@ fn build_ts_library(root: &Path, bin_dir: &Path) -> bool {
             .current_dir(&consumer),
     );
     report_node_tests(&step, &report)
+}
+
+/// Prints a step's status, and its log when it failed or `show_log` asks.
+fn report_step(step: &BuildStep, show_log: bool) -> bool {
+    if show_log || !step.ok {
+        print!("{}", step.log);
+        if !step.log.is_empty() && !step.log.ends_with('\n') {
+            println!();
+        }
+    }
+    println!("  {}... {}", step.label, step.status);
+    step.ok
+}
+
+/// A `go` command that sees no workspace file: the module under test is the
+/// whole build.
+fn go_command(dir: &Path) -> std::process::Command {
+    let mut cmd = std::process::Command::new("go");
+    cmd.env("GOWORK", "off").current_dir(dir);
+    cmd
+}
+
+/// A throwaway module requiring the package through a `replace`, under the
+/// system temp directory.
+fn go_scratch_module(tag: &str, lib_dir: &Path) -> std::io::Result<PathBuf> {
+    let dir = std::env::temp_dir().join(format!("ta_codegen_go_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir)?;
+    let lib = std::fs::canonicalize(lib_dir)?;
+    std::fs::write(
+        dir.join("go.mod"),
+        format!(
+            "module {tag}\n\ngo 1.22\n\nrequire {0} v0.0.0\n\nreplace {0} => {1}\n",
+            backends::go_examples::MODULE,
+            lib.display()
+        ),
+    )?;
+    Ok(dir)
+}
+
+/// The README's ```go blocks, in order.
+fn readme_go_blocks(readme: &str) -> Vec<Vec<String>> {
+    let mut blocks = Vec::new();
+    let mut current: Option<Vec<String>> = None;
+    for line in readme.lines() {
+        match &mut current {
+            None if line.trim_end() == "```go" => current = Some(Vec::new()),
+            Some(block) if line.trim_end() == "```" => {
+                blocks.push(std::mem::take(block));
+                current = None;
+            }
+            Some(block) => block.push(line.to_string()),
+            None => {}
+        }
+    }
+    blocks
+}
+
+/// What the consumer runs after the README's snippets: one batch call and one
+/// stream through the module path, the stream held bit-for-bit to the batch.
+const GO_CONSUMER_MAIN: &str = r#"package main
+
+import (
+	"errors"
+	"fmt"
+	"math"
+	"os"
+
+	talib "ta-lib.github.io/go"
+)
+
+func fail(format string, a ...any) {
+	fmt.Printf("consumer check FAILED: "+format+"\n", a...)
+	os.Exit(1)
+}
+
+func main() {
+	readme()
+	const n = 300
+	series := make([]float64, n)
+	for i := range series {
+		series[i] = 100 + 10*math.Sin(0.1*float64(i)) + 0.8*math.Sin(0.7*float64(i))
+	}
+	core := talib.NewCore()
+	out := make([]float64, n)
+	r, err := core.SMA(0, n-1, series, 20, out)
+	if err != nil || r.BegIdx != 19 || r.NBElement != n-19 {
+		fail("SMA: %+v, %v", r, err)
+	}
+	s, last, err := core.SMAOpen(series[:200], 20)
+	if err != nil || math.Float64bits(last) != math.Float64bits(out[199-r.BegIdx]) {
+		fail("SMAOpen: %v, %v", last, err)
+	}
+	for bar := 200; bar < n; bar++ {
+		v, err := s.Update(series[bar])
+		if err != nil || math.Float64bits(v) != math.Float64bits(out[bar-r.BegIdx]) {
+			fail("SMA Update at bar %d: %v, want %v (%v)", bar, v, out[bar-r.BegIdx], err)
+		}
+	}
+	if s.OutRange() != r {
+		fail("SMA stream range %+v, batch %+v", s.OutRange(), r)
+	}
+	_, err = core.SMA(0, n-1, series, 0, out)
+	var code talib.RetCode
+	if !errors.Is(err, talib.BadParam) || !errors.As(err, &code) || code.Error() != "TA_BAD_PARAM" {
+		fail("SMA period 0: %v", err)
+	}
+	fmt.Println("consumer check OK")
+}
+"#;
+
+/// Vet, gofmt and test the Go package with the `go` on PATH, then build a
+/// throwaway module that imports it by its module path and runs the README's
+/// snippets and one batch call against one stream.
+///
+/// Every function must have run its example, which only an example with a
+/// recorded `// Output:` does.
+fn build_go_library(root: &Path) -> bool {
+    let lib_dir = root.join("ta_codegen/output/go");
+    if !lib_dir.join("go.mod").exists() {
+        println!("  Building Go library... FAILED (no {})", lib_dir.join("go.mod").display());
+        return false;
+    }
+    let goroot = match go_command(&lib_dir).args(["env", "GOROOT"]).output() {
+        Ok(o) if o.status.success() => PathBuf::from(String::from_utf8_lossy(&o.stdout).trim()),
+        _ => {
+            println!("  Building Go library... FAILED (no `go` on PATH)");
+            return false;
+        }
+    };
+    if let Ok(o) = go_command(&lib_dir).arg("version").output() {
+        println!("  Go library on {}", String::from_utf8_lossy(&o.stdout).trim());
+    }
+    if !report_step(&run_build_step("Vetting the package (go vet)", "go", go_command(&lib_dir).args(["vet", "./..."])), false) {
+        return false;
+    }
+    let gofmt = goroot.join("bin").join("gofmt");
+    let fmt = run_build_step("Checking the package is gofmt-canonical", "gofmt", std::process::Command::new(&gofmt).args(["-l", "."]).current_dir(&lib_dir));
+    if fmt.ok && !fmt.log.trim().is_empty() {
+        print!("{}", fmt.log);
+        println!("  {}... FAILED (gofmt -l lists the files above)", fmt.label);
+        return false;
+    }
+    if !report_step(&fmt, false) {
+        return false;
+    }
+
+    let test = run_build_step("Testing the package and its examples (go test)", "go", go_command(&lib_dir).args(["test", "-count=1", "-v", "./..."]));
+    if !test.ok {
+        return report_step(&test, true);
+    }
+    let passed = |prefix: &str| test.log.lines().filter(|l| l.trim_start().starts_with(prefix)).count();
+    let examples = passed("--- PASS: Example");
+    let tests = passed("--- PASS: Test");
+    let functions = load_all_yaml_defs(&root.join("ta_codegen/input")).len();
+    if examples != functions {
+        println!(
+            "  {}... FAILED ({examples} examples ran for {functions} functions: an example without a recorded \
+             `// Output:` does not run; run `ta_codegen bless-go-examples`)",
+            test.label
+        );
+        return false;
+    }
+    println!("  {}... OK ({tests} tests, {examples} examples, one per function)", test.label);
+
+    let consumer = match go_scratch_module("consumer", &lib_dir) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("  Go consumer check... FAILED (cannot create its module: {e})");
+            return false;
+        }
+    };
+    let ok = go_consumer_check(root, &consumer);
+    let _ = std::fs::remove_dir_all(&consumer);
+    ok
+}
+
+fn go_consumer_check(root: &Path, dir: &Path) -> bool {
+    let readme_path = root.join("ta_codegen/output/go/README.md");
+    let readme = std::fs::read_to_string(&readme_path).unwrap_or_default();
+    let blocks = readme_go_blocks(&readme);
+    if blocks.len() != 2 {
+        println!(
+            "  Go consumer check... FAILED ({} holds {} ```go blocks; the check runs exactly two, batch then stream)",
+            readme_path.display(),
+            blocks.len()
+        );
+        return false;
+    }
+    let mut snippets = format!(
+        "package main\n\nimport (\n\t\"fmt\"\n\t\"log\"\n\n\ttalib \"{}\"\n)\n\nvar _ = fmt.Sprint\nvar _ = log.Print\n\nfunc readme() {{\n",
+        backends::go_examples::MODULE
+    );
+    for line in blocks.iter().flatten() {
+        if line.is_empty() {
+            snippets.push('\n');
+        } else {
+            snippets.push_str(&format!("\t{line}\n"));
+        }
+    }
+    snippets.push_str("}\n");
+    if let Err(e) = std::fs::write(dir.join("readme.go"), snippets).and_then(|()| std::fs::write(dir.join("main.go"), GO_CONSUMER_MAIN)) {
+        println!("  Go consumer check... FAILED ({e})");
+        return false;
+    }
+    if !report_step(&run_build_step("Vetting a module that imports the package and runs the README's snippets", "go", go_command(dir).args(["vet", "."])), false) {
+        return false;
+    }
+    let run = run_build_step("Running it", "go", go_command(dir).args(["run", "."]));
+    if run.ok && !run.log.lines().any(|l| l == "consumer check OK") {
+        print!("{}", run.log);
+        println!("  {}... FAILED (no `consumer check OK`)", run.label);
+        return false;
+    }
+    report_step(&run, true)
+}
+
+/// Generate the Go package, run every example's sample through the module path
+/// and record what each prints, then regenerate so the examples and the pages
+/// carry it.
+fn bless_go_examples() -> i32 {
+    let root = repo_root();
+    generate(None, Some("go"));
+    let base = root.join("ta_codegen/input");
+    let funcs = load_all_yaml_defs(&base);
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let lib_dir = root.join("ta_codegen/output/go");
+    let dir = match go_scratch_module("bless", &lib_dir) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("bless-go-examples: cannot create the module: {e}");
+            return 1;
+        }
+    };
+    let program = backends::go_examples::render_bless_program(&funcs, &enums);
+    let run = std::fs::write(dir.join("main.go"), program).and_then(|()| go_command(&dir).args(["run", "."]).output());
+    let _ = std::fs::remove_dir_all(&dir);
+    let output = match run {
+        Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).into_owned(),
+        Ok(o) => {
+            eprintln!("bless-go-examples: the samples failed:\n{}{}", String::from_utf8_lossy(&o.stdout), String::from_utf8_lossy(&o.stderr));
+            return 1;
+        }
+        Err(e) => {
+            eprintln!("bless-go-examples: cannot run go: {e}");
+            return 1;
+        }
+    };
+    let ledger = match backends::go_examples::parse_bless_output(&output) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("bless-go-examples: {e}");
+            return 1;
+        }
+    };
+    if ledger.len() != funcs.len() {
+        eprintln!("bless-go-examples: {} samples printed for {} functions", ledger.len(), funcs.len());
+        return 1;
+    }
+    let path = root.join(backends::go_examples::LEDGER);
+    write_if_changed(&path, backends::go_examples::render_ledger(&ledger)).unwrap();
+    println!("  Recorded {} Go example outputs -> {}", ledger.len(), path.display());
+    generate(None, None);
+    0
 }
 
 /// Prints `node --test`'s TAP totals; fails a run that executed no test.

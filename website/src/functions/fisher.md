@@ -172,6 +172,29 @@ const { begIdx, outFisher, outTrigger } = fisher({ high, low }, {
 console.log(outFisher.length + ' values from bar ' + begIdx + '; last outFisher = ' + outFisher[outFisher.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+fisher := make([]float64, 252)
+trigger := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.FISHER(0, len(high)-1, high, low, 10, fisher, trigger)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last fisher = %.4f\n", r.NBElement, r.BegIdx, fisher[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -187,6 +210,7 @@ TA-Lib Definition: [`fisher.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Java | [`Core_FISHER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FISHER.java) |
 | C# | [`Core_FISHER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FISHER.cs) |
 | TypeScript | [`fisher.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fisher.ts) |
+| Go | [`fisher.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/fisher.go) |
 
 Python: `talib.FISHER` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

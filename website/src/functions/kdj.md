@@ -194,6 +194,32 @@ const { begIdx, outK, outD, outJ } = kdj({ high, low, close }, {
 console.log(outK.length + ' values from bar ' + begIdx + '; last outK = ' + outK[outK.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+k := make([]float64, 252)
+d := make([]float64, 252)
+j := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.KDJ(0, len(high)-1, high, low, close, 9, 3, talib.MATypeRMA, 3, talib.MATypeRMA,
+	k, d, j)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last k = %.4f\n", r.NBElement, r.BegIdx, k[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -209,6 +235,7 @@ TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_KDJ.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KDJ.java) |
 | C# | [`Core_KDJ.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KDJ.cs) |
 | TypeScript | [`kdj.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kdj.ts) |
+| Go | [`kdj.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/kdj.go) |
 
 Python: `talib.KDJ` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

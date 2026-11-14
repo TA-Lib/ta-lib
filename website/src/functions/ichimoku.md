@@ -198,6 +198,32 @@ const {
 console.log(outTenkanSen.length + ' values from bar ' + begIdx + '; last outTenkanSen = ' + outTenkanSen[outTenkanSen.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+tenkanSen := make([]float64, 252)
+kijunSen := make([]float64, 252)
+senkouSpanA := make([]float64, 252)
+senkouSpanB := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.ICHIMOKU(0, len(high)-1, high, low, 9, 26, 52,
+	tenkanSen, kijunSen, senkouSpanA, senkouSpanB)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last tenkanSen = %.4f\n", r.NBElement, r.BegIdx, tenkanSen[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -213,6 +239,7 @@ TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Java | [`Core_ICHIMOKU.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ICHIMOKU.java) |
 | C# | [`Core_ICHIMOKU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ICHIMOKU.cs) |
 | TypeScript | [`ichimoku.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ichimoku.ts) |
+| Go | [`ichimoku.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/ichimoku.go) |
 
 Python: `talib.ICHIMOKU` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

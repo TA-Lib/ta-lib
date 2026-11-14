@@ -168,6 +168,27 @@ const { begIdx, values } = stc(series, {
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.STC(0, len(series)-1, series, 23, 50, 10, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -183,6 +204,7 @@ TA-Lib Definition: [`stc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_STC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_STC.java) |
 | C# | [`Core_STC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STC.cs) |
 | TypeScript | [`stc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stc.ts) |
+| Go | [`stc.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/stc.go) |
 
 Python: `talib.STC` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

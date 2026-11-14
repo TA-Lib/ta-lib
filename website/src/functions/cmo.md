@@ -149,6 +149,27 @@ const { begIdx, values } = cmo(series, { timePeriod: 14 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.CMO(0, len(series)-1, series, 14, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -164,6 +185,7 @@ TA-Lib Definition: [`cmo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_CMO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMO.java) |
 | C# | [`Core_CMO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMO.cs) |
 | TypeScript | [`cmo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cmo.ts) |
+| Go | [`cmo.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/cmo.go) |
 
 Python: `talib.CMO`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

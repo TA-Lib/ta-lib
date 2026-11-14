@@ -17,6 +17,7 @@ use std::collections::HashMap;
 
 pub(crate) mod c;
 pub(crate) mod csharp;
+pub(crate) mod go;
 pub(crate) mod java;
 pub(crate) mod rust_lang;
 pub(crate) mod ts;
@@ -263,8 +264,8 @@ enum SvRangeSite {
     Fill = 0,
     /// The `Open(P)` + updates handle.
     Prefix = 1,
-    /// The `startIdx`-anchored `_OpenInternal` handle. Every server but Rust,
-    /// whose server is a separate crate and cannot reach a `pub(crate)` seam.
+    /// The `startIdx`-anchored `_OpenInternal` handle. Every server but Rust and
+    /// Go, whose servers are a separate crate or module and cannot reach the seam.
     Anchored = 2,
     /// The handle forked mid-stream by `copy()` / `Clone()` / `.clone()` and
     /// driven to the end (#287). Every server, C included since it gained
@@ -300,8 +301,8 @@ const fn sv_range_mask(sites: &[SvRangeSite]) -> u32 {
     m
 }
 
-/// Every server but Rust reaches the anchored seam: Rust's server is a separate
-/// crate and `_OpenInternal` is `pub(crate)`.
+/// Every server but Rust and Go reaches the anchored seam: theirs is a separate
+/// crate or module and `_OpenInternal` is not exported.
 const SV_RANGE_MASK_C: u32 = sv_range_mask(&[
     SvRangeSite::Fill,
     SvRangeSite::Prefix,
@@ -320,6 +321,9 @@ const SV_RANGE_MASK_CSHARP: u32 = SV_RANGE_MASK_JAVA;
 const SV_RANGE_MASK_TS: u32 = SV_RANGE_MASK_JAVA;
 const SV_RANGE_MASK_RUST: u32 =
     sv_range_mask(&[SvRangeSite::Fill, SvRangeSite::Prefix, SvRangeSite::Copy, SvRangeSite::Advance]);
+/// Go's server is a separate module, so it cannot reach the unexported
+/// `_OpenInternal` seam either.
+const SV_RANGE_MASK_GO: u32 = SV_RANGE_MASK_RUST;
 
 /// Substitute C enum constants (`TA_MAType_HMA`) with their integer values so
 /// a `sv_reject_condition` guard renders as valid Rust or Java (both compare

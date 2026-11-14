@@ -151,6 +151,28 @@ const { begIdx, outMin, outMax } = minmax(series, { timePeriod: 30 });
 console.log(outMin.length + ' values from bar ' + begIdx + '; last outMin = ' + outMin[outMin.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+min := make([]float64, 252)
+max := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.MINMAX(0, len(series)-1, series, 30, min, max)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last min = %.4f\n", r.NBElement, r.BegIdx, min[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -166,6 +188,7 @@ TA-Lib Definition: [`minmax.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Java | [`Core_MINMAX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MINMAX.java) |
 | C# | [`Core_MINMAX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINMAX.cs) |
 | TypeScript | [`minmax.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/minmax.ts) |
+| Go | [`minmax.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/minmax.go) |
 
 Python: `talib.MINMAX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_operators.html).
 

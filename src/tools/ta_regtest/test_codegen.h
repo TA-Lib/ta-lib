@@ -17,7 +17,7 @@
 
 /* Run codegen verification tests against one or more languages.
  * languageFilter: comma-separated list of languages to test (NULL = test all).
- *   Valid values: "rust", "c", "java", "csharp", "ts", "tswasm"
+ *   Valid values: "rust", "c", "java", "csharp", "ts", "tswasm", "go"
  * functionFilter: CSV list of function names to test (NULL = test all).
  * Errors loudly if a requested language's server cannot be started.
  */
@@ -53,6 +53,13 @@ unsigned int codegen_range_grace(const char *funcName);
  * at instead of by a bitwise hash; 0 for a language held bitwise on them. The
  * single definition --codegen, --xlang-hash and server_verify read. */
 double codegen_lang_transcendental_tol(const char *lang);
+
+/* What a language's server offers beyond the batch and streaming tiers: the
+ * metadata tier (abstract_*) and a single-precision surface (use_float). A leg
+ * a language lacks is not sent to its server, and a floor on that leg holds
+ * only when a server offering it ran. */
+int codegen_lang_has_abstract(const char *lang);
+int codegen_lang_serves_float(const char *lang);
 
 /* Records one tolerance-lane compare of funcName from `lang`: dev is the call's
  * largest scaled deviation (codegen_scaled_dev), 0 when every element agreed. */

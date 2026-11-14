@@ -86,6 +86,16 @@ fn test_composed_open_fuses_every_sub_call() {
             (fused, unfused),
             "{name}: TS fused/unfused split differs from C"
         );
+        // Go binds each sub-handle with `sub<n>, _E<k> := c.<n>Open...`.
+        let g = backends::go::generate(&func, &enums, registry, helpers);
+        let go_sub_opens = |needle: &str| {
+            g.lines().filter(|l| l.trim_start().starts_with("sub") && l.contains(":= c.") && l.contains(needle)).count()
+        };
+        assert_eq!(
+            (go_sub_opens("OpenAndFillInternal("), go_sub_opens("OpenInternal(")),
+            (fused, unfused),
+            "{name}: Go fused/unfused split differs from C"
+        );
         assert!(
             fused + unfused > 0,
             "{name}: composed Open emitted no sub-stream open at all"
@@ -613,14 +623,15 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     // an Open-family identifier in this backend's own casing (Rust keeps the
     // `_open` underscore; Java/C# dropped the underscore but kept `Open`
     // PascalCase, issue #278).
-    let specs: [(&str, &str, &str, &str); 4] = [
+    let specs: [(&str, &str, &str, &str); 5] = [
         ("Rust", "pub(crate) fn", "return Err(retCode)", "_open"),
         ("Java", "private RetCode", "return retCode ;", "Open"),
         ("C#", "private RetCode", "return retCode ;", "Open"),
         ("TS", "function ", "return retCode;", "Open"),
+        ("Go", "func (c *Core) ", "return retCode\n", "Open"),
     ];
 
-    let mut per_backend = [0usize; 4];
+    let mut per_backend = [0usize; 5];
     for name in discover_indicators() {
         let Some((func, _)) = try_load_indicator(&name) else { continue };
         if !func.streaming {
@@ -645,6 +656,7 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
             backends::java::generate(&func, &enums, registry, helpers),
             backends::csharp::generate(&func, &enums, registry, helpers),
             backends::ts::generate(&func, &enums, registry, helpers),
+            backends::go::generate(&func, &enums, registry, helpers),
         ];
         for (b, src) in sources.iter().enumerate() {
             let (lang, def_kw, bare, needle) = specs[b];
@@ -814,31 +826,35 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 
     // guard text, the emptiness check that must not exist, and the arm-level
     // guard a managed DualMode body relies on instead (C and Rust hoist theirs)
-    let specs: [(&str, &str, &str, Option<&str>); 5] = [
+    let specs: [(&str, &str, &str, Option<&str>); 6] = [
         ("C", "if( startIdx >= historyLen )", "historyLen < 1", None),
         ("Rust", "if startIdx >= historyLen {", ".is_empty()", None),
         ("Java", "if( startIdx >= historyLen ) {", "historyLen < 1", Some("if( startIdx > endIdx ) {")),
         ("C#", "if( startIdx >= historyLen ) {", "historyLen < 1", Some("if( startIdx > endIdx ) {")),
         ("TS", "if (startIdx >= historyLen) {", "historyLen < 1", Some("if (startIdx > endIdx) {")),
+        ("Go", "if startIdx >= historyLen {", "historyLen < 1", Some("if startIdx > endIdx {")),
     ];
     // Per backend: the definition keyword, which is what tells a definition
     // from a call site, and the `_OpenImpl` marker in that backend's own casing
     // (issue #278): C keeps `_OpenImpl(`, Rust lower-cases the whole family to
     // `_open_impl(`, and Java/C# dropped the underscore joiner but kept
     // `OpenImpl(` PascalCase.
-    let shapes: [&[(&str, &str)]; 5] = [
+    let shapes: [&[(&str, &str)]; 6] = [
         &[("static ", "_OpenImpl(")],
         &[("pub(crate) fn", "_open_impl("), ("    fn ", "_open_impl_scalar(")],
         &[("private RetCode", "OpenImpl(")],
         &[("private RetCode", "OpenImpl(")],
         &[("function ", "OpenImpl(")],
+        &[("func (c *Core) ", "OpenImpl(")],
     ];
     // Java and C# write `for(`, which `for ` does not match; TS's `for (` would,
     // and its DualMode identity fill loop precedes the arm's own guard.
-    let loops: [&[&str]; 5] = [&["while", "for "], &["while", "for "], &["while", "for "], &["while", "for "], &["while"]];
+    // Go spells every loop `for `; its DualMode identity fill loop, `for fillIdx`,
+    // precedes the arm's own guard and is skipped below.
+    let loops: [&[&str]; 6] = [&["while", "for "], &["while", "for "], &["while", "for "], &["while", "for "], &["while"], &["\tfor "]];
 
     let mut checked = 0usize;
-    let mut per_backend = [0usize; 5];
+    let mut per_backend = [0usize; 6];
 
     for name in discover_indicators() {
         let Some((func, _)) = try_load_indicator(&name) else { continue };
@@ -848,6 +864,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
             backends::java::generate(&func, &enums, registry, helpers),
             backends::csharp::generate(&func, &enums, registry, helpers),
             backends::ts::generate(&func, &enums, registry, helpers),
+            backends::go::generate(&func, &enums, registry, helpers),
         ];
 
         for (b, src) in sources.iter().enumerate() {
@@ -881,7 +898,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
                 // a placement check that skips the 37 bodies matching no needle.
                 let first_loop = loops[b]
                     .iter()
-                    .filter_map(|kw| body.find(kw))
+                    .filter_map(|kw| body.match_indices(kw).map(|(i, _)| i).find(|&i| !body[i..].starts_with("\tfor fillIdx")))
                     .min();
                 if let Some(l) = first_loop {
                     assert!(
@@ -905,7 +922,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
             specs[b].0
         );
     }
-    assert!(checked > 750, "only {checked} bodies checked across five backends");
+    assert!(checked > 900, "only {checked} bodies checked across six backends");
     assert!(
         per_backend.iter().all(|n| *n == per_backend[0]),
         "the backends disagree on how many _OpenImpl bodies exist: {per_backend:?}"

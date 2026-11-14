@@ -169,6 +169,30 @@ const { begIdx, values } = cdlconcealbabyswall({ open, high, low, close });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+open := make([]float64, 252) // your data, oldest first
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+out := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.CDLCONCEALBABYSWALL(0, len(open)-1, open, high, low, close, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -184,6 +208,7 @@ TA-Lib Definition: [`cdlconcealbabyswall.c`](https://github.com/TA-Lib/ta-lib/bl
 | Java | [`Core_CDLCONCEALBABYSWALL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLCONCEALBABYSWALL.java) |
 | C# | [`Core_CDLCONCEALBABYSWALL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLCONCEALBABYSWALL.cs) |
 | TypeScript | [`cdlconcealbabyswall.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlconcealbabyswall.ts) |
+| Go | [`cdlconcealbabyswall.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/cdlconcealbabyswall.go) |
 
 Python: `talib.CDLCONCEALBABYSWALL`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
 

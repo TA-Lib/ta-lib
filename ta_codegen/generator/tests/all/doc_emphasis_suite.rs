@@ -1,7 +1,8 @@
 //! The canonical `input/<name>/<name>.md` is Markdown. Rust's and TypeScript's
-//! doc targets are Markdown too, so they render it; Java's is HTML and C#'s is XML, and
-//! whatever those emitters do not convert reaches the reader as punctuation —
-//! in the published javadoc, the NuGet XML docs and every IDE hover.
+//! doc targets are Markdown too, so they render it; Java's is HTML, C#'s is XML and
+//! Go's is plain text, and whatever those emitters do not convert reaches the reader
+//! as punctuation — in the published javadoc, the NuGet XML docs, pkg.go.dev and
+//! every IDE hover.
 //!
 //! Nothing else can see this class. `javadoc -Xdoclint:all,-missing` (what
 //! `pom.xml` enforces) and `csc` under `-warnaserror` with
@@ -88,6 +89,8 @@ fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
         format!("csharp {upper} lookback"),
         backends::csharp_doc::lookback_docs(&func, &upper, &enums),
     ));
+    out.push((format!("go {upper} batch"), backends::go_doc::batch_docs(&func, &enums, registry)));
+    out.push((format!("go {upper} lookback"), backends::go_doc::lookback_docs(&func, &enums)));
     out.push((format!("ts {upper} batch"), backends::ts_doc::batch_docs(&func, &enums, registry)));
     out.push((format!("ts {upper} lookback"), backends::ts_doc::lookback_docs(&func)));
     let options: String = func
@@ -111,6 +114,8 @@ fn prose_lines(block: &str) -> Vec<String> {
         let body = if let Some(b) = s.strip_prefix("///") {
             b
         } else if let Some(b) = s.strip_prefix('*') {
+            b
+        } else if let Some(b) = s.strip_prefix("//") {
             b
         } else {
             continue;
@@ -177,7 +182,7 @@ fn emphasis_runs(line: &str, len: usize) -> usize {
     n
 }
 
-/// Every rendered Java/C# doc line that still carries a Markdown emphasis
+/// Every rendered Java/C#/Go doc line that still carries a Markdown emphasis
 /// delimiter, as `label | line`.
 fn emphasis_survivors() -> Vec<String> {
     let registry = common::make_registry();
@@ -203,10 +208,10 @@ fn emphasis_survivors() -> Vec<String> {
     out
 }
 
-/// The gate. A paired `*`/`**` in a rendered Java or C# doc line is a Markdown
-/// delimiter the reader sees as punctuation.
+/// The gate. A paired `*`/`**` in a rendered Java, C# or Go doc line is a
+/// Markdown delimiter the reader sees as punctuation.
 #[test]
-fn no_markdown_emphasis_reaches_the_java_or_csharp_docs() {
+fn no_markdown_emphasis_reaches_the_java_csharp_or_go_docs() {
     let survivors = emphasis_survivors();
     assert!(
         survivors.is_empty(),
@@ -285,7 +290,7 @@ fn tex_survivors() -> Vec<String> {
 /// definition a Java or C# user gets — so TeX authored there has to fail the
 /// build instead. Nothing in the corpus carries any today; this is what says so.
 #[test]
-fn no_tex_reaches_the_java_csharp_or_ts_docs() {
+fn no_tex_reaches_the_java_csharp_ts_or_go_docs() {
     let survivors = tex_survivors();
     assert!(
         survivors.is_empty(),

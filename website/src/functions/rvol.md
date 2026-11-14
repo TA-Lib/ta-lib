@@ -152,6 +152,27 @@ const { begIdx, values } = rvol({ volume }, { timePeriod: 20 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+volume := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.RVOL(0, len(volume)-1, volume, 20, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -167,6 +188,7 @@ TA-Lib Definition: [`rvol.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Java | [`Core_RVOL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RVOL.java) |
 | C# | [`Core_RVOL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_RVOL.cs) |
 | TypeScript | [`rvol.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rvol.ts) |
+| Go | [`rvol.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/rvol.go) |
 
 Python: `talib.RVOL` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
 

@@ -168,6 +168,29 @@ const {
 console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+macd := make([]float64, 252)
+macdSignal := make([]float64, 252)
+macdHist := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.MACD(0, len(series)-1, series, 12, 26, 9, macd, macdSignal, macdHist)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -183,6 +206,7 @@ TA-Lib Definition: [`macd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Java | [`Core_MACD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACD.java) |
 | C# | [`Core_MACD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACD.cs) |
 | TypeScript | [`macd.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macd.ts) |
+| Go | [`macd.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/macd.go) |
 
 Python: `talib.MACD`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

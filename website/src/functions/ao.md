@@ -159,6 +159,28 @@ const { begIdx, values } = ao({ high, low }, { fastPeriod: 5, slowPeriod: 34 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.AO(0, len(high)-1, high, low, 5, 34, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -174,6 +196,7 @@ TA-Lib Definition: [`ao.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Java | [`Core_AO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_AO.java) |
 | C# | [`Core_AO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AO.cs) |
 | TypeScript | [`ao.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ao.ts) |
+| Go | [`ao.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/ao.go) |
 
 Python: `talib.AO` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

@@ -172,6 +172,30 @@ const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
 console.log(outBullPower.length + ' values from bar ' + begIdx + '; last outBullPower = ' + outBullPower[outBullPower.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+bullPower := make([]float64, 252)
+bearPower := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.ERI(0, len(high)-1, high, low, close, 13, bullPower, bearPower)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last bullPower = %.4f\n", r.NBElement, r.BegIdx, bullPower[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -187,6 +211,7 @@ TA-Lib Definition: [`eri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_ERI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ERI.java) |
 | C# | [`Core_ERI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ERI.cs) |
 | TypeScript | [`eri.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/eri.ts) |
+| Go | [`eri.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/eri.go) |
 
 Python: `talib.ERI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

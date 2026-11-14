@@ -180,6 +180,30 @@ const { begIdx, values } = si({ open, high, low, close }, { limitMove: 3 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+open := make([]float64, 252) // your data, oldest first
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.SI(0, len(open)-1, open, high, low, close, 3, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -195,6 +219,7 @@ TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Java | [`Core_SI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SI.java) |
 | C# | [`Core_SI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SI.cs) |
 | TypeScript | [`si.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/si.ts) |
+| Go | [`si.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/si.go) |
 
 Python: `talib.SI` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

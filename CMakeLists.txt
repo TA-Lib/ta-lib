@@ -1142,9 +1142,9 @@ if(_TA_BUILD_TOOLS)
 	# `scripts/build.py servers` (CMake itself never invokes cargo).
 	add_custom_target(regtest
 		COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-			./ta_regtest --codegen --language=c,java,csharp,rust,ts
+			./ta_regtest --codegen --language=c,java,csharp,rust,ts,go
 		DEPENDS ensure_ta_regtest_in_bin
-		COMMENT "Running cross-language regression tests (C, Java, C#, Rust, TypeScript)"
+		COMMENT "Running cross-language regression tests (C, Java, C#, Rust, TypeScript, Go)"
 	)
 	endif() # BUILD_TESTING
 

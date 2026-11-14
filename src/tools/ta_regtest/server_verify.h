@@ -5,10 +5,10 @@
 #include "ta_libc.h"
 #include "codegen_pipe.h"
 
-#define SV_MAX_PIPES 5
+#define SV_MAX_PIPES 6
 
 /* Initialize server verification with one or more server pipes.
- * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"csharp"/"ts"),
+ * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"csharp"/"ts"/"go"),
  * used to pick the per-pipe comparison policy (bitwise vs the language's
  * transcendental bound). Called from ta_regtest.c when --codegen is active. */
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes);
@@ -38,6 +38,9 @@ int server_verify_comparisons(void);
  * in a floor asking whether a test group verified anything: `comparisons` also
  * counts server_verify_lookback_parity, which compares no number. */
 int server_verify_value_comparisons(void);
+
+/* Live pipes whose language answers the lookback RPC. */
+int server_verify_lookback_pipes(void);
 
 /* Output values server_verify() held by fuzz_vmath_near instead of by bits, and
  * the live pipes it does that on for funcName. A caller routing a kernel-batch

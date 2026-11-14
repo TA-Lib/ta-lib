@@ -21,8 +21,9 @@ the SYNTH family:
        fixture that computes the wrong thing in all four backends passes both;
        this is the only leg that knows what the numbers should be.
   4. scripts/build.py libraries
-       the publishable Java jars and C# library over the injected tree --
-       nothing else asks whether a synthetic construct packages.
+       the publishable Java jars, C# library, npm package and Go module over
+       the injected tree -- nothing else asks whether a synthetic construct
+       packages.
 
 Leg 0 is the generator's own `cargo test` on the injected tree — the static
 sweeps that read emitted text for structural properties, the class no value leg
@@ -52,7 +53,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import check_prerequisites, LIBRARY_PREREQS
 
-LANGS = 6  # C, Rust, Java, C#, TypeScript, TS-WASM — one --codegen tally line each
+LANGS = 7  # C, Rust, Java, C#, TypeScript, TS-WASM, Go — one --codegen tally line each
 
 
 # Held for the life of the process: an flock lives on the descriptor, so this
@@ -301,7 +302,7 @@ def main():
         # The internal assertion is why a per-language tally is enough now:
         # ta_regtest fails itself if a leg goes uncovered.
         tally = re.findall(
-            r"^  (C|Rust|Java|C#|TypeScript|TS-WASM): (\d+) passed, (\d+) failed, (\d+) skipped",
+            r"^  (C|Rust|Java|C#|TypeScript|TS-WASM|Go): (\d+) passed, (\d+) failed, (\d+) skipped",
             out1, re.M)
         if len(tally) != LANGS:
             sys.exit(f"synth_gate: VACUOUS — {len(tally)} per-language tally "
@@ -324,7 +325,13 @@ def main():
 
         # Leg 4: the only leg that packages. Its floor: the jar check derives
         # what it expects from THIS tree's input/, so an injected fixture that
-        # never reaches the packaged Core fails it.
+        # never reaches the packaged Core fails it. The Go library refuses an
+        # example with no recorded output, which a fixture has until blessed.
+        rc, _ = run(["cargo", "run", "--release", "--manifest-path",
+                     os.path.join(wt, "ta_codegen", "generator", "Cargo.toml"),
+                     "--", "bless-go-examples"], cwd=wt, capture=True)
+        if rc != 0:
+            sys.exit(f"synth_gate: FAIL — bless-go-examples exited {rc}")
         rc, _ = run([sys.executable, os.path.join(wt, "scripts", "build.py"), "libraries"],
                     cwd=wt, capture=True)
         if rc != 0:

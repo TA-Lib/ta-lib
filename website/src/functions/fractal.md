@@ -192,6 +192,29 @@ const { begIdx, outSwingHigh, outSwingLow } = fractal({ high, low }, {
 console.log(outSwingHigh.length + ' values from bar ' + begIdx + '; last outSwingHigh = ' + outSwingHigh[outSwingHigh.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+swingHigh := make([]int32, 252)
+swingLow := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.FRACTAL(0, len(high)-1, high, low, 2, 2, swingHigh, swingLow)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last swingHigh = %d\n", r.NBElement, r.BegIdx, swingHigh[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -207,6 +230,7 @@ TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Java | [`Core_FRACTAL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FRACTAL.java) |
 | C# | [`Core_FRACTAL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FRACTAL.cs) |
 | TypeScript | [`fractal.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/fractal.ts) |
+| Go | [`fractal.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/fractal.go) |
 
 Python: `talib.FRACTAL` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

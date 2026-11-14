@@ -83,13 +83,18 @@ the last word:
   drops the dead ones; never renumber an existing entry by hand.
 - `rust_func_ids.yaml`: on a rebase conflict, keep the side you are rebasing
   onto and regenerate.
+- `go_example_values.yaml` is what each Go example prints, which `generate`
+  cannot compute. A change that moves a function's values or range fails its
+  Go example until `ta_codegen bless-go-examples` (Go on PATH) re-records it;
+  that command regenerates after.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
 lives under `output/` too (the Java shared types, `Core.java` outside the GENCODE
 markers, the test suites except the generated `ExamplesTest`, the C#
 `TALib.csproj`, `pom.xml`, the TypeScript `library/src/runtime/`,
-`library/README.md` and tooling `package.json`); the generator preserves those
+`library/README.md` and tooling `package.json`, and the Go `README.md`, `doc.go`
+and the files marked hand-written); the generator preserves those
 and never overwrites them. Of `pom.xml` and `TALib.csproj` only the version is
 written for you, by `scripts/sync.py`.
 

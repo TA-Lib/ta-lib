@@ -176,6 +176,33 @@ def is_node_installed() -> bool:
     except (subprocess.CalledProcessError, OSError):
         return False
 
+GO_MIN = (1, 22)
+
+
+def go_version_ok() -> bool:
+    try:
+        out = subprocess.run(['go', 'version'], check=True, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, text=True).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    m = re.search(r'\bgo(\d+)\.(\d+)', out)
+    return bool(m) and (int(m.group(1)), int(m.group(2))) >= GO_MIN
+
+
+def is_go_installed() -> bool:
+    """A Go of at least GO_MIN on PATH; without one, the pinned "stable" toolchain
+    from go_toolchain.py goes first on this process's PATH, which every child
+    inherits."""
+    if go_version_ok():
+        return True
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'go_toolchain.py')
+    found = subprocess.run([sys.executable, script, 'stable'], stdout=subprocess.PIPE, text=True)
+    bin_dir = found.stdout.strip()
+    if found.returncode or not bin_dir:
+        return False
+    os.environ['PATH'] = bin_dir + os.pathsep + os.environ.get('PATH', '')
+    return go_version_ok()
+
 def check_prerequisites(tools: list):
     """Check that all required tools are installed. Exit with an error if any are missing.
 
@@ -220,12 +247,15 @@ PREREQS_UNZIP = ("unzip", is_unzip_installed, "apt install unzip (or brew instal
 PREREQS_NODE = ("node", is_node_installed,
                 "Node >= 22.18 with npm from https://nodejs.org, or put the directory "
                 "`python3 scripts/node_toolchain.py 22` prints first on PATH")
+PREREQS_GO = ("go", is_go_installed,
+              "Go >= 1.22 from https://go.dev/dl; without one, scripts/go_toolchain.py "
+              "stable is fetched, which needs the network once")
 
 # Grouped prerequisite sets for common build scenarios.
 PREREQS_BUILD_BASIC = [PREREQS_CMAKE]
 PREREQS_BUILD_CODEGEN = [PREREQS_CMAKE, PREREQS_CARGO]
 PREREQS_BUILD_SERVERS = [PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-                         PREREQS_DOTNET, PREREQS_NODE]
+                         PREREQS_DOTNET, PREREQS_NODE, PREREQS_GO]
 
 # Tools each --language= backend's SERVER needs, on top of the base set below.
 # Unknown tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
@@ -239,6 +269,7 @@ LANG_PREREQS = {
     "java":   [PREREQS_JAVAC, PREREQS_JAVA],
     "csharp": [PREREQS_DOTNET],
     "ts":     [PREREQS_NODE],
+    "go":     [PREREQS_GO],
 }
 
 # Tools the PUBLISHABLE library of each backend needs, which is a different
@@ -248,12 +279,13 @@ LIBRARY_PREREQS = {
     "java":   [PREREQS_JAVAC, PREREQS_JAVA, PREREQS_UNZIP],
     "csharp": [PREREQS_DOTNET],
     "ts":     [PREREQS_NODE],
+    "go":     [PREREQS_GO],
 }
 
 # The ta_codegen `--backend=` tokens, which are 1:1 with the --language= ones
-# (backends::all_names() == ["c", "rust", "java", "csharp", "ts"]) bar the
+# (backends::all_names() == ["c", "rust", "java", "csharp", "ts", "go"]) bar the
 # ta_regtest entries that run one backend's server another way.
-CODEGEN_BACKENDS = ("c", "rust", "java", "csharp", "ts")
+CODEGEN_BACKENDS = ("c", "rust", "java", "csharp", "ts", "go")
 LANGUAGE_BACKEND = {"tswasm": "ts"}
 
 

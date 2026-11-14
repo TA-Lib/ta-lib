@@ -32,6 +32,13 @@ pub mod expr_walk;
 pub mod fma;
 pub mod func_api_xml;
 pub mod func_list;
+pub mod go;
+pub mod go_doc;
+pub mod go_examples;
+pub mod go_enums;
+pub mod go_fmt;
+pub mod go_prune;
+pub mod go_stream;
 pub mod java;
 pub mod java_abstract;
 pub mod java_stream;
@@ -522,6 +529,77 @@ impl LanguageBackend for TsBackend {
     }
 }
 
+/// The Go package: one `<name>.go` per indicator, methods on `*Core`, in the
+/// module root `ta_codegen/output/go`.
+pub struct GoBackend;
+impl LanguageBackend for GoBackend {
+    fn name(&self) -> &'static str {
+        "go"
+    }
+    fn label(&self) -> &'static str {
+        "Go"
+    }
+    fn generate(
+        &self,
+        func: &FuncDef,
+        enums: &HashMap<String, EnumDef>,
+        registry: &Registry,
+        helpers: &HelperRegistry,
+    ) -> String {
+        go::generate(func, enums, registry, helpers)
+    }
+    fn out_subdir(&self) -> &'static str {
+        "go"
+    }
+    fn file_name(&self, func: &FuncDef) -> String {
+        format!("{}.go", go::file_stem(&func.name))
+    }
+    fn clean_glob(&self) -> (&'static str, &'static str) {
+        ("", ".go")
+    }
+    fn clean_keep(&self) -> &'static [&'static str] {
+        go::KEEP
+    }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        go::RESERVED_WORDS
+    }
+    /// A function renders as its exported method (`VAR`), which no keyword
+    /// spells; a local takes a trailing `_` where Go reserves its name.
+    fn rendered_name(&self, name: &str, kind: NameKind) -> String {
+        match kind {
+            NameKind::Function => go::go_names(name).body,
+            _ => go::go_ident(name),
+        }
+    }
+    fn check_name(&self, name: &str, kind: NameKind) -> Result<(), String> {
+        if matches!(kind, NameKind::Function) {
+            if let Some(reason) = go::stem_problem(&name.to_lowercase()) {
+                return Err(format!("its Go file `{}.go` {reason}", name.to_lowercase()));
+            }
+        }
+        let rendered = self.rendered_name(name, kind);
+        if let Some(word) = self.reserved_words().iter().find(|w| w.eq_ignore_ascii_case(&rendered)) {
+            return Err(reserved_word_reason(self.name(), name, &rendered, word));
+        }
+        Ok(())
+    }
+    /// A module of its own nested in the package's, so the package's module zip
+    /// leaves it out.
+    fn generate_server(
+        &self,
+        funcs: &[FuncDef],
+        enums: &HashMap<String, EnumDef>,
+        out_base: &Path,
+    ) {
+        let dir = out_base.join("go/tools");
+        std::fs::create_dir_all(&dir).unwrap();
+        crate::emit::write_if_changed(dir.join("go.mod"), go::GO_TOOLS_MOD).unwrap();
+        let path = dir.join("ta_codegen_serve.go");
+        crate::emit::write_if_changed(&path, server_gen::generate_go_server(funcs, enums)).unwrap();
+        println!("  Go server -> {}", path.display());
+    }
+}
+
 /// The reason string a backend's default [`LanguageBackend::check_name`]
 /// returns, spelling out the mangling when the rendered form differs from the
 /// authored one (`LOOP` is not itself a keyword; `loop` is), and the case fold
@@ -559,6 +637,7 @@ pub fn all() -> Vec<Box<dyn LanguageBackend>> {
         Box::new(JavaBackend),
         Box::new(CSharpBackend),
         Box::new(TsBackend),
+        Box::new(GoBackend),
     ]
 }
 

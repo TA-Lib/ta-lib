@@ -21,6 +21,7 @@ mod doc_emphasis_suite;
 mod enums_suite;
 mod examples_suite;
 mod fma_suite;
+mod go_doc_suite;
 mod indicator_variants_suite;
 mod input_domain_suite;
 mod integration_test;

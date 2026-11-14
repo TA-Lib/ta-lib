@@ -15,7 +15,7 @@
 #   scripts/build.py regen-check    The PR gate: regenerating must change nothing (cargo)
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
-#   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript libraries (cargo)
+#   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript/Go libraries (cargo)
 #   scripts/build.py wasm           Build and check bin/ta_lib.wasm (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
@@ -37,7 +37,7 @@ from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
     PREREQS_CARGO, PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-    PREREQS_DOTNET, PREREQS_NODE, LIBRARY_PREREQS,
+    PREREQS_DOTNET, PREREQS_NODE, PREREQS_GO, LIBRARY_PREREQS,
     prereqs_for_languages, backends_for_languages,
     default_build_jobs, JobServer,
 )
@@ -157,12 +157,14 @@ def show_help():
     servers             Generate all source + compile JSON-RPC language servers,
                         and bring bin/ta_regtest — the only thing that drives
                         them — up to date, so bin/ can be run by hand
-    libraries           Build the publishable Java jars, C# library and npm
-                        package from the committed source and run their suites
-                        against them. Generates nothing; needs a JDK + unzip,
-                        the .NET SDK and/or Node with npm, narrowed by
-                        --language. --node=22,24,26 (or all) runs the
-                        TypeScript suite once per pinned Node major instead.
+    libraries           Build the publishable Java jars, C# library, npm
+                        package and Go module from the committed source and
+                        run their suites against them. Generates nothing; needs
+                        a JDK + unzip, the .NET SDK, Node with npm and/or Go,
+                        narrowed by --language. --node=22,24,26 (or all) runs
+                        the TypeScript suite once per pinned Node major
+                        instead. Go runs with the module's floor toolchain
+                        (scripts/go_toolchain.py 1.22) and with the Go on PATH.
     wasm                Build bin/ta_lib.wasm from the committed ta_codegen/output/wasm
                         crate for wasm32-unknown-unknown, then fail unless it
                         imports nothing and its only relaxed-SIMD instruction
@@ -222,13 +224,13 @@ def show_help():
                         the release tags. --versions=0_8_1[,...] narrows it;
                         --build-only stops after the serves.
     xlang-hash          Cross-language BITWISE parity gate (opt-in; issue #113):
-                        builds the Rust + Java + C# + TypeScript servers +
+                        builds the Rust + Java + C# + TypeScript + Go servers +
                         ta_regtest, then runs ta_regtest --xlang-hash — diffs each
-                        language server vs the in-process C library (Rust via seed
-                        inputs, the others via lossless hex inputs) with no
-                        tolerance, except the Java, C# and TypeScript calls that
-                        reach a transcendental (their Math.* is not the C libm).
-                        Needs the JDK, the .NET SDK and Node.
+                        language server vs the in-process C library (Rust and Go
+                        via seed inputs, the others via lossless hex inputs) with
+                        no tolerance, except the Java, C#, TypeScript and Go calls
+                        that reach a transcendental (their math is not the C libm).
+                        Needs the JDK, the .NET SDK, Node and Go.
 
   Other:
     clean               Remove cmake-build/ and cmake-build-asan/
@@ -241,12 +243,13 @@ def show_help():
                         fewer on a small or busy host)
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
-                        these backends (c, rust, java, csharp, ts), and require
+                        these backends (c, rust, java, csharp, ts, go), and require
                         only their toolchains (tswasm builds ts and selects
                         ta_regtest's WASM-engine run of its server). A machine
                         with no JDK, .NET SDK or Node can still run
                         `servers --language=c,rust`. Omit
-                        it and every backend is built, which needs all three.
+                        it and every backend is built, which needs all of them
+                        (a missing Go is fetched by scripts/go_toolchain.py).
     --node=all          For libraries: run the TypeScript suite once per listed
                         Node major, each from scripts/node_toolchain.py (fetched
                         on first use), so no system Node is needed
@@ -330,8 +333,30 @@ def pinned_node_majors(root_dir: str, node: str):
         return None
     return majors
 
+def build_go_library(root_dir: str) -> int:
+    """The Go module with its floor toolchain, then with the Go on PATH when that
+    is another one."""
+    found = subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'go_toolchain.py'), '1.22'],
+                           stdout=subprocess.PIPE, text=True, check=False)
+    floor = found.stdout.strip()
+    if found.returncode or not floor:
+        print("Error: scripts/go_toolchain.py 1.22 found no floor toolchain.", flush=True)
+        return 1
+    path_go = shutil.which('go')
+    toolchains = [('floor toolchain', floor)]
+    if path_go and os.path.realpath(os.path.dirname(path_go)) != os.path.realpath(floor):
+        toolchains.append(('Go on PATH', os.path.dirname(path_go)))
+    for label, prefix in toolchains:
+        print(f"\n--- Go library, {label} ({prefix})", flush=True)
+        try:
+            run_codegen(root_dir, 'run', '--release', '--', 'build-libraries', '--backend=go',
+                        path_prefix=prefix)
+        except subprocess.CalledProcessError:
+            return 1
+    return 0
+
 def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
-    """Build the publishable Java/C#/TypeScript libraries and run their suites (issue #428).
+    """Build the publishable Java/C#/TypeScript/Go libraries and run their suites (issue #428).
 
     Builds the COMMITTED source and generates nothing, so after editing
     ta_codegen/input/ run `generate` first or this tests the previous tree."""
@@ -340,6 +365,12 @@ def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
         print(f"Error: --language={lang_filter} selects no backend with a publishable "
               f"library (valid: {', '.join(LIBRARY_PREREQS)}).", flush=True)
         return 2
+    if 'go' in picked:
+        if build_go_library(root_dir) != 0:
+            return 1
+        picked = [b for b in picked if b != 'go']
+        if not picked:
+            return 0
     # The npm package carries bin/ta_lib.wasm, and its build refuses a stale one.
     if 'ts' in picked and build_wasm(root_dir) != 0:
         return 1
@@ -533,15 +564,15 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     reachable no other way. A narrowed run skips it along with everything else
     the filter excludes.
     """
-    rows = [b for b in (backends_for_languages(lang_filter) or 'rust,java,csharp,ts').split(',')
-            if b in ('rust', 'java', 'csharp', 'ts')]
+    rows = [b for b in (backends_for_languages(lang_filter) or 'rust,java,csharp,ts,go').split(',')
+            if b in ('rust', 'java', 'csharp', 'ts', 'go')]
     if not rows:
         print(f"Error: --language={lang_filter} selects no xlang-hash row "
-              f"(valid: rust, java, csharp, ts, tswasm; C is the in-process golden).", flush=True)
+              f"(valid: rust, java, csharp, ts, tswasm, go; C is the in-process golden).", flush=True)
         return 2
     backends = ','.join(rows)
     servers = ','.join(t for t in dict.fromkeys(s.strip().lower() for s in (lang_filter or '').split(','))
-                       if t in ('rust', 'java', 'csharp', 'ts', 'tswasm'))
+                       if t in ('rust', 'java', 'csharp', 'ts', 'tswasm', 'go'))
     if lang_filter:
         # flush: this script's stdout is block-buffered when CI captures it,
         # while the cargo/ta_regtest subprocesses write straight to the pipe —
@@ -740,11 +771,16 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/ts/library/src/func/sma.ts',
     'ta_codegen/output/ts/library/src/engine/func/sma.ts',
     'ta_codegen/output/wasm/src/lib.rs',
+    'ta_codegen/output/go/sma.go',
+    'ta_codegen/output/go/enums.go',
+    'ta_codegen/output/go/example_test.go',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',
     'ta_codegen/output/java/tools/TaCodegenServe.java',
     'ta_codegen/output/csharp/tools/TaCodegenServe.cs',
     'ta_codegen/output/rust/tools/src/bin/ta_codegen_serve.rs',
     'ta_codegen/output/ts/tools/taCodegenServe.ts',
+    'ta_codegen/output/go/tools/ta_codegen_serve.go',
+    'ta_codegen/output/go/tools/go.mod',
     'ta_codegen/output/c/tools/ta_bench_cg.c',
     'ta_codegen/output/c/tools/ta_bench_stream.c',
     'ta_codegen/output/c/tools/ta_bench_icount.c',
@@ -967,11 +1003,11 @@ TARGET_PREREQS = {
     'regtest':      PREREQS_BUILD_SERVERS,
     'ref':          [PREREQS_CMAKE, PREREQS_GCC],
     'refdata':      PREREQS_BUILD_BASIC,
-    # build_xlanghash builds --backend=rust,java,csharp,ts, so the .NET SDK and
-    # Node are as required here as the JDK. Without one, that server silently
-    # never builds.
+    # build_xlanghash builds --backend=rust,java,csharp,ts,go, so the .NET SDK,
+    # Node and Go are as required here as the JDK. Without one, that server
+    # silently never builds.
     'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-                                             PREREQS_DOTNET, PREREQS_NODE],
+                                             PREREQS_DOTNET, PREREQS_NODE, PREREQS_GO],
 }
 
 def main():
@@ -992,7 +1028,7 @@ def main():
     # machine without a JDK or the .NET SDK can still do `servers`/`regtest`
     # for the backends it does have. Same tokens as regtest.py / ta_regtest.
     parser.add_argument('--language', default=None,
-                        help='c,rust,java,csharp,ts — limit which servers are built')
+                        help='c,rust,java,csharp,ts,go — limit which servers are built')
     parser.add_argument('--versions', default=None,
                         help='ref: the ta_ref members to build and run (default: all)')
     parser.add_argument('--build-only', action='store_true',
@@ -1090,6 +1126,8 @@ def main():
         check_prerequisites(prereqs_for_languages(_backends))
     else:
         check_prerequisites(TARGET_PREREQS.get(args.target, PREREQS_BUILD_BASIC))
+    # A prerequisite check may have put a fetched toolchain first on PATH.
+    JOBS.env['PATH'] = os.environ['PATH']
 
     # Rust ta_codegen targets build with cargo directly — no CMake involved.
     if args.target in CARGO_TARGETS:

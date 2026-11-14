@@ -143,6 +143,27 @@ const { begIdx, values } = acos(series);
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.ACOS(0, len(series)-1, series, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d\n", r.NBElement, r.BegIdx)
+```
+
 :::
 
 ## Implementation
@@ -158,6 +179,7 @@ TA-Lib Definition: [`acos.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Java | [`Core_ACOS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ACOS.java) |
 | C# | [`Core_ACOS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ACOS.cs) |
 | TypeScript | [`acos.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/acos.ts) |
+| Go | [`acos.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/acos.go) |
 
 Python: `talib.ACOS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/math_transform.html).
 

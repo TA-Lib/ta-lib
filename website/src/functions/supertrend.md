@@ -185,6 +185,30 @@ const { begIdx, outSupertrend, outTrend } = supertrend({ high, low, close }, {
 console.log(outSupertrend.length + ' values from bar ' + begIdx + '; last outSupertrend = ' + outSupertrend[outSupertrend.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+supertrend := make([]float64, 252)
+trend := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.SUPERTREND(0, len(high)-1, high, low, close, 10, 3, supertrend, trend)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last supertrend = %.4f\n", r.NBElement, r.BegIdx, supertrend[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -200,6 +224,7 @@ TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | Java | [`Core_SUPERTREND.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SUPERTREND.java) |
 | C# | [`Core_SUPERTREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUPERTREND.cs) |
 | TypeScript | [`supertrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/supertrend.ts) |
+| Go | [`supertrend.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/supertrend.go) |
 
 Python: `talib.SUPERTREND` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

@@ -179,6 +179,30 @@ const {
 console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+upperBand := make([]float64, 252)
+middleBand := make([]float64, 252)
+lowerBand := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.DONCHIAN(0, len(high)-1, high, low, 20, upperBand, middleBand, lowerBand)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -194,6 +218,7 @@ TA-Lib Definition: [`donchian.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Java | [`Core_DONCHIAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DONCHIAN.java) |
 | C# | [`Core_DONCHIAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DONCHIAN.cs) |
 | TypeScript | [`donchian.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/donchian.ts) |
+| Go | [`donchian.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/donchian.go) |
 
 Python: `talib.DONCHIAN` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

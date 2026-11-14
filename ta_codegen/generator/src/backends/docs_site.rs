@@ -233,7 +233,7 @@ fn inject_implementation(body: &str, func: &FuncDef, root: &Path, releases: &Rel
     insert_before_later_sections(body, &implementation_section(func, root, releases))
 }
 
-/// The five tabs of the `## Example` section, in site order: tab title, fence language,
+/// The tabs of the `## Example` section, in site order: tab title, fence language,
 /// and the lines each language's emitter shows (its compiled copy carries more).
 #[allow(clippy::implicit_hasher)]
 #[must_use]
@@ -247,6 +247,7 @@ pub fn example_tabs(
         ("Java", "java", super::java_examples::example(func, enums)?.shown()),
         ("C\\#", "csharp", super::csharp_examples::example(func, enums)?.shown()),
         ("TypeScript", "ts", super::ts_doc::batch_example(func, enums)?.source()),
+        ("Go", "go", super::go_examples::example(func, enums)?.shown()),
     ])
 }
 

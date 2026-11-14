@@ -25,12 +25,13 @@ fn corpus() -> (Vec<ir::FuncDef>, std::collections::HashMap<String, ir::EnumDef>
 /// Per backend: the needle that counts a ride comparison, and the one that
 /// counts an emitted ride function. Both name the ride's OWN buffers, so a hit
 /// cannot come from `stream_verify`, which compares the same way over `b0`/`f0`.
-const COMPARE_NEEDLE: [(&str, &str, &str, &str); 5] = [
+const COMPARE_NEEDLE: [(&str, &str, &str, &str); 6] = [
     ("c", "sv_xtier_ne(sr_b", "!= sr_ib", "static void sr_"),
     ("rust", "sv_xtier_ne(rb", "!= rib", "(core: &Core, params: &Value, endIdx:"),
     ("java", "svXtierNe(rb", "!= rib", "static void rideBody"),
     ("csharp", "SvXtierNe(rb", "!= rib", "static void RideBody"),
     ("ts", "svXtierNe(rb", "!== rib", "function rideBody"),
+    ("go", "svXtierNe(rb", "!= rib", "(core *talib.Core, p params, endIdx int"),
 ];
 
 fn servers(
@@ -43,6 +44,7 @@ fn servers(
         ("java", ta_codegen_lib::server_gen::generate_java_server(funcs, enums)),
         ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(funcs, enums)),
         ("ts", ta_codegen_lib::server_gen::generate_ts_server(funcs, enums)),
+        ("go", ta_codegen_lib::server_gen::generate_go_server(funcs, enums)),
     ]
 }
 
@@ -153,12 +155,13 @@ fn every_backend_keys_the_dedup_cache_by_function_identity() {
     let (funcs, enums) = corpus();
     let streaming: Vec<&ir::FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
     // (backend, the key line around the function's own name)
-    let key_form: [(&str, &str, &str); 5] = [
+    let key_form: [(&str, &str, &str); 6] = [
         ("c", "srKey = fuzz_hash_bytes(srKey, \"TA_", "\","),
         ("rust", "key = ride_mix_str(key, \"TA_", "\");"),
         ("java", "hash = rideMixStr(hash, \"TA_", "\");"),
         ("csharp", "hash = RideMixStr(hash, \"TA_", "\");"),
         ("ts", "hash = rideMixStr(hash, 'TA_", "');"),
+        ("go", "key = rideMixStr(key, \"TA_", "\")"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, pre, post) = key_form
@@ -202,12 +205,13 @@ fn every_ambient_mutation_invalidates_the_ride_cache() {
     ];
     // (backend, how that backend bumps the generation; C hashes the live state
     //  instead, so its key names sr_ambient and no counter exists to forget)
-    let bump: [(&str, &str); 5] = [
+    let bump: [(&str, &str); 6] = [
         ("c", "sr_ambient("),
         ("rust", "RIDE_GEN.with(|g| g.set("),
         ("java", "rideGen++"),
         ("csharp", "rideGen++"),
         ("ts", "rideGen++"),
+        ("go", "rideGen++"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, needle) = bump
@@ -265,6 +269,8 @@ fn the_ride_along_is_emitted_after_the_timed_region() {
         ("java", "long elapsedNs =", "ride", "(core, json", "rideBody"),
         ("csharp", "long elapsedNs =", "Ride", "(core, p", "RideBody"),
         ("ts", "const elapsedNs =", "const rideFields = wasmEngine ? '' : ride", "(core, p", "rideBody"),
+        // One timed loop, in the shared `batch`, which every handler calls.
+        ("go", "elapsed := time.Since(t0)", "rideFields = ride(c)", "ride(c)", "rideBody"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, timer, call_prefix, call_args, inner) = probes
@@ -334,7 +340,7 @@ fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
     let (funcs, enums) = corpus();
     let want_fns = funcs.iter().filter(|f| f.streaming).count();
     // (backend, the reject-leg Open call, its OpenAndFill, the two comparisons)
-    let probes: [(&str, &str, &str, &str, &str); 5] = [
+    let probes: [(&str, &str, &str, &str, &str); 6] = [
         (
             "c",
             "_Open( &srHR,",
@@ -370,6 +376,13 @@ fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
             "const cmpO = r.rcOpen === r.rcBatch",
             "const cmpF = r.rcFill === r.rcBatch",
         ),
+        (
+            "go",
+            "r.rcOpen = rideCode(core.",
+            "r.rcFill = rideCode(core.",
+            "cmp := r.rcOpen == r.rcBatch",
+            "cmp = r.rcFill == r.rcBatch",
+        ),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, open_call, fill_call, open_cmp, fill_cmp) = probes
@@ -390,6 +403,10 @@ fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
             "rust" => &[
                 ("if cmp { r.rej += 1; }", 2),
                 ("if !cmp { r.ok = false; r.leg = 3; }", 2),
+            ],
+            "go" => &[
+                ("if cmp {\n\t\t\tr.rej++\n", 2),
+                ("if !cmp {\n\t\t\tr.ok = false\n\t\t\tr.leg = 3\n", 2),
             ],
             "java" | "ts" => &[
                 ("if (cmpO) r.rej++;", 1),
@@ -512,7 +529,7 @@ fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
     // (backend, the two reject-leg lines, the range every one must carry). Java
     // and C# put the call and its catch on one line, so the assignment anchors
     // both.
-    let probes: [(&str, [&str; 2], &str); 5] = [
+    let probes: [(&str, [&str; 2], &str); 6] = [
         ("c", ["_Open( &srHR,", "_OpenAndFill( &srHR,"], ", srM,"),
         (
             "rust",
@@ -526,6 +543,7 @@ fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
             ".AsSpan(0, m)",
         ),
         ("ts", ["r.rcOpen = rideCode(", "r.rcFill = rideCode("], ".slice(0, m)"),
+        ("go", ["r.rcOpen = rideCode(", "r.rcFill = rideCode("], "[:m]"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, anchor, range) = probes

@@ -1,19 +1,21 @@
-//! The C type of every expression a TypeScript body renders (D10).
+//! The C type of every expression a TypeScript or Go body renders (D10).
 //!
-//! JS has one number type, so each place where C's integer arithmetic differs
-//! from float arithmetic has to be spelled out, and a wrong guess fails
-//! silently. The verdict comes from C's own rules, seeded from declarations,
-//! never from a name. An expression this pass cannot type stops generation.
+//! JS has one number type and Go converts nothing implicitly, so each place
+//! where C's integer arithmetic differs from float arithmetic has to be spelled
+//! out, and a wrong guess fails silently. The verdict comes from C's own rules,
+//! seeded from declarations, never from a name. An expression this pass cannot
+//! type stops generation.
 //!
-//! `Bool` is the 0/1 `int` a relational or logical operator yields; TS renders
-//! it as a `boolean`, so it needs a conversion wherever C uses it as a number.
+//! `Bool` is the 0/1 `int` a relational or logical operator yields; both
+//! targets render it as a boolean, so it needs a conversion wherever C uses it
+//! as a number.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::helper_registry::{try_inline_expr, HelperRegistry};
 use crate::ir::{BinOp, CircBuf, CircBufLayout, EnumDef, Expr, FuncDef, HelperDef, ParamType, Statement, VarType};
-use crate::registry::{Lang, Registry};
+use crate::registry::Registry;
 
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 
@@ -63,7 +65,7 @@ impl CType {
 }
 
 fn arith(l: CType, r: CType, what: &dyn Fn() -> String) -> CType {
-    assert!(!l.is_pointer() && !r.is_pointer(), "TS type pass: pointer arithmetic in {}", what());
+    assert!(!l.is_pointer() && !r.is_pointer(), "C type pass: pointer arithmetic in {}", what());
     if l == CType::Real || r == CType::Real {
         CType::Real
     } else {
@@ -121,7 +123,7 @@ impl<'a> TypeEnv<'a> {
     pub fn declare(&self, name: &str, t: CType) {
         let mut vars = self.vars.borrow_mut();
         if let Some(prev) = vars.insert(name.to_string(), t) {
-            assert!(prev == t, "TS type pass: `{name}` is declared both {prev:?} and {t:?}");
+            assert!(prev == t, "C type pass: `{name}` is declared both {prev:?} and {t:?}");
         }
     }
 
@@ -280,32 +282,32 @@ impl<'a> TypeEnv<'a> {
             Expr::IntLiteral(_) => CType::Int32,
             Expr::Var(name) => self
                 .lookup(name)
-                .unwrap_or_else(|| panic!("TS type pass: `{name}` has no declared type")),
+                .unwrap_or_else(|| panic!("C type pass: `{name}` has no declared type")),
             Expr::ArrayAccess(name, idx) => {
                 let it = self.type_of(idx);
                 assert!(
                     it.numeric() == CType::Int32,
-                    "TS type pass: index of `{name}` is {it:?}, not an int: {}",
+                    "C type pass: index of `{name}` is {it:?}, not an int: {}",
                     what()
                 );
                 match self.lookup(name) {
                     Some(CType::RealPtr) => CType::Real,
                     Some(CType::IntPtr) => CType::Int32,
-                    other => panic!("TS type pass: `{name}` is indexed but is {other:?}"),
+                    other => panic!("C type pass: `{name}` is indexed but is {other:?}"),
                 }
             }
             Expr::PointerDeref(name) => match self.lookup(name) {
                 Some(CType::RealPtr) => CType::Real,
                 Some(CType::IntPtr) => CType::Int32,
-                other => panic!("TS type pass: `*{name}` dereferences {other:?}"),
+                other => panic!("C type pass: `*{name}` dereferences {other:?}"),
             },
             Expr::AddressOf(inner) => match inner.as_ref() {
                 Expr::Var(n) | Expr::ArrayAccess(n, _) => match self.lookup(n) {
                     Some(CType::Real | CType::RealPtr) => CType::RealPtr,
                     Some(CType::Int32 | CType::IntPtr) => CType::IntPtr,
-                    other => panic!("TS type pass: `&{n}` of {other:?}"),
+                    other => panic!("C type pass: `&{n}` of {other:?}"),
                 },
-                _ => panic!("TS type pass: address of a non-lvalue: {}", what()),
+                _ => panic!("C type pass: address of a non-lvalue: {}", what()),
             },
             Expr::BinOp(l, op, r) => {
                 let (lt, rt) = (self.type_of(l), self.type_of(r));
@@ -314,7 +316,7 @@ impl<'a> TypeEnv<'a> {
                     BinOp::Mod | BinOp::BitwiseAnd | BinOp::BitwiseOr | BinOp::BitwiseXor | BinOp::Shl | BinOp::Shr => {
                         assert!(
                             lt.numeric() == CType::Int32 && rt.numeric() == CType::Int32,
-                            "TS type pass: integer operator over {lt:?}, {rt:?}: {}",
+                            "C type pass: integer operator over {lt:?}, {rt:?}: {}",
                             what()
                         );
                         CType::Int32
@@ -322,13 +324,13 @@ impl<'a> TypeEnv<'a> {
                     BinOp::Eq | BinOp::NotEq => {
                         assert!(
                             lt.is_pointer() == rt.is_pointer(),
-                            "TS type pass: pointer compared with a number: {}",
+                            "C type pass: pointer compared with a number: {}",
                             what()
                         );
                         CType::Bool
                     }
                     BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq => {
-                        assert!(!lt.is_pointer() && !rt.is_pointer(), "TS type pass: pointer ordering: {}", what());
+                        assert!(!lt.is_pointer() && !rt.is_pointer(), "C type pass: pointer ordering: {}", what());
                         CType::Bool
                     }
                     BinOp::And | BinOp::Or => CType::Bool,
@@ -339,7 +341,7 @@ impl<'a> TypeEnv<'a> {
                 let out = CType::of_var_type(t);
                 assert!(
                     out.is_pointer() == it.is_pointer(),
-                    "TS type pass: cast between a pointer and a number: {}",
+                    "C type pass: cast between a pointer and a number: {}",
                     what()
                 );
                 out
@@ -347,12 +349,12 @@ impl<'a> TypeEnv<'a> {
             Expr::Not(_) => CType::Bool,
             Expr::Neg(inner) => {
                 let t = self.type_of(inner).numeric();
-                assert!(!t.is_pointer(), "TS type pass: negated pointer: {}", what());
+                assert!(!t.is_pointer(), "C type pass: negated pointer: {}", what());
                 t
             }
             Expr::BitwiseNot(inner) => {
                 let t = self.type_of(inner).numeric();
-                assert!(t == CType::Int32, "TS type pass: `~` of {t:?}: {}", what());
+                assert!(t == CType::Int32, "C type pass: `~` of {t:?}: {}", what());
                 t
             }
             Expr::PostIncrement(inner)
@@ -370,7 +372,7 @@ impl<'a> TypeEnv<'a> {
                 if tt == CType::Bool && et == CType::Bool {
                     CType::Bool
                 } else if tt.is_pointer() || et.is_pointer() {
-                    assert!(tt == et, "TS type pass: ternary over {tt:?} and {et:?}: {}", what());
+                    assert!(tt == et, "C type pass: ternary over {tt:?} and {et:?}: {}", what());
                     tt
                 } else {
                     arith(tt.numeric(), et.numeric(), &what)
@@ -399,7 +401,7 @@ impl<'a> TypeEnv<'a> {
                 SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => CType::Int32,
                 SpecialBuiltin::PerToK => CType::Real,
                 SpecialBuiltin::Unlikely => self.type_of(&args[0]),
-                SpecialBuiltin::ArrayCopy => panic!("TS type pass: ARRAY_COPY has no value"),
+                SpecialBuiltin::ArrayCopy => panic!("C type pass: ARRAY_COPY has no value"),
             };
         }
         if let Some(m) = MathFn::from_name(name) {
@@ -407,7 +409,7 @@ impl<'a> TypeEnv<'a> {
                 // C renders max/min as its branch macros, whose type is the
                 // usual conversion of the two operands.
                 MathFn::Max | MathFn::Min => {
-                    let [a, b] = args else { panic!("TS type pass: {name} takes two arguments") };
+                    let [a, b] = args else { panic!("C type pass: {name} takes two arguments") };
                     arith(self.type_of(a).numeric(), self.type_of(b).numeric(), &|| name.to_string())
                 }
                 _ => CType::Real,
@@ -423,12 +425,12 @@ impl<'a> TypeEnv<'a> {
                         CType::RealPtr
                     }
                 }
-                _ => panic!("TS type pass: {name} has no value"),
+                _ => panic!("C type pass: {name} has no value"),
             };
         }
-        if self.registry.contains(name) || self.registry.resolve_call(name, Lang::Ts) != name {
+        if self.registry.split_call(name).is_some() {
             return CType::Int32;
         }
-        panic!("TS type pass: call to `{name}` has no known type")
+        panic!("C type pass: call to `{name}` has no known type")
     }
 }

@@ -393,7 +393,7 @@ fn attr_escape(dest: &str) -> String {
 /// site-absolute path — a parenthesis that merely follows a bracketed aside is
 /// not a link. A site-absolute destination is written for ta-lib.org, which
 /// javadoc has no root for, so it is resolved against the real site.
-fn inline_link(chars: &[char], start: usize) -> Option<(String, String, usize)> {
+pub(super) fn inline_link(chars: &[char], start: usize) -> Option<(String, String, usize)> {
     let close = chars[start + 1..]
         .iter()
         .position(|c| *c == ']' || *c == '[')

@@ -6130,6 +6130,650 @@ fn ts_batch_handler(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, E
     s
 }
 
+/// The function-independent part of the Go server: the request fields, the
+/// output buffers and their canaries, the reply, and every RPC that is not a
+/// function call. A Go `error` from the public tier becomes its `retCode` here.
+const GO_SERVER_PRELUDE: &str = r#"import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"math"
+	"os"
+	"sort"
+	"strconv"
+	"time"
+
+	talib "ta-lib.github.io/go"
+)
+
+const maxArraySize = 200000
+
+const unsupportedMode = `{"retCode":0,"timing_ns":0,"unsupported_mode":1}`
+
+const tailBits = 0x7ff8deadbeef1234
+const tailI32 = 0x5eadbeef
+
+type params map[string]json.RawMessage
+
+func (p params) i64(name string, def int64) int64 {
+	if v, err := strconv.ParseInt(string(p[name]), 10, 64); err == nil {
+		return v
+	}
+	return def
+}
+
+// integer reads an optional parameter: absent is the default sentinel.
+func (p params) integer(name string) int {
+	return int(p.i64(name, talib.IntegerDefault))
+}
+
+func (p params) real(name string) float64 {
+	if v, err := strconv.ParseFloat(string(p[name]), 64); err == nil {
+		return v
+	}
+	return talib.RealDefault
+}
+
+func (p params) realOr(name string, def float64) float64 {
+	if v, err := strconv.ParseFloat(string(p[name]), 64); err == nil {
+		return v
+	}
+	return def
+}
+
+func (p params) str(name string) string {
+	var s string
+	if json.Unmarshal(p[name], &s) != nil {
+		return ""
+	}
+	return s
+}
+
+func hexDigit(c byte) uint64 {
+	switch {
+	case c >= '0' && c <= '9':
+		return uint64(c - '0')
+	case c >= 'a' && c <= 'f':
+		return uint64(c-'a') + 10
+	case c >= 'A' && c <= 'F':
+		return uint64(c-'A') + 10
+	}
+	return 0
+}
+
+func hexBits(s string) uint64 {
+	var bits uint64
+	for i := 0; i < len(s); i++ {
+		bits = bits<<4 | hexDigit(s[i])
+	}
+	return bits
+}
+
+// f64Array reads a series: a string of 16-hex-digit IEEE-754 groups, or a
+// number array.
+func (p params) f64Array(name string) []float64 {
+	raw := p[name]
+	var s string
+	if json.Unmarshal(raw, &s) == nil {
+		out := make([]float64, 0, len(s)/16)
+		for i := 0; i+16 <= len(s); i += 16 {
+			out = append(out, math.Float64frombits(hexBits(s[i:i+16])))
+		}
+		return out
+	}
+	var a []float64
+	if json.Unmarshal(raw, &a) == nil {
+		return a
+	}
+	return nil
+}
+
+// f64Bits reads one value as the 16 hex digits of its bits, so a NaN travels.
+func (p params) f64Bits(name string, def float64) float64 {
+	s := p.str(name)
+	if len(s) != 16 {
+		return def
+	}
+	return math.Float64frombits(hexBits(s))
+}
+
+func retCodeOf(err error) int {
+	var rc talib.RetCode
+	if !errors.As(err, &rc) {
+		panic(err)
+	}
+	return int(rc)
+}
+
+func appendHex(b []byte, v uint64) []byte {
+	const digits = "0123456789abcdef"
+	for shift := 60; shift >= 0; shift -= 4 {
+		b = append(b, digits[(v>>uint(shift))&0xf])
+	}
+	return b
+}
+
+type server struct {
+	core *talib.Core
+	ref  [7][]float64
+	refN int
+}
+
+// An input slot: its wire name, the fuzz_gen series it reads, and the
+// preloaded series it reads.
+type inSlot struct {
+	name    string
+	fuzz    int
+	preload int
+}
+
+type outSlot struct {
+	key   string
+	isInt bool
+}
+
+// call is what a function's public call reads: the range, the inputs and the
+// output buffers, the reals and the integers each in declaration order.
+type call struct {
+	start, end int
+	in         [][]float64
+	r          [][]float64
+	i          [][]int32
+}
+
+func (s *server) inputs(p params, slots []inSlot) [][]float64 {
+	in := make([][]float64, len(slots))
+	switch {
+	case p.i64("gen_present", 0) != 0:
+		n := int(p.i64("gen_n", 0))
+		if n < 0 {
+			n = 0
+		}
+		var series [6][]float64
+		for k := range series {
+			series[k] = make([]float64, n)
+		}
+		fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n,
+			series[0], series[1], series[2], series[3], series[4], series[5])
+		for k, slot := range slots {
+			in[k] = series[slot.fuzz]
+		}
+	case p.i64("use_preloaded", 0) != 0 && s.refN > 0:
+		for k, slot := range slots {
+			in[k] = s.ref[slot.preload][:s.refN]
+		}
+	default:
+		for k, slot := range slots {
+			in[k] = p.f64Array(slot.name)
+		}
+	}
+	return in
+}
+
+// pin applies a request's own unstablePeriod; a rejected one keeps the
+// previous setting, as C's TA_SetUnstablePeriod does.
+func (s *server) pin(p params, id talib.FuncUnstId) {
+	if _, ok := p["unstablePeriod"]; ok {
+		_ = s.core.SetUnstablePeriod(id, int(p.i64("unstablePeriod", 0)))
+	}
+}
+
+// batch answers one function call: run is the batch tier, open and fill the
+// streaming openers over the inputs cut to endIdx+1 (bench_mode 1 and 2), and
+// ride the ride-along, which runs after the timed loop.
+func (s *server) batch(p params, ins []inSlot, outs []outSlot, lookback func() (int, error),
+	run func(c *call) (talib.OutRange, error), open func(in [][]float64) error,
+	fill func(in [][]float64, c *call) (talib.OutRange, error), ride func(c *call) string) string {
+	c := &call{start: int(p.i64("startIdx", 0)), end: int(p.i64("endIdx", 0))}
+	c.in = s.inputs(p, ins)
+	mode := p.i64("bench_mode", 0)
+	if mode < 0 || mode > 2 || mode != 0 && open == nil {
+		return unsupportedMode
+	}
+	var warm [][]float64
+	if mode != 0 {
+		warm = make([][]float64, len(c.in))
+		for k, x := range c.in {
+			warm[k] = x[:max(min(len(x), c.end+1), 0)]
+		}
+	}
+	size := 1
+	if lb, err := lookback(); err == nil && max(c.start, lb) <= c.end {
+		size = c.end - max(c.start, lb) + 1
+	}
+	size += int(p.i64("out_pad", 0))
+	for _, o := range outs {
+		if o.isInt {
+			buf := make([]int32, size)
+			for k := range buf {
+				buf[k] = tailI32
+			}
+			c.i = append(c.i, buf)
+		} else {
+			buf := make([]float64, size)
+			for k := range buf {
+				buf[k] = math.Float64frombits(tailBits)
+			}
+			c.r = append(c.r, buf)
+		}
+	}
+	iters := p.i64("iters", 1)
+	if iters < 1 {
+		iters = 1
+	}
+	var out talib.OutRange
+	var err error
+	var t0 time.Time
+	for bi := int64(0); bi <= iters; bi++ {
+		if bi == 1 {
+			t0 = time.Now()
+		}
+		switch mode {
+		case 0:
+			out, err = run(c)
+		case 1:
+			out, err = talib.OutRange{}, open(warm)
+		default:
+			out, err = fill(warm, c)
+		}
+	}
+	elapsed := time.Since(t0).Nanoseconds() / iters
+	rideFields := ""
+	if ride != nil {
+		rideFields = ride(c)
+	}
+	rc, beg, nb := 0, out.BegIdx, out.NBElement
+	if err != nil {
+		rc, beg, nb = retCodeOf(err), 0, 0
+	}
+
+	b := make([]byte, 0, 64+nb*17*len(outs))
+	b = append(b, `{"retCode":`...)
+	b = strconv.AppendInt(b, int64(rc), 10)
+	b = append(b, `,"outBegIdx":`...)
+	b = strconv.AppendInt(b, int64(beg), 10)
+	b = append(b, `,"outNBElement":`...)
+	b = strconv.AppendInt(b, int64(nb), 10)
+	if rc == 0 {
+		dirty := 0
+		for _, buf := range c.r {
+			for _, v := range buf[nb:] {
+				if math.Float64bits(v) != tailBits {
+					dirty++
+				}
+			}
+		}
+		for _, buf := range c.i {
+			for _, v := range buf[nb:] {
+				if v != tailI32 {
+					dirty++
+				}
+			}
+		}
+		b = append(b, `,"out_tail_dirty":`...)
+		b = strconv.AppendInt(b, int64(dirty), 10)
+	}
+	if (p.i64("gen_present", 0) != 0 || p.i64("want_hash", 0) != 0) && p.i64("full_output", 0) == 0 {
+		h := fuzzHashInit()
+		if rc == 0 && nb > 0 {
+			kr, ki := 0, 0
+			for _, o := range outs {
+				if o.isInt {
+					h = fuzzHashI32(h, c.i[ki][:nb])
+					ki++
+				} else {
+					h = fuzzHashF64(h, c.r[kr][:nb])
+					kr++
+				}
+			}
+		}
+		b = append(b, `,"out_hash":"`...)
+		b = appendHex(b, fuzzHashFin(h))
+		b = append(b, '"')
+		b = append(b, rideFields...)
+		return string(append(b, '}'))
+	}
+	b = append(b, `,"out_len":`...)
+	b = strconv.AppendInt(b, int64(size), 10)
+	b = append(b, `,"timing_ns":`...)
+	b = strconv.AppendInt(b, elapsed, 10)
+	if p.i64("no_output", 0) == 0 {
+		kr, ki := 0, 0
+		for _, o := range outs {
+			b = append(b, `,"`...)
+			b = append(b, o.key...)
+			b = append(b, `":`...)
+			if o.isInt {
+				b = append(b, '[')
+				for k, v := range c.i[ki][:nb] {
+					if k > 0 {
+						b = append(b, ',')
+					}
+					b = strconv.AppendInt(b, int64(v), 10)
+				}
+				b = append(b, ']')
+				ki++
+			} else {
+				b = append(b, '"')
+				for _, v := range c.r[kr][:nb] {
+					b = appendHex(b, math.Float64bits(v))
+				}
+				b = append(b, '"')
+				kr++
+			}
+		}
+	}
+	b = append(b, rideFields...)
+	return string(append(b, '}'))
+}
+
+func (s *server) loadData(p params) string {
+	names := [7]string{"open", "high", "low", "close", "volume", "openInterest", "periods"}
+	s.refN = min(len(p.f64Array("open")), maxArraySize)
+	for k, name := range names {
+		src := p.f64Array(name)
+		copy(s.ref[k], src[:min(len(src), s.refN)])
+	}
+	return `{"status":"ok","n":` + strconv.Itoa(s.refN) + `}`
+}
+
+func errorReply(msg string) string {
+	b, _ := json.Marshal(map[string]string{"error": msg})
+	return string(b)
+}
+
+func (s *server) setUnstablePeriod(p params) string {
+	id := p.i64("id", 99)
+	if id < 0 || id > math.MaxInt32 {
+		return errorReply("Invalid unstable period id")
+	}
+	if s.core.SetUnstablePeriod(talib.FuncUnstId(id), int(p.i64("period", 0))) != nil {
+		return errorReply("Invalid unstable period")
+	}
+	return `{"status":"ok"}`
+}
+
+func fitsInt32(v int64) bool {
+	return v >= math.MinInt32 && v <= math.MaxInt32
+}
+
+func (s *server) setCandleSettings(p params) string {
+	st, rt, ap := p.i64("settingType", -1), p.i64("rangeType", -1), p.i64("avgPeriod", 0)
+	if !fitsInt32(st) || !fitsInt32(rt) || s.core.SetCandleSetting(talib.CandleSettingType(st),
+		talib.RangeType(rt), int(ap), p.f64Bits("factorBits", 1.0)) != nil {
+		return errorReply("Invalid candle setting")
+	}
+	return `{"status":"ok"}`
+}
+
+func (s *server) restoreCandleDefaultSettings(p params) string {
+	st := p.i64("settingType", -1)
+	if !fitsInt32(st) || s.core.RestoreCandleDefault(talib.CandleSettingType(st)) != nil {
+		return errorReply("Invalid candle setting type")
+	}
+	return `{"status":"ok"}`
+}
+
+func fuzzInHash(p params) string {
+	n := max(int(p.i64("gen_n", 0)), 0)
+	var a [6][]float64
+	for k := range a {
+		a[k] = make([]float64, n)
+	}
+	fuzzGen(int32(p.i64("gen_shape", 0)), int32(p.i64("gen_seed", 0)), n, a[0], a[1], a[2], a[3], a[4], a[5])
+	h := fuzzHashInit()
+	for _, x := range a {
+		h = fuzzHashF64(h, x)
+	}
+	return `{"in_hash":"` + string(appendHex(nil, fuzzHashFin(h))) + `"}`
+}
+
+func (s *server) handle(line []byte) (reply string) {
+	defer func() {
+		if r := recover(); r != nil {
+			reply = errorReply(fmt.Sprint("panic: ", r))
+		}
+	}()
+	var req struct {
+		Method string `json:"method"`
+		Params params `json:"params"`
+	}
+	if err := json.Unmarshal(line, &req); err != nil {
+		return errorReply("Parse error: " + err.Error())
+	}
+	if req.Method == "" {
+		return errorReply("Missing method field")
+	}
+	if fn := function(req.Method); fn != nil {
+		return fn(s, req.Params)
+	}
+	return s.dispatch(req.Method, req.Params)
+}
+
+func main() {
+	s := &server{core: talib.NewCore()}
+	for k := range s.ref {
+		s.ref[k] = make([]float64, maxArraySize)
+	}
+	in := bufio.NewReaderSize(os.Stdin, 1<<20)
+	out := bufio.NewWriter(os.Stdout)
+	for {
+		line, err := in.ReadBytes('\n')
+		if len(line) > 0 {
+			if trimmed := bytes.TrimSpace(line); len(trimmed) > 0 {
+				out.WriteString(s.handle(trimmed))
+				out.WriteByte('\n')
+				out.Flush()
+			}
+		}
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+}
+"#;
+
+const GO_FUZZ: &str = include_str!("../templates/go/fuzz.go");
+
+/// The Go server: `package main` in its own module under `go/tools`, so it
+/// reaches the package through its exported API alone, as Rust's `tools` crate
+/// does.
+#[allow(clippy::implicit_hasher)]
+#[must_use]
+pub fn generate_go_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+    let resolved = crate::ir::resolve_all(funcs, crate::ir::Lang::Go);
+    let funcs: &[FuncDef] = &resolved;
+    let mut s = format!(
+        "{}\n\n{}package main\n\n",
+        crate::backends::go::GENERATED_HEADER,
+        crate::backends::ta_abstract_c::LICENSE
+    );
+    s.push_str(GO_SERVER_PRELUDE);
+    s.push('\n');
+    s.push_str(&crate::backends::runtime_info::go_server_handler());
+
+    s.push_str("func evalPredicate(p params) string {\n");
+    s.push_str("\tvalues, scale := p.f64Array(\"values\"), p.f64Array(\"scale\")\n");
+    s.push_str("\twhich := p.i64(\"which\", 0)\n");
+    s.push_str("\tb := []byte(`{\"outInteger\":[`)\n");
+    s.push_str("\tfor i, v := range values {\n");
+    s.push_str("\t\ts := 0.0\n");
+    s.push_str("\t\tif i < len(scale) {\n\t\t\ts = scale[i]\n\t\t}\n");
+    s.push_str("\t\tvar r bool\n");
+    s.push_str("\t\tswitch which {\n");
+    let pred = |b| crate::backends::go::go_predicate_expr(b, "v", "s");
+    let _ = write!(s, "\t\tcase 1:\n\t\t\tr = {}\n", pred(SpecialBuiltin::IsZeroScaled));
+    let _ = write!(s, "\t\tcase 2:\n\t\t\tr = {}\n", pred(SpecialBuiltin::IsZeroOrNeg));
+    let _ = write!(s, "\t\tdefault:\n\t\t\tr = {}\n", pred(SpecialBuiltin::IsZero));
+    s.push_str("\t\t}\n");
+    s.push_str("\t\tif i > 0 {\n\t\t\tb = append(b, ',')\n\t\t}\n");
+    s.push_str("\t\tif r {\n\t\t\tb = append(b, '1')\n\t\t} else {\n\t\t\tb = append(b, '0')\n\t\t}\n");
+    s.push_str("\t}\n");
+    s.push_str("\treturn string(append(b, \"]}\"...))\n");
+    s.push_str("}\n\n");
+
+    let names: Vec<String> = funcs.iter().map(|f| format!("\"TA_{}\"", f.name)).collect();
+    let _ = write!(s, "const functionList = `{{\"functions\":[{}]}}`\n\n", names.join(","));
+
+    s.push_str("func (s *server) dispatch(method string, p params) string {\n\tswitch method {\n");
+    for (rpc, call, ambient) in [
+        ("load_data", "s.loadData(p)", false),
+        ("list_functions", "functionList", false),
+        ("set_unstable_period", "s.setUnstablePeriod(p)", true),
+        ("set_candle_settings", "s.setCandleSettings(p)", true),
+        ("restore_candle_default_settings", "s.restoreCandleDefaultSettings(p)", true),
+        ("eval_predicate", "evalPredicate(p)", false),
+        ("TA_GetRuntimeInfo", "runtimeInfo(p)", false),
+        ("fuzz_in_hash", "fuzzInHash(p)", false),
+        ("stream_verify", "s.streamVerify(p)", false),
+    ] {
+        let bump = if ambient { "\t\trideGen++\n" } else { "" };
+        let _ = write!(s, "\tcase \"{rpc}\":\n{bump}\t\treturn {call}\n");
+    }
+    s.push_str("\t}\n\treturn errorReply(\"Unknown method: \" + method)\n}\n\n");
+
+    s.push_str("func function(method string) func(*server, params) string {\n\tswitch method {\n");
+    for func in funcs {
+        let _ = write!(s, "\tcase \"TA_{0}\":\n\t\treturn rpc{0}\n", func.name);
+    }
+    s.push_str("\t}\n\treturn nil\n}\n");
+
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    for func in funcs {
+        s.push('\n');
+        s.push_str(&go_batch_handler(func, enums, crate::backends::go_stream::emits_stream(func, &lookup)));
+    }
+    s.push_str(&crate::stream_verify_gen::go::generate_go_stream_verify(funcs, enums));
+    s.push_str(&crate::ride_gen::go::generate_go_ridealong(funcs));
+    s.push('\n');
+    s.push_str(GO_FUZZ);
+    s
+}
+
+/// The `fuzz_gen` series an input reads under `gen_present`, in O, H, L, C, V,
+/// OI order: a price component its own, generic reals close then volume.
+fn go_fuzz_slots(input_names: &[String]) -> Vec<usize> {
+    let mut generic = 0;
+    input_names
+        .iter()
+        .map(|name| match name.as_str() {
+            "inOpen" => 0,
+            "inHigh" => 1,
+            "inLow" => 2,
+            "inClose" => 3,
+            "inVolume" => 4,
+            "inOpenInterest" => 5,
+            _ => {
+                generic += 1;
+                if generic == 2 { 4 } else { 3 }
+            }
+        })
+        .collect()
+}
+
+fn go_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, streams: bool) -> String {
+    let names = crate::backends::go::go_names(&func.name);
+    let input_names = expand_input_names(&func.inputs);
+    assert!(
+        input_names.len() == func.inputs.len() && func.inputs.iter().all(|i| i.param_type == ParamType::Real),
+        "{}: the Go server reads real inputs only",
+        func.name
+    );
+    let preload: Vec<usize> = preload_refs(func, &input_names)
+        .iter()
+        .map(|r| match *r {
+            "refOpen" => 0,
+            "refHigh" => 1,
+            "refLow" => 2,
+            "refClose" => 3,
+            "refVolume" => 4,
+            "refOI" => 5,
+            "refPeriods" => 6,
+            other => unreachable!("no preloaded series {other}"),
+        })
+        .collect();
+    let ins: Vec<String> = input_names
+        .iter()
+        .zip(go_fuzz_slots(&input_names))
+        .zip(&preload)
+        .map(|((n, f), r)| format!("{{\"{n}\", {f}, {r}}}"))
+        .collect();
+    let outs: Vec<String> = (0..func.outputs.len())
+        .map(|k| format!("{{\"{}\", {}}}", output_json_key(&func.outputs, k), func.outputs[k].param_type == ParamType::Integer))
+        .collect();
+
+    let mut s = format!("func rpc{}(s *server, p params) string {{\n", func.name);
+    for opt in &func.optional_inputs {
+        let read = match &opt.param_type {
+            ParamType::Real => format!("p.real(\"{}\")", opt.name),
+            ParamType::Enum(e) => format!("talib.{e}(p.integer(\"{}\"))", opt.name),
+            _ => format!("p.integer(\"{}\")", opt.name),
+        };
+        let _ = writeln!(s, "\t{} := {read}", opt.name);
+    }
+    if func_unst_id(&func.name, enums).is_some() {
+        let target = format!("TA_FUNC_UNST_{}", func.name);
+        let variant = &enums["FuncUnstId"].variants.iter().find(|v| v.c_name == target).expect("func_unst_id found it").name;
+        let _ = writeln!(s, "\ts.pin(p, talib.FuncUnstId{variant})");
+    }
+    let params: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+    let mut args = vec!["c.start".to_string(), "c.end".to_string()];
+    args.extend((0..func.inputs.len()).map(|k| format!("c.in[{k}]")));
+    args.extend(params.iter().map(|o| (*o).to_string()));
+    let (mut nr, mut ni) = (0, 0);
+    for o in &func.outputs {
+        if o.param_type == ParamType::Integer {
+            args.push(format!("c.i[{ni}]"));
+            ni += 1;
+        } else {
+            args.push(format!("c.r[{nr}]"));
+            nr += 1;
+        }
+    }
+    let _ = writeln!(
+        s,
+        "\treturn s.batch(p, []inSlot{{{}}}, []outSlot{{{}}}, func() (int, error) {{",
+        ins.join(", "),
+        outs.join(", ")
+    );
+    let _ = writeln!(s, "\t\treturn s.core.{}({})", names.lookback_public, params.join(", "));
+    s.push_str("\t}, func(c *call) (talib.OutRange, error) {\n");
+    let _ = writeln!(s, "\t\treturn s.core.{}({})", names.public, args.join(", "));
+    if !streams {
+        s.push_str("\t}, nil, nil, nil)\n}\n");
+        return s;
+    }
+    let ins: Vec<String> = (0..func.inputs.len()).map(|k| format!("in[{k}]")).collect();
+    let mut open_args = ins.clone();
+    open_args.extend(params.iter().map(|o| (*o).to_string()));
+    let mut fill_args = open_args.clone();
+    fill_args.extend(args[2 + func.inputs.len() + params.len()..].iter().cloned());
+    let blanks = vec!["_"; func.outputs.len()].join(", ");
+    s.push_str("\t}, func(in [][]float64) error {\n");
+    let _ = writeln!(s, "\t\t_, {blanks}, err := s.core.{}Open({})", names.public, open_args.join(", "));
+    s.push_str("\t\treturn err\n");
+    s.push_str("\t}, func(in [][]float64, c *call) (talib.OutRange, error) {\n");
+    let _ = writeln!(s, "\t\t_, r, err := s.core.{}OpenAndFill({})", names.public, fill_args.join(", "));
+    s.push_str("\t\treturn r, err\n");
+    s.push_str("\t}, func(c *call) string {\n");
+    let mut ride_args = vec!["s.core".to_string(), "p".to_string(), "c.end".to_string()];
+    ride_args.extend((0..func.inputs.len()).map(|k| format!("c.in[{k}]")));
+    ride_args.extend(params.iter().map(|o| (*o).to_string()));
+    if func.streaming {
+        let _ = writeln!(s, "\t\treturn ride{}({})", func.name, ride_args.join(", "));
+    } else {
+        s.push_str("\t\treturn \"\"\n");
+    }
+    s.push_str("\t})\n}\n");
+    s
+}
+
 #[cfg(test)]
 mod predicate_form_tests {
     use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};

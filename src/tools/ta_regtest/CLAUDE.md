@@ -30,7 +30,7 @@ of a property of library output; it moves with FMA dispatch, libm and compiler.
 |------|-------------|
 | `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). `--codegen` also matches each entry against real function names; `--xlang-hash` and `--ref` match only those. An entry that matches nothing at all is `TA_REGTEST_FILTER_MATCHED_NOTHING`, even beside entries that matched. |
 | `--codegen` | Codegen verification after the C reference tests |
-| `--language=CSV` | Narrow it (`c,rust,java,csharp,ts,tswasm`) |
+| `--language=CSV` | Narrow it (`c,rust,java,csharp,ts,tswasm,go`) |
 | `--ref=X_Y_Z` | Differential fuzz vs one frozen release. **Self-contained** |
 | `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
 
@@ -106,8 +106,8 @@ requests from ta_abstract metadata with no per-function hand-coding. Real inputs
 are named **positionally** (`inReal`, or `inReal0`/`inReal1`), price inputs by
 OHLCV component per the `TA_InputParameterInfo.flags` bitmask. Inputs travel as
 IEEE-754 hex bits and the baseline is the in-process library called with the
-same request, so real outputs compare **bitwise**, bar the Java, C# and TS calls
-that reach a transcendental, which take `server_verify`'s per-language bound
+same request, so real outputs compare **bitwise**, bar the Java, C#, TS and Go
+calls that reach a transcendental, which take `server_verify`'s per-language bound
 (below).
 Integer outputs compare exactly. Integer parameters sweep from each one's
 declared minimum.
@@ -430,8 +430,15 @@ constant is that value with its last digit lost. Every server and every
 standard basis matches nothing. Call `fuzz_hash_init()`; never retype the number.
 
 Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe`,
-`dotnet ta_codegen_csharp/TaCodegenServe.dll` and
-`node ta_codegen_ts/tools/taCodegenServe.js` (`--engine=wasm` for `tswasm`).
+`dotnet ta_codegen_csharp/TaCodegenServe.dll`,
+`node ta_codegen_ts/tools/taCodegenServe.js` (`--engine=wasm` for `tswasm`) and
+`./ta_codegen_serve_go`.
+
+**Go has no metadata tier and no single-precision surface.**
+`codegen_lang_has_abstract` and `codegen_lang_serves_float` say so; a leg Go
+lacks is never sent to its server, and a floor on such a leg holds only when a
+server offering it ran. With no lookback RPC, Go's batch rejections in the
+`--xlang-hash` tier leg are held to C's lookback verdict.
 
 ## Building
 
@@ -485,8 +492,8 @@ value leg is structurally blind to — and the first with a per-SITE ratchet rat
 than a total. Each server reports which of its own sites fired (`range_sites`)
 and which set it has (`range_sites_all`); the driver ORs the mask across the run
 and demands every bit, because a total cannot see one site of five stop. Rust
-declares four: its server is a separate crate and cannot reach the `pub(crate)`
-`_OpenInternal` seam, so it says so rather than pretending.
+and Go declare four: their servers are a separate crate or module and cannot
+reach the unexported `_OpenInternal` seam, so they say so rather than pretending.
 `sv_range_sites_mask_matches_the_declared_set` checks the bits a server ORs in
 against the set it declares, on emitted text, since a site added without joining
 the set, or one reusing another's bit, leaves a full mask at run time and fails
@@ -721,17 +728,19 @@ rather than the 252-bar series: full-precision inputs (a seed both sides
 regenerate, or lossless hex-of-IEEE-bits) and outputs compared by a
 full-precision FNV hash, so a ~1e-10 fusion-site divergence is a hard failure.
 `scripts/build.py xlang-hash` builds and runs it; both CI nightlies gate
-on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK** and **Node**.
+on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK**, **Node** and **Go**.
 
 - **Golden = the in-process C library**, called directly via `TA_CallFunc` with
   its raw output hashed. Each server crosses the pipe and is diffed against it.
-- **Two transports (per-server `usesSeed`).** *Seed* (Rust): `"gen_present":1` +
+- **Two transports (per-server `usesSeed`).** *Seed* (Rust, Go): `"gen_present":1` +
   `(gen_shape,gen_seed,gen_n)`, the server generating inputs from its own
-  bit-exact `fuzz_gen` port. *Hex* (Java, C#, TS): the driver
+  bit-exact `fuzz_gen` port, over `abstract_call`, or the per-function method on a
+  server with no metadata tier. A seed server's transcendental call takes the hex
+  transport, since its arrays are compared at the bound. *Hex* (Java, C#, TS): the driver
   serializes its own arrays via `codegen_write_hexbits_array`, the transport
   shared with `server_verify`. Both hash the **guarded** call, like-for-like with
   the golden.
-- **Transcendental tolerance (Java, C# and TS).** Java's fdlibm differs from the C
+- **Transcendental tolerance (Java, C#, TS and Go).** Java's fdlibm differs from the C
   libm by a few ULP on `atan/sin/cos/exp/log/...` (3 measured on `tanh`), and **.NET does not guarantee
   `Math.*` reaches the platform libm** — an ordinary-value 1 ULP difference,
   host-dependent, so a locally clean run proves nothing here.
@@ -739,7 +748,8 @@ on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK** and **Node**
   untouched; only transcendentals moved. Such calls are decided **per call** by
   `codegen_call_is_transcendental`, drop `want_hash`, and are element-compared at
   the language's bound: 1e-9 for Java and C#, 1e-11 for TS, whose engine `Math.*`
-  is no libm either. Every other call stays bitwise, and the summary reports the
+  is no libm either, and 1e-9 for Go, whose `math` package is its own and whose
+  bits move with `GOARCH` and `GOAMD64`. Every other call stays bitwise, and the summary reports the
   per-server tolerance-path count so the bitwise coverage is visibly non-vacuous.
   `codegen_lang_transcendental_tol` is the single definition, read by every
   gate — as two literals they drifted.
@@ -774,7 +784,7 @@ on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK** and **Node**
 
 Scope rules (deliberate):
 
-- **No waivers; the transcendental tolerance, the kernel lane and two skips.** Current against current, so no
+- **No waivers; the transcendental tolerance, the kernel lane, the tolerance rows and two skips.** Current against current, so no
   frozen-release carve-out applies. A non-tolerated mismatch is a real
   fusion-site or codegen divergence to fix.
 - **The choice-list default sentinel, Java only.** Every optional parameter gets
@@ -794,6 +804,16 @@ Scope rules (deliberate):
   tolerance-lane servers, and reports the count. Not a codegen bug: every
   non-degenerate shape agrees within 1e-9, and the phase of a null signal is
   undefined, so no fixed tolerance could separate it from libm noise.
+- **Tolerance rows (`g_xlangTolRows`).** A tolerance-lane call is held to its
+  language's bound unless a row names its language, function and fuzz shape, all
+  three, with no wildcard. The one row is Go's KSTEXT on the domain-edge shape:
+  its ROC of ±3e37 bars cancels to 1e-16 of the operands, which amplifies the
+  1 ULP by which Go's `math.Exp` differs from glibc on some ALMA weights. A row's
+  bound is about 3x the largest deviation measured, its calls over the language's
+  bound are reported on a `TOL ROW` line and kept out of TRANSCENDENTAL MAX, and
+  on an unfiltered run a row that held no call fails: delete it. A row names
+  the C library it was measured against (glibc on x86-64 for this one) and is
+  inert on any other host: on Apple Silicon Go's KSTEXT stays within 1e-9 there.
 - **Integer periods sweep from each parameter's declared minimum**, period 1
   included, and reach default+50/+51.
 - Expected GREEN because every backend fuses the identical `a*b+c` sites via the

@@ -207,6 +207,22 @@ pub fn ts_fn() -> String {
 }
 
 /// The TypeScript server's handler: the library function, its rejection back as a code.
+/// The Go server's `TA_GetRuntimeInfo`: the Go package has no metadata layer to
+/// answer it, so the server answers the common keys itself.
+#[must_use]
+pub fn go_server_handler() -> String {
+    format!(
+        "func runtimeInfo(p params) string {{\n\
+         \tswitch p.str(\"key\") {{\n\
+         \tcase {keys}:\n\
+         \t\treturn `{{\"retCode\":0,\"value\":0}}`\n\
+         \t}}\n\
+         \treturn `{{\"retCode\":` + strconv.Itoa(int(talib.BadParam)) + `,\"value\":0}}`\n\
+         }}\n\n",
+        keys = quoted(", "),
+    )
+}
+
 pub const TS_SERVER_HANDLER: &str = "function handleGetRuntimeInfo(p: Params): string {\n\
     \x20 let rc = 0;\n\
     \x20 let value = 0;\n\

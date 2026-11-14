@@ -2283,7 +2283,7 @@ impl ExprEmitter for TsExpr<'_> {
 }
 
 /// `count` of a `memcpy`-family call as an element count: `n * sizeof(T)` is `n`.
-fn strip_sizeof(e: &Expr) -> Expr {
+pub(crate) fn strip_sizeof(e: &Expr) -> Expr {
     let is_sizeof = |x: &Expr| matches!(x, Expr::FuncCall(n, _) if n == "sizeof");
     match e {
         Expr::BinOp(l, BinOp::Mul, r) if is_sizeof(r) => strip_sizeof(l),

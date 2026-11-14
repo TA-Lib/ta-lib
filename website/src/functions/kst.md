@@ -191,6 +191,28 @@ const { begIdx, outKst, outKstSignal } = kst(series, {
 console.log(outKst.length + ' values from bar ' + begIdx + '; last outKst = ' + outKst[outKst.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+kst := make([]float64, 252)
+kstSignal := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.KST(0, len(series)-1, series, 10, 15, 20, 30, 10, 10, 10, 15, 9, kst, kstSignal)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last kst = %.4f\n", r.NBElement, r.BegIdx, kst[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -206,6 +228,7 @@ TA-Lib Definition: [`kst.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_KST.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KST.java) |
 | C# | [`Core_KST.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KST.cs) |
 | TypeScript | [`kst.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kst.ts) |
+| Go | [`kst.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/kst.go) |
 
 Python: `talib.KST` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

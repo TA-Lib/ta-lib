@@ -192,6 +192,31 @@ const {
 console.log(outMacdv.length + ' values from bar ' + begIdx + '; last outMacdv = ' + outMacdv[outMacdv.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+macdv := make([]float64, 252)
+macdvSignal := make([]float64, 252)
+macdvHist := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.MACDV(0, len(high)-1, high, low, close, 12, 26, 9, macdv, macdvSignal, macdvHist)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last macdv = %.4f\n", r.NBElement, r.BegIdx, macdv[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -207,6 +232,7 @@ TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Java | [`Core_MACDV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDV.java) |
 | C# | [`Core_MACDV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDV.cs) |
 | TypeScript | [`macdv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdv.ts) |
+| Go | [`macdv.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/macdv.go) |
 
 Python: `talib.MACDV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

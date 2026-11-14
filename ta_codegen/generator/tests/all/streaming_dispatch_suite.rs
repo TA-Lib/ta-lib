@@ -979,9 +979,10 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
     let java = backends::java::generate(&func, &enums, registry, &helpers);
     let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
     let ts = backends::ts::generate(&func, &enums, registry, &helpers);
+    let go = backends::go::generate(&func, &enums, registry, &helpers);
 
     // (backend, source, definition, call sites, the retired word)
-    let cases: [(&str, &str, &str, &[&str], &str); 5] = [
+    let cases: [(&str, &str, &str, &[&str], &str); 6] = [
         (
             "c",
             &c,
@@ -1021,6 +1022,14 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             // of a module-level function's reach.
             "\nfunction smaStepImpl(sp: SmaStream,",
             &["smaStepImpl(this,"],
+            "StreamStep",
+        ),
+        (
+            "go",
+            &go,
+            // A package function: the handle's state is unexported fields.
+            "\nfunc smaStepImpl(sp *SMAStream,",
+            &["\tsmaStepImpl(sp, inReal)\n"],
             "StreamStep",
         ),
     ];
@@ -1071,7 +1080,8 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
     let java = backends::java::generate(&func, &enums, registry, helpers);
     let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
     let ts = backends::ts::generate(&func, &enums, registry, helpers);
-    let cases: [(&str, &str, &str, &str); 5] = [
+    let go = backends::go::generate(&func, &enums, registry, helpers);
+    let cases: [(&str, &str, &str, &str); 6] = [
         ("c", &c, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         (
             "rust",
@@ -1082,6 +1092,7 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
         ("java", &java, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         ("csharp", &csharp, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         ("ts", &ts, "if (startIdx > fillLb) {\n      fillLb = startIdx;\n    }", "if (historyLen < fillLb + 1) {"),
+        ("go", &go, "if startIdx > fillLb {", "if historyLen < fillLb+1 {"),
     ];
     // Every TS assignment of the anchor is the conditional clamp walked below.
     assert_eq!(
@@ -1116,7 +1127,7 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
         assert!(seen >= 1, "{lang}: MA emits no startIdx clamp at all");
         checked += 1;
     }
-    assert_eq!(checked, 5, "every backend must be covered");
+    assert_eq!(checked, 6, "every backend must be covered");
 }
 
 /// The #241 range leg's per-site ratchet, pinned across every server at once.
@@ -1151,6 +1162,7 @@ fn sv_range_sites_mask_matches_the_declared_set() {
         ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
         ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 1 | 2 | 8 | 16),
         ("ts", ta_codegen_lib::server_gen::generate_ts_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
+        ("go", ta_codegen_lib::server_gen::generate_go_server(&funcs, &enums), 1 | 2 | 8 | 16),
     ];
 
     for (lang, src, want_all) in servers {

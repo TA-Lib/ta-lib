@@ -175,6 +175,30 @@ const { begIdx, values } = cdldarkcloudcover({ open, high, low, close }, {
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+open := make([]float64, 252) // your data, oldest first
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+out := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.CDLDARKCLOUDCOVER(0, len(open)-1, open, high, low, close, 0.5, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -190,6 +214,7 @@ TA-Lib Definition: [`cdldarkcloudcover.c`](https://github.com/TA-Lib/ta-lib/blob
 | Java | [`Core_CDLDARKCLOUDCOVER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLDARKCLOUDCOVER.java) |
 | C# | [`Core_CDLDARKCLOUDCOVER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLDARKCLOUDCOVER.cs) |
 | TypeScript | [`cdldarkcloudcover.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdldarkcloudcover.ts) |
+| Go | [`cdldarkcloudcover.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/cdldarkcloudcover.go) |
 
 Python: `talib.CDLDARKCLOUDCOVER`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
 

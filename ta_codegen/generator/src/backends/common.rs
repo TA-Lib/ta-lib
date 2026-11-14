@@ -174,6 +174,7 @@ pub fn enum_limit_names_of(def: &EnumDef, lang: Lang) -> Option<(String, String)
         Lang::CSharp | Lang::Ts => {
             Some((format!("{}s.Min", def.name), format!("{}s.Max", def.name)))
         }
+        Lang::Go => Some((format!("{}Min", def.name), format!("{}Max", def.name))),
         Lang::Java | Lang::Rust => None,
     }
 }

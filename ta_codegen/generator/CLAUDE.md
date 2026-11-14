@@ -30,6 +30,9 @@ ta_codegen/output/       per-language products: library/ (shipped) + tools/ (ser
                                    server from disk
   csharp/library/ + tools/         shipped TA-Lib package incl. src/metadata/
   ts/library/ + tools/             the npm package; tools/ compiles ../library/src
+  go/ + tools/                     the Go module root, batch and streaming tiers; tools/ is the
+                                   server's own module, nested so the package's zip
+                                   leaves it out
   wasm/                            the WASM engine's crate over rust/library, built
                                    by `scripts/build.py wasm` into bin/ta_lib.wasm
 ```
@@ -55,6 +58,7 @@ assets, kept out of `input/` (indicator definitions only) and out of `output/`
 - `templates/c/ta_retcode.c.template` — spliced with `ta_retcode.csv`.
 - `templates/c/ta_abstract_serve.c` — abstract-serve handlers `#include`d into
   the C server.
+- `templates/go/fuzz.go` — the Go server's port of `fuzz_data.h`.
 
 Every Rust template is listed in `main.rs`'s `RUST_TEMPLATE_MODULES` (test-only
 ones also in `RUST_TEST_ONLY_MODULES`) and in `RustBackend::clean_keep`, so
@@ -76,8 +80,9 @@ that names no indicator.
 | `backends/rust_lang.rs` | Rust indicators (concrete `f64`) |
 | `backends/java.rs`, `csharp.rs`, `ts.rs` | Java `Core` methods; one `Core_<NAME>.cs` per function; one ES module per function |
 | `backends/ctype.rs` | The C type pass behind TS integer semantics: every integer `/`, `%` and real-to-int conversion truncates with `\| 0` because this pass typed it, never because of a name |
-| `backends/{c,rust,java,csharp,ts}_stream.rs` | The streaming emitters, each rendering the *same* backend-neutral analysis from `streaming.rs`. A new backend means writing only its emitter |
-| `backends/rust_doc.rs`, `csharp_doc.rs`, `ts_doc.rs` | Per-language rendering of each function's canonical `<name>.md` |
+| `backends/go.rs`, `go_fmt.rs`, `go_prune.rs` | Go: one file per function, lowered at render time (steps, ternaries, `&&` operands needing statements); `go_fmt` prints gofmt's spacing; `go_prune` drops unread locals. Every real product is emitted as `float64(a*b)`, or Go may fuse it; a literal-only real operation takes `float64(lit)` operands, or Go folds it exactly where C rounds each step |
+| `backends/{c,rust,java,csharp,ts,go}_stream.rs` | The streaming emitters, each rendering the *same* backend-neutral analysis from `streaming.rs`. A new backend means writing only its emitter |
+| `backends/rust_doc.rs`, `csharp_doc.rs`, `ts_doc.rs`, `go_doc.rs` | Per-language rendering of each function's canonical `<name>.md` |
 | `backends/ir_cleanup.rs` | Backend-selected, length-preserving IR passes between the streaming decision and rendering |
 | `attributes` | The attribute keys (`levels`, ...): one row per key, and the canonical JSON form of a value |
 | `backends/abstract_rows.rs` | The backend-neutral `ta_abstract` row model, rendered by Rust, Java, C# and TS — but deliberately not by C (below) |

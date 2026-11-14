@@ -189,6 +189,31 @@ const {
 console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+upperBand := make([]float64, 252)
+middleBand := make([]float64, 252)
+lowerBand := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.KC(0, len(high)-1, high, low, close, 20, 10, 2, upperBand, middleBand, lowerBand)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -204,6 +229,7 @@ TA-Lib Definition: [`kc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Java | [`Core_KC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KC.java) |
 | C# | [`Core_KC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KC.cs) |
 | TypeScript | [`kc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kc.ts) |
+| Go | [`kc.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/kc.go) |
 
 Python: `talib.KC` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

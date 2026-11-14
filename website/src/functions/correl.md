@@ -155,6 +155,28 @@ const { begIdx, values } = correl(series0, series1, { timePeriod: 30 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series0 := make([]float64, 252) // your data, oldest first
+series1 := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.CORREL(0, len(series0)-1, series0, series1, 30, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -170,6 +192,7 @@ TA-Lib Definition: [`correl.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Java | [`Core_CORREL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CORREL.java) |
 | C# | [`Core_CORREL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CORREL.cs) |
 | TypeScript | [`correl.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/correl.ts) |
+| Go | [`correl.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/correl.go) |
 
 Python: `talib.CORREL`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
 

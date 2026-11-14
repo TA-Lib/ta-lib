@@ -32,7 +32,7 @@ use std::path::PathBuf;
 use ta_codegen_lib::streaming;
 use ta_codegen_lib::{backends, ir, parser};
 
-const LANGS: [&str; 5] = ["c", "rust", "java", "csharp", "ts"];
+const LANGS: [&str; 6] = ["c", "rust", "java", "csharp", "ts", "go"];
 
 fn input_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../input")
@@ -78,9 +78,15 @@ fn section(name: &str, lang: &str) -> String {
         "java" => backends::java::generate(&func, &enums, registry, helpers),
         "csharp" => backends::csharp::generate(&func, &enums, registry, helpers),
         "ts" => backends::ts::generate(&func, &enums, registry, helpers),
+        "go" => backends::go::generate(&func, &enums, registry, helpers),
         other => panic!("unknown backend {other}"),
     };
-    match full.find("/**** Streaming API *****/") {
+    // Go's tier opens at the handle type's doc comment.
+    let marker = full.find("/**** Streaming API *****/").or_else(|| {
+        let ty = full.find("Stream struct {")?;
+        full[..ty].rfind("\n//").map(|i| i + 1)
+    });
+    match marker {
         Some(at) => full[at..].to_string(),
         None => full,
     }
@@ -128,6 +134,7 @@ fn spellings(lang: &str) -> (&'static str, &'static str) {
         "java" => ("outRangeCount++", "throw nonFiniteBar("),
         "csharp" => ("outRangeCount++", "throw Core.NonFiniteBar("),
         "ts" => ("outRangeCount++", "throw nonFiniteBar("),
+        "go" => ("outRangeCount++", "BadParam\n"),
         other => panic!("unknown backend {other}"),
     }
 }
@@ -140,6 +147,7 @@ fn ceiling_needle(lang: &str) -> &'static str {
         "java" => "if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )",
         "csharp" => "if( outRangeBegIdx + outRangeCount > Core.IndexMax )",
         "ts" => "if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {",
+        "go" => "if sp.outRangeBegIdx+sp.outRangeCount > IndexMax {",
         other => panic!("unknown backend {other}"),
     }
 }
@@ -192,6 +200,7 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
             "throw streamFailure(",
             "RetCode.OUT_OF_RANGE_END_INDEX",
         ],
+        "go" => [ceiling_needle("go"), "return ", "OutOfRangeEndIndex"],
         other => panic!("unknown backend {other}"),
     };
     let head: Vec<&str> = body
@@ -225,6 +234,7 @@ fn finite_test(lang: &str, bars: &[String]) -> String {
             "java" => format!("!Double.isFinite({b})"),
             "csharp" => format!("!double.IsFinite({b})"),
             "ts" => format!("!Number.isFinite({})", backends::ts::input_param_name(b)),
+            "go" => format!("!isFinite({})", backends::go::go_ident(b)),
             other => panic!("unknown backend {other}"),
         })
         .collect();
@@ -264,6 +274,12 @@ fn entry_sig(lang: &str, upper: &str, verb: &str) -> Box<dyn Fn(&str) -> bool> {
         "ts" => {
             let ts = format!("{verb}(");
             Box::new(move |l: &str| l.starts_with(&ts))
+        }
+        "go" => {
+            let mut v = verb.to_string();
+            v[..1].make_ascii_uppercase();
+            let go = format!("func (sp *{upper}Stream) {v}(");
+            Box::new(move |l: &str| l.starts_with(&go))
         }
         other => panic!("unknown backend {other}"),
     }
@@ -324,6 +340,10 @@ fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
         "java" => Box::new(|l: &str| l.starts_with("public void advance() {")),
         "csharp" => Box::new(|l: &str| l.starts_with("public void Advance()")),
         "ts" => Box::new(|l: &str| l.starts_with("advance(): void {")),
+        "go" => {
+            let go = format!("func (sp *{upper}Stream) Advance() error {{");
+            Box::new(move |l: &str| l.starts_with(&go))
+        }
         other => panic!("unknown backend {other}"),
     }
 }

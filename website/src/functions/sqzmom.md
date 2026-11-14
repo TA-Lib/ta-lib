@@ -205,6 +205,30 @@ const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
 console.log(outMomentum.length + ' values from bar ' + begIdx + '; last outMomentum = ' + outMomentum[outMomentum.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+momentum := make([]float64, 252)
+squeeze := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.SQZMOM(0, len(high)-1, high, low, close, 20, 2, 20, 2, 1.5, 1, momentum, squeeze)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last momentum = %.4f\n", r.NBElement, r.BegIdx, momentum[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -220,6 +244,7 @@ TA-Lib Definition: [`sqzmom.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Java | [`Core_SQZMOM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SQZMOM.java) |
 | C# | [`Core_SQZMOM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SQZMOM.cs) |
 | TypeScript | [`sqzmom.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sqzmom.ts) |
+| Go | [`sqzmom.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/sqzmom.go) |
 
 Python: `talib.SQZMOM` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

@@ -193,6 +193,31 @@ const { begIdx, outKvo, outKvoSignal } = kvo({ high, low, close, volume }, {
 console.log(outKvo.length + ' values from bar ' + begIdx + '; last outKvo = ' + outKvo[outKvo.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+volume := make([]float64, 252) // your data, oldest first
+kvo := make([]float64, 252)
+kvoSignal := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.KVO(0, len(high)-1, high, low, close, volume, 34, 55, 13, kvo, kvoSignal)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last kvo = %.2f\n", r.NBElement, r.BegIdx, kvo[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -208,6 +233,7 @@ TA-Lib Definition: [`kvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_KVO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KVO.java) |
 | C# | [`Core_KVO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KVO.cs) |
 | TypeScript | [`kvo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kvo.ts) |
+| Go | [`kvo.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/kvo.go) |
 
 Python: `talib.KVO` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/volume_indicators.html).
 

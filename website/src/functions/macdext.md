@@ -188,6 +188,30 @@ const {
 console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+macd := make([]float64, 252)
+macdSignal := make([]float64, 252)
+macdHist := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.MACDEXT(0, len(series)-1, series, 12, talib.MATypeSMA, 26, talib.MATypeSMA, 9, talib.MATypeSMA,
+	macd, macdSignal, macdHist)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -203,6 +227,7 @@ TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Java | [`Core_MACDEXT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDEXT.java) |
 | C# | [`Core_MACDEXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDEXT.cs) |
 | TypeScript | [`macdext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdext.ts) |
+| Go | [`macdext.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/macdext.go) |
 
 Python: `talib.MACDEXT`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

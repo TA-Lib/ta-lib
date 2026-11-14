@@ -84,6 +84,12 @@ BACKENDS = [
      re.compile(r"(?:historyLen\s*<\s*(?!1\s*\))[^\n)]*?\+\s*1|outNBElement\.value\s*<\s*1)\s*\)\s*\{\s*\n\s*"
                 r"return\s+RetCode\.(BAD_PARAM|INSUFFICIENT_HISTORY)\s*;"), 11,
      None, 0),
+
+    ("Go", os.path.join("ta_codegen", "output", "go"), ".go",
+     r"BadParam", r"InsufficientHistory",
+     re.compile(r"(?:historyLen\s*<\s*(?!1\s*\{)[^\n{]*?\+\s*1|\*outNBElement\s*<\s*1)\s*\{\s*\n\s*"
+                r"return\s+(BadParam|InsufficientHistory)\b"), 11,
+     re.compile(r"if\s+startIdx\s*>\s*endIdx\s*\{[\s\S]{0,220}?return\s+(\w+)"), 100),
 ]
 
 
@@ -110,6 +116,10 @@ EMPTY_ARMS = [
     ("TypeScript", os.path.join("ta_codegen", "output", "ts", "library", "src", "func"), ".ts",
      "INSUFFICIENT_HISTORY",
      re.compile(r"if\s*\(\s*startIdx\s*>=\s*historyLen\s*\)\s*\{[\s\S]{0,160}?return\s+RetCode\.(\w+)\s*;"), 220),
+
+    ("Go", os.path.join("ta_codegen", "output", "go"), ".go",
+     "InsufficientHistory",
+     re.compile(r"if\s+startIdx\s*>=\s*historyLen\s*\{[\s\S]{0,160}?return\s+(\w+)"), 220),
 ]
 
 

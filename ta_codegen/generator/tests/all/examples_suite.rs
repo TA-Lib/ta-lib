@@ -1,4 +1,4 @@
-//! The `## Example` section of every function page (#585): five tabs, each the shown
+//! The `## Example` section of every function page (#585): one tab per language, each the shown
 //! half of a sample whose full copy a language's suite compiles and runs. These pin
 //! the page text to those compiled copies over the whole corpus, so the page can only
 //! show what ran.
@@ -51,7 +51,7 @@ fn occur_in_order(hay: &str, from: usize, needles: &[String], what: &str) -> usi
             };
             let at = search + rel;
             let line_start = hay[..at].rfind('\n').map_or(0, |i| i + 1);
-            if hay[line_start..at].chars().all(|c| c == ' ') {
+            if hay[line_start..at].chars().all(|c| c == ' ' || c == '\t') {
                 pos = at + needle.len();
                 break;
             }
@@ -134,6 +134,33 @@ fn the_java_csharp_and_c_tabs_are_compiled_verbatim_by_their_suites() {
     assert!(checked > 200, "only {checked} functions");
 }
 
+/// The Go tab is the example's shown lines, and `example_test.go` holds the whole
+/// sample under the example's name with the `// Output:` the ledger records. A
+/// function the ledger lacks gets none: `build-libraries --backend=go` refuses
+/// that, so the injected fixtures of `scripts/synth_gate.py` pass here.
+#[test]
+fn the_go_tab_is_an_example_go_test_runs() {
+    let (funcs, enums) = corpus();
+    let text = backends::go_examples::render_test(&funcs, &enums);
+    let mut checked = 0;
+    for func in &funcs {
+        let tabs = docs_site::example_tabs(func, &enums).unwrap();
+        let snippet = backends::go_examples::example(func, &enums).unwrap();
+        assert_eq!(snippet.shown(), tab(&tabs, "Go"), "{}: Go tab", func.name);
+        let head = format!("func {}() {{", backends::go_examples::example_name(&func.name));
+        let at = text.find(&head).unwrap_or_else(|| panic!("{}: no `{head}`", func.name));
+        let end = occur_in_order(&text, at, &snippet.body_text().iter().map(|l| l.trim_start().to_string()).collect::<Vec<_>>(), &func.name);
+        let close = match backends::go_examples::expected_output(func) {
+            Some(output) => format!("// Output: {output}\n}}"),
+            None => "}".to_string(),
+        };
+        assert!(text[end..].trim_start().starts_with(&close), "{}: the example does not close with `{close}`", func.name);
+        assert!(snippet.body.iter().any(|l| !l.shown), "{}: no hidden fill", func.name);
+        checked += 1;
+    }
+    assert!(checked > 200, "only {checked} functions");
+}
+
 /// One shape in every language: the arrays named after the inputs, every parameter at
 /// its default, the last value printed.
 #[test]
@@ -144,7 +171,7 @@ fn every_tab_names_the_inputs_and_prints_the_last_value() {
         let tabs = docs_site::example_tabs(func, &enums).unwrap();
         assert_eq!(
             tabs.iter().map(|(t, f, _)| (*t, *f)).collect::<Vec<_>>(),
-            [("C", "c"), ("Rust", "rust"), ("Java", "java"), ("C\\#", "csharp"), ("TypeScript", "ts")]
+            [("C", "c"), ("Rust", "rust"), ("Java", "java"), ("C\\#", "csharp"), ("TypeScript", "ts"), ("Go", "go")]
         );
         let vars: Vec<&str> = func
             .inputs
@@ -169,7 +196,12 @@ fn every_tab_names_the_inputs_and_prints_the_last_value() {
         for (title, _, lines) in &tabs {
             let text = lines.join("\n");
             for var in &vars {
-                let decl = lines.iter().filter(|l| l.contains(&format!(" {var} ")) || l.contains(&format!(" {var}[252]"))).count();
+                let decl = lines
+                    .iter()
+                    .filter(|l| {
+                        l.contains(&format!(" {var} ")) || l.contains(&format!(" {var}[252]")) || l.starts_with(&format!("{var} :="))
+                    })
+                    .count();
                 assert!(decl >= 1, "{} {title}: no declaration of `{var}`:\n{text}", func.name);
             }
             assert!(text.contains("252"), "{} {title}: no 252-bar array", func.name);
@@ -201,6 +233,7 @@ fn enum_parameters_are_named_in_every_language() {
         ("Java", "MAType.SMA"),
         ("C\\#", "MAType.SMA"),
         ("TypeScript", "maType: MAType.SMA"),
+        ("Go", "talib.MATypeSMA"),
     ] {
         assert!(tab(&tabs, title).iter().any(|l| l.contains(needle)), "{title}: no `{needle}`");
     }
@@ -218,7 +251,7 @@ fn the_page_carries_the_section_once_and_refuses_an_authored_one() {
     assert_eq!(headings[at - 1], "## Properties", "{headings:?}");
     assert_eq!(headings[at + 1], "## Implementation", "{headings:?}");
     assert_eq!(page.matches("::: code-tabs#lang").count(), 1);
-    assert_eq!(page.matches("\n@tab ").count(), 5);
+    assert_eq!(page.matches("\n@tab ").count(), 6);
 
     let real = crate::added_in_suite::repo_root();
     let root = std::env::temp_dir().join(format!("ta_example_authored_{}", std::process::id()));

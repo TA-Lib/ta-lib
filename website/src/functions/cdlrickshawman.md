@@ -166,6 +166,30 @@ const { begIdx, values } = cdlrickshawman({ open, high, low, close });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+open := make([]float64, 252) // your data, oldest first
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+out := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.CDLRICKSHAWMAN(0, len(open)-1, open, high, low, close, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -181,6 +205,7 @@ TA-Lib Definition: [`cdlrickshawman.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Java | [`Core_CDLRICKSHAWMAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLRICKSHAWMAN.java) |
 | C# | [`Core_CDLRICKSHAWMAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLRICKSHAWMAN.cs) |
 | TypeScript | [`cdlrickshawman.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlrickshawman.ts) |
+| Go | [`cdlrickshawman.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/cdlrickshawman.go) |
 
 Python: `talib.CDLRICKSHAWMAN`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/pattern_recognition.html).
 

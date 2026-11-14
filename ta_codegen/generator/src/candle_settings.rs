@@ -8,8 +8,8 @@ use std::collections::BTreeSet;
 
 use crate::ir::{Expr, Statement};
 
-/// Known candlestick setting names.
-const CANDLE_SETTINGS: &[&str] = &[
+/// Known candlestick setting names, in `TA_CandleSettingType` order.
+pub const CANDLE_SETTINGS: &[&str] = &[
     "BodyLong",
     "BodyVeryLong",
     "BodyShort",

@@ -45,7 +45,7 @@
 /* ---- Global state ---- */
 
 static CodegenPipe *g_pipes[SV_MAX_PIPES];
-static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csharp"/"ts" */
+static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csharp"/"ts"/"go" */
 static int          g_nbPipes = 0;
 static char        *g_reqBuf  = NULL;
 static char        *g_respBuf = NULL;
@@ -305,6 +305,15 @@ int server_verify_value_comparisons(void)
     return g_valueComparisons;
 }
 
+int server_verify_lookback_pipes(void)
+{
+    int n = 0;
+    for( int p = 0; p < g_nbPipes; p++ )
+        if( codegen_lang_has_abstract(g_pipeLang[p]) )
+            n++;
+    return n;
+}
+
 int server_verify_lookback_values(void)
 {
     return g_lookbackValues;
@@ -483,16 +492,10 @@ void server_verify_set_float(int on)
     g_svFloat = on;
 }
 
-/* Rust has no single-precision surface. */
-static int sv_serves_float(const char *lang)
-{
-    return !(lang && strcmp(lang, "rust") == 0);
-}
-
 int server_verify_float_active(void)
 {
     for( int p = 0; p < g_nbPipes; p++ )
-        if( sv_serves_float(g_pipeLang[p]) )
+        if( codegen_lang_serves_float(g_pipeLang[p]) )
             return 1;
     return 0;
 }
@@ -823,7 +826,7 @@ ErrorNumber server_verify(
         int vmath = bitwise && codegen_call_needs_vmath_tol(lang, funcName);
         bitwise = bitwise && !vmath;
 
-        if( g_svFloat && !sv_serves_float(lang) )
+        if( g_svFloat && !codegen_lang_serves_float(lang) )
             continue;
 
         /* Sync global state (unstable periods + candle settings) */
@@ -973,6 +976,8 @@ ErrorNumber server_verify_lookback_parity(
     {
         g_curPipe = p;
         const char *lang = g_pipeLang[p];
+        if( !codegen_lang_has_abstract(lang) )
+            continue;
 
         ErrorNumber err = sync_unstable_periods(p);
         if( err != TA_TEST_PASS )
@@ -1083,6 +1088,8 @@ ErrorNumber server_verify_lookback_value(
         ErrorNumber err;
         int lbLen, got;
 
+        if( !codegen_lang_has_abstract(g_pipeLang[p]) )
+            continue;
         g_curPipe = p;
         err = sync_unstable_periods(p);
         if( err == TA_TEST_PASS )

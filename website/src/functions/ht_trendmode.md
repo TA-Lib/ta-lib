@@ -139,6 +139,27 @@ const { begIdx, values } = htTrendmode(series);
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+out := make([]int32, 252)
+
+core := talib.NewCore()
+r, err := core.HT_TRENDMODE(0, len(series)-1, series, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %d\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -154,6 +175,7 @@ TA-Lib Definition: [`ht_trendmode.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Java | [`Core_HT_TRENDMODE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_TRENDMODE.java) |
 | C# | [`Core_HT_TRENDMODE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_TRENDMODE.cs) |
 | TypeScript | [`htTrendmode.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htTrendmode.ts) |
+| Go | [`ht_trendmode.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/ht_trendmode.go) |
 
 Python: `talib.HT_TRENDMODE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/cycle_indicators.html).
 

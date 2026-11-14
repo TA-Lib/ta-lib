@@ -185,6 +185,31 @@ const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
 console.log(outSlowK.length + ' values from bar ' + begIdx + '; last outSlowK = ' + outSlowK[outSlowK.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+slowK := make([]float64, 252)
+slowD := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.STOCH(0, len(high)-1, high, low, close, 5, 3, talib.MATypeSMA, 3, talib.MATypeSMA,
+	slowK, slowD)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last slowK = %.4f\n", r.NBElement, r.BegIdx, slowK[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -200,6 +225,7 @@ TA-Lib Definition: [`stoch.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Java | [`Core_STOCH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_STOCH.java) |
 | C# | [`Core_STOCH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STOCH.cs) |
 | TypeScript | [`stoch.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/stoch.ts) |
+| Go | [`stoch.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/stoch.go) |
 
 Python: `talib.STOCH`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

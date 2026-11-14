@@ -166,6 +166,7 @@ impl Registry {
                 Lang::Java => camel_words(&name),
                 Lang::CSharp => pascal_words(&name),
                 Lang::Ts => crate::backends::ts::ts_names(&name).positional,
+                Lang::Go => name,
                 Lang::C => format!("TA_{name}"),
             };
         }
@@ -195,7 +196,7 @@ impl Registry {
             Lang::C => format!("TA_{name}_{}", capitalize(&suffix)),
             Lang::Rust => format!("{}_{}", snake_words(&name), suffix.to_lowercase()),
             Lang::Ts if suffix.eq_ignore_ascii_case("lookback") => crate::backends::ts::ts_names(&name).lookback_positional,
-            Lang::Java | Lang::Ts => format!("{}{}", camel_words(&name), capitalize(&suffix)),
+            Lang::Java | Lang::Ts | Lang::Go => format!("{}{}", camel_words(&name), capitalize(&suffix)),
             Lang::CSharp => format!("{}{}", pascal_words(&name), capitalize(&suffix)),
         }
     }

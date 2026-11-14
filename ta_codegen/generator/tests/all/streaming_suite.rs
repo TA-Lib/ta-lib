@@ -4048,6 +4048,7 @@ fn a_tap_fuses_in_the_step_where_its_read_fuses_in_batch() {
         ("java", backends::java::generate(&f, &enums, reg, helpers), "RetCode apoImpl(", "private void apoStepImpl(", "Math.fma("),
         ("csharp", backends::csharp::generate(&f, &enums, reg, helpers), "internal RetCode ApoImpl(", "private void ApoStepImpl(", "Math.FusedMultiplyAdd("),
         ("ts", backends::ts::generate(&f, &enums, reg, helpers), "export function apoImpl(", "function apoStepImpl(", "fma("),
+        ("go", backends::go::generate(&f, &enums, reg, helpers), "func (c *Core) apoImpl(", "func apoStepImpl(", "math.FMA("),
     ];
     for (lang, text, batch, step, marker) in &rows {
         let fused = fn_body(text, batch).matches(marker).count();

@@ -182,6 +182,30 @@ const { begIdx, outHighStop, outLowStop } = cksp({ high, low, close }, {
 console.log(outHighStop.length + ' values from bar ' + begIdx + '; last outHighStop = ' + outHighStop[outHighStop.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+highStop := make([]float64, 252)
+lowStop := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.CKSP(0, len(high)-1, high, low, close, 10, 1, 9, highStop, lowStop)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last highStop = %.4f\n", r.NBElement, r.BegIdx, highStop[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -197,6 +221,7 @@ TA-Lib Definition: [`cksp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Java | [`Core_CKSP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CKSP.java) |
 | C# | [`Core_CKSP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CKSP.cs) |
 | TypeScript | [`cksp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cksp.ts) |
+| Go | [`cksp.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/cksp.go) |
 
 Python: `talib.CKSP` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

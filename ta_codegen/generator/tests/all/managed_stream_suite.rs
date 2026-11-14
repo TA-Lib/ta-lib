@@ -1,4 +1,4 @@
-//! Java, C# and TypeScript stream-emitter properties that no runtime gate can see.
+//! Java, C#, TypeScript and Go stream-emitter properties that no runtime gate can see.
 //!
 //! The managed backends share a shape C and Rust do not: a peek frame
 //! carries the transition in locals rather than in the handle. Two properties
@@ -60,9 +60,15 @@ fn render_stream(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>, lang:
         "java" => backends::java::generate(func, enums, registry, helpers),
         "csharp" => backends::csharp::generate(func, enums, registry, helpers),
         "ts" => backends::ts::generate(func, enums, registry, helpers),
+        "go" => backends::go::generate(func, enums, registry, helpers),
         other => panic!("unknown backend {other}"),
     };
-    match full.find("/**** Streaming API *****/") {
+    // Go's tier opens at the handle type's doc comment.
+    let marker = full.find("/**** Streaming API *****/").or_else(|| {
+        let ty = full.find("Stream struct {")?;
+        full[..ty].rfind("\n//").map(|i| i + 1)
+    });
+    match marker {
         Some(at) => full[at..].to_string(),
         None => full,
     }
@@ -108,7 +114,14 @@ fn no_managed_peek_seeds_a_dead_output_local() {
     let (mut control, enums) = load("imi");
     let parsed = parser::c_source::parse_c_source_str(LOOP_STORE_CONTROL);
     parser::c_source::wire_parsed_source(&mut control, &parsed);
-    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek(")] {
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek("), ("go", ") Peek(")] {
+        let seed_of = |out: &str| {
+            if lang == "go" {
+                format!("cur_{out} := sp.cur_{out}\n")
+            } else {
+                format!("cur_{out} = sp.cur_{out};")
+            }
+        };
         let mut swept = 0usize;
         let mut seedless = 0usize;
         let mut seeded: BTreeSet<String> = BTreeSet::new();
@@ -122,7 +135,7 @@ fn no_managed_peek_seeds_a_dead_output_local() {
             swept += 1;
             let mut any = false;
             for out in &func.outputs {
-                let seed = format!("cur_{} = sp.cur_{};", out.name, out.name);
+                let seed = seed_of(&out.name);
                 if body.contains(&seed) {
                     any = true;
                     seeded.insert(name.clone());
@@ -143,7 +156,7 @@ fn no_managed_peek_seeds_a_dead_output_local() {
         );
         let body = body_of(&render_stream(&control, &enums, lang), needle);
         assert!(
-            body.contains("cur_outReal = sp.cur_outReal;"),
+            body.contains(&seed_of("outReal")),
             "{lang}: the control's kept seed no longer matches the needle"
         );
     }
@@ -201,7 +214,7 @@ TA_RetCode imi(int startIdx, int endIdx,
 /// mixture out as a reading.
 #[test]
 fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
-    for lang in ["java", "csharp", "ts"] {
+    for lang in ["java", "csharp", "ts", "go"] {
         let mut with_subs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
         for name in streaming_funcs() {
             let upper = name.to_uppercase();
@@ -211,7 +224,11 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
                 backends::common::camel_words(&upper)
             };
             let s = section(&name, lang);
-            let def = if lang == "ts" { format!("function {base}StepImpl(") } else { format!("void {base}StepImpl(") };
+            let def = match lang {
+                "ts" => format!("function {base}StepImpl("),
+                "go" => format!("func {base}StepImpl("),
+                _ => format!("void {base}StepImpl("),
+            };
             let body = body_of(&s, &def);
             // Only the multi-output handles hold a cache, and only they can
             // publish a half-written bar. A single-output `value()` is a field
@@ -349,8 +366,12 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         .collect();
     assert!(!members.is_empty(), "the tape set is empty");
     let mut offenders = Vec::new();
-    for lang in ["java", "csharp", "ts"] {
-        let def_kw = if lang == "ts" { "export function " } else { "private " };
+    for lang in ["java", "csharp", "ts", "go"] {
+        let def_kw = match lang {
+            "ts" => "export function ",
+            "go" => "func ",
+            _ => "private ",
+        };
         let mut swept = 0usize;
         for name in &members {
             let src = section(name, lang);
@@ -374,6 +395,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         let needle = match lang {
             "java" => "public double peek(",
             "csharp" => "public double Peek(",
+            "go" => "func (sp *MAVPStream) Peek(",
             _ => "  peek(real: number, periods: number): number {",
         };
         let peek = body_of(&bank, needle);
@@ -387,6 +409,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         let eval = match lang {
             "java" => "private double mavpEvalWindow(",
             "csharp" => "internal double MavpEvalWindow(",
+            "go" => "func mavpEvalWindow(",
             _ => "function mavpEvalWindow(",
         };
         assert!(bank.contains(eval), "{lang}: MAVP's window evaluation not found");
@@ -406,7 +429,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
 fn no_managed_peek_writes_its_handle() {
     let funcs = streaming_funcs();
     let mut offenders = Vec::new();
-    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek(")] {
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek("), ("go", ") Peek(")] {
         let mut swept = 0usize;
         let mut handle_reads = 0usize;
         for name in &funcs {
@@ -416,7 +439,12 @@ fn no_managed_peek_writes_its_handle() {
                 let line_start = src[..at].rfind('\n').map_or(0, |k| k + 1);
                 // A TypeScript method has no modifier: the line holds only indent.
                 let head = src[line_start..at].trim_start();
-                if (lang == "ts" && !head.is_empty()) || (lang != "ts" && !head.starts_with("public ")) {
+                let public = match lang {
+                    "ts" => head.is_empty(),
+                    "go" => head.starts_with("func (sp *"),
+                    _ => head.starts_with("public "),
+                };
+                if !public {
                     continue;
                 }
                 found = true;
@@ -425,7 +453,7 @@ fn no_managed_peek_writes_its_handle() {
                         offenders.push(format!("{lang} {name}: {}", l.trim()));
                     }
                     // A committing call writes the handle with no target of its own.
-                    if lang == "ts" && [".update(", "StepTape(", "StepImpl("].iter().any(|c| l.contains(c)) {
+                    if matches!(lang, "ts" | "go") && [".update(", ".Update(", "StepTape(", "StepImpl("].iter().any(|c| l.contains(c)) {
                         offenders.push(format!("{lang} {name} commits: {}", l.trim()));
                     }
                     handle_reads += usize::from(l.contains("sp."));
@@ -456,7 +484,7 @@ fn every_delay_line_allocation_holds_at_least_one_slot() {
         {
             corpus_lines += cp.lines.len();
         }
-        for lang in ["c", "rust", "java", "csharp", "ts"] {
+        for lang in ["c", "rust", "java", "csharp", "ts", "go"] {
             texts.entry(lang).or_default().push_str(&render_stream(&func, &enums, lang));
         }
     }
@@ -477,7 +505,7 @@ fn every_delay_line_allocation_holds_at_least_one_slot() {
                 if k.is_empty() || preceded {
                     continue;
                 }
-                let allocates = ["TA_Malloc", "vec![", "new double[", "new Float64Array("]
+                let allocates = ["TA_Malloc", "vec![", "new double[", "new Float64Array(", "make("]
                     .iter()
                     .any(|t| rhs.starts_with(t) || rhs.starts_with(&format!("(double *){t}")));
                 if !allocates {
@@ -494,6 +522,7 @@ fn every_delay_line_allocation_holds_at_least_one_slot() {
                         format!("new double[Math.Max(lagCap{k}, 1)];"),
                         format!("new double[other.lagBuf{k}.Length];"),
                     ],
+                    "go" => [format!("make([]float64, max(lagCap{k}, 1))"), String::new()],
                     _ => [format!("new Float64Array(lagCap{k} > 0 ? lagCap{k} : 1);"), String::new()],
                 };
                 if rhs == max[0] {
@@ -536,15 +565,17 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
         else {
             continue;
         };
-        for lang in ["c", "rust", "java", "csharp", "ts"] {
+        for lang in ["c", "rust", "java", "csharp", "ts", "go"] {
             let text = render_stream(&func, &enums, lang);
+            // Go ends no statement with `;`.
+            let semi = if lang == "go" { "" } else { ";" };
             let lines: Vec<&str> = text.lines().map(str::trim).collect();
             for k in 0..cp.lines.len() {
                 let local = format!("lagPosL{k}");
                 let wrap = if matches!(lang, "java" | "ts") {
                     format!("{local} = {local} & ({local} - lagCapL{k} >> 31);")
                 } else {
-                    format!("{local} = 0;")
+                    format!("{local} = 0{semi}")
                 };
                 let mut from_local = Vec::new();
                 for (i, l) in lines.iter().enumerate() {
@@ -554,7 +585,7 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
                     else {
                         continue;
                     };
-                    match rhs.strip_suffix(';') {
+                    match rhs.strip_suffix(semi) {
                         Some(r) if r == local => from_local.push(i),
                         Some(r) if r == format!("lagPos{k}") => {}
                         _ => panic!(
@@ -581,7 +612,7 @@ fn every_delay_line_push_stores_its_position_once_after_the_wrap() {
 /// form; a regression changes no value, so nothing else sees it.
 #[test]
 fn every_ring_position_advances_in_a_local() {
-    const LANGS: [&str; 5] = ["c", "rust", "java", "csharp", "ts"];
+    const LANGS: [&str; 6] = ["c", "rust", "java", "csharp", "ts", "go"];
     let mut advanced = [0usize; LANGS.len()];
     for name in streaming_funcs() {
         let (func, enums) = load(&name);
@@ -589,7 +620,7 @@ fn every_ring_position_advances_in_a_local() {
             let text = render_stream(&func, &enums, lang);
             let lines: Vec<&str> = text.lines().map(str::trim).collect();
             for (i, l) in lines.iter().enumerate() {
-                let advance = l.strip_suffix(';').and_then(|s| s.split_once(" = "));
+                let advance = if lang == "go" { Some(*l) } else { l.strip_suffix(';') }.and_then(|s| s.split_once(" = "));
                 let Some((lhs, rhs)) = advance else { continue };
                 if rhs != format!("{lhs} + 1") {
                     continue;
@@ -666,7 +697,7 @@ TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
     let words = |l: &str| -> BTreeSet<String> {
         l.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).map(str::to_string).collect()
     };
-    for lang in ["c", "rust", "java", "csharp", "ts"] {
+    for lang in ["c", "rust", "java", "csharp", "ts", "go"] {
         let text = render_stream(&func, &enums, lang);
         let seeds: Vec<&str> =
             text.lines().filter(|l| l.contains("lagNb0") && l.contains("lagCap0") && l.contains('-')).collect();

@@ -174,6 +174,30 @@ const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
 console.log(outPlusVi.length + ' values from bar ' + begIdx + '; last outPlusVi = ' + outPlusVi[outPlusVi.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+plusVi := make([]float64, 252)
+minusVi := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.VORTEX(0, len(high)-1, high, low, close, 14, plusVi, minusVi)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last plusVi = %.4f\n", r.NBElement, r.BegIdx, plusVi[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -189,6 +213,7 @@ TA-Lib Definition: [`vortex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Java | [`Core_VORTEX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VORTEX.java) |
 | C# | [`Core_VORTEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VORTEX.cs) |
 | TypeScript | [`vortex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vortex.ts) |
+| Go | [`vortex.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/vortex.go) |
 
 Python: `talib.VORTEX` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

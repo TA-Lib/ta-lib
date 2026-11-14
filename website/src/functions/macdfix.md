@@ -167,6 +167,29 @@ const {
 console.log(outMacd.length + ' values from bar ' + begIdx + '; last outMacd = ' + outMacd[outMacd.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+macd := make([]float64, 252)
+macdSignal := make([]float64, 252)
+macdHist := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.MACDFIX(0, len(series)-1, series, 9, macd, macdSignal, macdHist)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last macd = %.4f\n", r.NBElement, r.BegIdx, macd[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -182,6 +205,7 @@ TA-Lib Definition: [`macdfix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Java | [`Core_MACDFIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDFIX.java) |
 | C# | [`Core_MACDFIX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDFIX.cs) |
 | TypeScript | [`macdfix.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdfix.ts) |
+| Go | [`macdfix.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/macdfix.go) |
 
 Python: `talib.MACDFIX`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

@@ -186,6 +186,30 @@ const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
 console.log(outJaw.length + ' values from bar ' + begIdx + '; last outJaw = ' + outJaw[outJaw.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+jaw := make([]float64, 252)
+teeth := make([]float64, 252)
+lips := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.ALLIGATOR(0, len(high)-1, high, low, 13, 8, 8, 5, 5, 3, jaw, teeth, lips)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last jaw = %.4f\n", r.NBElement, r.BegIdx, jaw[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -201,6 +225,7 @@ TA-Lib Definition: [`alligator.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Java | [`Core_ALLIGATOR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ALLIGATOR.java) |
 | C# | [`Core_ALLIGATOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ALLIGATOR.cs) |
 | TypeScript | [`alligator.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/alligator.ts) |
+| Go | [`alligator.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/alligator.go) |
 
 Python: `talib.ALLIGATOR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

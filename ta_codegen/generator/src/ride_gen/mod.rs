@@ -14,6 +14,7 @@ use std::fmt::Write as _;
 
 pub(crate) mod c;
 pub(crate) mod csharp;
+pub(crate) mod go;
 pub(crate) mod java;
 pub(crate) mod rust_lang;
 pub(crate) mod ts;

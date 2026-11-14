@@ -169,6 +169,27 @@ const { begIdx, values } = swakButter(series, { timePeriod: 20 });
 console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+series := make([]float64, 252) // your data, oldest first
+out := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.SWAK_BUTTER(0, len(series)-1, series, 20, out)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last out = %.4f\n", r.NBElement, r.BegIdx, out[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -184,6 +205,7 @@ TA-Lib Definition: [`swak_butter.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Java | [`Core_SWAK_BUTTER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_BUTTER.java) |
 | C# | [`Core_SWAK_BUTTER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_BUTTER.cs) |
 | TypeScript | [`swakButter.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakButter.ts) |
+| Go | [`swak_butter.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/swak_butter.go) |
 
 Python: `talib.SWAK_BUTTER` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

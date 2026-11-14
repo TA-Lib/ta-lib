@@ -183,6 +183,30 @@ const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
 console.log(outSmi.length + ' values from bar ' + begIdx + '; last outSmi = ' + outSmi[outSmi.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+smi := make([]float64, 252)
+smiSignal := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.SMI(0, len(high)-1, high, low, close, 13, 2, 25, 9, smi, smiSignal)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last smi = %.4f\n", r.NBElement, r.BegIdx, smi[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -198,6 +222,7 @@ TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_SMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SMI.java) |
 | C# | [`Core_SMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMI.cs) |
 | TypeScript | [`smi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/smi.ts) |
+| Go | [`smi.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/smi.go) |
 
 Python: `talib.SMI` (ta-lib-python 0.8.1 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

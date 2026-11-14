@@ -36,19 +36,56 @@ impl RangeType {
         Self::ALL.into_iter().find(|t| t.c_name() == name)
     }
 
+    /// The name after C's `TA_RangeType_` prefix.
+    #[must_use]
+    pub fn name(self) -> &'static str {
+        &self.c_name()["TA_RangeType_".len()..]
+    }
+
     /// The range type the library ships for `setting`, read from its own
     /// defaults table so no backend can assume one it does not ship.
     #[must_use]
     pub fn shipped_default(setting: &str) -> RangeType {
-        const GLOBALS_C: &str = include_str!("../../../../src/ta_common/ta_global.c");
-        let entry = format!("{{ TA_{setting}, ");
-        let at = GLOBALS_C
-            .find(&entry)
-            .unwrap_or_else(|| panic!("no {setting} row in TA_CANDLE_DEFAULT_SETTINGS (src/ta_common/ta_global.c)"));
-        let ty = &GLOBALS_C[at + entry.len()..];
-        let ty = &ty[..ty.find(',').expect("a defaults row continues after its range type")];
-        Self::from_c_name(ty).unwrap_or_else(|| panic!("{setting}: unknown default range type {ty}"))
+        shipped_row(setting).1
     }
+}
+
+const GLOBALS_C: &str = include_str!("../../../../src/ta_common/ta_global.c");
+
+/// `setting`'s row of `TA_CANDLE_DEFAULT_SETTINGS`: its offset in the file, range
+/// type, average period and factor as written.
+fn shipped_row(setting: &str) -> (usize, RangeType, i32, &'static str) {
+    let entry = format!("{{ TA_{setting}, ");
+    let at = GLOBALS_C
+        .find(&entry)
+        .unwrap_or_else(|| panic!("no {setting} row in TA_CANDLE_DEFAULT_SETTINGS (src/ta_common/ta_global.c)"));
+    let rest = &GLOBALS_C[at + entry.len()..];
+    let row = &rest[..rest.find('}').expect("a defaults row closes")];
+    let fields: Vec<&str> = row.split(',').map(str::trim).collect();
+    assert_eq!(fields.len(), 3, "{setting}: a defaults row is range type, average period, factor");
+    let ty = RangeType::from_c_name(fields[0]).unwrap_or_else(|| panic!("{setting}: unknown default range type {}", fields[0]));
+    let period = fields[1].parse().unwrap_or_else(|_| panic!("{setting}: average period {}", fields[1]));
+    (at, ty, period, fields[2])
+}
+
+/// Every candle setting's shipped default, in `TA_CandleSettingType` order:
+/// name, range type, average period, and the factor as C writes it.
+///
+/// # Panics
+/// When the C table's rows are not in that order: it is a positional
+/// initializer, so its order is the enum's.
+#[must_use]
+pub fn shipped_defaults() -> Vec<(&'static str, RangeType, i32, &'static str)> {
+    let mut last = 0;
+    crate::candle_settings::CANDLE_SETTINGS
+        .iter()
+        .map(|&setting| {
+            let (at, ty, period, factor) = shipped_row(setting);
+            assert!(at > last, "TA_CANDLE_DEFAULT_SETTINGS lists {setting} out of TA_CandleSettingType order");
+            last = at;
+            (setting, ty, period, factor)
+        })
+        .collect()
 }
 
 /// The local a body reads `setting`'s range type from.

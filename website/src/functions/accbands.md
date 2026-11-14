@@ -178,6 +178,31 @@ const {
 console.log(outUpperBand.length + ' values from bar ' + begIdx + '; last outUpperBand = ' + outUpperBand[outUpperBand.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+upperBand := make([]float64, 252)
+middleBand := make([]float64, 252)
+lowerBand := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.ACCBANDS(0, len(high)-1, high, low, close, 20, upperBand, middleBand, lowerBand)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last upperBand = %.4f\n", r.NBElement, r.BegIdx, upperBand[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -193,6 +218,7 @@ TA-Lib Definition: [`accbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Java | [`Core_ACCBANDS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ACCBANDS.java) |
 | C# | [`Core_ACCBANDS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ACCBANDS.cs) |
 | TypeScript | [`accbands.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/accbands.ts) |
+| Go | [`accbands.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/accbands.go) |
 
 Python: `talib.ACCBANDS`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 

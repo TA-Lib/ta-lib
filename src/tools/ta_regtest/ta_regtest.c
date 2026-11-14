@@ -639,7 +639,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
 
    {
       /* When codegen mode is active, also verify hand-written tests
-       * against every available language server (C, Rust, Java, C#, TS),
+       * against every available language server (C, Rust, Java, C#, TS, Go),
        * honoring --language=CSV. The Java/C#/TS launch commands are
        * relative to the bin directory (same as test_codegen.c).
        */
@@ -670,12 +670,14 @@ static ErrorNumber regtest_main( int argc, char **argv )
                                              "ta_codegen_csharp/TaCodegenServe.dll", NULL};
          const char *const svArgvTs[]     = {"node",
                                              "ta_codegen_ts/tools/taCodegenServe.js", NULL};
+         const char *const svArgvGo[]     = {"./ta_codegen_serve_go", NULL};
          const struct { const char *lang; const char *const *argvSv; } svServers[] = {
             { "c",      svArgvC },
             { "rust",   svArgvRust },
             { "java",   svArgvJava },
             { "csharp", svArgvCsharp },
             { "ts",     svArgvTs },
+            { "go",     svArgvGo },
          };
          unsigned int svIdx;
          for( svIdx = 0; svIdx < sizeof(svServers)/sizeof(svServers[0]); svIdx++ )
@@ -1135,12 +1137,12 @@ static void printUsage(void)
       printf( "\n" );
       printf( "    --codegen[=LANG[,LANG,...]]\n" );
       printf( "       After normal tests, verify ta_codegen output against C reference.\n" );
-      printf( "       Languages: rust, c, java, csharp, ts, tswasm (default: all)\n" );
+      printf( "       Languages: rust, c, java, csharp, ts, tswasm, go (default: all)\n" );
       printf( "       Example: --codegen=rust,java\n" );
       printf( "\n" );
       printf( "    --language=LANG[,LANG,...]\n" );
       printf( "       Filter which language servers to test with --codegen.\n" );
-      printf( "       Valid values: rust, c, java, csharp, ts, tswasm (default: all)\n" );
+      printf( "       Valid values: rust, c, java, csharp, ts, tswasm, go (default: all)\n" );
       printf( "       tswasm is the TypeScript server with the WASM engine forced.\n" );
       printf( "       Example: --language=c,rust\n" );
       printf( "\n" );
@@ -1152,7 +1154,7 @@ static void printUsage(void)
       printf( "       language server against the in-process C library on\n" );
       printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
       printf( "       with no tolerance. Honors --function and --language (rust, java,\n" );
-      printf( "       csharp, ts, tswasm).\n" );
+      printf( "       csharp, ts, tswasm, go).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
       printf( "\n" );
       printf( "    --ref=X_Y_Z\n" );

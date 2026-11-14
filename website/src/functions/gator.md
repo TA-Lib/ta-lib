@@ -180,6 +180,29 @@ const { begIdx, outUpper, outLower } = gator({ high, low }, {
 console.log(outUpper.length + ' values from bar ' + begIdx + '; last outUpper = ' + outUpper[outUpper.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+upper := make([]float64, 252)
+lower := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.GATOR(0, len(high)-1, high, low, 13, 8, 8, 5, 5, 3, upper, lower)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last upper = %.4f\n", r.NBElement, r.BegIdx, upper[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -195,6 +218,7 @@ TA-Lib Definition: [`gator.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Java | [`Core_GATOR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_GATOR.java) |
 | C# | [`Core_GATOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_GATOR.cs) |
 | TypeScript | [`gator.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/gator.ts) |
+| Go | [`gator.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/gator.go) |
 
 Python: `talib.GATOR`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 

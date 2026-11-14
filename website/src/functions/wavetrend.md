@@ -187,6 +187,30 @@ const { begIdx, outWt1, outWt2 } = wavetrend({ high, low, close }, {
 console.log(outWt1.length + ' values from bar ' + begIdx + '; last outWt1 = ' + outWt1[outWt1.length - 1]);
 ```
 
+@tab Go
+
+```go
+import (
+	"fmt"
+	"log"
+
+	talib "ta-lib.github.io/go"
+)
+
+high := make([]float64, 252) // your data, oldest first
+low := make([]float64, 252) // your data, oldest first
+close := make([]float64, 252) // your data, oldest first
+wt1 := make([]float64, 252)
+wt2 := make([]float64, 252)
+
+core := talib.NewCore()
+r, err := core.WAVETREND(0, len(high)-1, high, low, close, 10, 21, 4, wt1, wt2)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%d values from bar %d; last wt1 = %.4f\n", r.NBElement, r.BegIdx, wt1[r.NBElement-1])
+```
+
 :::
 
 ## Implementation
@@ -202,6 +226,7 @@ TA-Lib Definition: [`wavetrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Java | [`Core_WAVETREND.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WAVETREND.java) |
 | C# | [`Core_WAVETREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAVETREND.cs) |
 | TypeScript | [`wavetrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wavetrend.ts) |
+| Go | [`wavetrend.go`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/go/wavetrend.go) |
 
 Python: `talib.WAVETREND` (ta-lib-python 0.8.3 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 
