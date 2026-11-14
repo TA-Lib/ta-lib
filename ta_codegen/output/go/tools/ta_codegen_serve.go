@@ -49,6 +49,7 @@ import (
 	"time"
 
 	talib "ta-lib.github.io/go"
+	"ta-lib.github.io/go/metadata"
 )
 
 const maxArraySize = 200000
@@ -481,11 +482,321 @@ func main() {
 }
 
 func runtimeInfo(p params) string {
-	switch p.str("key") {
-	case "vmath.transcendental", "count.initialize", "count.shutdown":
-		return `{"retCode":0,"value":0}`
+	v, err := metadata.RuntimeInfo(p.str("key"))
+	rc := 0
+	if err != nil {
+		rc = retCodeOf(err)
 	}
-	return `{"retCode":` + strconv.Itoa(int(talib.BadParam)) + `,"value":0}`
+	return `{"retCode":` + strconv.Itoa(rc) + `,"value":` + strconv.Itoa(v) + `}`
+}
+
+// jstr is s as a JSON string, with no HTML escaping.
+func jstr(s string) string {
+	var b bytes.Buffer
+	e := json.NewEncoder(&b)
+	e.SetEscapeHTML(false)
+	_ = e.Encode(s)
+	return string(bytes.TrimRight(b.Bytes(), "\n"))
+}
+
+func num(v float64) string {
+	return strconv.FormatFloat(v, 'g', -1, 64)
+}
+
+const absNotFound = `{"retCode":2}`
+
+func absLookup(p params) (metadata.FuncInfo, bool) {
+	return metadata.Lookup(p.str("funcName"))
+}
+
+func absFuncInfo(p params) string {
+	f, ok := absLookup(p)
+	if !ok {
+		return absNotFound
+	}
+	return `{"name":` + jstr(f.Name()) + `,"group":` + jstr(f.Group().String()) + `,"hint":` + jstr(f.Hint()) +
+		`,"flags":` + strconv.FormatUint(uint64(f.Flags()), 10) + `,"nbInput":` + strconv.Itoa(len(f.Inputs())) +
+		`,"nbOptInput":` + strconv.Itoa(len(f.OptInputs())) + `,"nbOutput":` + strconv.Itoa(len(f.Outputs())) + `}`
+}
+
+func absFuncAttributes(p params) string {
+	f, ok := absLookup(p)
+	if !ok {
+		return absNotFound
+	}
+	return `{"attributes":` + jstr(f.Attributes()) + `}`
+}
+
+func absInputInfo(p params) string {
+	f, ok := absLookup(p)
+	i := int(p.i64("paramIndex", -1))
+	if !ok || i < 0 || i >= len(f.Inputs()) {
+		return absNotFound
+	}
+	x := f.Inputs()[i]
+	return `{"type":` + strconv.Itoa(int(x.Kind)) + `,"paramName":` + jstr(x.ParamName) +
+		`,"flags":` + strconv.FormatUint(uint64(x.Components), 10) + `}`
+}
+
+func absOutputInfo(p params) string {
+	f, ok := absLookup(p)
+	i := int(p.i64("paramIndex", -1))
+	if !ok || i < 0 || i >= len(f.Outputs()) {
+		return absNotFound
+	}
+	x := f.Outputs()[i]
+	return `{"type":` + strconv.Itoa(int(x.Kind)) + `,"paramName":` + jstr(x.ParamName) +
+		`,"flags":` + strconv.FormatUint(uint64(x.Flags), 10) + `}`
+}
+
+func absOptInputInfo(p params) string {
+	f, ok := absLookup(p)
+	i := int(p.i64("paramIndex", -1))
+	if !ok || i < 0 || i >= len(f.OptInputs()) {
+		return absNotFound
+	}
+	o := f.OptInputs()[i]
+	s := `{"type":` + strconv.Itoa(int(o.Kind)) + `,"paramName":` + jstr(o.ParamName) +
+		`,"flags":` + strconv.FormatUint(uint64(o.Flags), 10) + `,"displayName":` + jstr(o.DisplayName) +
+		`,"hint":` + jstr(o.Hint) + `,"defaultValue":` + num(o.DefaultValue)
+	switch d := o.Domain.(type) {
+	case metadata.RealRange:
+		s += `,"min":` + num(d.Min) + `,"max":` + num(d.Max) + `,"precision":` + strconv.Itoa(d.Precision) +
+			`,"suggestedStart":` + num(d.SuggestedStart) + `,"suggestedEnd":` + num(d.SuggestedEnd) +
+			`,"suggestedIncrement":` + num(d.SuggestedIncrement)
+	case metadata.IntegerRange:
+		s += `,"min":` + strconv.Itoa(d.Min) + `,"max":` + strconv.Itoa(d.Max) +
+			`,"suggestedStart":` + strconv.Itoa(d.SuggestedStart) + `,"suggestedEnd":` + strconv.Itoa(d.SuggestedEnd) +
+			`,"suggestedIncrement":` + strconv.Itoa(d.SuggestedIncrement)
+	case metadata.IntegerList:
+		s += `,"valueList":` + jstr(d.ValueList())
+	case metadata.RealList:
+		s += `,"valueList":` + jstr(d.ValueList())
+	default:
+		panic(fmt.Sprintf("unhandled optional-parameter domain %T", d))
+	}
+	return s + `}`
+}
+
+func absForEachFunc() string {
+	b := []byte(`{"functions":[`)
+	for k, f := range metadata.All() {
+		if k > 0 {
+			b = append(b, ',')
+		}
+		b = append(b, `{"name":`+jstr(f.Name())+`,"group":`+jstr(f.Group().String())+
+			`,"nbInput":`+strconv.Itoa(len(f.Inputs()))+`,"nbOptInput":`+strconv.Itoa(len(f.OptInputs()))+
+			`,"nbOutput":`+strconv.Itoa(len(f.Outputs()))+`}`...)
+	}
+	return string(append(b, "]}"...))
+}
+
+func absDescriptionXML() string {
+	xml := metadata.FunctionDescriptionXML()
+	var sum uint64
+	for i := 0; i < len(xml); i++ {
+		sum += uint64(xml[i])
+	}
+	return `{"length":` + strconv.Itoa(len(xml)) + `,"checksum":` + strconv.FormatUint(sum, 10) + `}`
+}
+
+// absBindOpts binds every optional parameter the request carries; an absent
+// one stays unset, which is its default. The first rejection is returned.
+func absBindOpts(f metadata.FuncInfo, h *metadata.ParamHolder, p params) error {
+	for k, o := range f.OptInputs() {
+		raw, ok := p[o.ParamName]
+		if !ok {
+			continue
+		}
+		var err error
+		switch o.Kind {
+		case metadata.OptRealRange, metadata.OptRealList:
+			v, perr := strconv.ParseFloat(string(raw), 64)
+			if perr != nil {
+				return talib.BadParam
+			}
+			err = h.SetOptInputReal(k, v)
+		default:
+			v, perr := strconv.ParseInt(string(raw), 10, 64)
+			if perr != nil || !fitsInt32(v) {
+				return talib.BadParam
+			}
+			err = h.SetOptInputInteger(k, int(v))
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *server) absHolder(p params) (*metadata.ParamHolder, bool) {
+	f, ok := absLookup(p)
+	if !ok {
+		return nil, false
+	}
+	h := f.NewCall(s.core)
+	if absBindOpts(f, h, p) != nil {
+		return nil, true
+	}
+	return h, true
+}
+
+func (s *server) absLookback(p params) string {
+	h, ok := s.absHolder(p)
+	if !ok {
+		return errorReply("Unknown function: " + p.str("funcName"))
+	}
+	lb := -1
+	if h != nil {
+		if v, err := h.Lookback(); err == nil {
+			lb = v
+		}
+	}
+	return `{"lookback":` + strconv.Itoa(lb) + `}`
+}
+
+func (s *server) absDisplayShift(p params) string {
+	h, ok := s.absHolder(p)
+	if !ok {
+		return errorReply("Unknown function: " + p.str("funcName"))
+	}
+	ds := math.MinInt32
+	if h != nil {
+		if v, err := h.DisplayShift(int(p.i64("outputIdx", 0))); err == nil {
+			ds = v
+		}
+	}
+	return `{"displayShift":` + strconv.Itoa(ds) + `}`
+}
+
+func (s *server) absCall(p params) string {
+	if p.i64("gen_present", 0) != 0 || p.i64("want_hash", 0) != 0 {
+		if fn := function("TA_" + p.str("funcName")); fn != nil {
+			return fn(s, p)
+		}
+	}
+	f, ok := absLookup(p)
+	if !ok {
+		return errorReply("Unknown function: " + p.str("funcName"))
+	}
+	start, end := p.i64("startIdx", 0), p.i64("endIdx", 0)
+	early := func(rc talib.RetCode) string {
+		return `{"binder":1,"lookback":-1,"retCode":` + strconv.Itoa(int(rc)) + `,"outBegIdx":0,"outNBElement":0}`
+	}
+	if start < 0 || start > talib.IndexMax {
+		return early(talib.OutOfRangeStartIndex)
+	}
+	if end < 0 || end > talib.IndexMax || end < start {
+		return early(talib.OutOfRangeEndIndex)
+	}
+	// Capped, so a range the library rejects is answered with its code rather
+	// than with an allocation.
+	n := int(min(end-start+1, maxArraySize))
+	h := f.NewCall(s.core)
+	var bindErr error
+	note := func(err error) {
+		if bindErr == nil {
+			bindErr = err
+		}
+	}
+	inputs, outputs := f.Inputs(), f.Outputs()
+	skipIn, skipOut := int(p.i64("skipInput", 0)), int(p.i64("skipOutput", 0))
+	generic := 0
+	for _, in := range inputs {
+		if in.Kind != metadata.InputPrice {
+			generic++
+		}
+	}
+	gi := 0
+	for slot, in := range inputs {
+		key := "inReal"
+		if generic > 1 {
+			key = "inReal" + strconv.Itoa(gi)
+		}
+		if in.Kind != metadata.InputPrice {
+			gi++
+		}
+		if slot+1 == skipIn {
+			continue
+		}
+		switch in.Kind {
+		case metadata.InputPrice:
+			note(h.SetPriceInput(slot, metadata.PriceInput{
+				Open: p.f64Array("inOpen"), High: p.f64Array("inHigh"), Low: p.f64Array("inLow"),
+				Close: p.f64Array("inClose"), Volume: p.f64Array("inVolume"), OpenInterest: p.f64Array("inOpenInterest"),
+			}))
+		case metadata.InputReal:
+			note(h.SetInput(slot, p.f64Array(key)))
+		default:
+			src := p.f64Array(key)
+			ints := make([]int32, len(src))
+			for k, v := range src {
+				ints[k] = int32(v)
+			}
+			note(h.SetIntInput(slot, ints))
+		}
+	}
+	note(absBindOpts(f, h, p))
+	reals := make([][]float64, len(outputs))
+	ints := make([][]int32, len(outputs))
+	for k, o := range outputs {
+		if o.Kind == metadata.OutputReal {
+			reals[k] = make([]float64, n)
+			if k+1 != skipOut {
+				note(h.SetOutput(k, reals[k]))
+			}
+		} else {
+			ints[k] = make([]int32, n)
+			if k+1 != skipOut {
+				note(h.SetIntOutput(k, ints[k]))
+			}
+		}
+	}
+	lb := -1
+	if v, err := h.Lookback(); err == nil {
+		lb = v
+	}
+	rc, beg, nb := 0, 0, 0
+	if bindErr != nil {
+		rc = retCodeOf(bindErr)
+	} else if r, err := h.Call(int(start), int(end)); err != nil {
+		rc = retCodeOf(err)
+	} else {
+		beg, nb = r.BegIdx, r.NBElement
+	}
+	b := []byte(`{"binder":1,"lookback":` + strconv.Itoa(lb) + `,"retCode":` + strconv.Itoa(rc) +
+		`,"outBegIdx":` + strconv.Itoa(beg) + `,"outNBElement":` + strconv.Itoa(nb))
+	kr, ki := 0, 0
+	for k, o := range outputs {
+		if o.Kind == metadata.OutputReal {
+			b = append(b, `,"outReal`...)
+			if kr > 0 {
+				b = strconv.AppendInt(b, int64(kr), 10)
+			}
+			b = append(b, `":"`...)
+			for _, v := range reals[k][:nb] {
+				b = appendHex(b, math.Float64bits(v))
+			}
+			b = append(b, '"')
+			kr++
+		} else {
+			b = append(b, `,"outInteger`...)
+			if ki > 0 {
+				b = strconv.AppendInt(b, int64(ki), 10)
+			}
+			b = append(b, `":[`...)
+			for j, v := range ints[k][:nb] {
+				if j > 0 {
+					b = append(b, ',')
+				}
+				b = strconv.AppendInt(b, int64(v), 10)
+			}
+			b = append(b, ']')
+			ki++
+		}
+	}
+	return string(append(b, '}'))
 }
 
 func evalPredicate(p params) string {
@@ -541,6 +852,26 @@ func (s *server) dispatch(method string, p params) string {
 		return runtimeInfo(p)
 	case "fuzz_in_hash":
 		return fuzzInHash(p)
+	case "abstract_call":
+		return s.absCall(p)
+	case "abstract_get_lookback":
+		return s.absLookback(p)
+	case "abstract_get_display_shift":
+		return s.absDisplayShift(p)
+	case "abstract_for_each_func":
+		return absForEachFunc()
+	case "TA_GetFuncInfo":
+		return absFuncInfo(p)
+	case "TA_GetFuncAttributes":
+		return absFuncAttributes(p)
+	case "TA_GetInputParameterInfo":
+		return absInputInfo(p)
+	case "TA_GetOptInputParameterInfo":
+		return absOptInputInfo(p)
+	case "TA_GetOutputParameterInfo":
+		return absOutputInfo(p)
+	case "TA_FunctionDescriptionXML":
+		return absDescriptionXML()
 	case "stream_verify":
 		return s.streamVerify(p)
 	}

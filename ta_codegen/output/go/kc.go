@@ -161,6 +161,25 @@ func (c *Core) KCLookback(optInTimePeriod, optInATRPeriod int, optInNbDev float6
 	return int(lookback), nil
 }
 
+// KCDisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.KC]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.KC] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter [Core.KCLookback]
+// rejects or an index that names no output.
+func (c *Core) KCDisplayShift(optInTimePeriod, optInATRPeriod int, optInNbDev float64, outputIdx int) (int, error) {
+	if _, err := c.KCLookback(optInTimePeriod, optInATRPeriod, optInNbDev); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 3 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // KC computes the Keltner Channels over bars startIdx through endIdx.
 //
 // Keltner Channels: three overlap lines around price. The centre line is an

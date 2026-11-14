@@ -472,6 +472,25 @@ func (c *Core) CKSPLookback(optInTimePeriod int, optInMultiplier float64, optInS
 	return int(lookback), nil
 }
 
+// CKSPDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.CKSP].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CKSP] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CKSPLookback] rejects or an index that names no output.
+func (c *Core) CKSPDisplayShift(optInTimePeriod int, optInMultiplier float64, optInStopPeriod, outputIdx int) (int, error) {
+	if _, err := c.CKSPLookback(optInTimePeriod, optInMultiplier, optInStopPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CKSP computes the Chande Kroll Stop over bars startIdx through endIdx.
 //
 // Chande and Kroll's two-line volatility stop. The highest high is offset down,

@@ -150,6 +150,37 @@ func (c *Core) FRACTALLookback(optInLeftBars, optInRightBars int) (int, error) {
 	return int(lookback), nil
 }
 
+func (c *Core) fractalDisplayShift(optInLeftBars, optInRightBars, outputIdx int32) int32 {
+	if optInLeftBars == IntegerDefault {
+		optInLeftBars = 2
+	} else if optInLeftBars < 1 || optInLeftBars > 100000 {
+		return 0
+	}
+	if optInRightBars == IntegerDefault {
+		optInRightBars = 2
+	} else if optInRightBars < 1 || optInRightBars > 100000 {
+		return 0
+	}
+	return -optInRightBars
+}
+
+// FRACTALDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.FRACTAL]. The values are never shifted.
+//
+// It takes the parameters of [Core.FRACTAL] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.FRACTALLookback] rejects or an index that names no output.
+func (c *Core) FRACTALDisplayShift(optInLeftBars, optInRightBars, outputIdx int) (int, error) {
+	if _, err := c.FRACTALLookback(optInLeftBars, optInRightBars); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return int(c.fractalDisplayShift(int32(optInLeftBars), int32(optInRightBars), int32(outputIdx))), nil
+}
+
 // FRACTAL computes the Williams Fractal over bars startIdx through endIdx.
 //
 // Williams Fractal: a causal swing-pivot detector. A bar is a swing high when

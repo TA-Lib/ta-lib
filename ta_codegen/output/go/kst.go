@@ -530,6 +530,25 @@ func (c *Core) KSTLookback(optInROC1Period, optInROC2Period, optInROC3Period, op
 	return int(lookback), nil
 }
 
+// KSTDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.KST]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.KST] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.KSTLookback] rejects or an index that names no output.
+func (c *Core) KSTDisplayShift(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.KSTLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // KST computes the Know Sure Thing (Pring) over bars startIdx through endIdx.
 //
 // Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of

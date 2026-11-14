@@ -207,6 +207,25 @@ func (c *Core) SKEWLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// SKEWDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.SKEW].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SKEW] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SKEWLookback] rejects or an index that names no output.
+func (c *Core) SKEWDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.SKEWLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SKEW computes the Rolling Skewness over bars startIdx through endIdx.
 //
 // An estimate, from the trailing window, of the skewness of the distribution

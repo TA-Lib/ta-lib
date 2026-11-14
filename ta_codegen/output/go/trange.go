@@ -98,6 +98,21 @@ func (c *Core) TRANGELookback() (int, error) {
 	return int(lookback), nil
 }
 
+// TRANGEDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.TRANGE]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.TRANGE], from 0,
+// and returns [BadParam] for an index that names no output.
+func (c *Core) TRANGEDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // TRANGE computes the True Range over bars startIdx through endIdx.
 //
 // True Range: the greatest of today's high-low span and the two gaps between

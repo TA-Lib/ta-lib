@@ -187,6 +187,25 @@ func (c *Core) TRIMALookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// TRIMADisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.TRIMA].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.TRIMA] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.TRIMALookback] rejects or an index that names no output.
+func (c *Core) TRIMADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.TRIMALookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // TRIMA computes the Triangular Moving Average over bars startIdx through
 // endIdx.
 //

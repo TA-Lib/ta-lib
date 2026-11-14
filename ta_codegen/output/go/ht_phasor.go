@@ -356,6 +356,21 @@ func (c *Core) HT_PHASORLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// HT_PHASORDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.HT_PHASOR]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.HT_PHASOR], from 0,
+// and returns [BadParam] for an index that names no output.
+func (c *Core) HT_PHASORDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // HT_PHASOR computes the Hilbert Transform - Phasor Components over bars
 // startIdx through endIdx.
 //

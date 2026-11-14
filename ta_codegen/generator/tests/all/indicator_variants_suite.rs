@@ -846,6 +846,46 @@ fn metadata_price_setter_validates_before_writing() {
     );
     assert!(t_check < t_write, "ts: the bundle is committed before the last component is checked");
     assert_eq!(t_sec.matches("this.prices[").count(), 1, "ts: the bundle is written more than once");
+
+    // Go: the same shape as TypeScript, the bundle committed whole after the loop.
+    let go = backends::go_metadata::render_param_holder();
+    let g_sec = extract_section(&go, "func (h *ParamHolder) SetPriceInput(", "\n}\n");
+    let g_check = g_sec.find("&& s == nil {").expect("go: no per-component validation");
+    let g_write = g_sec.find("h.prices[idx] = given").expect(
+        "go: the write is not the whole-bundle commit -- an indexed write is the interleaved shape",
+    );
+    assert!(g_check < g_write, "go: the bundle is committed before the last component is checked");
+    assert_eq!(g_sec.matches("h.prices[").count(), 1, "go: the bundle is written more than once");
+}
+
+/// Go's metadata thunks call each function's exported methods, so a holder's
+/// lookback, display shift and call meet the argument contract a direct call
+/// does, a leg shorter than the range included. On the PR gate, as the
+/// runtime probes in the Go module's own suite are not.
+#[test]
+fn go_metadata_calls_the_public_tier() {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators()
+        .iter()
+        .map(|n| parser::yaml::parse_yaml(&base.join(format!("{n}/{n}.yaml"))))
+        .collect();
+    let files = backends::go_metadata::render_all(&funcs, &enums);
+    let out = &files.iter().find(|(n, _)| *n == "functions.go").expect("functions.go").1;
+    for f in &funcs {
+        let names = backends::go::go_names(&f.name);
+        for (thunk, callee) in [
+            ("lookback", &names.lookback_public),
+            ("displayShift", &names.display_shift_public),
+            ("call", &names.public),
+        ] {
+            let head = format!("func {thunk}{}(", f.name);
+            let body = extract_section(out, &head, "\n}\n");
+            assert!(body.contains(&format!("return c.{callee}(")), "{}: {thunk} does not call {callee}", f.name);
+        }
+    }
+    assert!(!out.contains("Impl("), "a thunk calls an unexported body");
+    assert!(funcs.len() >= 200, "only {} functions", funcs.len());
 }
 
 /// Rust's transcribed bodies call their callee's PUBLIC entry point, as C, Java

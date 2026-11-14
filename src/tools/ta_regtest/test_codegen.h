@@ -54,11 +54,9 @@ unsigned int codegen_range_grace(const char *funcName);
  * single definition --codegen, --xlang-hash and server_verify read. */
 double codegen_lang_transcendental_tol(const char *lang);
 
-/* What a language's server offers beyond the batch and streaming tiers: the
- * metadata tier (abstract_*) and a single-precision surface (use_float). A leg
- * a language lacks is not sent to its server, and a floor on that leg holds
- * only when a server offering it ran. */
-int codegen_lang_has_abstract(const char *lang);
+/* Whether a language's server has a single-precision surface (use_float). The
+ * float leg is not sent to one without, and its floor holds only when a server
+ * with one ran. */
 int codegen_lang_serves_float(const char *lang);
 
 /* Records one tolerance-lane compare of funcName from `lang`: dev is the call's

@@ -114,6 +114,25 @@ func (c *Core) SUMLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// SUMDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.SUM]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SUM] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SUMLookback] rejects or an index that names no output.
+func (c *Core) SUMDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.SUMLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SUM computes the Summation over bars startIdx through endIdx.
 //
 // Rolling sum of the input over a fixed period. Each output is the sum of the

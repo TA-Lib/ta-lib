@@ -409,6 +409,40 @@ pub fn lookback_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String
     b.render()
 }
 
+/// `<N>DisplayShift`.
+#[must_use]
+pub fn display_shift_docs(func: &FuncDef) -> String {
+    let names = go_names(&func.name);
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let mut b = Block::new();
+    b.para(&format!(
+        "{} returns how many bars ahead (positive) or behind (negative) of the bar that computed it a chart \
+         draws output {idx} of [Core.{}]. The values are never shifted.",
+        names.display_shift_public, names.public
+    ));
+    if !func.has_display_shift() {
+        b.para("Every output of this function is drawn at its own bar, so the answer is 0.");
+    }
+    let lead = if func.optional_inputs.is_empty() {
+        format!("It takes the output's position among the outputs of [Core.{}], from 0", names.public)
+    } else {
+        format!(
+            "It takes the parameters of [Core.{}] followed by the output's position among its outputs, from 0",
+            names.public
+        )
+    };
+    let rejects = if func.optional_inputs.is_empty() {
+        "returns [BadParam] for an index that names no output".to_string()
+    } else {
+        format!(
+            "returns [BadParam] for a parameter [Core.{}] rejects or an index that names no output",
+            names.lookback_public
+        )
+    };
+    b.para(&format!("{lead}, and {rejects}."));
+    b.render()
+}
+
 // ---------------------------------------------------------------------------
 // Streaming tier
 // ---------------------------------------------------------------------------

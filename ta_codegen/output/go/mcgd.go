@@ -132,6 +132,25 @@ func (c *Core) MCGDLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// MCGDDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.MCGD].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MCGD] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MCGDLookback] rejects or an index that names no output.
+func (c *Core) MCGDDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.MCGDLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MCGD computes the McGinley Dynamic over bars startIdx through endIdx.
 //
 // McGinley Dynamic (John R. McGinley, Jr.): a moving average whose speed

@@ -247,6 +247,25 @@ func (c *Core) SQZMOMLookback(optInBBPeriod int, optInNbDev float64, optInKCPeri
 	return int(lookback), nil
 }
 
+// SQZMOMDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.SQZMOM]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SQZMOM] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SQZMOMLookback] rejects or an index that names no output.
+func (c *Core) SQZMOMDisplayShift(optInBBPeriod int, optInNbDev float64, optInKCPeriod int, optInFactorWide, optInFactorNormal, optInFactorNarrow float64, outputIdx int) (int, error) {
+	if _, err := c.SQZMOMLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SQZMOM computes the Squeeze Momentum and Level over bars startIdx through
 // endIdx.
 //

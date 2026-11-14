@@ -152,6 +152,25 @@ func (c *Core) AROONOSCLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// AROONOSCDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.AROONOSC]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.AROONOSC] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.AROONOSCLookback] rejects or an index that names no output.
+func (c *Core) AROONOSCDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.AROONOSCLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // AROONOSC computes the Aroon Oscillator over bars startIdx through endIdx.
 //
 // Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures

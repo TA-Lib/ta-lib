@@ -193,6 +193,25 @@ func (c *Core) MINMAXLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// MINMAXDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.MINMAX]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MINMAX] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MINMAXLookback] rejects or an index that names no output.
+func (c *Core) MINMAXDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.MINMAXLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MINMAX computes the Lowest and highest values over a specified period over
 // bars startIdx through endIdx.
 //

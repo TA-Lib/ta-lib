@@ -104,6 +104,25 @@ func (c *Core) ROCR100Lookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// ROCR100DisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.ROCR100]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.ROCR100] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.ROCR100Lookback] rejects or an index that names no output.
+func (c *Core) ROCR100DisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.ROCR100Lookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // ROCR100 computes the Rate of change ratio 100 scale: (price/prevPrice)*100
 // over bars startIdx through endIdx.
 //

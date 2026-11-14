@@ -207,6 +207,25 @@ func (c *Core) NATRLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// NATRDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.NATR].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.NATR] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.NATRLookback] rejects or an index that names no output.
+func (c *Core) NATRDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.NATRLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // NATR computes the Normalized Average True Range over bars startIdx through
 // endIdx.
 //

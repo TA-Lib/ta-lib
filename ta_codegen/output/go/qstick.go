@@ -111,6 +111,25 @@ func (c *Core) QSTICKLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// QSTICKDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.QSTICK]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.QSTICK] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.QSTICKLookback] rejects or an index that names no output.
+func (c *Core) QSTICKDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.QSTICKLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // QSTICK computes the Qstick over bars startIdx through endIdx.
 //
 // Tushar Chande and Stanley Kroll's Qstick (The New Technical Trader, 1994): a

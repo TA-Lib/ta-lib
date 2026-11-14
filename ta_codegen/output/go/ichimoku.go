@@ -152,6 +152,48 @@ func (c *Core) ICHIMOKULookback(optInTenkanPeriod, optInKijunPeriod, optInSenkou
 	return int(lookback), nil
 }
 
+func (c *Core) ichimokuDisplayShift(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outputIdx int32) int32 {
+	if optInTenkanPeriod == IntegerDefault {
+		optInTenkanPeriod = 9
+	} else if optInTenkanPeriod < 2 || optInTenkanPeriod > 100000 {
+		return 0
+	}
+	if optInKijunPeriod == IntegerDefault {
+		optInKijunPeriod = 26
+	} else if optInKijunPeriod < 2 || optInKijunPeriod > 100000 {
+		return 0
+	}
+	if optInSenkouBPeriod == IntegerDefault {
+		optInSenkouBPeriod = 52
+	} else if optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 {
+		return 0
+	}
+	if outputIdx == 2 || outputIdx == 3 {
+		return optInKijunPeriod
+	}
+	return 0
+}
+
+// ICHIMOKUDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.ICHIMOKU]. The values are never shifted.
+//
+// It takes the parameters of [Core.ICHIMOKU] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.ICHIMOKULookback] rejects or an index that names no output.
+func (c *Core) ICHIMOKUDisplayShift(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outputIdx int) (int, error) {
+	if _, err := c.ICHIMOKULookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 4 {
+		return 0, BadParam
+	}
+	if outputIdx == 0 || outputIdx == 1 {
+		return 0, nil
+	}
+	return int(c.ichimokuDisplayShift(int32(optInTenkanPeriod), int32(optInKijunPeriod), int32(optInSenkouBPeriod), int32(outputIdx))), nil
+}
+
 // ICHIMOKU computes the Ichimoku Kinko Hyo over bars startIdx through endIdx.
 //
 // Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from

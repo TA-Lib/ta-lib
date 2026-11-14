@@ -279,6 +279,25 @@ func (c *Core) KVOLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod i
 	return int(lookback), nil
 }
 
+// KVODisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.KVO]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.KVO] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.KVOLookback] rejects or an index that names no output.
+func (c *Core) KVODisplayShift(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.KVOLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // KVO computes the Klinger Volume Oscillator over bars startIdx through endIdx.
 //
 // Klinger Volume Oscillator: each bar's volume is signed by the direction of

@@ -201,6 +201,25 @@ func (c *Core) TSILookback(optInFirstPeriod, optInSecondPeriod int) (int, error)
 	return int(lookback), nil
 }
 
+// TSIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.TSI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.TSI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.TSILookback] rejects or an index that names no output.
+func (c *Core) TSIDisplayShift(optInFirstPeriod, optInSecondPeriod, outputIdx int) (int, error) {
+	if _, err := c.TSILookback(optInFirstPeriod, optInSecondPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // TSI computes the True Strength Index over bars startIdx through endIdx.
 //
 // True Strength Index: William Blau's double-smoothed momentum oscillator. The

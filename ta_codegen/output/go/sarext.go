@@ -308,6 +308,25 @@ func (c *Core) SAREXTLookback(optInStartValue, optInOffsetOnReverse, optInAccele
 	return int(lookback), nil
 }
 
+// SAREXTDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.SAREXT]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SAREXT] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SAREXTLookback] rejects or an index that names no output.
+func (c *Core) SAREXTDisplayShift(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort float64, outputIdx int) (int, error) {
+	if _, err := c.SAREXTLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SAREXT computes the Parabolic SAR - Extended over bars startIdx through
 // endIdx.
 //

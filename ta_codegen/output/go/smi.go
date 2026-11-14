@@ -352,6 +352,25 @@ func (c *Core) SMILookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, op
 	return int(lookback), nil
 }
 
+// SMIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.SMI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SMI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SMILookback] rejects or an index that names no output.
+func (c *Core) SMIDisplayShift(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.SMILookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SMI computes the Stochastic Momentum Index over bars startIdx through endIdx.
 //
 // Stochastic Momentum Index: where the close sits relative to the midpoint of

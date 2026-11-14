@@ -111,6 +111,25 @@ func (c *Core) SMALookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// SMADisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.SMA]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SMA] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SMALookback] rejects or an index that names no output.
+func (c *Core) SMADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.SMALookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SMA computes the Simple Moving Average over bars startIdx through endIdx.
 //
 // Simple Moving Average: the unweighted arithmetic mean of the last N input

@@ -71,6 +71,21 @@ func (c *Core) WCLPRICELookback() (int, error) {
 	return int(lookback), nil
 }
 
+// WCLPRICEDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.WCLPRICE]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.WCLPRICE], from 0,
+// and returns [BadParam] for an index that names no output.
+func (c *Core) WCLPRICEDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // WCLPRICE computes the Weighted Close Price over bars startIdx through endIdx.
 //
 // Weighted Close Price: a per-bar price average giving the close double weight

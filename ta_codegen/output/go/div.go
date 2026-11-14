@@ -68,6 +68,21 @@ func (c *Core) DIVLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// DIVDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.DIV]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.DIV], from 0, and
+// returns [BadParam] for an index that names no output.
+func (c *Core) DIVDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // DIV computes the Vector Arithmetic Div over bars startIdx through endIdx.
 //
 // Element-wise division of two input series.

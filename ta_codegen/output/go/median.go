@@ -240,6 +240,25 @@ func (c *Core) MEDIANLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// MEDIANDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.MEDIAN]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MEDIAN] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MEDIANLookback] rejects or an index that names no output.
+func (c *Core) MEDIANDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.MEDIANLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MEDIAN computes the Rolling Median over bars startIdx through endIdx.
 //
 // The middle order statistic of the trailing window: the central value when

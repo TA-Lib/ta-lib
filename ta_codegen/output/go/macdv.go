@@ -394,6 +394,25 @@ func (c *Core) MACDVLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod
 	return int(lookback), nil
 }
 
+// MACDVDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.MACDV].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MACDV] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MACDVLookback] rejects or an index that names no output.
+func (c *Core) MACDVDisplayShift(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.MACDVLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 3 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MACDV computes the MACD-V, Volatility Normalised Momentum over bars startIdx
 // through endIdx.
 //

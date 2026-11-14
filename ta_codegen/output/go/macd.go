@@ -261,6 +261,25 @@ func (c *Core) MACDLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod 
 	return int(lookback), nil
 }
 
+// MACDDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.MACD].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MACD] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MACDLookback] rejects or an index that names no output.
+func (c *Core) MACDDisplayShift(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.MACDLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 3 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MACD computes the Moving Average Convergence/Divergence over bars startIdx
 // through endIdx.
 //

@@ -835,13 +835,15 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::ts_engine::generate_routing_test(all_funcs, &root, &ts_lib.join("test"));
     }
 
-    // The Go module's whole-corpus files: the manifest, the enums and the examples.
+    // The Go module's whole-corpus files: the manifest, the enums, the examples
+    // and the metadata package.
     if backends_to_run.contains(&"go") {
         let go_dir = out_base.join("go");
         std::fs::create_dir_all(&go_dir).unwrap();
         write_if_changed(go_dir.join("go.mod"), backends::go::GO_MOD).unwrap();
         backends::go_enums::generate(all_funcs, &enums, &go_dir.join("enums.go"));
         backends::go_examples::write(all_funcs, &enums, &go_dir.join("example_test.go"));
+        backends::go_metadata::generate(all_funcs, &enums, &go_dir.join("metadata"));
     }
 
     // Whole-corpus, like the Rust probe above: a `--func=X` run must not shrink it.

@@ -127,6 +127,34 @@ func TestLookback(t *testing.T) {
 	}
 }
 
+func TestDisplayShift(t *testing.T) {
+	c := NewCore()
+	check := func(what string, got int, err error, want int, wantErr error) {
+		t.Helper()
+		if got != want || wantErr == nil && err != nil || wantErr != nil && !errors.Is(err, wantErr) {
+			t.Errorf("%s: %d, %v; want %d, %v", what, got, err, want, wantErr)
+		}
+	}
+	ds, err := c.DPODisplayShift(20, 0)
+	check("DPO(20) output 0", ds, err, -11, nil)
+	ds, err = c.DPODisplayShift(IntegerDefault, 0)
+	check("DPO at its default", ds, err, -11, nil)
+	ds, err = c.ICHIMOKUDisplayShift(9, 30, 52, 2)
+	check("ICHIMOKU span A", ds, err, 30, nil)
+	ds, err = c.ICHIMOKUDisplayShift(9, 30, 52, 0)
+	check("ICHIMOKU conversion line", ds, err, 0, nil)
+	ds, err = c.SMADisplayShift(30, 0)
+	check("SMA", ds, err, 0, nil)
+	ds, err = c.SMADisplayShift(30, 1)
+	check("SMA output 1", ds, err, 0, BadParam)
+	ds, err = c.SMADisplayShift(30, -1)
+	check("SMA output -1", ds, err, 0, BadParam)
+	ds, err = c.SMADisplayShift(0, 0)
+	check("SMA period 0", ds, err, 0, BadParam)
+	ds, err = c.ADDDisplayShift(0)
+	check("ADD", ds, err, 0, nil)
+}
+
 func TestNoUnsafeOrReflectImport(t *testing.T) {
 	files, err := filepath.Glob("*.go")
 	if err != nil || len(files) < 100 {

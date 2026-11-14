@@ -150,6 +150,25 @@ func (c *Core) EFILookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// EFIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.EFI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.EFI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.EFILookback] rejects or an index that names no output.
+func (c *Core) EFIDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.EFILookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // EFI computes the Elder's Force Index over bars startIdx through endIdx.
 //
 // Alexander Elder's Force Index (Trading for a Living, 1993): volume-weighted

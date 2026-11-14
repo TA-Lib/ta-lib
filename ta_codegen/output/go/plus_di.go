@@ -325,6 +325,25 @@ func (c *Core) PLUS_DILookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// PLUS_DIDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.PLUS_DI]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.PLUS_DI] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.PLUS_DILookback] rejects or an index that names no output.
+func (c *Core) PLUS_DIDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.PLUS_DILookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // PLUS_DI computes the Plus Directional Indicator over bars startIdx through
 // endIdx.
 //

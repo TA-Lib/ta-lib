@@ -83,8 +83,8 @@
 #include "../ta_alloc_check.h"
 #include "../../ta_common/ta_global.h"   /* reads the candle settings in force */
 static CodegenPipe *g_abstractPipe = NULL;
-/* Which language the attached server is ("c"/"rust"/"java"/"csharp"), so a
- * per-backend carve-out can name its backend instead of applying to all four. */
+/* Which language the attached server is ("c"/"rust"/"java"/"csharp"/"ts"/"go"),
+ * so a per-backend carve-out can name its backend instead of applying to all. */
 static const char *g_abstractLang = NULL;
 
 /* How many optional-parameter vectors were driven through a binder, and how many
@@ -1289,19 +1289,19 @@ static ErrorNumber abstract_verify_server_call(
         return TA_ABSTRACT_SERVER_ERROR;
     }
 
-    /* The Rust server answers abstract_call two ways: through the SHIPPED
-     * abstract_api::ParamHolder, or -- when the request carries gen_present /
-     * want_hash, which is --xlang-hash's seed transport -- by rerouting to the
-     * per-function handler. That selector is a payload heuristic, and both
-     * replies carry the same fields, so nothing would notice if this sweep drifted
-     * onto the reroute and stopped exercising the binder at all. Requiring the
-     * marker makes the binder path positively observable instead of merely
-     * probable. The other three servers have a single implementation and cannot
-     * drift this way. */
-    if( g_abstractLang && strcmp(g_abstractLang, "rust") == 0
+    /* The seed-transport servers (Rust, Go) answer abstract_call two ways:
+     * through the SHIPPED parameter holder, or -- when the request carries
+     * gen_present / want_hash, which is --xlang-hash's seed transport -- by
+     * rerouting to the per-function handler. That selector is a payload
+     * heuristic, and both replies carry the same fields, so nothing would notice
+     * if this sweep drifted onto the reroute and stopped exercising the binder at
+     * all. Requiring the marker makes the binder path positively observable
+     * instead of merely probable. The other servers have a single implementation
+     * and cannot drift this way. */
+    if( g_abstractLang && (strcmp(g_abstractLang, "rust") == 0 || strcmp(g_abstractLang, "go") == 0)
         && abstract_json_get_int(g_abstractRespBuf, "binder") != 1 )
     {
-        printf("  ABSTRACT ERROR [%s]: reply did not come from the shipped Rust binder "
+        printf("  ABSTRACT ERROR [%s]: reply did not come from the shipped binder "
                "(no \"binder\":1) — the transport split has drifted and this sweep is "
                "testing the per-function handler instead\n", funcName);
         return TA_ABSTRACT_CALL_MISMATCH;
@@ -2956,6 +2956,16 @@ ErrorNumber test_abstract( void )
                  g_unboundInput, g_unboundOutput );
          return TA_ABSTRACT_CALL_MISMATCH;
       }
+
+      /* The counts behind the floors above, which speak only on failure. */
+      printf( "  abstract counts [%s]: metadata %d function(s), %d opt hint(s), %d range(s)/list(s), "
+              "%d attribute string(s); binder vectors %lld (non-default %lld, sentinel %lld, "
+              "out-of-range %lld, ordering %lld), unbound input %lld / output %lld; display shift "
+              "%lld compared with the server, held under a moved lookback %lld / %lld\n",
+              g_abstractLang ? g_abstractLang : "?", g_metaParityChecked, g_optHintCompared,
+              g_optExtendedCompared, g_attrNonEmptyCompared, g_d2Vectors, g_d2NonDefault,
+              g_d2Sentinel, g_d2Reject, g_d2Ordering, g_unboundInput, g_unboundOutput,
+              g_dsServer, g_dsSrvSettingLive[0], g_dsSrvSettingLive[1] );
    }
 
    return TA_TEST_PASS; /* Succcess. */

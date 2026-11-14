@@ -139,6 +139,25 @@ func (c *Core) CHOPTRLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// CHOPTRDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.CHOPTR]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CHOPTR] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CHOPTRLookback] rejects or an index that names no output.
+func (c *Core) CHOPTRDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.CHOPTRLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CHOPTR computes the Choppiness Index (True Range Box) over bars startIdx
 // through endIdx.
 //

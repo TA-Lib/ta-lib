@@ -111,6 +111,25 @@ func (c *Core) ADRLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// ADRDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.ADR]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.ADR] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.ADRLookback] rejects or an index that names no output.
+func (c *Core) ADRDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.ADRLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // ADR computes the Average Day Range over bars startIdx through endIdx.
 //
 // Average Day Range: the arithmetic mean of the last optInTimePeriod bar

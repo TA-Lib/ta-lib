@@ -251,6 +251,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
 {
    ErrorNumber retValue;
    int tsAbstractFuncs = 0;
+   int goAbstractFuncs = 0;
 
    printf( "\n" );
    printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
@@ -624,6 +625,33 @@ static ErrorNumber regtest_main( int argc, char **argv )
          ABSTRACT_SERVER_MISSING("ts", codegenLanguageFilter, retValue);
       }
    }
+   /* Go abstract parity: the same two passes, against the package
+    * `ta-lib.github.io/go/metadata`. */
+   if( retValue == TA_TEST_PASS && doCodegenTest &&
+       svLanguageEnabled( codegenLanguageFilter, "go" ) )
+   {
+      CodegenPipe goAbstractPipe;
+      const char *const goArgv[] = {"./ta_codegen_serve_go", NULL};
+      if( codegen_pipe_open(&goAbstractPipe, goArgv) == TA_TEST_PASS )
+      {
+         ErrorNumber e;
+         test_abstract_set_server(&goAbstractPipe, "go");
+         e = test_abstract_server_metadata(functionFilter);
+         if( e == TA_TEST_PASS )
+         {
+            goAbstractFuncs = test_abstract_server_metadata_checked();
+            e = test_abstract();
+         }
+         test_abstract_set_server(NULL, NULL);
+         codegen_pipe_close(&goAbstractPipe);
+         if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
+            retValue = e;
+      }
+      else
+      {
+         ABSTRACT_SERVER_MISSING("go", codegenLanguageFilter, retValue);
+      }
+   }
 #undef ABSTRACT_SERVER_MISSING
 
    if( retValue != TA_TEST_PASS )
@@ -635,6 +663,8 @@ static ErrorNumber regtest_main( int argc, char **argv )
    printf( "done.\n" );
    if( tsAbstractFuncs > 0 )
       printf( "  abstract parity (TypeScript): %d functions\n", tsAbstractFuncs );
+   if( goAbstractFuncs > 0 )
+      printf( "  abstract parity (Go): %d functions\n", goAbstractFuncs );
    fflush(stdout);
 
    {

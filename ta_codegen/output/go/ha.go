@@ -148,6 +148,21 @@ func (c *Core) HALookback() (int, error) {
 	return int(lookback), nil
 }
 
+// HADisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.HA]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.HA], from 0, and
+// returns [BadParam] for an index that names no output.
+func (c *Core) HADisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 4 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // HA computes the Heikin-Ashi Candles over bars startIdx through endIdx.
 //
 // Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with a

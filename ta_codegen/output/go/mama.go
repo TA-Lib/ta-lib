@@ -417,6 +417,25 @@ func (c *Core) MAMALookback(optInFastLimit, optInSlowLimit float64) (int, error)
 	return int(lookback), nil
 }
 
+// MAMADisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.MAMA].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MAMA] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MAMALookback] rejects or an index that names no output.
+func (c *Core) MAMADisplayShift(optInFastLimit, optInSlowLimit float64, outputIdx int) (int, error) {
+	if _, err := c.MAMALookback(optInFastLimit, optInSlowLimit); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MAMA computes the MESA Adaptive Moving Average over bars startIdx through
 // endIdx.
 //

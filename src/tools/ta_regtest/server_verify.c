@@ -305,15 +305,6 @@ int server_verify_value_comparisons(void)
     return g_valueComparisons;
 }
 
-int server_verify_lookback_pipes(void)
-{
-    int n = 0;
-    for( int p = 0; p < g_nbPipes; p++ )
-        if( codegen_lang_has_abstract(g_pipeLang[p]) )
-            n++;
-    return n;
-}
-
 int server_verify_lookback_values(void)
 {
     return g_lookbackValues;
@@ -976,8 +967,6 @@ ErrorNumber server_verify_lookback_parity(
     {
         g_curPipe = p;
         const char *lang = g_pipeLang[p];
-        if( !codegen_lang_has_abstract(lang) )
-            continue;
 
         ErrorNumber err = sync_unstable_periods(p);
         if( err != TA_TEST_PASS )
@@ -1088,8 +1077,6 @@ ErrorNumber server_verify_lookback_value(
         ErrorNumber err;
         int lbLen, got;
 
-        if( !codegen_lang_has_abstract(g_pipeLang[p]) )
-            continue;
         g_curPipe = p;
         err = sync_unstable_periods(p);
         if( err == TA_TEST_PASS )

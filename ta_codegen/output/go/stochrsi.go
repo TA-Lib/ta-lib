@@ -160,6 +160,25 @@ func (c *Core) STOCHRSILookback(optInTimePeriod, optInFastK_Period, optInFastD_P
 	return int(lookback), nil
 }
 
+// STOCHRSIDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.STOCHRSI]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.STOCHRSI] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.STOCHRSILookback] rejects or an index that names no output.
+func (c *Core) STOCHRSIDisplayShift(optInTimePeriod, optInFastK_Period, optInFastD_Period int, optInFastD_MAType MAType, outputIdx int) (int, error) {
+	if _, err := c.STOCHRSILookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // STOCHRSI computes the Stochastic Relative Strength Index over bars startIdx
 // through endIdx.
 //

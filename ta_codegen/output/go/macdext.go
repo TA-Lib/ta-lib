@@ -219,6 +219,25 @@ func (c *Core) MACDEXTLookback(optInFastPeriod int, optInFastMAType MAType, optI
 	return int(lookback), nil
 }
 
+// MACDEXTDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.MACDEXT]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MACDEXT] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MACDEXTLookback] rejects or an index that names no output.
+func (c *Core) MACDEXTDisplayShift(optInFastPeriod int, optInFastMAType MAType, optInSlowPeriod int, optInSlowMAType MAType, optInSignalPeriod int, optInSignalMAType MAType, outputIdx int) (int, error) {
+	if _, err := c.MACDEXTLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 3 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MACDEXT computes the MACD with controllable MA type over bars startIdx
 // through endIdx.
 //

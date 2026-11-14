@@ -163,6 +163,25 @@ func (c *Core) LINEARREG_ANGLELookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// LINEARREG_ANGLEDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.LINEARREG_ANGLE]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.LINEARREG_ANGLE] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.LINEARREG_ANGLELookback] rejects or an index that names no output.
+func (c *Core) LINEARREG_ANGLEDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.LINEARREG_ANGLELookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // LINEARREG_ANGLE computes the Linear Regression Angle over bars startIdx
 // through endIdx.
 //

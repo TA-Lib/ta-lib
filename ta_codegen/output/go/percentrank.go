@@ -107,6 +107,25 @@ func (c *Core) PERCENTRANKLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// PERCENTRANKDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.PERCENTRANK]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.PERCENTRANK] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.PERCENTRANKLookback] rejects or an index that names no output.
+func (c *Core) PERCENTRANKDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.PERCENTRANKLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // PERCENTRANK computes the Percent Rank over bars startIdx through endIdx.
 //
 // Percent Rank: where the current value sits inside the distribution of the

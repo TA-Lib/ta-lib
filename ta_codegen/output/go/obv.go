@@ -80,6 +80,21 @@ func (c *Core) OBVLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// OBVDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.OBV]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.OBV], from 0, and
+// returns [BadParam] for an index that names no output.
+func (c *Core) OBVDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // OBV computes the On Balance Volume over bars startIdx through endIdx.
 //
 // On Balance Volume: a running cumulative total of volume, added on up-price

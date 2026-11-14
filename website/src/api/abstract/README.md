@@ -1,6 +1,6 @@
 ---
 title: Abstract API
-description: "Every TA-Lib function describes itself at run time in C, Rust, Java, C# and TypeScript: list them, read each one's inputs, parameters, outputs and flags, and call it by name, so settings dialogs, parameter searches and generated bindings need no code per function."
+description: "Every TA-Lib function describes itself at run time in C, Rust, Java, C#, TypeScript and Go: list them, read each one's inputs, parameters, outputs and flags, and call it by name, so settings dialogs, parameter searches and generated bindings need no code per function."
 toc: false
 ---
 
@@ -87,6 +87,18 @@ for (const fi of Functions.all()) {
 }
 ```
 
+@tab Go
+
+```go
+import "ta-lib.github.io/go/metadata"
+
+f, ok := metadata.Lookup("SMA")   // Name(), Group(), Hint(), Flags(), Inputs(), OptInputs(), Outputs(), Attributes()
+
+for _, fi := range metadata.All() {
+	fmt.Printf("%s (%s)\n", fi.Name(), fi.Group())
+}
+```
+
 :::
 
 The name lookup ignores case. `Core.Functions` in C# is an alias for `FunctionCatalog.Default`.
@@ -156,9 +168,25 @@ const r = Functions.byName('SMA')!.newCall()
   .call();                         // the whole series, as the typed call's defaults
 ```
 
+@tab Go
+
+```go
+f, _ := metadata.Lookup("SMA")
+call := f.NewCall(talib.NewCore())
+if err := errors.Join(
+	call.SetInput(0, closes),
+	call.SetOptInputInteger(0, 30),
+	call.SetOutput(0, out),
+); err != nil {
+	log.Fatal(err)
+}
+
+r, err := call.Call(0, len(closes)-1)
+```
+
 :::
 
-The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and an optional parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
+The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and an optional parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. In Go each setter returns its error, a `talib.RetCode`, so the calls do not chain. The exact rules: [Abstract API and Metadata](/spec/abstract/).
 
 ## Lookback and display shift
 
@@ -216,6 +244,19 @@ const call = Functions.byName('DPO')!.newCall().setOptInput(0, 20);
 
 const lookback = call.lookback();
 const shift = call.displayShift(0);   // output 0: -11
+```
+
+@tab Go
+
+```go
+f, _ := metadata.Lookup("DPO")
+call := f.NewCall(talib.NewCore())
+if err := call.SetOptInputInteger(0, 20); err != nil {
+	log.Fatal(err)
+}
+
+lookback, err := call.Lookback()
+shift, err := call.DisplayShift(0)   // output 0: -11
 ```
 
 :::

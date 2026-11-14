@@ -402,6 +402,25 @@ func (c *Core) RVILookback(optInTimePeriod, optInStdDevPeriod int) (int, error) 
 	return int(lookback), nil
 }
 
+// RVIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.RVI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.RVI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.RVILookback] rejects or an index that names no output.
+func (c *Core) RVIDisplayShift(optInTimePeriod, optInStdDevPeriod, outputIdx int) (int, error) {
+	if _, err := c.RVILookback(optInTimePeriod, optInStdDevPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // RVI computes the Relative Volatility Index over bars startIdx through endIdx.
 //
 // Relative Volatility Index: Donald Dorsey's volatility oscillator, built

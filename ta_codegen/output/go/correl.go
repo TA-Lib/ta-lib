@@ -250,6 +250,25 @@ func (c *Core) CORRELLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// CORRELDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.CORREL]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CORREL] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CORRELLookback] rejects or an index that names no output.
+func (c *Core) CORRELDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.CORRELLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CORREL computes the Pearson's Correlation Coefficient (r) over bars startIdx
 // through endIdx.
 //

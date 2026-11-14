@@ -434,11 +434,9 @@ Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe`,
 `node ta_codegen_ts/tools/taCodegenServe.js` (`--engine=wasm` for `tswasm`) and
 `./ta_codegen_serve_go`.
 
-**Go has no metadata tier and no single-precision surface.**
-`codegen_lang_has_abstract` and `codegen_lang_serves_float` say so; a leg Go
-lacks is never sent to its server, and a floor on such a leg holds only when a
-server offering it ran. With no lookback RPC, Go's batch rejections in the
-`--xlang-hash` tier leg are held to C's lookback verdict.
+Rust and Go have no single-precision surface: `codegen_lang_serves_float`
+says so, the float leg is never sent to their servers, and its floor holds only
+when a server with one ran.
 
 ## Building
 
@@ -734,9 +732,9 @@ on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK**, **Node** an
   its raw output hashed. Each server crosses the pipe and is diffed against it.
 - **Two transports (per-server `usesSeed`).** *Seed* (Rust, Go): `"gen_present":1` +
   `(gen_shape,gen_seed,gen_n)`, the server generating inputs from its own
-  bit-exact `fuzz_gen` port, over `abstract_call`, or the per-function method on a
-  server with no metadata tier. A seed server's transcendental call takes the hex
-  transport, since its arrays are compared at the bound. *Hex* (Java, C#, TS): the driver
+  bit-exact `fuzz_gen` port, over `abstract_call`. A seed server's
+  transcendental call takes the hex transport, since its arrays are compared at
+  the bound. *Hex* (Java, C#, TS): the driver
   serializes its own arrays via `codegen_write_hexbits_array`, the transport
   shared with `server_verify`. Both hash the **guarded** call, like-for-like with
   the golden.

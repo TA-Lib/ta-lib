@@ -70,6 +70,21 @@ func (c *Core) ATANLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// ATANDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.ATAN].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.ATAN], from 0, and
+// returns [BadParam] for an index that names no output.
+func (c *Core) ATANDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // ATAN computes the Vector Trigonometric ATan over bars startIdx through
 // endIdx.
 //

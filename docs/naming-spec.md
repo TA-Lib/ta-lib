@@ -42,7 +42,7 @@ Go keeps the canonical name in exported identifiers (`HT_TRENDLINE`,
 |---|---|---|---|---|---|---|
 | batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` | `SMA` |
 | lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` | `smaLookback` | `SMALookback` |
-| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` | `smaDisplayShift` | none |
+| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` | `smaDisplayShift` | `SMADisplayShift` |
 | numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` | `smaImpl` | `smaImpl` |
 | opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` | `smaOpen` | `SMAOpen` |
 | filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` | `smaOpenAndFill` | `SMAOpenAndFill` |
@@ -136,34 +136,34 @@ Go returns the `RetCode` itself as the `error`; `errors.Is` matches it.
 
 ## 7. Metadata tier
 
-Go has none.
-
-| surface | C (frozen) | Rust | Java | C# | TypeScript |
-|---|---|---|---|---|---|
-| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` | `Functions.byName` |
-| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` | `Functions.all`, `Functions.groups` |
-| holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
-| set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` | `setInput` |
-| set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` | `setOptInput` |
-| set output | `TA_SetOutputParamRealPtr` | `set_output` | `setOutput` | `SetOutput` | `setOutput` |
-| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` | `lookback` |
-| display shift | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` | `displayShift` |
-| invoke | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` | `call` |
-| descriptor | `TA_FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
-| flags | `TA_FuncFlags`, `TA_InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags` | `FuncFlags`, `InputFlags` |
+| surface | C (frozen) | Rust | Java | C# | TypeScript | Go |
+|---|---|---|---|---|---|---|
+| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` | `Functions.byName` | `metadata.Lookup` |
+| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` | `Functions.all`, `Functions.groups` | `metadata.All`, `metadata.Groups`, `metadata.InGroup` |
+| holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
+| set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` | `setInput` | `SetInput` |
+| set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` | `setOptInput` | `SetOptInputInteger`, `SetOptInputReal` |
+| set output | `TA_SetOutputParamRealPtr` | `set_output` | `setOutput` | `SetOutput` | `setOutput` | `SetOutput` |
+| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` | `lookback` | `Lookback` |
+| display shift | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` | `displayShift` | `DisplayShift` |
+| invoke | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` | `call` | `Call` |
+| descriptor | `TA_FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| flags | `TA_FuncFlags`, `TA_InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `PriceComponents` |
 
 This is the one area where the backends could disagree about *words*, not
 casing. The tier exists to mirror C, so it takes C's words and recases them:
 `ParamHolder`, `setInput` / `setOptInput` / `setOutput`, `lookback`, `call`,
 `FuncInfo`. `TryCall` keeps .NET's `Try` prefix, because that is a pattern
-rather than a word.
+rather than a word. Go cannot overload, so it splits C's setters the way C
+does, by the value's type: `SetOptInputInteger`, `SetOptInputReal`.
 
 The lookup and enumerate rows have no C word to take: C has free functions where
 the managed backends have a catalog object, so `Functions` and `FunctionCatalog`
 keep their own accessors.
 
 Out of scope here: C# models the parameter domains as a record hierarchy
-(`OptInputDomain`, `InputKind`) where Rust, Java and TypeScript use enumerations
+(`OptInputDomain`, `InputKind`), and Go as an interface over one struct per
+domain (`Domain`, `InputKind`), where Rust, Java and TypeScript use enumerations
 (`OptInputType`, `InputType`). That is a shape, and a naming specification does not decide it.
 
 ## 8. Parameter names

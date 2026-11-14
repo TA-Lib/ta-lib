@@ -225,6 +225,25 @@ func (c *Core) T3Lookback(optInTimePeriod int, optInVFactor float64) (int, error
 	return int(lookback), nil
 }
 
+// T3DisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.T3]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.T3] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter [Core.T3Lookback]
+// rejects or an index that names no output.
+func (c *Core) T3DisplayShift(optInTimePeriod int, optInVFactor float64, outputIdx int) (int, error) {
+	if _, err := c.T3Lookback(optInTimePeriod, optInVFactor); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // T3 computes the Triple Exponential Moving Average (T3) over bars startIdx
 // through endIdx.
 //

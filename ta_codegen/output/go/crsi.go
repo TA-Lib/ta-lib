@@ -191,6 +191,25 @@ func (c *Core) CRSILookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod 
 	return int(lookback), nil
 }
 
+// CRSIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.CRSI].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CRSI] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CRSILookback] rejects or an index that names no output.
+func (c *Core) CRSIDisplayShift(optInTimePeriod, optInStreakPeriod, optInRankPeriod, outputIdx int) (int, error) {
+	if _, err := c.CRSILookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CRSI computes the Connors Relative Strength Index over bars startIdx through
 // endIdx.
 //

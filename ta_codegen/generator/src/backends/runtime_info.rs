@@ -1,4 +1,4 @@
-//! `TA_GetRuntimeInfo`'s analog in Rust, Java, C# and TypeScript, and the key
+//! `TA_GetRuntimeInfo`'s analog in Rust, Java, C#, TypeScript and Go, and the key
 //! table `ta_regtest` asks every server from.
 //!
 //! A common key is answered in every backend, so a caller written against one
@@ -206,18 +206,21 @@ pub fn ts_fn() -> String {
     )
 }
 
-/// The Go server's `TA_GetRuntimeInfo`: the Go package has no metadata layer to
-/// answer it, so the server answers the common keys itself.
+/// The body of the Go package `metadata`'s `runtimeinfo.go`, after its imports.
 #[must_use]
-pub fn go_server_handler() -> String {
+pub fn go_fn() -> String {
     format!(
-        "func runtimeInfo(p params) string {{\n\
-         \tswitch p.str(\"key\") {{\n\
+        "\n// RuntimeInfo returns one run-time state of this library, by key: the Go\n\
+         // analog of C's TA_GetRuntimeInfo. The keys: {SPEC}.\n\
+         //\n\
+         // An unknown key is [talib.BadParam].\n\
+         func RuntimeInfo(key string) (int, error) {{\n\
+         \tswitch key {{\n\
          \tcase {keys}:\n\
-         \t\treturn `{{\"retCode\":0,\"value\":0}}`\n\
+         \t\treturn 0, nil\n\
          \t}}\n\
-         \treturn `{{\"retCode\":` + strconv.Itoa(int(talib.BadParam)) + `,\"value\":0}}`\n\
-         }}\n\n",
+         \treturn 0, talib.BadParam\n\
+         }}\n",
         keys = quoted(", "),
     )
 }

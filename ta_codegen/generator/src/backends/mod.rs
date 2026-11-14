@@ -37,6 +37,7 @@ pub mod go_doc;
 pub mod go_examples;
 pub mod go_enums;
 pub mod go_fmt;
+pub mod go_metadata;
 pub mod go_prune;
 pub mod go_stream;
 pub mod java;

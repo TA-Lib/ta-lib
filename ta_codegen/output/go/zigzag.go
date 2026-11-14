@@ -162,6 +162,25 @@ func (c *Core) ZIGZAGLookback(optInSensitivity float64, optInMinTrendLength int)
 	return int(lookback), nil
 }
 
+// ZIGZAGDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.ZIGZAG]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.ZIGZAG] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.ZIGZAGLookback] rejects or an index that names no output.
+func (c *Core) ZIGZAGDisplayShift(optInSensitivity float64, optInMinTrendLength, outputIdx int) (int, error) {
+	if _, err := c.ZIGZAGLookback(optInSensitivity, optInMinTrendLength); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 3 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // ZIGZAG computes the Zig Zag over bars startIdx through endIdx.
 //
 // The percent-filter swing line. A leg runs from the last confirmed pivot to

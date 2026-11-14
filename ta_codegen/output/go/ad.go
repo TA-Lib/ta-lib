@@ -86,6 +86,21 @@ func (c *Core) ADLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// ADDisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.AD]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.AD], from 0, and
+// returns [BadParam] for an index that names no output.
+func (c *Core) ADDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // AD computes the Chaikin A/D Line over bars startIdx through endIdx.
 //
 // Chaikin Accumulation/Distribution Line, a cumulative volume-flow indicator.

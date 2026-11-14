@@ -260,6 +260,72 @@ func (c *Core) GATORLookback(optInJawPeriod, optInJawShift, optInTeethPeriod, op
 	return int(lookback), nil
 }
 
+func (c *Core) gatorDisplayShift(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outputIdx int32) int32 {
+	if optInJawPeriod == IntegerDefault {
+		optInJawPeriod = 13
+	} else if optInJawPeriod < 1 || optInJawPeriod > 100000 {
+		return 0
+	}
+	if optInJawShift == IntegerDefault {
+		optInJawShift = 8
+	} else if optInJawShift < 0 || optInJawShift > 100000 {
+		return 0
+	}
+	if optInTeethPeriod == IntegerDefault {
+		optInTeethPeriod = 8
+	} else if optInTeethPeriod < 1 || optInTeethPeriod > 100000 {
+		return 0
+	}
+	if optInTeethShift == IntegerDefault {
+		optInTeethShift = 5
+	} else if optInTeethShift < 0 || optInTeethShift > 100000 {
+		return 0
+	}
+	if optInLipsPeriod == IntegerDefault {
+		optInLipsPeriod = 5
+	} else if optInLipsPeriod < 1 || optInLipsPeriod > 100000 {
+		return 0
+	}
+	if optInLipsShift == IntegerDefault {
+		optInLipsShift = 3
+	} else if optInLipsShift < 0 || optInLipsShift > 100000 {
+		return 0
+	}
+	if outputIdx == 0 {
+		var _T0 int32
+		if optInJawShift < optInTeethShift {
+			_T0 = optInJawShift
+		} else {
+			_T0 = optInTeethShift
+		}
+		return _T0
+	}
+	var _T1 int32
+	if optInTeethShift < optInLipsShift {
+		_T1 = optInTeethShift
+	} else {
+		_T1 = optInLipsShift
+	}
+	return _T1
+}
+
+// GATORDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.GATOR].
+// The values are never shifted.
+//
+// It takes the parameters of [Core.GATOR] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.GATORLookback] rejects or an index that names no output.
+func (c *Core) GATORDisplayShift(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, outputIdx int) (int, error) {
+	if _, err := c.GATORLookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return int(c.gatorDisplayShift(int32(optInJawPeriod), int32(optInJawShift), int32(optInTeethPeriod), int32(optInTeethShift), int32(optInLipsPeriod), int32(optInLipsShift), int32(outputIdx))), nil
+}
+
 // GATOR computes the Gator Oscillator over bars startIdx through endIdx.
 //
 // Bill Williams' Gator Oscillator: how far apart the three Alligator lines are,

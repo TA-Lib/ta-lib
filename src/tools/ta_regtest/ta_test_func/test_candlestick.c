@@ -11657,7 +11657,7 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
       printf( "Failed: no candle setting was pushed to any language server\n" );
       return TA_CDLSET_VACUOUS_NO_SYNC;
    }
-   if( server_verify_lookback_pipes() > 0 && movedLookbacks == 0 )
+   if( server_verify_active() && movedLookbacks == 0 )
    {
       printf( "Failed: no lookback moved by a candle setting was compared with any "
               "language server\n" );

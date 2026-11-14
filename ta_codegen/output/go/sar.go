@@ -216,6 +216,25 @@ func (c *Core) SARLookback(optInAcceleration, optInMaximum float64) (int, error)
 	return int(lookback), nil
 }
 
+// SARDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.SAR]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SAR] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SARLookback] rejects or an index that names no output.
+func (c *Core) SARDisplayShift(optInAcceleration, optInMaximum float64, outputIdx int) (int, error) {
+	if _, err := c.SARLookback(optInAcceleration, optInMaximum); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SAR computes the Parabolic SAR over bars startIdx through endIdx.
 //
 // Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that

@@ -267,6 +267,25 @@ func (c *Core) PSOLookback(optInFastK_Period, optInEMAPeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// PSODisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.PSO]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.PSO] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.PSOLookback] rejects or an index that names no output.
+func (c *Core) PSODisplayShift(optInFastK_Period, optInEMAPeriod, outputIdx int) (int, error) {
+	if _, err := c.PSOLookback(optInFastK_Period, optInEMAPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // PSO computes the Premier Stochastic Oscillator over bars startIdx through
 // endIdx.
 //

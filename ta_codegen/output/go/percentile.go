@@ -1093,6 +1093,25 @@ func (c *Core) PERCENTILELookback(optInTimePeriod int, optInPercentile float64) 
 	return int(lookback), nil
 }
 
+// PERCENTILEDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.PERCENTILE]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.PERCENTILE] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.PERCENTILELookback] rejects or an index that names no output.
+func (c *Core) PERCENTILEDisplayShift(optInTimePeriod int, optInPercentile float64, outputIdx int) (int, error) {
+	if _, err := c.PERCENTILELookback(optInTimePeriod, optInPercentile); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // PERCENTILE computes the Percentile (nearest rank) over bars startIdx through
 // endIdx.
 //

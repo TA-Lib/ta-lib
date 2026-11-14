@@ -126,6 +126,25 @@ func (c *Core) MAXINDEXLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// MAXINDEXDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.MAXINDEX]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.MAXINDEX] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.MAXINDEXLookback] rejects or an index that names no output.
+func (c *Core) MAXINDEXDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.MAXINDEXLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // MAXINDEX computes the Index of highest value over a specified period over
 // bars startIdx through endIdx.
 //

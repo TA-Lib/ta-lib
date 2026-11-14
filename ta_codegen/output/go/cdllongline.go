@@ -146,6 +146,21 @@ func (c *Core) CDLLONGLINELookback() (int, error) {
 	return int(lookback), nil
 }
 
+// CDLLONGLINEDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.CDLLONGLINE]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.CDLLONGLINE], from
+// 0, and returns [BadParam] for an index that names no output.
+func (c *Core) CDLLONGLINEDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CDLLONGLINE recognizes the Long Line Candle pattern over bars startIdx
 // through endIdx.
 //

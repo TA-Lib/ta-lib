@@ -15,10 +15,10 @@ const PAGE: &str = "website/src/spec/abstract/README.md";
 const NAMES_PAGE: &str = "website/src/spec/README.md";
 const NAMES_HEADING: &str = "### Metadata flags {#flag-names}";
 const UNUSED: &str = "No function sets it";
-/// TypeScript lacks every flag Java and C# lack.
-const ABSENT: &str = "Java, C# and TypeScript have no member for it";
-const TS_ABSENT: &str = "TypeScript has no member for it";
-/// TypeScript, the newest port, carries no deprecated flag either.
+/// TypeScript and Go lack every flag Java and C# lack.
+const ABSENT: &str = "Java, C#, TypeScript and Go have no member for it";
+const TS_ABSENT: &str = "TypeScript and Go have no member for it";
+/// TypeScript and Go, the newest ports, carry no deprecated flag either.
 const DEPRECATED: &str = "Deprecated:";
 
 fn repo_root() -> PathBuf {
@@ -110,6 +110,7 @@ fn the_spec_flag_catalog_is_complete() {
     let rust_src = read("ta_codegen/output/rust/library/src/abstract_api.rs");
     let ts_src = read("ta_codegen/output/ts/library/src/metadata/flags.ts");
     let csharp_src = read("ta_codegen/output/csharp/library/src/metadata/Vocabulary.g.cs");
+    let go_src = read("ta_codegen/output/go/metadata/vocabulary.go");
     let page = read(PAGE);
 
     // `| `TA_X` | meaning |` on the catalog page; `| owner | `TA_X_` | rust, java | c# |`
@@ -165,6 +166,8 @@ fn the_spec_flag_catalog_is_complete() {
     assert_eq!(java_flag_files, families.len(), "a Java flag family this test does not read");
     let ts_families = ts_src.lines().filter(|l| l.starts_with("export const ") && l.contains("Flags = Object.freeze({")).count();
     assert_eq!(ts_families, families.len(), "a TypeScript flag family this test does not read");
+    let go_families = go_src.lines().filter(|l| l.starts_with("type ") && l.ends_with(" uint32")).count();
+    assert_eq!(go_families, families.len(), "a Go flag family this test does not read");
 
     let (mut checked, mut marked, mut absent) = (0, 0, 0);
     for fam in &families {
@@ -233,6 +236,18 @@ fn the_spec_flag_catalog_is_complete() {
                 .collect()
         };
         let ts_values: BTreeSet<u32> = ts.values().copied().collect();
+
+        // Go, the newest port with TypeScript, carries exactly TypeScript's flags,
+        // as `\tName <family> = 0x...` constants of package metadata.
+        let go_suffix = format!(" {} = ", fam.csharp);
+        let go: Vec<u32> = go_src
+            .lines()
+            .filter_map(|l| l.strip_prefix('\t').and_then(|l| l.split_once(&go_suffix)))
+            .map(|(name, value)| hex(value).unwrap_or_else(|| panic!("vocabulary.go: `{name}` is not `0x...`")))
+            .collect();
+        let go_values: BTreeSet<u32> = go.iter().copied().collect();
+        assert_eq!(go_values.len(), go.len(), "Go {}: two constants carry one value", fam.csharp);
+        assert_eq!(go_values, ts_values, "Go {} and TypeScript {} carry different flags", fam.csharp, fam.rust);
         assert_eq!(ts_values.len(), ts.len(), "TypeScript {}: two members carry one value", fam.rust);
         let stray: Vec<&String> = ts.iter().filter(|(_, v)| !c.values().any(|d| d == *v)).map(|(m, _)| m).collect();
         assert!(stray.is_empty(), "TypeScript {} members that carry no {}* value: {stray:?}", fam.rust, fam.c_prefix);

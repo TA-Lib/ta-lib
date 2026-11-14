@@ -145,6 +145,25 @@ func (c *Core) SWAK_BUTTERLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// SWAK_BUTTERDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.SWAK_BUTTER]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SWAK_BUTTER] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SWAK_BUTTERLookback] rejects or an index that names no output.
+func (c *Core) SWAK_BUTTERDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.SWAK_BUTTERLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SWAK_BUTTER computes the Swiss Army Knife - Butterworth Filter over bars
 // startIdx through endIdx.
 //

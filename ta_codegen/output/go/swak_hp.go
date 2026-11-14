@@ -133,6 +133,25 @@ func (c *Core) SWAK_HPLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// SWAK_HPDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.SWAK_HP]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SWAK_HP] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SWAK_HPLookback] rejects or an index that names no output.
+func (c *Core) SWAK_HPDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.SWAK_HPLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SWAK_HP computes the Swiss Army Knife - High-Pass Filter over bars startIdx
 // through endIdx.
 //

@@ -278,6 +278,25 @@ func (c *Core) CELookback(optInTimePeriod int, optInMultiplier float64) (int, er
 	return int(lookback), nil
 }
 
+// CEDisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.CE]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CE] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter [Core.CELookback]
+// rejects or an index that names no output.
+func (c *Core) CEDisplayShift(optInTimePeriod int, optInMultiplier float64, outputIdx int) (int, error) {
+	if _, err := c.CELookback(optInTimePeriod, optInMultiplier); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 2 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CE computes the Chandelier Exit over bars startIdx through endIdx.
 //
 // Le Beau's Chandelier Exit, a two-line volatility stop. The highest high of

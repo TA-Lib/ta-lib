@@ -61,7 +61,7 @@ In Rust, Java, C# and Go, a function's calls are methods of a `Core`. In TypeScr
 |---|---|---|---|---|---|---|
 | batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` returns `{ begIdx, values }` | `SMA` returns `(OutRange, error)` |
 | lookback | `int TA_SMA_Lookback` | `sma_lookback` returns `Result<usize, RetCode>` | `int smaLookback` | `int SmaLookback` | `smaLookback` returns `number` | `SMALookback` returns `(int, error)` |
-| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` | none |
+| display shift of one output | `int TA_SMA_DisplayShift` | `sma_display_shift` returns `Result<i32, RetCode>` | `int smaDisplayShift` | `int SmaDisplayShift` | `smaDisplayShift` returns `number` | `SMADisplayShift` returns `(int, error)` |
 | open, open and fill | `TA_SMA_Open`, `TA_SMA_OpenAndFill` | `sma_open`, `sma_open_and_fill` | `smaOpen`, `smaOpenAndFill` | `SmaOpen`, `SmaOpenAndFill` | `smaOpen`; `smaOpenAndFill` returns `{ stream, begIdx, values }` | `SMAOpen`, `SMAOpenAndFill` |
 | handle | `TA_SMA_Stream *` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` | `*SMAStream` |
 | handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Value`, `OutRange`, `Advance`, `Clone` |
@@ -99,14 +99,14 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java, C# and TypeScript hold
 
 What each flag means: [flags](/spec/abstract/#flags).
 
-| Flags of | C prefix | Rust, Java, TypeScript | C# |
+| Flags of | C prefix | Rust, Java, TypeScript | C#, Go |
 |---|---|---|---|
 | a function | `TA_FUNC_FLG_` | `FuncFlags` | `FuncFlags` |
 | a price input | `TA_IN_PRICE_` | `InputFlags` | `PriceComponents` |
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust, Java and TypeScript and UpperCamel in C#, and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
+Members are upper case in Rust, Java and TypeScript, UpperCamel in C#, and UpperCamel constants of package `metadata` in Go, prefixed `Func`, `Price`, `Opt` and `Out` (`metadata.FuncStream`), and can use other words than C's (`FuncFlags.STREAMING` in Java and TypeScript is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
 
 ## How a failure reaches the caller {#failures}
 
@@ -122,7 +122,7 @@ Members are upper case in Rust, Java and TypeScript and UpperCamel in C#, and ca
 | reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` | a thrown `TALibError`; `code`, C's name as a string (`'TA_BAD_PARAM'`) | a returned `error` that is a `RetCode`; `errors.Is(err, talib.BadParam)` |
 | C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast | `retCode` | `int` conversion of the `RetCode` |
 | lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` | `Core.LOOKBACK_INVALID` (-1) | `talib.BadParam` |
-| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) | no display-shift call |
+| display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` | `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) | `talib.BadParam` |
 
 One row per [code a function call can report](/spec/errors/#return-codes). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works. TypeScript throws `TALibError : Error` for every code, its `code` being the code's C name.
 

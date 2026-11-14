@@ -353,6 +353,25 @@ func (c *Core) HMALookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// HMADisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.HMA]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.HMA] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.HMALookback] rejects or an index that names no output.
+func (c *Core) HMADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.HMALookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // HMA computes the Hull Moving Average over bars startIdx through endIdx.
 //
 // Hull Moving Average, published by Alan Hull in 2005: a moving average built

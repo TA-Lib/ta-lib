@@ -71,6 +71,21 @@ func (c *Core) CUMSUMLookback() (int, error) {
 	return int(lookback), nil
 }
 
+// CUMSUMDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.CUMSUM]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the output's position among the outputs of [Core.CUMSUM], from 0,
+// and returns [BadParam] for an index that names no output.
+func (c *Core) CUMSUMDisplayShift(outputIdx int) (int, error) {
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CUMSUM computes the Cumulative Sum over bars startIdx through endIdx.
 //
 // Cumulative Sum: the running total of a series from the anchor bar forward. A

@@ -165,6 +165,25 @@ func (c *Core) CDLEVENINGDOJISTARLookback(optInPenetration float64) (int, error)
 	return int(lookback), nil
 }
 
+// CDLEVENINGDOJISTARDisplayShift returns how many bars ahead (positive) or
+// behind (negative) of the bar that computed it a chart draws output outputIdx
+// of [Core.CDLEVENINGDOJISTAR]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CDLEVENINGDOJISTAR] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CDLEVENINGDOJISTARLookback] rejects or an index that names no output.
+func (c *Core) CDLEVENINGDOJISTARDisplayShift(optInPenetration float64, outputIdx int) (int, error) {
+	if _, err := c.CDLEVENINGDOJISTARLookback(optInPenetration); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CDLEVENINGDOJISTAR recognizes the Evening Doji Star pattern over bars
 // startIdx through endIdx.
 //

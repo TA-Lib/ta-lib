@@ -41,7 +41,7 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | rL3 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#rl3) | ✅ | ✅ | ✅ | ✅ |  |  |
 | rL4 | [agrees with C](https://ta-lib.org/spec/lookback/#rl4) | — | ✅ | ✅ | ✅ |  |  |
 | rL2 | [its only failure](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |  |  |
-| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ |  | — |
+| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ |  | ✅ |
 
 ### Batch tier
 

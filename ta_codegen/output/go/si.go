@@ -131,6 +131,25 @@ func (c *Core) SILookback(optInLimitMove float64) (int, error) {
 	return int(lookback), nil
 }
 
+// SIDisplayShift returns how many bars ahead (positive) or behind (negative) of
+// the bar that computed it a chart draws output outputIdx of [Core.SI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter [Core.SILookback]
+// rejects or an index that names no output.
+func (c *Core) SIDisplayShift(optInLimitMove float64, outputIdx int) (int, error) {
+	if _, err := c.SILookback(optInLimitMove); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SI computes the Wilder Swing Index over bars startIdx through endIdx.
 //
 // Wilder's Swing Index: one number rating each bar against the bar before it,

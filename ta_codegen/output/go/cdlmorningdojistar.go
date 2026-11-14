@@ -165,6 +165,25 @@ func (c *Core) CDLMORNINGDOJISTARLookback(optInPenetration float64) (int, error)
 	return int(lookback), nil
 }
 
+// CDLMORNINGDOJISTARDisplayShift returns how many bars ahead (positive) or
+// behind (negative) of the bar that computed it a chart draws output outputIdx
+// of [Core.CDLMORNINGDOJISTAR]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CDLMORNINGDOJISTAR] followed by the output's
+// position among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CDLMORNINGDOJISTARLookback] rejects or an index that names no output.
+func (c *Core) CDLMORNINGDOJISTARDisplayShift(optInPenetration float64, outputIdx int) (int, error) {
+	if _, err := c.CDLMORNINGDOJISTARLookback(optInPenetration); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CDLMORNINGDOJISTAR recognizes the Morning Doji Star pattern over bars
 // startIdx through endIdx.
 //

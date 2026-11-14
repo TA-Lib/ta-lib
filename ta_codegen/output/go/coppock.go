@@ -249,6 +249,25 @@ func (c *Core) COPPOCKLookback(optInWMAPeriod, optInROC1Period, optInROC2Period 
 	return int(lookback), nil
 }
 
+// COPPOCKDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.COPPOCK]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.COPPOCK] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.COPPOCKLookback] rejects or an index that names no output.
+func (c *Core) COPPOCKDisplayShift(optInWMAPeriod, optInROC1Period, optInROC2Period, outputIdx int) (int, error) {
+	if _, err := c.COPPOCKLookback(optInWMAPeriod, optInROC1Period, optInROC2Period); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // COPPOCK computes the Coppock Curve over bars startIdx through endIdx.
 //
 // Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator

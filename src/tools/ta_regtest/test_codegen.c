@@ -151,12 +151,6 @@ double codegen_lang_transcendental_tol(const char *lang)
     return 0.0;
 }
 
-/* Go has no metadata tier yet. */
-int codegen_lang_has_abstract(const char *lang)
-{
-    return !(lang && strcmp(lang, "go") == 0);
-}
-
 /* Rust and Go are concrete f64. */
 int codegen_lang_serves_float(const char *lang)
 {
@@ -2278,7 +2272,7 @@ ErrorNumber test_func_unstable_shift( TA_History *history )
                ctx.flatMinimum, ctx.flatList);
         return TA_UNSTABLE_SHIFT_VACUOUS;
     }
-    if( server_verify_lookback_pipes() > 0 && server_verify_lookback_values() == serverLookbacks )
+    if( server_verify_active() && server_verify_lookback_values() == serverLookbacks )
     {
         printf("\nUNSTABLE SHIFT: no lookback was compared with any language server\n");
         return TA_UNSTABLE_SHIFT_VACUOUS;
@@ -6242,18 +6236,15 @@ static unsigned long long fuzz_hash_local(const CodegenRangeTestParam *p, int nb
 
 /* Build an abstract_call request that generates its inputs from (shape,seed,n).
  * hash mode unless fullOutput. */
-static void fuzz_build_request_as(char *buf, int perFunction, const TA_FuncInfo *fi,
-                                  int s, int e, int shape, int seed, int n,
-                                  const double *optVals, int fullOutput, int unst)
+static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
+                               int s, int e, int shape, int seed, int n,
+                               const double *optVals, int fullOutput, int unst)
 {
-    int pos = perFunction
-        ? codegen_appendf(buf, JSON_BUF_SIZE, 0, "{\"method\":\"TA_%s\",\"params\":{", fi->name)
-        : codegen_appendf(buf, JSON_BUF_SIZE, 0,
-                          "{\"method\":\"abstract_call\",\"params\":{\"funcName\":\"%s\",", fi->name);
-    pos = codegen_appendf(buf, JSON_BUF_SIZE, pos,
+    int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
+        "{\"method\":\"abstract_call\",\"params\":{\"funcName\":\"%s\","
         "\"startIdx\":%d,\"endIdx\":%d,"
         "\"gen_present\":1,\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d",
-        s, e, shape, seed, n);
+        fi->name, s, e, shape, seed, n);
     if( fullOutput )
         pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"full_output\":1");
     for( unsigned int i = 0; i < fi->nbOptInput; i++ )
@@ -6268,13 +6259,6 @@ static void fuzz_build_request_as(char *buf, int perFunction, const TA_FuncInfo 
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
         pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":%d", unst);
     codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
-}
-
-static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
-                               int s, int e, int shape, int seed, int n,
-                               const double *optVals, int fullOutput, int unst)
-{
-    fuzz_build_request_as(buf, 0, fi, s, e, shape, seed, n, optVals, fullOutput, unst);
 }
 
 static unsigned long long fuzz_parse_hash(const char *resp)
@@ -9097,50 +9081,44 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
              * value: Java's MAType.values()[Integer.MIN_VALUE] throws out of an
              * uncaught handler and takes the subprocess with it. */
             if( enumSent && !sv->enumSentinel ) { ctx->sentEnumSkipped++; continue; }
-            /* A server with no metadata tier has no lookback RPC; its batch tier is
-             * held to C's verdict below instead of to its own. */
-            long long srv = gold;
-            if( codegen_lang_has_abstract(sv->name) )
+            if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
             {
-                if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
-                {
-                    if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
-                    sv->mism++;
-                    continue;
-                }
-                int present = 0;
-                srv = xlang_lookback_norm(ctx->respBuf, &present);
-                sv->cases++;
-                ctx->lbCases++;
-                if( kind[k] == FUZZ_VEC_REJECT )   ctx->lbOorCases++;
-                if( kind[k] == FUZZ_VEC_SENTINEL ) ctx->lbSentCases++;
-                if( enumSent )                     ctx->lbSentEnumCases++;
+                if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+                sv->mism++;
+                continue;
+            }
+            int present = 0;
+            long long srv = xlang_lookback_norm(ctx->respBuf, &present);
+            sv->cases++;
+            ctx->lbCases++;
+            if( kind[k] == FUZZ_VEC_REJECT )   ctx->lbOorCases++;
+            if( kind[k] == FUZZ_VEC_SENTINEL ) ctx->lbSentCases++;
+            if( enumSent )                     ctx->lbSentEnumCases++;
 
-                if( !present )
+            if( !present )
+            {
+                printf("  XLANG LOOKBACK PROTOCOL MISSING [%s] TA_%s: response has no "
+                       "lookback field (%.120s)\n", sv->display, funcInfo->name, ctx->respBuf);
+                if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                sv->mism++;
+                continue;
+            }
+            if( srv != gold )
+            {
+                sv->mism++;
+                if( ctx->reportedThisFunc < 3 )
                 {
-                    printf("  XLANG LOOKBACK PROTOCOL MISSING [%s] TA_%s: response has no "
-                           "lookback field (%.120s)\n", sv->display, funcInfo->name, ctx->respBuf);
-                    if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
-                    sv->mism++;
-                    continue;
-                }
-                if( srv != gold )
-                {
-                    sv->mism++;
-                    if( ctx->reportedThisFunc < 3 )
-                    {
-                        ctx->reportedThisFunc++;
-                        printf("  XLANG LOOKBACK MISMATCH TA_%s  C(golden) vs %s%s  params:",
-                               funcInfo->name, sv->display,
-                               kind[k] == FUZZ_VEC_REJECT
-                                   ? "  [out-of-range vector: both tiers must REJECT]"
-                               : kind[k] == FUZZ_VEC_SENTINEL
-                                   ? "  [sentinel vector: both tiers must resolve it to the default]"
-                                   : "");
-                        xlang_print_params(funcInfo, vec[k]);
-                        printf("\n    lookback %lld/%lld (golden/%s; -1 = parameters rejected)\n",
-                               gold, srv, sv->display);
-                    }
+                    ctx->reportedThisFunc++;
+                    printf("  XLANG LOOKBACK MISMATCH TA_%s  C(golden) vs %s%s  params:",
+                           funcInfo->name, sv->display,
+                           kind[k] == FUZZ_VEC_REJECT
+                               ? "  [out-of-range vector: both tiers must REJECT]"
+                           : kind[k] == FUZZ_VEC_SENTINEL
+                               ? "  [sentinel vector: both tiers must resolve it to the default]"
+                               : "");
+                    xlang_print_params(funcInfo, vec[k]);
+                    printf("\n    lookback %lld/%lld (golden/%s; -1 = parameters rejected)\n",
+                           gold, srv, sv->display);
                 }
             }
 
@@ -9223,7 +9201,7 @@ static void xlang_auto_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
             for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
             {
                 XlangServer *sv = &ctx->sv[sIdx];
-                if( !sv->open || !codegen_lang_has_abstract(sv->name) ) continue;
+                if( !sv->open ) continue;
                 if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
                 {
                     if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
@@ -9284,8 +9262,7 @@ static int xlang_hash_call(XlangCtx *ctx, XlangServer *sv, const TA_FuncInfo *fi
      * hardcodes the right id in its generated handler, so the unstable legs
      * take the hex transport on every server. */
     if( sv->usesSeed && unstPeriod == 0 && xlang_period_selector(fi) == 0 )
-        fuzz_build_request_as(ctx->reqBuf, !codegen_lang_has_abstract(sv->name), fi, s, e,
-                              shape, seed, n, optVals, 0, 0);
+        fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 0, 0);
     else
         xlang_build_hex_request(ctx->reqBuf, fi, hist, n, s, e, optVals, unstPeriod, 1);
 
@@ -9696,11 +9673,9 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     { ctx->illcondSkipped++; continue; }
                     /* curUnst != 0 forces the hex transport even for a seed
                      * server — see xlang_hash_call for why abstract_call cannot
-                     * carry an unstable period. A server with no abstract_call
-                     * takes the seed on its per-function method. */
+                     * carry an unstable period. */
                     if( sv->usesSeed && curUnst == 0 && !rampPeriods && !tolPath )
-                        fuzz_build_request_as(ctx->reqBuf, !codegen_lang_has_abstract(sv->name),
-                                              funcInfo, s, e, shape, seeds[si], n, vec[k], 0, 0);
+                        fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0, 0);
                     else
                         xlang_build_hex_request(ctx->reqBuf, funcInfo, &hist, n, s, e, vec[k],
                                                 curUnst, !tolPath);
@@ -10055,12 +10030,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     /* Non-vacuity: with no rejected and no sentinel vector this gate is back to
      * what it was before #148 — asserting only that VALUES agree. Unfiltered runs
      * only; --function= can select functions with no range-typed param at all. */
-    int abstractOpen = 0;
-    for( int s = 0; s < nsv; s++ )
-        if( servers[s].open && codegen_lang_has_abstract(servers[s].name) ) abstractOpen = 1;
     if( !functionFilter && ctx.comparisons > 0 &&
-        (ctx.oorCases == 0 || ctx.sentCases == 0 ||
-         (abstractOpen && (ctx.lbOorCases == 0 || ctx.lbSentCases == 0))) )
+        (ctx.oorCases == 0 || ctx.lbOorCases == 0 ||
+         ctx.sentCases == 0 || ctx.lbSentCases == 0) )
     {
         printf("FAIL — VACUOUS CONTRACT LEG: reject %lld batch / %lld lookback, sentinel "
                "%lld batch / %lld lookback — no vector any language had to reject or "
@@ -10070,7 +10042,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     }
     printf("auto levels (#492): %lld lookback case(s), %lld of them lengthened by the level\n",
            ctx.autoLbCases, ctx.autoLbMoved);
-    if( !functionFilter && abstractOpen && ctx.comparisons > 0 && ctx.autoLbMoved < 1000 )
+    if( !functionFilter && ctx.comparisons > 0 && ctx.autoLbMoved < 1000 )
     {
         printf("FAIL — VACUOUS AUTO LOOKBACK LEG: %lld case(s), %lld lengthened by a level.\n",
                ctx.autoLbCases, ctx.autoLbMoved);
@@ -10169,15 +10141,11 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * this leg excluded the guard above stays green — which is how #162 survived.
      * Requiring an enum-capable server to be open keeps `--language=java`, whose
      * skip is legitimate, from tripping it. */
-    int enumCapableOpen = 0, enumLookbackOpen = 0;
+    int enumCapableOpen = 0;
     for( int s = 0; s < nsv; s++ )
-    {
         if( servers[s].open && servers[s].enumSentinel ) enumCapableOpen = 1;
-        if( servers[s].open && servers[s].enumSentinel && codegen_lang_has_abstract(servers[s].name) )
-            enumLookbackOpen = 1;
-    }
     if( !functionFilter && enumCapableOpen && ctx.comparisons > 0 &&
-        (ctx.sentEnumCases == 0 || (enumLookbackOpen && ctx.lbSentEnumCases == 0)) )
+        (ctx.sentEnumCases == 0 || ctx.lbSentEnumCases == 0) )
     {
         printf("FAIL — VACUOUS CHOICE-LIST SENTINEL LEG: %lld batch / %lld lookback case(s) "
                "put TA_INTEGER_DEFAULT on an enum:MAType parameter. That leg is what gates "

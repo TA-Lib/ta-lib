@@ -320,6 +320,25 @@ func (c *Core) DOSCLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod
 	return int(lookback), nil
 }
 
+// DOSCDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.DOSC].
+// The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.DOSC] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.DOSCLookback] rejects or an index that names no output.
+func (c *Core) DOSCDisplayShift(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outputIdx int) (int, error) {
+	if _, err := c.DOSCLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // DOSC computes the Derivative Oscillator over bars startIdx through endIdx.
 //
 // Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages in

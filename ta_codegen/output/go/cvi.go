@@ -172,6 +172,25 @@ func (c *Core) CVILookback(optInTimePeriod, optInROCPeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// CVIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.CVI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CVI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CVILookback] rejects or an index that names no output.
+func (c *Core) CVIDisplayShift(optInTimePeriod, optInROCPeriod, outputIdx int) (int, error) {
+	if _, err := c.CVILookback(optInTimePeriod, optInROCPeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CVI computes the Chaikin's Volatility over bars startIdx through endIdx.
 //
 // Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily

@@ -111,10 +111,14 @@ pub struct GoNames {
     pub public: String,
     /// The public lookback (`SMALookback`).
     pub lookback_public: String,
+    /// The public display shift (`SMADisplayShift`).
+    pub display_shift_public: String,
     /// The C-shaped body (`smaImpl`).
     pub body: String,
     /// The C-shaped lookback the bodies call (`smaLookback`).
     pub lookback: String,
+    /// The display-shift body of a function with a shifted output (`smaDisplayShift`).
+    pub display_shift: String,
     /// The declared private variant (`smaPrivate`).
     pub private: String,
 }
@@ -125,8 +129,10 @@ pub fn go_names(func_name: &str) -> GoNames {
     GoNames {
         public: func_name.to_string(),
         lookback_public: format!("{func_name}Lookback"),
+        display_shift_public: format!("{func_name}DisplayShift"),
         body: format!("{camel}Impl"),
         lookback: format!("{camel}Lookback"),
+        display_shift: format!("{camel}DisplayShift"),
         private: format!("{camel}Private"),
     }
 }
@@ -163,6 +169,7 @@ pub fn generate(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Reg
     }
     body.push_str(&gen_impl(func, false, &svc));
     body.push_str(&gen_public_lookback(func, svc.enums));
+    body.push_str(&gen_display_shift(func, &svc));
     body.push_str(&gen_public(func, &svc));
     if super::go_stream::emits_stream(func, registry) {
         body.push_str(&super::go_stream::generate(func, &svc));
@@ -1662,33 +1669,93 @@ fn gen_lookback(func: &FuncDef, svc: &Services) -> String {
     match &func.lookback {
         Some(LookbackExpr::Literal(n)) => lines.push(format!("return {n}")),
         Some(LookbackExpr::ParamMinus(p, off)) => lines.push(format!("return {p} - {off}")),
-        Some(LookbackExpr::Code(stmts)) => {
-            let ctx = Ctx::new(svc, &func.name, stmts, &func.outputs, false, Ret::Int);
-            ctx.env.seed_opts(func);
-            for s in stmts {
-                if let Statement::VarDecl { var_type, name, .. } = s {
-                    lines.push(format!("var {} {}", go_ident(name), var_go_type(var_type)));
-                }
-            }
-            lines.extend(emit_candle_unpacking(&detect_candle_settings(stmts)));
-            for s in stmts {
-                if let Statement::VarDecl { var_type, name, init: Some(init) } = s {
-                    let mut sc = Scope::default();
-                    let v = ctx.value_for(CType::of_var_type(var_type), init, &mut sc);
-                    lines.extend(sc.pre);
-                    lines.push(format!("{} = {}", go_ident(name), v.render()));
-                    lines.extend(sc.post);
-                }
-            }
-            for s in stmts {
-                if !matches!(s, Statement::VarDecl { .. }) {
-                    ctx.stmt(s, &mut lines);
-                }
-            }
-        }
+        Some(LookbackExpr::Code(stmts)) => lines.extend(scalar_body(func, stmts, svc, false)),
         None => lines.push("return 0".to_string()),
     }
     func_text(&format!("func (c *Core) {}({}) int32", names.lookback, param_list(&params)), &lines)
+}
+
+/// A lookback or display-shift body: integer arithmetic over the optional
+/// parameters, and `outputIdx` in a display shift.
+fn scalar_body(func: &FuncDef, stmts: &[Statement], svc: &Services, display_shift: bool) -> Vec<String> {
+    let mut lines = Vec::new();
+    let ctx = Ctx::new(svc, &func.name, stmts, &func.outputs, false, Ret::Int);
+    ctx.env.seed_opts(func);
+    if display_shift {
+        ctx.env.declare(crate::ir::DISPLAY_SHIFT_INDEX_PARAM, CType::Int32);
+    }
+    for s in stmts {
+        if let Statement::VarDecl { var_type, name, .. } = s {
+            lines.push(format!("var {} {}", go_ident(name), var_go_type(var_type)));
+        }
+    }
+    lines.extend(emit_candle_unpacking(&detect_candle_settings(stmts)));
+    for s in stmts {
+        if let Statement::VarDecl { var_type, name, init: Some(init) } = s {
+            let mut sc = Scope::default();
+            let v = ctx.value_for(CType::of_var_type(var_type), init, &mut sc);
+            lines.extend(sc.pre);
+            lines.push(format!("{} = {}", go_ident(name), v.render()));
+            lines.extend(sc.post);
+        }
+    }
+    for s in stmts {
+        if !matches!(s, Statement::VarDecl { .. }) {
+            ctx.stmt(s, &mut lines);
+        }
+    }
+    lines
+}
+
+/// `<N>DisplayShift`: the lookback's verdict on the parameters first, so the two
+/// reject the same ones, then the output index, then the shift. A function with
+/// a shifted output computes it in an unexported body over the C-shaped
+/// parameters.
+fn gen_display_shift(func: &FuncDef, svc: &Services) -> String {
+    let names = go_names(&func.name);
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let mut out = String::new();
+    if let Some(stmts) = &func.display_shift {
+        let mut params: Vec<(String, String)> =
+            func.optional_inputs.iter().map(|o| (o.name.clone(), impl_opt_type(o).to_string())).collect();
+        params.push((idx.to_string(), "int32".to_string()));
+        // Unreachable rejection: the public method has already asked the lookback.
+        let mut lines = opt_validation(func, "0", svc.enums);
+        lines.extend(scalar_body(func, stmts, svc, true));
+        out.push_str(&func_text(&format!("func (c *Core) {}({}) int32", names.display_shift, param_list(&params)), &lines));
+    }
+    let mut params: Vec<(String, String)> = func.optional_inputs.iter().map(|o| (o.name.clone(), public_opt_type(o))).collect();
+    params.push((idx.to_string(), "int".to_string()));
+    let mut l = Vec::new();
+    if !func.optional_inputs.is_empty() {
+        let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+        l.push(format!("if _, err := c.{}({}); err != nil {{", names.lookback_public, args.join(", ")));
+        l.push("\treturn 0, err".to_string());
+        l.push("}".to_string());
+    }
+    l.push(format!("if {idx} < 0 || {idx} >= {} {{", func.outputs.len()));
+    l.push("\treturn 0, BadParam".to_string());
+    l.push("}".to_string());
+    if func.display_shift.is_some() {
+        let unshifted = func.unshifted_outputs();
+        if !unshifted.is_empty() {
+            let tests: Vec<String> = unshifted.iter().map(|i| format!("{idx} == {i}")).collect();
+            l.push(format!("if {} {{", tests.join(" || ")));
+            l.push("\treturn 0, nil".to_string());
+            l.push("}".to_string());
+        }
+        let mut args: Vec<String> = func.optional_inputs.iter().map(impl_arg).collect();
+        args.push(format!("int32({idx})"));
+        l.push(format!("return int(c.{}({})), nil", names.display_shift, args.join(", ")));
+    } else {
+        l.push("return 0, nil".to_string());
+    }
+    let doc = super::go_doc::display_shift_docs(func);
+    out.push_str(&format!(
+        "{doc}{}",
+        func_text(&format!("func (c *Core) {}({}) (int, error)", names.display_shift_public, param_list(&params)), &l)
+    ));
+    out
 }
 
 fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {

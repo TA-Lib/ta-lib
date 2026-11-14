@@ -198,6 +198,25 @@ func (c *Core) CTILookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// CTIDisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.CTI]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.CTI] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.CTILookback] rejects or an index that names no output.
+func (c *Core) CTIDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.CTILookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // CTI computes the Correlation Trend Indicator over bars startIdx through
 // endIdx.
 //

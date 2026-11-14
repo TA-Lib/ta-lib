@@ -185,10 +185,10 @@ public overload, like C's frames and Java's `Dispatch`).
 
 **Every metadata tier calls the public tier.** C (`ta_frame.c`), Java
 (`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk), Rust
-(`ParamHolder::call`) and TypeScript (`ParamHolder.call`) all do, so binding a
-leg shorter than the requested range is `TA_BAD_PARAM` in every port and
-inexpressible in C, whose setters take a bare pointer and carry no length.
-Go has no metadata tier.
+(`ParamHolder::call`), TypeScript (`ParamHolder.call`) and Go (the `metadata`
+package's thunks) all do, so binding a leg shorter than the requested range is
+`TA_BAD_PARAM` in every port and inexpressible in C, whose setters take a bare
+pointer and carry no length.
 
 **And a rejected setter leaves the holder as it found it** — the price setter
 validates every consumed component before it writes any. The case that makes it

@@ -157,6 +157,25 @@ func (c *Core) SWAK_BPLookback(optInTimePeriod int, optInDelta float64) (int, er
 	return int(lookback), nil
 }
 
+// SWAK_BPDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.SWAK_BP]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.SWAK_BP] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.SWAK_BPLookback] rejects or an index that names no output.
+func (c *Core) SWAK_BPDisplayShift(optInTimePeriod int, optInDelta float64, outputIdx int) (int, error) {
+	if _, err := c.SWAK_BPLookback(optInTimePeriod, optInDelta); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // SWAK_BP computes the Swiss Army Knife - Band-Pass Filter over bars startIdx
 // through endIdx.
 //

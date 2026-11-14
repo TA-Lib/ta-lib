@@ -153,6 +153,25 @@ func (c *Core) EMALookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// EMADisplayShift returns how many bars ahead (positive) or behind (negative)
+// of the bar that computed it a chart draws output outputIdx of [Core.EMA]. The
+// values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.EMA] followed by the output's position among
+// its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.EMALookback] rejects or an index that names no output.
+func (c *Core) EMADisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.EMALookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // EMA computes the Exponential Moving Average over bars startIdx through
 // endIdx.
 //

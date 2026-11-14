@@ -166,6 +166,25 @@ func (c *Core) LINEARREGLookback(optInTimePeriod int) (int, error) {
 	return int(lookback), nil
 }
 
+// LINEARREGDisplayShift returns how many bars ahead (positive) or behind
+// (negative) of the bar that computed it a chart draws output outputIdx of
+// [Core.LINEARREG]. The values are never shifted.
+//
+// Every output of this function is drawn at its own bar, so the answer is 0.
+//
+// It takes the parameters of [Core.LINEARREG] followed by the output's position
+// among its outputs, from 0, and returns [BadParam] for a parameter
+// [Core.LINEARREGLookback] rejects or an index that names no output.
+func (c *Core) LINEARREGDisplayShift(optInTimePeriod, outputIdx int) (int, error) {
+	if _, err := c.LINEARREGLookback(optInTimePeriod); err != nil {
+		return 0, err
+	}
+	if outputIdx < 0 || outputIdx >= 1 {
+		return 0, BadParam
+	}
+	return 0, nil
+}
+
 // LINEARREG computes the Linear Regression over bars startIdx through endIdx.
 //
 // Least-squares straight-line fit over the last optInTimePeriod bars, reported
